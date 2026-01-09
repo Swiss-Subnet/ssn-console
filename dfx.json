@@ -1,0 +1,38 @@
+{
+  "canisters": {
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "frontend": {},
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "type": "custom",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+    },
+    "ssn-console-backend": {
+      "candid": "src/ssn-console-backend/ssn-console-backend.did",
+      "package": "ssn-console-backend",
+      "type": "rust"
+    },
+    "ssn-console-frontend": {
+      "dependencies": [
+        "ssn-console-backend"
+      ],
+      "source": [
+        "src/ssn-console-frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "ssn-console-frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
