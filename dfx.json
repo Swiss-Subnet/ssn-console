@@ -1,5 +1,28 @@
 {
+  "dfx": "0.30.1",
+  "output_env_file": ".env",
+  "version": 1,
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
   "canisters": {
+    "backend": {
+      "candid": "src/backend/backend.did",
+      "package": "backend",
+      "type": "rust"
+    },
+    "frontend": {
+      "dependencies": ["backend"],
+      "source": ["src/frontend/dist"],
+      "type": "assets",
+      "build": ["pnpm -F frontend run build"],
+      "declarations": {
+        "bindings": []
+      }
+    },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
       "frontend": {},
@@ -9,30 +32,10 @@
         }
       },
       "type": "custom",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
-    },
-    "ssn-console-backend": {
-      "candid": "src/ssn-console-backend/ssn-console-backend.did",
-      "package": "ssn-console-backend",
-      "type": "rust"
-    },
-    "ssn-console-frontend": {
-      "dependencies": [
-        "ssn-console-backend"
-      ],
-      "source": [
-        "src/ssn-console-frontend/dist"
-      ],
-      "type": "assets",
-      "workspace": "ssn-console-frontend"
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+      "declarations": {
+        "bindings": []
+      }
     }
-  },
-  "defaults": {
-    "build": {
-      "args": "",
-      "packtool": ""
-    }
-  },
-  "output_env_file": ".env",
-  "version": 1
+  }
 }

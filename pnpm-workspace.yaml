@@ -1,0 +1,6 @@
+packages:
+  - src/frontend
+
+onlyBuiltDependencies:
+  - "@parcel/watcher"
+  - esbuild

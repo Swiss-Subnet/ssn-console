@@ -1,14 +1,13 @@
 {
-  "name": "ssn-console-frontend",
+  "name": "frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "setup": "npm i && dfx canister create ssn-console-backend && dfx generate ssn-console-backend && dfx deploy",
+    "setup": "npm i && dfx canister create backend && dfx generate ssn-console-backend && dfx deploy",
     "start": "vite --port 3000",
     "prebuild": "dfx generate",
-    "build": "tsc && vite build",
-    "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\""
+    "build": "tsc && vite build"
   },
   "dependencies": {
     "react": "^18.2.0",

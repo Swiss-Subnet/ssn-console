@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { ssn_console_backend } from 'declarations/ssn-console-backend';
+import { useState } from "react";
+import { backend } from "declarations/backend";
 
 function App() {
-  const [greeting, setGreeting] = useState('');
+  const [greeting, setGreeting] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault();
     const name = event.target.elements.name.value;
-    ssn_console_backend.greet(name).then((greeting) => {
+    backend.greet(name).then((greeting) => {
       setGreeting(greeting);
     });
     return false;

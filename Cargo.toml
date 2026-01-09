@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "src/ssn-console-backend"
+    "src/backend"
 ]
 resolver = "2"
