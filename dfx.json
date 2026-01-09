@@ -1,0 +1,41 @@
+{
+  "dfx": "0.30.1",
+  "output_env_file": ".env",
+  "version": 1,
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
+  "canisters": {
+    "backend": {
+      "candid": "src/backend/backend.did",
+      "package": "backend",
+      "type": "rust"
+    },
+    "frontend": {
+      "dependencies": ["backend"],
+      "source": ["src/frontend/dist"],
+      "type": "assets",
+      "build": ["pnpm -F frontend run build"],
+      "declarations": {
+        "bindings": []
+      }
+    },
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "frontend": {},
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "type": "custom",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+      "declarations": {
+        "bindings": []
+      }
+    }
+  }
+}
