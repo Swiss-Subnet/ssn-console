@@ -39,6 +39,10 @@ pub fn create_user_profile(calling_principal: Principal, user_profile: UserProfi
 
 pub fn update_user_profile(user_id: Uuid, user_profile: UserProfile) -> Result<(), String> {
     mutate_state(|s| {
+        if !s.profiles.contains_key(&user_id) {
+            return Err(format!("User profile with ID {} does not exist.", user_id));
+        }
+
         s.profiles.insert(user_id, user_profile);
 
         Ok(())
@@ -63,8 +67,8 @@ thread_local! {
     static STATE: RefCell<UserProfileState> = RefCell::new(UserProfileState::default());
 }
 
-fn with_state<R>(f: impl FnOnce(&mut UserProfileState) -> R) -> R {
-    STATE.with(|s| f(&mut s.borrow_mut()))
+fn with_state<R>(f: impl FnOnce(&UserProfileState) -> R) -> R {
+    STATE.with(|s| f(&s.borrow()))
 }
 
 fn mutate_state<R>(f: impl FnOnce(&mut UserProfileState) -> R) -> R {
