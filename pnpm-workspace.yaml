@@ -1,6 +1,9 @@
 packages:
   - src/frontend
+  - src/backend-api
+  - src/backend-tests
 
 onlyBuiltDependencies:
-  - "@parcel/watcher"
+  - '@dfinity/pic'
+  - '@parcel/watcher'
   - esbuild
