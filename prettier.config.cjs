@@ -4,5 +4,5 @@ module.exports = {
   trailingComma: 'all',
   arrowParens: 'avoid',
   htmlWhitespaceSensitivity: 'strict',
-  plugins: ['prettier-plugin-motoko'],
+  plugins: ['prettier-plugin-motoko', 'prettier-plugin-tailwindcss'],
 };
