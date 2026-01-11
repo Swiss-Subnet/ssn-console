@@ -31,16 +31,13 @@ export const Header: FC = () => {
               </NavigationMenuLink>
             </NavigationMenuItem>
           )}
-
-          <NavigationMenuItem>
-            <ModeToggle />
-          </NavigationMenuItem>
-
-          <NavigationMenuItem>
-            <AuthButton />
-          </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
+
+      <div className="flex items-center gap-2">
+        <ModeToggle />
+        <AuthButton />
+      </div>
     </header>
   );
 };

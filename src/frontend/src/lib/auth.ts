@@ -1,14 +1,15 @@
 import { useInternetIdentity } from 'ic-use-internet-identity';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 
 export const useRequireAuth = (): void => {
   const { isLoginSuccess } = useInternetIdentity();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (!isLoginSuccess) {
+    if (!isLoginSuccess && location.pathname !== '/') {
       navigate('/');
     }
-  }, [isLoginSuccess, navigate]);
+  }, [isLoginSuccess, navigate, location.pathname]);
 };
