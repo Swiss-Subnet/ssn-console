@@ -1,14 +1,46 @@
+import { AuthButton } from '@/components/layout/auth-button';
 import { Logo } from '@/components/logo';
 import { ModeToggle } from '@/components/mode-toggle';
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from '@/components/ui/navigation-menu';
+import { useInternetIdentity } from 'ic-use-internet-identity';
+import type { FC } from 'react';
+import { NavLink } from 'react-router';
 
-export const Header: React.FC = () => (
-  <header className="flex w-full flex-row items-center p-3">
-    <a href="#">
-      <Logo className="h-13" />
-    </a>
+export const Header: FC = () => {
+  const { isLoginSuccess } = useInternetIdentity();
 
-    <div className="flex-1" />
+  return (
+    <header className="flex w-full flex-row items-center p-3">
+      <NavLink to="/">
+        <Logo className="h-13" />
+      </NavLink>
 
-    <ModeToggle />
-  </header>
-);
+      <div className="flex-1" />
+
+      <NavigationMenu>
+        <NavigationMenuList>
+          {isLoginSuccess && (
+            <NavigationMenuItem>
+              <NavigationMenuLink render={<NavLink to="/dashboard" />}>
+                Dashboard
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          )}
+
+          <NavigationMenuItem>
+            <ModeToggle />
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <AuthButton />
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+    </header>
+  );
+};

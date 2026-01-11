@@ -9,8 +9,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/components/theme-provider';
+import type { FC } from 'react';
 
-export function ModeToggle() {
+export const ModeToggle: FC = () => {
   const { setTheme } = useTheme();
 
   return (
@@ -24,6 +25,7 @@ export function ModeToggle() {
           </Button>
         }
       ></DropdownMenuTrigger>
+
       <DropdownMenuPositioner align="end">
         <DropdownMenuContent>
           <DropdownMenuItem onClick={() => setTheme('light')}>
@@ -39,4 +41,4 @@ export function ModeToggle() {
       </DropdownMenuPositioner>
     </DropdownMenu>
   );
-}
+};
