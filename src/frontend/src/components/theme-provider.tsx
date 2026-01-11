@@ -1,3 +1,4 @@
+import { isNil } from '@/lib/nil';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
@@ -67,8 +68,9 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
 
-  if (context === undefined)
+  if (isNil(context)) {
     throw new Error('useTheme must be used within a ThemeProvider');
+  }
 
   return context;
 };
