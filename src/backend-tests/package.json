@@ -1,0 +1,10 @@
+{
+  "name": "backend-tests",
+  "private": true,
+  "scripts": {
+    "test": "tsc && vitest run"
+  },
+  "dependencies": {
+    "@ssn/backend-api": "workspace:*"
+  }
+}

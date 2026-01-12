@@ -1,0 +1,10 @@
+{
+  "name": "@ssn/backend-api",
+  "private": true,
+  "scripts": {
+    "build": "dfx generate backend"
+  },
+  "module": "dist/backend.did.js",
+  "types": "dist/backend.did.d.ts",
+  "main": "dist/index.js"
+}

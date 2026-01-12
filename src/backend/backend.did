@@ -1,3 +1,1 @@
-service : {
-    "greet": (text) -> (text) query;
-}
+import service "./candid/user_profile.did";

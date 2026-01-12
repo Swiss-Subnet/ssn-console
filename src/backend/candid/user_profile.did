@@ -1,0 +1,34 @@
+type ListUserProfilesResponse = vec UserProfile;
+
+type GetMyUserProfileResponse = opt UserProfile;
+
+type CreateMyUserProfileResponse = UserProfile;
+
+type UpdateMyUserProfileRequest = record {
+  email : opt text;
+};
+
+type UpdateUserProfileRequest = record {
+  user_id : text;
+  status : opt UserStatus;
+};
+
+type UserProfile = record {
+  id : text;
+  email : opt text;
+  status : UserStatus;
+};
+
+type UserStatus = variant {
+  Active;
+  Inactive;
+};
+
+service : {
+  list_user_profiles : () -> (ListUserProfilesResponse) query;
+  update_user_profile : (UpdateUserProfileRequest) -> ();
+
+  get_my_user_profile : () -> (GetMyUserProfileResponse) query;
+  create_my_user_profile : () -> (CreateMyUserProfileResponse);
+  update_my_user_profile : (UpdateMyUserProfileRequest) -> ();
+};

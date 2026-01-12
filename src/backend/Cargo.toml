@@ -11,4 +11,12 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = "0.10"
 ic-cdk = "0.19"
-ic-cdk-timers = "1" # Feel free to remove this dependency if you don't need timers
+ic-cdk-timers = "1"
+ic-stable-structures = "0.7"
+
+serde = { version = "1", features = ["derive"] }
+ciborium = "0.2"
+
+uuid = { version = "1", features = ["serde"] }
+fastrand = "2"
+candid_parser = "0.3"

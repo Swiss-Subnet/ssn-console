@@ -12,7 +12,13 @@
     "backend": {
       "candid": "src/backend/backend.did",
       "package": "backend",
-      "type": "rust"
+      "type": "rust",
+      "gzip": true,
+      "optimize": "cycles",
+      "declarations": {
+        "bindings": ["js", "ts"],
+        "output": "./dist"
+      }
     },
     "frontend": {
       "dependencies": ["backend"],

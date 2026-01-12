@@ -1,4 +1,32 @@
-#[ic_cdk::query]
-fn greet(name: String) -> String {
-    format!("Hello, {}!", name)
+use candid::export_service;
+use dto::*;
+use ic_cdk::*;
+
+mod controller;
+mod data;
+mod dto;
+mod mapping;
+mod service;
+mod utils;
+
+export_service!();
+#[query(name = "__get_candid_interface_tmp_hack")]
+fn export_candid() -> String {
+    __export_service()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid_parser::utils::{service_equal, CandidSource};
+    use std::path::Path;
+
+    #[test]
+    fn check_candid_interface() {
+        service_equal(
+            CandidSource::Text(&__export_service()),
+            CandidSource::File(Path::new("./backend.did")),
+        )
+        .unwrap();
+    }
 }
