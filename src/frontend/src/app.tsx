@@ -7,9 +7,9 @@ export const App: FC = () => {
   const { initializeAuth, initializeApi } = useAppStore();
 
   useEffect(() => {
-    initializeAuth();
     initializeApi();
-  }, [initializeAuth]);
+    initializeAuth();
+  }, [initializeApi, initializeAuth]);
 
   return (
     <ThemeProvider>

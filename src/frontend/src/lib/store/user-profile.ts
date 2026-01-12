@@ -23,8 +23,12 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
       return;
     }
 
-    const profile = await userProfileApi.getOrCreateMyUserProfile();
-    set({ profile, isProfileInitialized: true });
+    try {
+      const profile = await userProfileApi.getOrCreateMyUserProfile();
+      set({ profile });
+    } finally {
+      set({ isProfileInitialized: true });
+    }
   },
 
   clearUserProfile: () => {

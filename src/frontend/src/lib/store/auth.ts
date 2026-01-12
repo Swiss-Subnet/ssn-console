@@ -50,17 +50,17 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
 
     await authClient.login({
       identityProvider: IDENTITY_PROVIDER,
-      onSuccess: () => {
+      onSuccess: async () => {
         const identity = authClient.getIdentity();
         setAgentIdentity(identity);
-        initializeUserProfile();
-
         set({
           isAuthenticated: true,
           isLoggingIn: false,
           identity,
           error: null,
         });
+
+        await initializeUserProfile();
       },
       onError: err => {
         console.error(err);
