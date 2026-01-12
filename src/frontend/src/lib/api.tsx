@@ -8,15 +8,16 @@ import {
   mapUpdateUserProfileRequest,
   type CreateMyUserProfileResponse,
   type GetMyUserProfileResponse,
+  type ListUserProfilesResponse,
+  type MyUserProfile,
   type UpdateMyUserProfileRequest,
   type UpdateUserProfileRequest,
-  type UserProfile,
 } from '@/lib/api-models/user-profile';
 import { isNil, isNotNil } from '@/lib/nil';
+import { useAppStore } from '@/lib/store';
 import type { PC } from '@/lib/utils';
 import { Actor, type ActorSubclass } from '@dfinity/agent';
 import { type _SERVICE, idlFactory } from '@ssn/backend-api';
-import { useInternetIdentity } from 'ic-use-internet-identity';
 import { createContext, useContext, useEffect, useMemo } from 'react';
 
 export class BackendApi {
@@ -34,7 +35,7 @@ export class BackendApi {
     return mapCreateMyUserProfileResponse(res);
   }
 
-  public async getOrCreateMyUserProfile(): Promise<UserProfile> {
+  public async getOrCreateMyUserProfile(): Promise<MyUserProfile> {
     const userProfile = await this.getMyUserProfile();
 
     if (isNotNil(userProfile)) {
@@ -44,7 +45,7 @@ export class BackendApi {
     return this.createMyUserProfile();
   }
 
-  public async listUserProfiles(): Promise<UserProfile[]> {
+  public async listUserProfiles(): Promise<ListUserProfilesResponse> {
     const res = await this.actor.list_user_profiles();
 
     return mapListUserProfilesResponse(res);
@@ -65,7 +66,7 @@ const BackendApiContext = createContext<BackendApi | null>(null);
 
 export const BackendApiProvider: PC = ({ children }) => {
   const agent = useAgent();
-  const { identity } = useInternetIdentity();
+  const { identity } = useAppStore();
 
   useEffect(() => {
     if (isNotNil(identity)) {

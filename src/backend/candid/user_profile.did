@@ -1,8 +1,8 @@
 type ListUserProfilesResponse = vec UserProfile;
 
-type GetMyUserProfileResponse = opt UserProfile;
+type GetMyUserProfileResponse = opt MyUserProfile;
 
-type CreateMyUserProfileResponse = UserProfile;
+type CreateMyUserProfileResponse = MyUserProfile;
 
 type UpdateMyUserProfileRequest = record {
   email : opt text;
@@ -17,6 +17,13 @@ type UserProfile = record {
   id : text;
   email : opt text;
   status : UserStatus;
+};
+
+type MyUserProfile = record {
+  id : text;
+  email : opt text;
+  status : UserStatus;
+  is_admin : bool;
 };
 
 type UserStatus = variant {

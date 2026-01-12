@@ -11,6 +11,9 @@ importers:
       '@dfinity/agent':
         specifier: ^3.0.0
         version: 3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0)
+      '@dfinity/auth-client':
+        specifier: ^3.0.0
+        version: 3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/identity@3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/curves@1.9.7)(@noble/hashes@1.8.0))(@dfinity/principal@3.4.3)
       '@dfinity/candid':
         specifier: ^3.0.0
         version: 3.4.3(@dfinity/principal@3.4.3)
@@ -62,12 +65,6 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      ic-use-actor:
-        specifier: 0.3.1
-        version: 0.3.1(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(react@19.2.3)
-      ic-use-internet-identity:
-        specifier: 0.6.2
-        version: 0.6.2(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/auth-client@3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/identity@3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/curves@1.9.7)(@noble/hashes@1.8.0))(@dfinity/principal@3.4.3))(@dfinity/identity@3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/curves@1.9.7)(@noble/hashes@1.8.0))(react@19.2.3)
       lucide-react:
         specifier: ^0.562.0
         version: 0.562.0(react@19.2.3)
@@ -86,6 +83,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.18
         version: 4.1.18
+      zustand:
+        specifier: ^5.0.10
+        version: 5.0.10(@types/react@19.2.8)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.1.18
@@ -828,17 +828,6 @@ packages:
   '@vitest/utils@4.0.16':
     resolution: {integrity: sha512-h8z9yYhV3e1LEfaQ3zdypIrnAg/9hguReGZoS7Gl0aBG5xgA410zBqECqmaF/+RkTggRsfnzc1XaAHA6bmUufA==}
 
-  '@xstate/store@3.14.1':
-    resolution: {integrity: sha512-LNl4XspU9Yp1bV9Igvbzz0pwDtm9ya9bSqbT9WB6nvLaP6Kie9d/FTlq3gLlKcbelaJDLTLBf5kKPfbiwkbAjA==}
-    peerDependencies:
-      react: ^18.2.0 || ^19.0.0
-      solid-js: ^1.7.6
-    peerDependenciesMeta:
-      react:
-        optional: true
-      solid-js:
-        optional: true
-
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
@@ -962,21 +951,6 @@ packages:
 
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
-
-  ic-use-actor@0.3.1:
-    resolution: {integrity: sha512-rgKAchYCMlxtDPFWC3uhzquvG/2kbdnNXLX4gswcfO1fNk3jK10IEe4WBNxQl/Z0FxFKK3cEjcI/Q2muUH3wpQ==}
-    peerDependencies:
-      '@dfinity/agent': ^3
-      '@dfinity/candid': ^3
-      react: '>=18.0.0'
-
-  ic-use-internet-identity@0.6.2:
-    resolution: {integrity: sha512-SAyxLkE3k1zh5dU73VjAIJN7cfuNl2j0nXubOUlotM8whx6g5Ig7TGgwDLxp9pqiHXbjtlHSxg/gBMP5Ur7hKA==}
-    peerDependencies:
-      '@dfinity/agent': ^3
-      '@dfinity/auth-client': ^3
-      '@dfinity/identity': ^3
-      react: '>=18.0.0'
 
   idb@7.1.1:
     resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
@@ -1401,6 +1375,24 @@ packages:
 
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
+
+  zustand@5.0.10:
+    resolution: {integrity: sha512-U1AiltS1O9hSy3rul+Ub82ut2fqIAefiSuwECWt6jlMVUGejvf+5omLcRBSzqbRagSM3hQZbtzdeRc6QVScXTg==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
 
 snapshots:
 
@@ -2008,10 +2000,6 @@ snapshots:
       '@vitest/pretty-format': 4.0.16
       tinyrainbow: 3.0.3
 
-  '@xstate/store@3.14.1(react@19.2.3)':
-    optionalDependencies:
-      react: 19.2.3
-
   assertion-error@2.0.1: {}
 
   babel-plugin-react-compiler@1.0.0:
@@ -2130,25 +2118,6 @@ snapshots:
   gensync@1.0.0-beta.2: {}
 
   graceful-fs@4.2.11: {}
-
-  ic-use-actor@0.3.1(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(react@19.2.3):
-    dependencies:
-      '@dfinity/agent': 3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0)
-      '@dfinity/candid': 3.4.3(@dfinity/principal@3.4.3)
-      '@xstate/store': 3.14.1(react@19.2.3)
-      react: 19.2.3
-    transitivePeerDependencies:
-      - solid-js
-
-  ic-use-internet-identity@0.6.2(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/auth-client@3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/identity@3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/curves@1.9.7)(@noble/hashes@1.8.0))(@dfinity/principal@3.4.3))(@dfinity/identity@3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/curves@1.9.7)(@noble/hashes@1.8.0))(react@19.2.3):
-    dependencies:
-      '@dfinity/agent': 3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0)
-      '@dfinity/auth-client': 3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/identity@3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/curves@1.9.7)(@noble/hashes@1.8.0))(@dfinity/principal@3.4.3)
-      '@dfinity/identity': 3.4.3(@dfinity/agent@3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0))(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/curves@1.9.7)(@noble/hashes@1.8.0)
-      '@xstate/store': 3.14.1(react@19.2.3)
-      react: 19.2.3
-    transitivePeerDependencies:
-      - solid-js
 
   idb@7.1.1: {}
 
@@ -2455,3 +2424,9 @@ snapshots:
       stackback: 0.0.2
 
   yallist@3.1.1: {}
+
+  zustand@5.0.10(@types/react@19.2.8)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3)):
+    optionalDependencies:
+      '@types/react': 19.2.8
+      react: 19.2.3
+      use-sync-external-store: 1.6.0(react@19.2.3)

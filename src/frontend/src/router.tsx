@@ -1,8 +1,10 @@
 import { DefaultLayout } from '@/components/layout/default-layout';
-import { Dashboard } from '@/routes/dashboard';
-import { Home } from '@/routes/home';
-import type { FC } from 'react';
+import { lazy, type FC } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
+
+const Home = lazy(() => import('@/routes/home'));
+const Dashboard = lazy(() => import('@/routes/dashboard'));
+const Admin = lazy(() => import('@/routes/admin'));
 
 export const Router: FC = () => (
   <BrowserRouter>
@@ -10,6 +12,7 @@ export const Router: FC = () => (
       <Route element={<DefaultLayout />}>
         <Route index element={<Home />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="admin" element={<Admin />} />
       </Route>
     </Routes>
   </BrowserRouter>

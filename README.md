@@ -34,7 +34,6 @@ Deploy the canisters:
 dfx deploy
 ```
 
-
 ### Build the frontend:
 
 ```shell
@@ -51,6 +50,18 @@ pnpm -F frontend start
 
 ```shell
 pnpm format
+```
+
+To add a controller (make a user into an admin):
+
+```shell
+dfx canister update-settings --add-controller ${CONTROLLER_PRINCIPAL} backend
+```
+
+To remove a controller (remove admin rights from a user):
+
+```shell
+dfx canister update-settings --remove-controller ${CONTROLLER_PRINCIPAL} backend
 ```
 
 Update to the latest version of `pnpm`:

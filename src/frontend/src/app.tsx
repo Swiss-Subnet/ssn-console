@@ -1,24 +1,24 @@
-import { InternetIdentityProvider } from 'ic-use-internet-identity';
 import { ThemeProvider } from '@/components/theme-provider';
-import { IDENTITY_PROVIDER } from '@/env';
 import { Router } from '@/router';
-import type { FC } from 'react';
+import { useEffect, type FC } from 'react';
 import { BackendApiProvider } from '@/lib/api';
-import { AppStateProvider } from '@/lib/state';
 import { AgentProvider } from '@/lib/agent';
+import { useAppStore } from '@/lib/store';
 
-export const App: FC = () => (
-  <InternetIdentityProvider
-    loginOptions={{ identityProvider: IDENTITY_PROVIDER }}
-  >
+export const App: FC = () => {
+  const { initializeAuth } = useAppStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  return (
     <ThemeProvider>
       <AgentProvider>
         <BackendApiProvider>
-          <AppStateProvider>
-            <Router />
-          </AppStateProvider>
+          <Router />
         </BackendApiProvider>
       </AgentProvider>
     </ThemeProvider>
-  </InternetIdentityProvider>
-);
+  );
+};

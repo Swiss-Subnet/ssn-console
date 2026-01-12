@@ -2,6 +2,7 @@ import { isNotNil } from '@/lib/nil';
 import { fromCandidOpt, toCandidOpt } from '@/lib/utils';
 import type {
   UserProfile as ApiUserProfile,
+  MyUserProfile as ApiMyUserProfile,
   UserStatus as ApiUserStatus,
   ListUserProfilesResponse as ApiListUserProfilesResponse,
   GetMyUserProfileResponse as ApiGetMyUserProfileResponse,
@@ -12,9 +13,9 @@ import type {
 
 export type ListUserProfilesResponse = UserProfile[];
 
-export type GetMyUserProfileResponse = UserProfile | null;
+export type GetMyUserProfileResponse = MyUserProfile | null;
 
-export type CreateMyUserProfileResponse = UserProfile;
+export type CreateMyUserProfileResponse = MyUserProfile;
 
 export type UpdateMyUserProfileRequest = {
   email?: string | null;
@@ -29,6 +30,13 @@ export type UserProfile = {
   id: string;
   email: string | null;
   status: UserStatus;
+};
+
+export type MyUserProfile = {
+  id: string;
+  email: string | null;
+  status: UserStatus;
+  isAdmin: boolean;
 };
 
 export enum UserStatus {
@@ -48,7 +56,7 @@ export function mapGetMyUserProfileResponse(
   const userProfile = fromCandidOpt(res);
 
   if (isNotNil(userProfile)) {
-    return mapUserProfileResponse(userProfile);
+    return mapMyUserProfileResponse(userProfile);
   }
 
   return null;
@@ -57,7 +65,7 @@ export function mapGetMyUserProfileResponse(
 export function mapCreateMyUserProfileResponse(
   res: ApiCreateMyUserProfileResponse,
 ): CreateMyUserProfileResponse {
-  return mapUserProfileResponse(res);
+  return mapMyUserProfileResponse(res);
 }
 
 export function mapUserProfileResponse(res: ApiUserProfile): UserProfile {
@@ -65,6 +73,15 @@ export function mapUserProfileResponse(res: ApiUserProfile): UserProfile {
     id: res.id,
     email: fromCandidOpt(res.email),
     status: mapUserStatusResponse(res.status),
+  };
+}
+
+export function mapMyUserProfileResponse(res: ApiMyUserProfile): MyUserProfile {
+  return {
+    id: res.id,
+    email: fromCandidOpt(res.email),
+    status: mapUserStatusResponse(res.status),
+    isAdmin: res.is_admin,
   };
 }
 
