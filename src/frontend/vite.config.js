@@ -27,11 +27,21 @@ export default defineConfig({
     },
   },
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
     tailwindcss(),
-    environment('all', { prefix: 'CANISTER_' }),
-    environment('all', { prefix: 'DFX_' }),
+    environment('all', { prefix: 'CANISTER_', defineOn: 'import.meta.env' }),
+    environment('all', { prefix: 'DFX_', defineOn: 'import.meta.env' }),
   ],
+  define: {
+    'process.env': {
+      // used by ic-use-internet-identity
+      DFX_NETWORK: process.env['DFX_NETWORK'],
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
