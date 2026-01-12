@@ -3,9 +3,9 @@ use serde::Deserialize;
 
 pub type ListUserProfilesResponse = Vec<UserProfile>;
 
-pub type GetMyUserProfileResponse = Option<UserProfile>;
+pub type GetMyUserProfileResponse = Option<MyUserProfile>;
 
-pub type CreateMyUserProfileResponse = UserProfile;
+pub type CreateMyUserProfileResponse = MyUserProfile;
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct UpdateMyUserProfileRequest {
@@ -23,6 +23,14 @@ pub struct UserProfile {
     pub id: String,
     pub email: Option<String>,
     pub status: UserStatus,
+}
+
+#[derive(Debug, Clone, CandidType)]
+pub struct MyUserProfile {
+    pub id: String,
+    pub email: Option<String>,
+    pub status: UserStatus,
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

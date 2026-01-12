@@ -1,37 +1,34 @@
 import { Button } from '@/components/ui/button';
-import { useInternetIdentity } from 'ic-use-internet-identity';
+import { useAppStore } from '@/lib/store/app';
 import { LogInIcon, LogOutIcon, LoaderIcon } from 'lucide-react';
-import type { FC } from 'react';
+import { type FC } from 'react';
 
 export const AuthButton: FC = () => {
-  const { login, clear, status } = useInternetIdentity();
+  const { login, logout, isAuthenticated, isInitializingAuth, isLoggingIn } =
+    useAppStore();
 
   const buttonToRender = () => {
-    switch (status) {
-      default:
-      case 'initializing':
-      case 'logging-in':
-        return (
-          <Button size="icon" variant="outline" disabled>
-            <LoaderIcon className="animate-spin" />
-          </Button>
-        );
-
-      case 'idle':
-      case 'error':
-        return (
-          <Button size="icon" variant="outline" onClick={() => login()}>
-            <LogInIcon />
-          </Button>
-        );
-
-      case 'success':
-        return (
-          <Button size="icon" variant="outline" onClick={() => clear()}>
-            <LogOutIcon />
-          </Button>
-        );
+    if (isInitializingAuth || isLoggingIn) {
+      return (
+        <Button size="icon" variant="outline" disabled>
+          <LoaderIcon className="animate-spin" />
+        </Button>
+      );
     }
+
+    if (isAuthenticated) {
+      return (
+        <Button size="icon" variant="outline" onClick={() => logout()}>
+          <LogOutIcon />
+        </Button>
+      );
+    }
+
+    return (
+      <Button size="icon" variant="outline" onClick={() => login()}>
+        <LogInIcon />
+      </Button>
+    );
   };
 
   return <>{buttonToRender()}</>;

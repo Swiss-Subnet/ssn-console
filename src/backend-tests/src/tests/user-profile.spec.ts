@@ -55,8 +55,16 @@ describe('User Profile', () => {
       const profiles = await driver.actor.list_user_profiles();
 
       expect(profiles.length).toBe(2);
-      expect(profiles).toContainEqual(aliceProfile);
-      expect(profiles).toContainEqual(bobProfile);
+      expect(profiles).toContainEqual({
+        email: aliceProfile?.email,
+        id: aliceProfile?.id,
+        status: aliceProfile?.status,
+      });
+      expect(profiles).toContainEqual({
+        email: bobProfile?.email,
+        id: bobProfile?.id,
+        status: bobProfile?.status,
+      });
     });
   });
 
@@ -165,6 +173,23 @@ describe('User Profile', () => {
         id: expect.any(String),
         status: { Inactive: null },
         email: [aliceEmail],
+        is_admin: false,
+      });
+    });
+
+    it('should return an admin user profile', async () => {
+      const adminEmail = 'admin@subnet.ch';
+
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.update_my_user_profile({ email: [adminEmail] });
+
+      const [adminProfile] = await driver.actor.get_my_user_profile();
+      expect(adminProfile).toEqual({
+        id: expect.any(String),
+        status: { Inactive: null },
+        email: [adminEmail],
+        is_admin: true,
       });
     });
   });
@@ -188,10 +213,26 @@ describe('User Profile', () => {
         id: expect.any(String),
         status: { Inactive: null },
         email: [],
+        is_admin: false,
       });
 
       const [fetchedProfile] = await driver.actor.get_my_user_profile();
       expect(fetchedProfile).toEqual(aliceProfile);
+    });
+
+    it('should create an admin user profile', async () => {
+      driver.actor.setIdentity(controllerIdentity);
+      const adminProfile = await driver.actor.create_my_user_profile();
+
+      expect(adminProfile).toEqual({
+        id: expect.any(String),
+        status: { Inactive: null },
+        email: [],
+        is_admin: true,
+      });
+
+      const [fetchedProfile] = await driver.actor.get_my_user_profile();
+      expect(fetchedProfile).toEqual(adminProfile);
     });
 
     it('should return an error if the user profile already exists', async () => {

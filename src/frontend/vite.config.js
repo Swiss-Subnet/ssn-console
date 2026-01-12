@@ -36,12 +36,6 @@ export default defineConfig({
     environment('all', { prefix: 'CANISTER_', defineOn: 'import.meta.env' }),
     environment('all', { prefix: 'DFX_', defineOn: 'import.meta.env' }),
   ],
-  define: {
-    'process.env': {
-      // used by ic-use-internet-identity
-      DFX_NETWORK: process.env['DFX_NETWORK'],
-    },
-  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

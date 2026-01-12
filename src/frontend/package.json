@@ -11,13 +11,13 @@
     "@ssn/backend-api": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "ic-use-internet-identity": "0.6.2",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router": "^7.12.0",
     "tailwind-merge": "^3.4.0",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",

@@ -7,12 +7,13 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
-import { useInternetIdentity } from 'ic-use-internet-identity';
-import type { FC } from 'react';
+import { selectIsAdmin, useAppStore } from '@/lib/store';
+import { type FC } from 'react';
 import { NavLink } from 'react-router';
 
 export const Header: FC = () => {
-  const { isLoginSuccess } = useInternetIdentity();
+  const { isAuthenticated } = useAppStore();
+  const isAdmin = useAppStore(selectIsAdmin);
 
   return (
     <header className="flex w-full flex-row items-center p-3">
@@ -24,7 +25,15 @@ export const Header: FC = () => {
 
       <NavigationMenu>
         <NavigationMenuList>
-          {isLoginSuccess && (
+          {isAdmin && (
+            <NavigationMenuItem>
+              <NavigationMenuLink render={<NavLink to="/admin" />}>
+                Admin
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          )}
+
+          {isAuthenticated && (
             <NavigationMenuItem>
               <NavigationMenuLink render={<NavLink to="/dashboard" />}>
                 Dashboard
@@ -34,7 +43,7 @@ export const Header: FC = () => {
         </NavigationMenuList>
       </NavigationMenu>
 
-      <div className="flex items-center gap-2 ml-2">
+      <div className="ml-2 flex items-center gap-2">
         <ModeToggle />
         <AuthButton />
       </div>
