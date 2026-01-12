@@ -34,10 +34,11 @@ Deploy the canisters:
 dfx deploy
 ```
 
-Build the frontend:
+
+### Build the frontend:
 
 ```shell
-pnpm -F frontend build
+pnpm -F @ssn/backend-api build
 ```
 
 Run the frontend development server:
@@ -46,7 +47,7 @@ Run the frontend development server:
 pnpm -F frontend start
 ```
 
-Format code:
+### Format code:
 
 ```shell
 pnpm format

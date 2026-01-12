@@ -24,7 +24,9 @@
       "dependencies": ["backend"],
       "source": ["src/frontend/dist"],
       "type": "assets",
-      "build": ["pnpm -F frontend run build"],
+      "build": [
+      "pnpm -F @ssn/backend-api build",
+      "pnpm -F frontend run build"],
       "declarations": {
         "bindings": []
       }
