@@ -15,3 +15,7 @@ const II_CANISTER_ID = getEnvVar('CANISTER_ID_INTERNET_IDENTITY');
 export const IDENTITY_PROVIDER = IS_LOCAL
   ? `http://${II_CANISTER_ID}.localhost:8000`
   : 'https://id.ai';
+
+export const BACKEND_CANISTER_ID: string = getEnvVar('CANISTER_ID_BACKEND');
+
+export const SHOULD_FETCH_ROOT_KEY = IS_LOCAL;
