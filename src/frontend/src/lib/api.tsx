@@ -3,7 +3,7 @@ import { useAgent } from '@/lib/agent';
 import {
   mapCreateMyUserProfileResponse,
   mapGetMyUserProfileResponse,
-  mapListUserprofilesResponse,
+  mapListUserProfilesResponse,
   mapUpdateMyUserProfileRequest,
   mapUpdateUserProfileRequest,
   type CreateMyUserProfileResponse,
@@ -47,7 +47,7 @@ export class BackendApi {
   public async listUserProfiles(): Promise<UserProfile[]> {
     const res = await this.actor.list_user_profiles();
 
-    return mapListUserprofilesResponse(res);
+    return mapListUserProfilesResponse(res);
   }
 
   public async updateMyUserProfile(
@@ -79,7 +79,7 @@ export const BackendApiProvider: PC = ({ children }) => {
         agent: agent,
         canisterId: BACKEND_CANISTER_ID,
       }),
-    [agent, BACKEND_CANISTER_ID],
+    [agent],
   );
   const api = useMemo(() => new BackendApi(actor), [actor]);
 

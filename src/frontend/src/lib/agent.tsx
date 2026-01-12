@@ -12,7 +12,7 @@ export const AgentProvider: PC = ({ children }) => {
       HttpAgent.createSync({
         shouldFetchRootKey: SHOULD_FETCH_ROOT_KEY,
       }),
-    [SHOULD_FETCH_ROOT_KEY],
+    [],
   );
 
   return (

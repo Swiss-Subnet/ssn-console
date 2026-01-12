@@ -33,7 +33,7 @@ export const AppStateProvider: PC = ({ children }) => {
     if (isLoginSuccess) {
       getOrCreateUserProfile();
     }
-  }, [isLoginSuccess]);
+  }, [isLoginSuccess, backendApi]);
 
   return (
     <AppStateContext.Provider value={state}>

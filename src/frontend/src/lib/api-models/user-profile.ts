@@ -36,7 +36,7 @@ export enum UserStatus {
   Inactive = 'Inactive',
 }
 
-export function mapListUserprofilesResponse(
+export function mapListUserProfilesResponse(
   res: ApiListUserProfilesResponse,
 ): ListUserProfilesResponse {
   return res.map(mapUserProfileResponse);
