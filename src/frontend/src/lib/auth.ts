@@ -1,4 +1,3 @@
-import { isNil } from '@/lib/nil';
 import { useAppStore } from '@/lib/store';
 import { useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
@@ -15,24 +14,24 @@ const useReturnHome = (): (() => void) => {
 };
 
 export const useRequireAuth = (): void => {
-  const { isAuthenticated, isInitializingAuth } = useAppStore();
+  const { isAuthenticated, isAuthInitialized } = useAppStore();
   const returnHome = useReturnHome();
 
   useEffect(() => {
-    if (!isInitializingAuth && !isAuthenticated) {
+    if (isAuthInitialized && !isAuthenticated) {
       returnHome();
     }
-  }, [isAuthenticated, isInitializingAuth, returnHome]);
+  }, [isAuthenticated, isAuthInitialized, returnHome]);
 };
 
 export const useRequireAdminAuth = (): void => {
   useRequireAuth();
-  const { profile, isInitializingAuth } = useAppStore();
+  const { profile, isAuthInitialized, isProfileInitialized } = useAppStore();
   const returnHome = useReturnHome();
 
   useEffect(() => {
-    if (!isInitializingAuth && (isNil(profile) || !profile.isAdmin)) {
+    if (isAuthInitialized && isProfileInitialized && !profile?.isAdmin) {
       returnHome();
     }
-  }, [isInitializingAuth, profile, returnHome]);
+  }, [isAuthInitialized, isProfileInitialized, profile, returnHome]);
 };
