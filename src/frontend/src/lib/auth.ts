@@ -1,17 +1,17 @@
 import { isNil } from '@/lib/nil';
 import { useAppStore } from '@/lib/store';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
 const useReturnHome = (): (() => void) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  return () => {
+  return useCallback(() => {
     if (location.pathname !== '/') {
       navigate('/');
     }
-  };
+  }, [location.pathname, navigate]);
 };
 
 export const useRequireAuth = (): void => {

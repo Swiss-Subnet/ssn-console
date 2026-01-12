@@ -16,7 +16,7 @@ export const DefaultLayout: FC = () => {
         .then(setUserProfile)
         .catch(console.error);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, backendApi, setUserProfile]);
 
   return (
     <main className="flex w-full flex-col">
