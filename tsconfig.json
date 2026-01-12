@@ -1,11 +1,21 @@
 {
   "compilerOptions": {
-    "strict": true,
-    "target": "ES2020",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": [],
+
     "experimentalDecorators": true,
-    "strictPropertyInitialization": false,
-    "moduleResolution": "node",
-    "allowJs": true,
-    "outDir": "HACK_BECAUSE_OF_ALLOW_JS"
+    "useDefineForClassFields": true,
+    "esModuleInterop": false,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "forceConsistentCasingInFileNames": true
   }
 }
