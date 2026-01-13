@@ -3,7 +3,7 @@ import { lazy, type FC } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
 
 const Home = lazy(() => import('@/routes/home'));
-const Dashboard = lazy(() => import('@/routes/dashboard'));
+const Profile = lazy(() => import('@/routes/profile'));
 const Admin = lazy(() => import('@/routes/admin'));
 
 export const Router: FC = () => (
@@ -11,7 +11,7 @@ export const Router: FC = () => (
     <Routes>
       <Route element={<DefaultLayout />}>
         <Route index element={<Home />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="profile" element={<Profile />} />
         <Route path="admin" element={<Admin />} />
       </Route>
     </Routes>
