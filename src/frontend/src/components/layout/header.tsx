@@ -35,8 +35,8 @@ export const Header: FC = () => {
 
           {isAuthenticated && (
             <NavigationMenuItem>
-              <NavigationMenuLink render={<NavLink to="/dashboard" />}>
-                Dashboard
+              <NavigationMenuLink render={<NavLink to="/profile" />}>
+                Profile
               </NavigationMenuLink>
             </NavigationMenuItem>
           )}
