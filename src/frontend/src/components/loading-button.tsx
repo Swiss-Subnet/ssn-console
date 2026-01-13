@@ -1,5 +1,5 @@
 import { Button, type ButtonProps } from '@/components/ui/button';
-import type { PC } from '@/lib/utils';
+import { cn, type PC } from '@/lib/utils';
 import { LoaderIcon } from 'lucide-react';
 
 export type LoadingButtonProps = ButtonProps & {
@@ -13,12 +13,15 @@ export const LoadingButton: PC<LoadingButtonProps> = ({
 }) => (
   <Button disabled={isLoading} {...props}>
     <span
-      className={`absolute ${isLoading ? 'visible-interactive' : 'hidden-inert'}`}
+      className={cn(
+        'absolute',
+        isLoading ? 'visible-interactive' : 'hidden-inert',
+      )}
     >
-      {isLoading && <LoaderIcon className="animate-spin" />}
+      <LoaderIcon className="animate-spin" />
     </span>
 
-    <span className={`${isLoading ? 'hidden-inert' : 'visible-interactive'}`}>
+    <span className={cn(isLoading ? 'hidden-inert' : 'visible-interactive')}>
       {children}
     </span>
   </Button>

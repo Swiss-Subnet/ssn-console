@@ -11,11 +11,11 @@ import { UserStatusBadge } from '@/routes/admin/user-status-badge';
 import { UserStatusToggle } from '@/routes/admin/user-status-toggle';
 import { type FC } from 'react';
 
-export type AdminUserTableProps = {
+export type UserTableProps = {
   className?: string;
 };
 
-export const UserTable: FC<AdminUserTableProps> = ({ className }) => {
+export const UserTable: FC<UserTableProps> = ({ className }) => {
   const { users } = useAppStore();
 
   return (

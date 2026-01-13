@@ -58,7 +58,7 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
     }
 
     if (!isAuthenticated || !profile.isAdmin) {
-      return;
+      throw new Error('Not authorized to set user status');
     }
 
     await userProfileApi.updateUserProfile({

@@ -1,4 +1,4 @@
-import type { PC } from '@/lib/utils';
+import { cn, type PC } from '@/lib/utils';
 import React from 'react';
 
 export type WidthLockProps = {
@@ -17,7 +17,10 @@ export const WidthLock: PC<WidthLockProps> = ({ children, activeId }) => {
 
         return (
           <span
-            className={`col-start-1 row-start-1 ${isActive ? 'visible-interactive' : 'hidden-inert'}`}
+            className={cn(
+              'col-start-1 row-start-1',
+              isActive ? 'visible-interactive' : 'hidden-inert',
+            )}
             aria-hidden={!isActive}
           >
             {child}
