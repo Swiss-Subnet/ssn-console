@@ -1,0 +1,17 @@
+type ListCanistersResponse = vec Canister;
+
+type ListMyCanistersResponse = vec Canister;
+
+type CreateCanisterResponse = Canister;
+
+type Canister = record {
+  id : text;
+  principal_id : text;
+};
+
+service : {
+  list_canisters : () -> (ListCanistersResponse) query;
+
+  list_my_canisters : () -> (ListMyCanistersResponse) query;
+  create_canister : () -> (CreateCanisterResponse);
+}

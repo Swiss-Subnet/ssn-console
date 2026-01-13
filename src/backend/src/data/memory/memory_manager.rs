@@ -11,3 +11,6 @@ thread_local! {
 
 pub(super) const USER_PROFILES_MEMORY_ID: MemoryId = MemoryId::new(0);
 pub(super) const USER_PROFILE_PRINCIPAL_INDEX_MEMORY_ID: MemoryId = MemoryId::new(1);
+
+pub(super) const CANISTERS_MEMORY_ID: MemoryId = MemoryId::new(2);
+pub(super) const CANISTER_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(3);
