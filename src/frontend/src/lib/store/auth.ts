@@ -4,7 +4,7 @@ import { IDENTITY_PROVIDER } from '@/env';
 import { isNil } from '@/lib/nil';
 
 export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
-  isInitializingAuth: true,
+  isAuthInitialized: false,
   isLoggingIn: false,
   isAuthenticated: false,
   identity: null,
@@ -12,29 +12,34 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
   error: null,
 
   initializeAuth: async () => {
+    const { setAgentIdentity, initializeUserProfile } = get();
+
     try {
       const authClient = await AuthClient.create();
       const isAuthenticated = await authClient.isAuthenticated();
       const identity = authClient.getIdentity();
+      setAgentIdentity(identity);
 
       set({
         authClient,
         isAuthenticated,
         identity,
-        isInitializingAuth: false,
+        isAuthInitialized: true,
       });
+
+      await initializeUserProfile();
     } catch (err) {
       console.error(err);
 
       set({
         error: 'Failed to initialize auth client',
-        isInitializingAuth: false,
+        isAuthInitialized: true,
       });
     }
   },
 
   login: async () => {
-    const { authClient } = get();
+    const { authClient, setAgentIdentity, initializeUserProfile } = get();
     if (isNil(authClient)) {
       throw new Error('AuthClient is not initialized');
     }
@@ -45,15 +50,17 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
 
     await authClient.login({
       identityProvider: IDENTITY_PROVIDER,
-      onSuccess: () => {
+      onSuccess: async () => {
         const identity = authClient.getIdentity();
-
+        setAgentIdentity(identity);
         set({
           isAuthenticated: true,
           isLoggingIn: false,
           identity,
           error: null,
         });
+
+        await initializeUserProfile();
       },
       onError: err => {
         console.error(err);
@@ -64,13 +71,14 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
   },
 
   logout: async () => {
-    const { authClient, clearUserProfile } = get();
+    const { authClient, clearUserProfile, setAgentIdentity } = get();
     if (isNil(authClient)) {
       throw new Error('AuthClient is not initialized');
     }
 
     await authClient.logout();
     const identity = authClient.getIdentity();
+    setAgentIdentity(identity);
 
     clearUserProfile();
     set({

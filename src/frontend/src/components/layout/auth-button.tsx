@@ -4,11 +4,11 @@ import { LogInIcon, LogOutIcon, LoaderIcon } from 'lucide-react';
 import { type FC } from 'react';
 
 export const AuthButton: FC = () => {
-  const { login, logout, isAuthenticated, isInitializingAuth, isLoggingIn } =
+  const { login, logout, isAuthenticated, isAuthInitialized, isLoggingIn } =
     useAppStore();
 
   const buttonToRender = () => {
-    if (isInitializingAuth || isLoggingIn) {
+    if (!isAuthInitialized || isLoggingIn) {
       return (
         <Button size="icon" variant="outline" disabled>
           <LoaderIcon className="animate-spin" />

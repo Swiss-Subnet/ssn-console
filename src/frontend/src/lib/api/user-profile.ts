@@ -1,5 +1,3 @@
-import { BACKEND_CANISTER_ID } from '@/env';
-import { useAgent } from '@/lib/agent';
 import {
   mapCreateMyUserProfileResponse,
   mapGetMyUserProfileResponse,
@@ -12,15 +10,12 @@ import {
   type MyUserProfile,
   type UpdateMyUserProfileRequest,
   type UpdateUserProfileRequest,
-} from '@/lib/api-models/user-profile';
-import { isNil, isNotNil } from '@/lib/nil';
-import { useAppStore } from '@/lib/store';
-import type { PC } from '@/lib/utils';
-import { Actor, type ActorSubclass } from '@dfinity/agent';
-import { type _SERVICE, idlFactory } from '@ssn/backend-api';
-import { createContext, useContext, useEffect, useMemo } from 'react';
+} from '@/lib/api-models';
+import { isNotNil } from '@/lib/nil';
+import type { ActorSubclass } from '@dfinity/agent';
+import type { _SERVICE } from '@ssn/backend-api';
 
-export class BackendApi {
+export class UserProfileApi {
   constructor(private readonly actor: ActorSubclass<_SERVICE>) {}
 
   public async getMyUserProfile(): Promise<GetMyUserProfileResponse> {
@@ -61,40 +56,3 @@ export class BackendApi {
     await this.actor.update_user_profile(mapUpdateUserProfileRequest(req));
   }
 }
-
-const BackendApiContext = createContext<BackendApi | null>(null);
-
-export const BackendApiProvider: PC = ({ children }) => {
-  const agent = useAgent();
-  const { identity } = useAppStore();
-
-  useEffect(() => {
-    if (isNotNil(identity)) {
-      agent.replaceIdentity(identity);
-    }
-  }, [identity, agent]);
-
-  const actor = useMemo(
-    () =>
-      Actor.createActor<_SERVICE>(idlFactory, {
-        agent: agent,
-        canisterId: BACKEND_CANISTER_ID,
-      }),
-    [agent],
-  );
-  const api = useMemo(() => new BackendApi(actor), [actor]);
-
-  return (
-    <BackendApiContext.Provider value={api}>
-      {children}
-    </BackendApiContext.Provider>
-  );
-};
-
-export const useBackendApi = (): BackendApi => {
-  const context = useContext(BackendApiContext);
-  if (isNil(context)) {
-    throw new Error('useBackendApi must be used within a BackendApiProvider');
-  }
-  return context;
-};
