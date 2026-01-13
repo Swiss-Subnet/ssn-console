@@ -1,4 +1,4 @@
-import type { MyUserProfile } from '@/lib/api-models';
+import type { MyUserProfile, UserProfile, UserStatus } from '@/lib/api-models';
 import type { UserProfileApi } from '@/lib/api';
 import type { ActorSubclass, HttpAgent, Identity } from '@dfinity/agent';
 import type { AuthClient } from '@dfinity/auth-client';
@@ -35,6 +35,17 @@ export type UserProfileSlice = {
   clearUserProfile: () => void;
 };
 
-export type AppSlice = AuthSlice & ApiSlice & UserProfileSlice;
+export type UsersSlice = {
+  isUsersInitialized: boolean;
+  users: UserProfile[] | null;
+
+  initializeUsers: () => Promise<void>;
+  clearUsers: () => void;
+  activateUser: (userId: string) => Promise<void>;
+  deactivateUser: (userId: string) => Promise<void>;
+  setUserStatus: (userId: string, status: UserStatus) => Promise<void>;
+};
+
+export type AppSlice = AuthSlice & ApiSlice & UserProfileSlice & UsersSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;

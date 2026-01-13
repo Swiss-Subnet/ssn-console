@@ -12,7 +12,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
   error: null,
 
   initializeAuth: async () => {
-    const { setAgentIdentity, initializeUserProfile } = get();
+    const { setAgentIdentity, initializeUserProfile, initializeUsers } = get();
 
     try {
       const authClient = await AuthClient.create();
@@ -28,6 +28,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       });
 
       await initializeUserProfile();
+      await initializeUsers();
     } catch (err) {
       console.error(err);
 
@@ -39,7 +40,12 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
   },
 
   login: async () => {
-    const { authClient, setAgentIdentity, initializeUserProfile } = get();
+    const {
+      authClient,
+      setAgentIdentity,
+      initializeUserProfile,
+      initializeUsers,
+    } = get();
     if (isNil(authClient)) {
       throw new Error('AuthClient is not initialized');
     }
@@ -61,6 +67,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
         });
 
         await initializeUserProfile();
+        await initializeUsers();
       },
       onError: err => {
         console.error(err);
@@ -71,7 +78,8 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
   },
 
   logout: async () => {
-    const { authClient, clearUserProfile, setAgentIdentity } = get();
+    const { authClient, clearUserProfile, clearUsers, setAgentIdentity } =
+      get();
     if (isNil(authClient)) {
       throw new Error('AuthClient is not initialized');
     }
@@ -81,6 +89,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
     setAgentIdentity(identity);
 
     clearUserProfile();
+    clearUsers();
     set({
       isAuthenticated: false,
       identity,

@@ -4,7 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router';
 
 const Home = lazy(() => import('@/routes/home'));
 const Dashboard = lazy(() => import('@/routes/dashboard'));
-const Admin = lazy(() => import('@/routes/admin'));
+const Admin = lazy(() => import('@/routes/admin/admin'));
 
 export const Router: FC = () => (
   <BrowserRouter>
