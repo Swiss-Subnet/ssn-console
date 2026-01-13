@@ -36,7 +36,7 @@ const buttonVariants = cva(
   },
 );
 
-type ButtonProps = ButtonPrimitive.Props &
+export type ButtonProps = ButtonPrimitive.Props &
   VariantProps<typeof buttonVariants> & {
     ref?: React.RefObject<HTMLButtonElement | null>;
   };

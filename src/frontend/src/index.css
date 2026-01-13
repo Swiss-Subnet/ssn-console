@@ -121,3 +121,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .visible-interactive {
+    @apply visible opacity-100;
+  }
+
+  .hidden-inert {
+    @apply pointer-events-none invisible opacity-0 select-none;
+  }
+}
