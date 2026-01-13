@@ -1,5 +1,5 @@
 use crate::{
-    dto::{CreateCanisterResponse, ListCanistersResponse},
+    dto::{CreateCanisterResponse, ListCanistersResponse, ListMyCanistersResponse},
     service::{access_control_service, canister_service},
 };
 use ic_cdk::{api::msg_caller, *};
@@ -15,7 +15,7 @@ fn list_canisters() -> ListCanistersResponse {
 }
 
 #[query]
-fn list_my_canisters() -> ListCanistersResponse {
+fn list_my_canisters() -> ListMyCanistersResponse {
     let calling_principal = msg_caller();
     if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
         trap(&err);

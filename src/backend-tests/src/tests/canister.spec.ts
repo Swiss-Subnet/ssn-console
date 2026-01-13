@@ -73,6 +73,17 @@ describe('Canisters', () => {
       );
     });
 
+    it('should return an error for a user without a profile', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+
+      await expect(driver.actor.list_my_canisters()).rejects.toThrowError(
+        new RegExp(
+          `User profile for principal ${aliceIdentity.getPrincipal()} does not exist`,
+        ),
+      );
+    });
+
     it('should return an empty array when the user has no canisters', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
@@ -119,6 +130,17 @@ describe('Canisters', () => {
 
       await expect(driver.actor.create_canister()).rejects.toThrowError(
         /Anonymous users are not allowed to perform this action/,
+      );
+    });
+
+    it('should return an error for a user without a profile', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+
+      await expect(driver.actor.create_canister()).rejects.toThrowError(
+        new RegExp(
+          `User profile for principal ${aliceIdentity.getPrincipal()} does not exist`,
+        ),
       );
     });
 
