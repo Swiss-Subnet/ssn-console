@@ -1,1 +1,2 @@
+import service "./candid/canister.did";
 import service "./candid/user_profile.did";
