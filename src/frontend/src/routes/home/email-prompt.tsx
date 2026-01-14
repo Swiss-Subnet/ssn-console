@@ -59,6 +59,7 @@ export const EmailPrompt: FC = () => {
       await setEmailInStore(email);
       toast.success('Email registered successfully!');
     } catch (error) {
+      console.error('Error registering email:', error);
       toast.error('Failed to register email');
     } finally {
       setIsSubmitting(false);

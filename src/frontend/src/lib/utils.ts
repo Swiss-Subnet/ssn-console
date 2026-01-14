@@ -1,4 +1,3 @@
-import { IDL } from '@icp-sdk/core/candid';
 import { clsx, type ClassValue } from 'clsx';
 import type { FC } from 'react';
 import { twMerge } from 'tailwind-merge';
@@ -18,17 +17,4 @@ export function fromCandidOpt<T>(opt: [] | [T]): T | null {
 
 export function toCandidOpt<T>(value: T | null | undefined): [] | [T] {
   return value == null ? [] : [value];
-}
-
-export function decodeCandid<T>(types: IDL.Type[], data: Uint8Array): T | null {
-  const returnValues = IDL.decode(types, data);
-
-  switch (returnValues.length) {
-    case 0:
-      return null;
-    case 1:
-      return returnValues[0] as T;
-    default:
-      return returnValues as T;
-  }
 }

@@ -15,11 +15,11 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
     } = get();
     const userProfileApi = getUserProfileApi();
 
-    if (!isProfileInitialized || isNil(profile)) {
+    if (!isProfileInitialized) {
       throw new Error('User profile is not initialized');
     }
 
-    if (!isAuthenticated || !profile.isAdmin) {
+    if (!isAuthenticated || !profile?.isAdmin) {
       set({ isUsersInitialized: true });
       return;
     }

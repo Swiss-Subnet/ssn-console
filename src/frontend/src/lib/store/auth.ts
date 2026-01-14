@@ -32,7 +32,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
         loginOptions: {
           maxTimeToLive: BigInt(
             7 * HOURS_PER_DAY * MINS_PER_HOUR * SECS_PER_MIN * NANOS_PER_SEC,
-          ), //7 days
+          ), // 7 days
         },
       });
       const isAuthenticated = await authClient.isAuthenticated();
@@ -46,9 +46,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
         isAuthInitialized: true,
       });
 
-      if (isAuthenticated) {
-        await initializeData();
-      }
+      await initializeData();
     } catch (err) {
       console.error(err);
 

@@ -1,8 +1,10 @@
 import { LoadingButton } from '@/components/loading-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { isNil } from '@/lib/nil';
 import { useAppStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { Principal } from '@icp-sdk/core/principal';
 import { useState, type FC } from 'react';
 
 export type AddControllerFormProps = {
@@ -20,6 +22,16 @@ export const AddControllerForm: FC<AddControllerFormProps> = ({
 
   async function onFormSubmitted(event: React.FormEvent): Promise<void> {
     event.preventDefault();
+
+    if (isNil(principal) || principal.trim() === '') {
+      return;
+    }
+
+    try {
+      Principal.fromText(principal);
+    } catch {
+      return;
+    }
 
     setIsSaving(true);
     try {
