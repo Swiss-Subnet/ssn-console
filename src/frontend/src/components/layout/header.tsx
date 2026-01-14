@@ -7,12 +7,12 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
-import { selectIsAdmin, useAppStore } from '@/lib/store';
+import { selectIsActive, selectIsAdmin, useAppStore } from '@/lib/store';
 import { type FC } from 'react';
 import { NavLink } from 'react-router';
 
 export const Header: FC = () => {
-  const { isAuthenticated } = useAppStore();
+  const isActive = useAppStore(selectIsActive);
   const isAdmin = useAppStore(selectIsAdmin);
 
   return (
@@ -33,10 +33,10 @@ export const Header: FC = () => {
             </NavigationMenuItem>
           )}
 
-          {isAuthenticated && (
+          {isActive && (
             <NavigationMenuItem>
-              <NavigationMenuLink render={<NavLink to="/dashboard" />}>
-                Dashboard
+              <NavigationMenuLink render={<NavLink to="/console" />}>
+                Console
               </NavigationMenuLink>
             </NavigationMenuItem>
           )}

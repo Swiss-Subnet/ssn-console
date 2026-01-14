@@ -9,6 +9,7 @@
   "dependencies": {
     "@base-ui/react": "^1.0.0",
     "@ssn/backend-api": "workspace:*",
+    "@ssn/management-canister": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",

@@ -1,7 +1,12 @@
 import type { AppStateCreator, AuthSlice } from '@/lib/store/model';
-import { AuthClient } from '@dfinity/auth-client';
+import { AuthClient } from '@icp-sdk/auth/client';
 import { IDENTITY_PROVIDER } from '@/env';
 import { isNil } from '@/lib/nil';
+
+const NANOS_PER_SEC = 1_000_000_000;
+const SECS_PER_MIN = 60;
+const MINS_PER_HOUR = 60;
+const HOURS_PER_DAY = 24;
 
 export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
   isAuthInitialized: false,
@@ -11,11 +16,25 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
   authClient: null,
   error: null,
 
-  initializeAuth: async () => {
-    const { setAgentIdentity, initializeUserProfile, initializeUsers } = get();
+  async initializeData() {
+    const { initializeUserProfile, initializeUsers, initializeCanisters } =
+      get();
+
+    await initializeUserProfile();
+    await Promise.all([initializeUsers(), initializeCanisters()]);
+  },
+
+  async initializeAuth() {
+    const { setAgentIdentity, initializeData } = get();
 
     try {
-      const authClient = await AuthClient.create();
+      const authClient = await AuthClient.create({
+        loginOptions: {
+          maxTimeToLive: BigInt(
+            7 * HOURS_PER_DAY * MINS_PER_HOUR * SECS_PER_MIN * NANOS_PER_SEC,
+          ), //7 days
+        },
+      });
       const isAuthenticated = await authClient.isAuthenticated();
       const identity = authClient.getIdentity();
       setAgentIdentity(identity);
@@ -27,8 +46,9 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
         isAuthInitialized: true,
       });
 
-      await initializeUserProfile();
-      await initializeUsers();
+      if (isAuthenticated) {
+        await initializeData();
+      }
     } catch (err) {
       console.error(err);
 
@@ -39,13 +59,8 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
     }
   },
 
-  login: async () => {
-    const {
-      authClient,
-      setAgentIdentity,
-      initializeUserProfile,
-      initializeUsers,
-    } = get();
+  async login() {
+    const { authClient, setAgentIdentity, initializeData } = get();
     if (isNil(authClient)) {
       throw new Error('AuthClient is not initialized');
     }
@@ -59,15 +74,14 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       onSuccess: async () => {
         const identity = authClient.getIdentity();
         setAgentIdentity(identity);
+
         set({
           isAuthenticated: true,
           isLoggingIn: false,
           identity,
           error: null,
         });
-
-        await initializeUserProfile();
-        await initializeUsers();
+        await initializeData();
       },
       onError: err => {
         console.error(err);
@@ -77,9 +91,14 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
     });
   },
 
-  logout: async () => {
-    const { authClient, clearUserProfile, clearUsers, setAgentIdentity } =
-      get();
+  async logout() {
+    const {
+      authClient,
+      clearUserProfile,
+      clearUsers,
+      clearCanisters,
+      setAgentIdentity,
+    } = get();
     if (isNil(authClient)) {
       throw new Error('AuthClient is not initialized');
     }
@@ -90,6 +109,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
 
     clearUserProfile();
     clearUsers();
+    clearCanisters();
     set({
       isAuthenticated: false,
       identity,

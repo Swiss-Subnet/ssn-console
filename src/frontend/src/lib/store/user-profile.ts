@@ -1,4 +1,4 @@
-import { isNil } from '@/lib/nil';
+import { UserStatus } from '@/lib/api-models';
 import type {
   AppSlice,
   AppStateCreator,
@@ -12,11 +12,9 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   isProfileInitialized: false,
   profile: null,
 
-  initializeUserProfile: async () => {
-    const { userProfileApi, isAuthenticated } = get();
-    if (isNil(userProfileApi)) {
-      throw new Error('UserProfileApi is not initialized');
-    }
+  async initializeUserProfile() {
+    const { getUserProfileApi, isAuthenticated } = get();
+    const userProfileApi = getUserProfileApi();
 
     if (!isAuthenticated) {
       set({ isProfileInitialized: true });
@@ -31,12 +29,13 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
     }
   },
 
-  clearUserProfile: () => {
+  clearUserProfile() {
     set({ profile: null });
   },
 
   setEmail: async (email: string) => {
-    const { userProfileApi, isAuthenticated, isProfileInitialized, profile } = get();
+    const { userProfileApi, isAuthenticated, isProfileInitialized, profile } =
+      get();
 
     if (isNil(userProfileApi)) {
       throw new Error('UserProfileApi is not initialized');
@@ -55,11 +54,15 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
 
     // Update the store directly (no full reload)
     set({
-      profile: { ...profile, email }
+      profile: { ...profile, email },
     });
   },
 });
 
 export function selectIsAdmin(state: AppSlice): boolean {
   return state.profile?.isAdmin ?? false;
+}
+
+export function selectIsActive(state: AppSlice): boolean {
+  return state.profile?.status === UserStatus.Active;
 }

@@ -6,12 +6,14 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
   isUsersInitialized: false,
   users: null,
 
-  initializeUsers: async () => {
-    const { userProfileApi, isAuthenticated, isProfileInitialized, profile } =
-      get();
-    if (isNil(userProfileApi)) {
-      throw new Error('UserProfileApi is not initialized');
-    }
+  async initializeUsers() {
+    const {
+      getUserProfileApi,
+      isAuthenticated,
+      isProfileInitialized,
+      profile,
+    } = get();
+    const userProfileApi = getUserProfileApi();
 
     if (!isProfileInitialized || isNil(profile)) {
       throw new Error('User profile is not initialized');
@@ -30,28 +32,30 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
     }
   },
 
-  clearUsers: () => {
+  clearUsers() {
     set({ users: null });
   },
 
-  activateUser: async userId => {
+  async activateUser(userId) {
     const { setUserStatus } = get();
 
     await setUserStatus(userId, UserStatus.Active);
   },
 
-  deactivateUser: async userId => {
+  async deactivateUser(userId) {
     const { setUserStatus } = get();
 
     await setUserStatus(userId, UserStatus.Inactive);
   },
 
-  setUserStatus: async (userId, status) => {
-    const { userProfileApi, isAuthenticated, isProfileInitialized, profile } =
-      get();
-    if (isNil(userProfileApi)) {
-      throw new Error('UserProfileApi is not initialized');
-    }
+  async setUserStatus(userId, status) {
+    const {
+      getUserProfileApi,
+      isAuthenticated,
+      isProfileInitialized,
+      profile,
+    } = get();
+    const userProfileApi = getUserProfileApi();
 
     if (!isProfileInitialized || isNil(profile)) {
       throw new Error('User profile is not initialized');

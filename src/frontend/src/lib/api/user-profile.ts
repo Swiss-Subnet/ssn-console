@@ -12,7 +12,7 @@ import {
   type UpdateUserProfileRequest,
 } from '@/lib/api-models';
 import { isNotNil } from '@/lib/nil';
-import type { ActorSubclass } from '@dfinity/agent';
+import type { ActorSubclass } from '@icp-sdk/core/agent';
 import type { _SERVICE } from '@ssn/backend-api';
 
 export class UserProfileApi {

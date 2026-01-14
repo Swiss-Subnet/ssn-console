@@ -1,5 +1,11 @@
 import { LoadingButton } from '@/components/loading-button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAppStore } from '@/lib/store';
@@ -24,7 +30,8 @@ export const EmailPrompt: FC = () => {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-sm">
-            You're signed up with: <span className="font-medium text-foreground">{profile.email}</span>
+            You're signed up with:{' '}
+            <span className="text-foreground font-medium">{profile.email}</span>
           </p>
         </CardContent>
       </Card>
@@ -75,11 +82,15 @@ export const EmailPrompt: FC = () => {
               type="email"
               placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               disabled={isSubmitting}
             />
           </div>
-          <LoadingButton type="submit" className="w-full" isLoading={isSubmitting}>
+          <LoadingButton
+            type="submit"
+            className="w-full"
+            isLoading={isSubmitting}
+          >
             Register Email
           </LoadingButton>
         </form>

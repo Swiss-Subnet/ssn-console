@@ -36,8 +36,16 @@ dfx deploy
 
 ### Build the frontend:
 
+Build the backend API library:
+
 ```shell
 pnpm -F @ssn/backend-api build
+```
+
+Build the management canister library:
+
+```shell
+pnpm -F @ssn/management-canister build
 ```
 
 Run the frontend development server:
@@ -68,4 +76,12 @@ Update to the latest version of `pnpm`:
 
 ```shell
 corepack prepare pnpm@latest --activate
+```
+
+### Canister Cycle Management
+
+To top up cycles for a canister, use the following command:
+
+```shell
+dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
 ```
