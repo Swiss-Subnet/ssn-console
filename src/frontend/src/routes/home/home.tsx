@@ -1,5 +1,5 @@
 import { H1 } from '@/components/typography/h1';
-import { EmailPrompt } from '@/components/features/email-prompt';
+import { EmailPrompt } from './email-prompt';
 import type { FC } from 'react';
 import { useAppStore } from '@/lib/store';
 

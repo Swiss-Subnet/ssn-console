@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { LoadingButton } from '@/components/loading-button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -79,9 +79,9 @@ export const EmailPrompt: FC = () => {
               disabled={isSubmitting}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Register Email'}
-          </Button>
+          <LoadingButton type="submit" className="w-full" isLoading={isSubmitting}>
+            Register Email
+          </LoadingButton>
         </form>
       </CardContent>
     </Card>
