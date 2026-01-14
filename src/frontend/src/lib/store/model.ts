@@ -33,6 +33,8 @@ export type UserProfileSlice = {
 
   initializeUserProfile: () => Promise<void>;
   clearUserProfile: () => void;
+
+  setEmail: (email: string) => Promise<void>;
 };
 
 export type AppSlice = AuthSlice & ApiSlice & UserProfileSlice;
