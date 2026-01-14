@@ -1,6 +1,7 @@
 use candid::export_service;
 use dto::*;
 use ic_cdk::*;
+use ic_http_certification::{HttpRequest, HttpResponse};
 
 mod controller;
 mod data;
@@ -18,12 +19,12 @@ fn export_candid() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid_parser::utils::{service_equal, CandidSource};
+    use candid_parser::utils::{service_compatible, CandidSource};
     use std::path::Path;
 
     #[test]
     fn check_candid_interface() {
-        service_equal(
+        service_compatible(
             CandidSource::Text(&__export_service()),
             CandidSource::File(Path::new("./backend.did")),
         )

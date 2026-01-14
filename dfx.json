@@ -10,43 +10,36 @@
   },
   "canisters": {
     "backend": {
+      "type": "custom",
       "candid": "src/backend/backend.did",
-      "package": "backend",
-      "type": "rust",
-      "gzip": true,
-      "optimize": "cycles",
-      "declarations": {
-        "bindings": ["js", "ts"],
-        "output": "./dist"
-      }
-    },
-    "frontend": {
-      "dependencies": ["backend"],
-      "source": ["src/frontend/dist"],
-      "type": "assets",
+      "wasm": "target/wasm32-unknown-unknown/release/backend.wasm",
       "build": [
         "pnpm -F @ssn/backend-api build",
         "pnpm -F @ssn/management-canister build",
-        "pnpm -F frontend run build"
+        "pnpm -F frontend run build",
+        "cargo build --target wasm32-unknown-unknown --release -p backend --locked"
       ],
       "declarations": {
-        "bindings": []
-      }
+        "bindings": ["js", "ts"],
+        "output": "./dist"
+      },
+      "frontend": {},
+      "gzip": true,
+      "shrink": true,
+      "optimize": "cycles"
     },
     "internet_identity": {
-      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
-      "frontend": {},
+      "type": "custom",
+      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2026-01-13/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2026-01-13/internet_identity_dev.wasm.gz",
+      "init_arg": "(opt record { captcha_config = opt record { max_unsolved_captchas= 50:nat64; captcha_trigger = variant {Static = variant {CaptchaDisabled}}}})",
       "remote": {
         "id": {
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
         }
       },
       "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
-      "type": "custom",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
-      "declarations": {
-        "bindings": []
-      }
+      "frontend": {}
     }
   }
 }

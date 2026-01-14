@@ -20,3 +20,7 @@ ciborium = "0.2"
 uuid = { version = "1", features = ["serde"] }
 fastrand = "2"
 candid_parser = "0.3"
+
+ic-http-certification = "3"
+ic-asset-certification = "3"
+include_dir = { version = "0.7", features = ["glob"] }

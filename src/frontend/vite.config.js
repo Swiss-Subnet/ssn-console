@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import environment from 'vite-plugin-environment';
 import dotenv from 'dotenv';
 import path from 'node:path';
+import viteCompressionPlugin from 'vite-plugin-compression';
 
 dotenv.config({ path: '../../.env' });
 
@@ -35,6 +36,18 @@ export default defineConfig({
     tailwindcss(),
     environment('all', { prefix: 'CANISTER_', defineOn: 'import.meta.env' }),
     environment('all', { prefix: 'DFX_', defineOn: 'import.meta.env' }),
+    viteCompressionPlugin({
+      algorithm: 'gzip',
+      ext: '.gz',
+      deleteOriginFile: false,
+      threshold: 0,
+    }),
+    viteCompressionPlugin({
+      algorithm: 'brotliCompress',
+      ext: '.br',
+      deleteOriginFile: false,
+      threshold: 0,
+    }),
   ],
   resolve: {
     alias: {
