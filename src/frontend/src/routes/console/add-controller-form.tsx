@@ -43,6 +43,7 @@ export const AddControllerForm: FC<AddControllerFormProps> = ({
     try {
       await addController(canisterId, formData.principal);
       showSuccessToast('Controller added successfully!');
+      form.reset();
     } catch (error) {
       showErrorToast('Failed to add controller', error);
     }

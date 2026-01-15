@@ -76,6 +76,7 @@ if (profile?.email && !isEditing) {
       await setEmailInStore(formData.email);
       showSuccessToast('Email registered successfully!');
       setIsEditing(false);
+      form.reset();
     } catch (error) {
       showErrorToast('Failed to register email', error);
     }
