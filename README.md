@@ -60,6 +60,8 @@ pnpm -F frontend start
 pnpm format
 ```
 
+### Controller Management
+
 To add a controller (make a user into an admin):
 
 ```shell
@@ -71,6 +73,8 @@ To remove a controller (remove admin rights from a user):
 ```shell
 dfx canister update-settings --remove-controller ${CONTROLLER_PRINCIPAL} backend
 ```
+
+### Update `pnpm`
 
 Update to the latest version of `pnpm`:
 
