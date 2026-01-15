@@ -7,23 +7,42 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAppStore } from '@/lib/store';
-import { useState, type FC, type FormEvent } from 'react';
-import { toast } from 'sonner';
+import { useState, type FC } from 'react';
 import { CheckCircleIcon } from 'lucide-react';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
+
+const formSchema = z.object({
+  email: z.email('Please enter a valid email address'),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 export const EmailPrompt: FC = () => {
   const { profile, setEmail: setEmailInStore } = useAppStore();
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { email: '' },
+  });
 
   // Show registered email if already set
 if (profile?.email && !isEditing) {
     return (
-      <Card className="mt-8 max-w-md">
+      <Card className="mx-auto mt-8 max-w-md">
         <CardHeader>
           <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
             <CheckCircleIcon className="size-5" />
@@ -39,7 +58,7 @@ if (profile?.email && !isEditing) {
             variant="link"
             size="sm"
             onClick={() => {
-              setEmail(profile.email ?? '');
+              form.setValue('email', profile.email ?? '');
               setIsEditing(true);
             }}
             className="mt-2 p-0"
@@ -52,36 +71,18 @@ if (profile?.email && !isEditing) {
   }
 
   // Show form if no email set
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-
-    if (!email) {
-      toast.error('Please enter your email address');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  async function onSubmit(formData: FormData): Promise<void> {
     try {
-      await setEmailInStore(email);
-      toast.success('Email registered successfully!');
+      await setEmailInStore(formData.email);
+      showSuccessToast('Email registered successfully!');
       setIsEditing(false);
     } catch (error) {
-      console.error('Error registering email:', error);
-      toast.error('Failed to register email');
-    } finally {
-      setIsSubmitting(false);
+      showErrorToast('Failed to register email', error);
     }
-  };
+  }
 
   return (
-    <Card className="mt-8 max-w-md">
+    <Card className="mx-auto mt-8 max-w-md">
       <CardHeader>
         <CardTitle>Welcome! 👋</CardTitle>
         <CardDescription>
@@ -89,26 +90,33 @@ if (profile?.email && !isEditing) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              disabled={isSubmitting}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+
+                  <FormControl>
+                    <Input placeholder="you@example.com" {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <LoadingButton
-            type="submit"
-            className="w-full"
-            isLoading={isSubmitting}
-          >
-            Register Email
-          </LoadingButton>
-        </form>
+
+            <LoadingButton
+              type="submit"
+              className="w-full"
+              isLoading={form.formState.isSubmitting}
+            >
+              Register Email
+            </LoadingButton>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

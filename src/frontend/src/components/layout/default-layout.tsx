@@ -11,6 +11,6 @@ export const DefaultLayout: FC = () => (
     <Container>
       <Outlet />
     </Container>
-    <Toaster position="top-right" richColors />
+    <Toaster position="bottom-right" richColors />
   </main>
 );

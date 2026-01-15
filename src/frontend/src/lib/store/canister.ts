@@ -118,7 +118,8 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   },
 
   async addController(canisterPrincipal, controller) {
-    const { getManagementCanisterApi, canisters, isCanistersInitialized } = get();
+    const { getManagementCanisterApi, canisters, isCanistersInitialized } =
+      get();
     const managementCanisterApi = getManagementCanisterApi();
 
     if (!isCanistersInitialized) {
@@ -132,7 +133,9 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
 
     const existingControllers = canister.status?.settings.controllers ?? [];
     if (existingControllers.includes(controller)) {
-      throw new Error(`Controller ${controller} is already a controller of canister ${canisterPrincipal}`);
+      throw new Error(
+        `Controller ${controller} is already a controller of canister ${canisterPrincipal}`,
+      );
     }
 
     await managementCanisterApi.updateSettings({

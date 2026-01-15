@@ -1,67 +1,86 @@
 import { LoadingButton } from '@/components/loading-button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { isNil } from '@/lib/nil';
 import { useAppStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
-import { Principal } from '@icp-sdk/core/principal';
-import { useState, type FC } from 'react';
+import { type FC } from 'react';
+import z from 'zod';
+import { PrincipalTextSchema } from '@dfinity/zod-schemas';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 
 export type AddControllerFormProps = {
   canisterId: string;
   className?: string;
 };
 
+const formSchema = z.object({
+  principal: PrincipalTextSchema,
+});
+
+type FormData = z.infer<typeof formSchema>;
+
 export const AddControllerForm: FC<AddControllerFormProps> = ({
   canisterId,
   className,
 }) => {
   const { addController } = useAppStore();
-  const [isSaving, setIsSaving] = useState(false);
-  const [principal, setPrincipal] = useState('');
 
-  async function onFormSubmitted(event: React.FormEvent): Promise<void> {
-    event.preventDefault();
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { principal: '' },
+  });
 
-    if (isNil(principal) || principal.trim() === '') {
-      return;
-    }
-
+  async function onSubmit(formData: FormData): Promise<void> {
     try {
-      Principal.fromText(principal);
-    } catch {
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await addController(canisterId, principal);
-      setPrincipal('');
-    } finally {
-      setIsSaving(false);
+      await addController(canisterId, formData.principal);
+      showSuccessToast('Controller added successfully!');
+    } catch (error) {
+      showErrorToast('Failed to add controller', error);
     }
   }
 
   return (
-    <form
-      className={cn('flex w-full items-center gap-2', className)}
-      onSubmit={event => onFormSubmitted(event)}
-    >
-      <Label htmlFor={`controller-principal-${canisterId}`} className="sr-only">
-        Controller Principal
-      </Label>
+    <Form {...form}>
+      <form
+        className={cn('flex w-full items-end gap-2', className)}
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <FormField
+          control={form.control}
+          name="principal"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <FormLabel>Controller Principal</FormLabel>
 
-      <Input
-        id={`controller-principal-${canisterId}`}
-        type="text"
-        placeholder="Controller Principal"
-        value={principal}
-        onChange={e => setPrincipal(e.target.value)}
-      />
+              <FormControl>
+                <Input
+                  placeholder="esnbu-tvlmz-llrn2-clxkp-q6746-hx6o5-ln6li-om2lt-dzree-muoij-sqe"
+                  {...field}
+                />
+              </FormControl>
 
-      <LoadingButton type="submit" variant="outline" isLoading={isSaving}>
-        Add Controller
-      </LoadingButton>
-    </form>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <LoadingButton
+          type="submit"
+          variant="outline"
+          isLoading={form.formState.isSubmitting}
+        >
+          Add Controller
+        </LoadingButton>
+      </form>
+    </Form>
   );
 };
