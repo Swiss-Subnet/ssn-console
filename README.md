@@ -36,8 +36,16 @@ dfx deploy
 
 ### Build the frontend:
 
+Build the backend API library:
+
 ```shell
 pnpm -F @ssn/backend-api build
+```
+
+Build the management canister library:
+
+```shell
+pnpm -F @ssn/management-canister build
 ```
 
 Run the frontend development server:
@@ -52,6 +60,8 @@ pnpm -F frontend start
 pnpm format
 ```
 
+### Controller Management
+
 To add a controller (make a user into an admin):
 
 ```shell
@@ -64,8 +74,18 @@ To remove a controller (remove admin rights from a user):
 dfx canister update-settings --remove-controller ${CONTROLLER_PRINCIPAL} backend
 ```
 
+### Update `pnpm`
+
 Update to the latest version of `pnpm`:
 
 ```shell
 corepack prepare pnpm@latest --activate
+```
+
+### Canister Cycle Management
+
+To top up cycles for a canister, use the following command:
+
+```shell
+dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
 ```

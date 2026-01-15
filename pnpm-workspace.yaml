@@ -1,7 +1,8 @@
 packages:
-  - src/frontend
   - src/backend-api
   - src/backend-tests
+  - src/frontend
+  - src/management-canister
 
 onlyBuiltDependencies:
   - '@dfinity/pic'

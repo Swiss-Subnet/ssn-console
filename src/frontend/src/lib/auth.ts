@@ -1,4 +1,4 @@
-import { useAppStore } from '@/lib/store';
+import { selectIsActive, selectIsAdmin, useAppStore } from '@/lib/store';
 import { useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
@@ -14,24 +14,25 @@ const useReturnHome = (): (() => void) => {
 };
 
 export const useRequireAuth = (): void => {
-  const { isAuthenticated, isAuthInitialized } = useAppStore();
+  const { isProfileInitialized } = useAppStore();
+  const isActive = useAppStore(selectIsActive);
   const returnHome = useReturnHome();
 
   useEffect(() => {
-    if (isAuthInitialized && !isAuthenticated) {
+    if (isProfileInitialized && !isActive) {
       returnHome();
     }
-  }, [isAuthenticated, isAuthInitialized, returnHome]);
+  }, [isProfileInitialized, isActive, returnHome]);
 };
 
 export const useRequireAdminAuth = (): void => {
-  useRequireAuth();
-  const { profile, isAuthInitialized, isProfileInitialized } = useAppStore();
+  const { isProfileInitialized } = useAppStore();
+  const isAdmin = useAppStore(selectIsAdmin);
   const returnHome = useReturnHome();
 
   useEffect(() => {
-    if (isAuthInitialized && isProfileInitialized && !profile?.isAdmin) {
+    if (isProfileInitialized && !isAdmin) {
       returnHome();
     }
-  }, [isAuthInitialized, isProfileInitialized, profile, returnHome]);
+  }, [isProfileInitialized, isAdmin, returnHome]);
 };

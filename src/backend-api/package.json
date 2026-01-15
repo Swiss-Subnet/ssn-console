@@ -2,9 +2,9 @@
   "name": "@ssn/backend-api",
   "private": true,
   "scripts": {
-    "build": "dfx generate backend"
+    "build": "icp-bindgen --did-file ../backend/backend.did --out-dir ./dist --force --actor-disabled"
   },
-  "module": "dist/backend.did.js",
-  "types": "dist/backend.did.d.ts",
-  "main": "dist/index.js"
+  "module": "dist/declarations/backend.did.js",
+  "types": "dist/declarations/backend.did.d.ts",
+  "main": "dist/declarations/backend.did.js"
 }

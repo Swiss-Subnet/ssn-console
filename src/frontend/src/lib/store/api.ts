@@ -1,26 +1,59 @@
 import { BACKEND_CANISTER_ID, SHOULD_FETCH_ROOT_KEY } from '@/env';
-import { UserProfileApi } from '@/lib/api';
+import { CanisterApi, UserProfileApi } from '@/lib/api';
+import { ManagementCanisterApi } from '@/lib/api/management-canister';
 import { isNil } from '@/lib/nil';
 import type { ApiSlice, AppStateCreator } from '@/lib/store/model';
-import { Actor, HttpAgent } from '@dfinity/agent';
-import { idlFactory, type _SERVICE } from '@ssn/backend-api';
+import { Actor, HttpAgent } from '@icp-sdk/core/agent';
+import { Principal } from '@icp-sdk/core/principal';
+import {
+  idlFactory as backendIdlFactory,
+  type _SERVICE as BACKEND_API_SERVICE,
+} from '@ssn/backend-api';
+import {
+  idlFactory as managementCanisterIdlFactory,
+  type _SERVICE as MANAGEMENT_CANISTER_SERVICE,
+} from '@ssn/management-canister';
 
 export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
   agent: null,
   actor: null,
   userProfileApi: null,
+  canisterApi: null,
+  managementCanisterApi: null,
 
-  initializeApi: () => {
+  initializeApi() {
     const agent = HttpAgent.createSync({
       shouldFetchRootKey: SHOULD_FETCH_ROOT_KEY,
     });
-    const actor = Actor.createActor<_SERVICE>(idlFactory, {
-      agent: agent,
-      canisterId: BACKEND_CANISTER_ID,
-    });
-    const userProfileApi = new UserProfileApi(actor);
+    const backendApiActor = Actor.createActor<BACKEND_API_SERVICE>(
+      backendIdlFactory,
+      {
+        agent: agent,
+        canisterId: BACKEND_CANISTER_ID,
+      },
+    );
+    const managementCanisterActor =
+      Actor.createActor<MANAGEMENT_CANISTER_SERVICE>(
+        managementCanisterIdlFactory,
+        {
+          agent: agent,
+          canisterId: Principal.managementCanister(),
+        },
+      );
 
-    set({ agent, actor, userProfileApi });
+    const userProfileApi = new UserProfileApi(backendApiActor);
+    const canisterApi = new CanisterApi(backendApiActor);
+    const managementCanisterApi = new ManagementCanisterApi(
+      managementCanisterActor,
+    );
+
+    set({
+      agent,
+      actor: backendApiActor,
+      userProfileApi,
+      canisterApi,
+      managementCanisterApi,
+    });
   },
 
   setAgentIdentity: identity => {
@@ -30,5 +63,31 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
     }
 
     agent.replaceIdentity(identity);
+  },
+
+  getUserProfileApi() {
+    const { userProfileApi } = get();
+    if (isNil(userProfileApi)) {
+      throw new Error('UserProfileApi is not initialized');
+    }
+    return userProfileApi;
+  },
+
+  getCanisterApi() {
+    const { canisterApi } = get();
+    if (isNil(canisterApi)) {
+      throw new Error('CanisterApi is not initialized');
+    }
+
+    return canisterApi;
+  },
+
+  getManagementCanisterApi() {
+    const { managementCanisterApi } = get();
+    if (isNil(managementCanisterApi)) {
+      throw new Error('ManagementCanisterApi is not initialized');
+    }
+
+    return managementCanisterApi;
   },
 });

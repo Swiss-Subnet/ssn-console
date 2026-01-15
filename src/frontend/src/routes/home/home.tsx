@@ -4,11 +4,17 @@ import type { FC } from 'react';
 import { useAppStore } from '@/lib/store';
 
 const Home: FC = () => {
-  const { isAuthenticated, userProfileApi } = useAppStore();
+  const { isAuthenticated, userProfileApi, identity, profile } = useAppStore();
   return (
     <>
       <H1>Swiss Subnet Console</H1>
-      {isAuthenticated && userProfileApi && <EmailPrompt />}
+      {isAuthenticated && userProfileApi && (
+        <>
+          <EmailPrompt />
+          <div className="mt-3">ID: {profile?.id}</div>
+          <div>Principal: {identity?.getPrincipal().toText()}</div>
+        </>
+      )}
     </>
   );
 };

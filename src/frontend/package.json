@@ -9,6 +9,7 @@
   "dependencies": {
     "@base-ui/react": "^1.0.0",
     "@ssn/backend-api": "workspace:*",
+    "@ssn/management-canister": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
@@ -19,6 +20,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
+    "vite-plugin-compression": "^0.5.1",
     "zustand": "^5.0.10"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { isNil } from '@/lib/nil';
+import { UserStatus } from '@/lib/api-models';
 import type {
   AppSlice,
   AppStateCreator,
@@ -12,11 +12,9 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   isProfileInitialized: false,
   profile: null,
 
-  initializeUserProfile: async () => {
-    const { userProfileApi, isAuthenticated } = get();
-    if (isNil(userProfileApi)) {
-      throw new Error('UserProfileApi is not initialized');
-    }
+  async initializeUserProfile() {
+    const { getUserProfileApi, isAuthenticated } = get();
+    const userProfileApi = getUserProfileApi();
 
     if (!isAuthenticated) {
       set({ isProfileInitialized: true });
@@ -31,18 +29,15 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
     }
   },
 
-  clearUserProfile: () => {
+  clearUserProfile() {
     set({ profile: null });
   },
 
   setEmail: async (email: string) => {
-    const { userProfileApi, isAuthenticated, isProfileInitialized, profile } = get();
+    const { getUserProfileApi, isAuthenticated, isProfileInitialized } = get();
+    const userProfileApi = getUserProfileApi();
 
-    if (isNil(userProfileApi)) {
-      throw new Error('UserProfileApi is not initialized');
-    }
-
-    if (!isProfileInitialized || isNil(profile)) {
+    if (!isProfileInitialized) {
       throw new Error('User profile is not initialized');
     }
 
@@ -50,16 +45,24 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
       return;
     }
 
-    // Make the API call
     await userProfileApi.updateMyUserProfile({ email });
 
-    // Update the store directly (no full reload)
-    set({
-      profile: { ...profile, email }
+    set(state => {
+      if (!state.profile) {
+        return state;
+      }
+
+      return {
+        profile: { ...state.profile, email },
+      };
     });
   },
 });
 
 export function selectIsAdmin(state: AppSlice): boolean {
   return state.profile?.isAdmin ?? false;
+}
+
+export function selectIsActive(state: AppSlice): boolean {
+  return state.profile?.status === UserStatus.Active;
 }

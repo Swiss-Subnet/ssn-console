@@ -2,7 +2,7 @@ import { PocketIc, type Actor, type CanisterFixture } from '@dfinity/pic';
 import { inject } from 'vitest';
 import { type _SERVICE as BackendService, idlFactory } from '@ssn/backend-api';
 import { resolve } from 'node:path';
-import { Principal } from '@dfinity/principal';
+import type { Principal } from '@icp-sdk/core/principal';
 import { controllerIdentity } from './identity';
 
 export const BACKEND_WASM_PATH = resolve(
