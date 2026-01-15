@@ -11,9 +11,10 @@ export const EmailPrompt: FC = () => {
   const { profile, setEmail: setEmailInStore } = useAppStore();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Show registered email if already set
-  if (profile?.email) {
+if (profile?.email && !isEditing) {
     return (
       <Card className="mt-8 max-w-md">
         <CardHeader>
@@ -26,6 +27,12 @@ export const EmailPrompt: FC = () => {
           <p className="text-muted-foreground text-sm">
             You're signed up with: <span className="font-medium text-foreground">{profile.email}</span>
           </p>
+          <button
+            onClick={() => { setEmail(profile.email ?? ''); setIsEditing(true); }}
+            className="text-sm text-blue-600 hover:underline mt-2"
+          >
+            Edit
+          </button>
         </CardContent>
       </Card>
     );
@@ -51,6 +58,7 @@ export const EmailPrompt: FC = () => {
     try {
       await setEmailInStore(email);
       toast.success('Email registered successfully!');
+      setIsEditing(false);
     } catch (error) {
       toast.error('Failed to register email');
     } finally {
