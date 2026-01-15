@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/item';
 import { useAppStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
-import { AddControllerForm } from '@/routes/console/add-controller-form';
+import { AddControllerForm } from '@/routes/canisters/add-controller-form';
 import { Fragment, type FC } from 'react';
 
 export type CanisterGridProps = {
