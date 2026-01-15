@@ -9,6 +9,10 @@ mod dto;
 mod mapping;
 mod service;
 mod utils;
+mod env;
+
+#[macro_use]
+extern crate dotenv_codegen;
 
 export_service!();
 #[query(name = "__get_candid_interface_tmp_hack")]

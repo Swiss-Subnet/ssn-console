@@ -1,6 +1,5 @@
-use ic_asset_certification::{
-    Asset, AssetConfig, AssetEncoding, AssetFallbackConfig, AssetRedirectKind, AssetRouter,
-};
+use crate::env;
+use ic_asset_certification::{Asset, AssetConfig, AssetEncoding, AssetFallbackConfig, AssetRouter};
 use ic_cdk::{
     api::{certified_data_set, data_certificate},
     *,
@@ -94,18 +93,6 @@ fn certify_all_assets() {
             )]),
             encodings: vec![],
         },
-        AssetConfig::Redirect {
-            from: "/old-url".to_string(),
-            to: "/".to_string(),
-            kind: AssetRedirectKind::Permanent,
-            headers: get_asset_headers(vec![
-                ("content-type".to_string(), "text/plain".to_string()),
-                (
-                    "cache-control".to_string(),
-                    NO_CACHE_ASSET_CACHE_CONTROL.to_string(),
-                ),
-            ]),
-        },
     ];
 
     let mut assets = Vec::new();
@@ -134,11 +121,19 @@ fn serve_asset(req: &HttpRequest) -> HttpResponse<'static> {
 }
 
 fn get_asset_headers(additional_headers: Vec<HeaderField>) -> Vec<HeaderField> {
+    let mut connect_src = vec!["'self'"];
+    if env::is_local() {
+        connect_src.push("localhost:8000");
+    } else {
+        connect_src.push("icp0.io");
+    }
+    let connect_src = connect_src.join(" ");
+
     let mut headers = vec![
         ("strict-transport-security".to_string(), "max-age=31536000; includeSubDomains".to_string()),
         ("x-frame-options".to_string(), "DENY".to_string()),
         ("x-content-type-options".to_string(), "nosniff".to_string()),
-        ("content-security-policy".to_string(), "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' localhost:8000; img-src 'self' data:; form-action 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content".to_string()),
+        ("content-security-policy".to_string(), format!("default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src {connect_src}; img-src 'self' data:; form-action 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content")),
         ("referrer-policy".to_string(), "no-referrer".to_string()),
         ("permissions-policy".to_string(), "accelerometer=(),ambient-light-sensor=(),autoplay=(),battery=(),camera=(),display-capture=(),document-domain=(),encrypted-media=(),fullscreen=(),gamepad=(),geolocation=(),gyroscope=(),layout-animations=(self),legacy-image-formats=(self),magnetometer=(),microphone=(),midi=(),oversized-images=(self),payment=(),picture-in-picture=(),publickey-credentials-get=(),speaker-selection=(),sync-xhr=(self),unoptimized-images=(self),unsized-media=(self),usb=(),screen-wake-lock=(),web-share=(),xr-spatial-tracking=()".to_string()),
     ];
