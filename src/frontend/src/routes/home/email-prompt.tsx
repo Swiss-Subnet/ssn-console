@@ -12,14 +12,16 @@ import { useAppStore } from '@/lib/store';
 import { useState, type FC, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { CheckCircleIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export const EmailPrompt: FC = () => {
   const { profile, setEmail: setEmailInStore } = useAppStore();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Show registered email if already set
-  if (profile?.email) {
+if (profile?.email && !isEditing) {
     return (
       <Card className="mt-8 max-w-md">
         <CardHeader>
@@ -33,6 +35,17 @@ export const EmailPrompt: FC = () => {
             You're signed up with:{' '}
             <span className="text-foreground font-medium">{profile.email}</span>
           </p>
+          <Button
+            variant="link"
+            size="sm"
+            onClick={() => {
+              setEmail(profile.email ?? '');
+              setIsEditing(true);
+            }}
+            className="mt-2 p-0"
+          >
+            Edit
+          </Button>
         </CardContent>
       </Card>
     );
@@ -58,6 +71,7 @@ export const EmailPrompt: FC = () => {
     try {
       await setEmailInStore(email);
       toast.success('Email registered successfully!');
+      setIsEditing(false);
     } catch (error) {
       console.error('Error registering email:', error);
       toast.error('Failed to register email');
