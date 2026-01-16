@@ -13,5 +13,5 @@ service : {
   list_canisters : () -> (ListCanistersResponse) query;
 
   list_my_canisters : () -> (ListMyCanistersResponse) query;
-  create_canister : () -> (CreateCanisterResponse);
+  create_my_canister : () -> (CreateCanisterResponse);
 };

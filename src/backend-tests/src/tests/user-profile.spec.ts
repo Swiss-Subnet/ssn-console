@@ -52,19 +52,16 @@ describe('User Profile', () => {
       const [bobProfile] = await driver.actor.get_my_user_profile();
 
       driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.update_my_user_profile({ email: ['admin@subnet.ch'] });
+      const [controllerProfile] = await driver.actor.get_my_user_profile();
+
       const profiles = await driver.actor.list_user_profiles();
 
-      expect(profiles.length).toBe(2);
-      expect(profiles).toContainEqual({
-        email: aliceProfile?.email,
-        id: aliceProfile?.id,
-        status: aliceProfile?.status,
-      });
-      expect(profiles).toContainEqual({
-        email: bobProfile?.email,
-        id: bobProfile?.id,
-        status: bobProfile?.status,
-      });
+      expect(profiles.length).toBe(3);
+      expect(profiles).toContainEqual(aliceProfile);
+      expect(profiles).toContainEqual(bobProfile);
+      expect(profiles).toContainEqual(controllerProfile);
     });
   });
 

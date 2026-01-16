@@ -4,7 +4,10 @@ import { PocketIcServer } from '@dfinity/pic';
 let pic: PocketIcServer | undefined;
 
 export async function setup(project: TestProject): Promise<void> {
-  pic = await PocketIcServer.start();
+  pic = await PocketIcServer.start({
+    showCanisterLogs: true,
+    showRuntimeLogs: true,
+  });
   const url = pic.getUrl();
 
   project.provide('PIC_URL', url);

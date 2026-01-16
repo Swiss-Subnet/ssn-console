@@ -44,7 +44,6 @@ fn collect_assets<'content, 'path>(
     }
 }
 
-// Certification
 fn certify_all_assets() {
     let encodings = vec![
         AssetEncoding::Brotli.default_config(),

@@ -2,4 +2,5 @@ export * from './api';
 export * from './app';
 export * from './auth';
 export * from './model';
+export * from './trusted-partner';
 export * from './user-profile';

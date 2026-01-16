@@ -15,13 +15,13 @@ pub fn list_user_profiles() -> ListUserProfilesResponse {
     map_list_user_profiles_response(user_profile_repository::list_user_profiles())
 }
 
-pub fn update_user_profile(request: UpdateUserProfileRequest) -> Result<(), String> {
-    let user_id = Uuid::try_from(request.user_id.as_str())?;
+pub fn update_user_profile(req: UpdateUserProfileRequest) -> Result<(), String> {
+    let user_id = Uuid::try_from(req.user_id.as_str())?;
     let mut current_user_profile =
         user_profile_repository::get_user_profile_by_user_id(&user_id)
             .ok_or_else(|| format!("User profile for user with id {} does not exist", user_id))?;
 
-    if let Some(status) = request.status {
+    if let Some(status) = req.status {
         current_user_profile.status = map_user_status_request(status);
     }
 
@@ -56,7 +56,7 @@ pub fn create_my_user_profile(
 
 pub fn update_my_user_profile(
     calling_principal: Principal,
-    request: UpdateMyUserProfileRequest,
+    req: UpdateMyUserProfileRequest,
 ) -> Result<(), String> {
     let (user_id, mut current_user_profile) =
         user_profile_repository::get_user_profile_by_principal(&calling_principal).ok_or_else(
@@ -68,7 +68,7 @@ pub fn update_my_user_profile(
             },
         )?;
 
-    if let Some(email) = request.email {
+    if let Some(email) = req.email {
         current_user_profile.email = Some(email);
     }
 

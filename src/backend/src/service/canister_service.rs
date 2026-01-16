@@ -1,7 +1,9 @@
 use crate::{
-    data::{Canister, canister_repository, user_profile_repository},
+    data::{canister_repository, user_profile_repository, Canister},
     dto::{CreateCanisterResponse, ListCanistersResponse, ListMyCanistersResponse},
-    mapping::{map_create_canister_response, map_list_canisters_response, map_list_my_canisters_response},
+    mapping::{
+        map_create_my_canister_response, map_list_canisters_response, map_list_my_canisters_response,
+    },
 };
 use candid::Principal;
 use ic_cdk::management_canister::{self, CanisterSettings, CreateCanisterArgs};
@@ -24,7 +26,7 @@ pub fn list_my_canisters(calling_principal: Principal) -> Result<ListMyCanisters
     Ok(map_list_my_canisters_response(canisters))
 }
 
-pub async fn create_canister(
+pub async fn create_my_canister(
     calling_principal: Principal,
 ) -> Result<CreateCanisterResponse, String> {
     let Some(user_id) = user_profile_repository::get_user_id_by_principal(&calling_principal)
@@ -52,5 +54,5 @@ pub async fn create_canister(
     };
     let canister_id = canister_repository::create_canister(user_id, canister.clone());
 
-    Ok(map_create_canister_response(canister_id, canister))
+    Ok(map_create_my_canister_response(canister_id, canister))
 }

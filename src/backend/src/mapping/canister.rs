@@ -21,7 +21,7 @@ pub fn map_list_my_canisters_response(
         .collect()
 }
 
-pub fn map_create_canister_response(
+pub fn map_create_my_canister_response(
     id: data::Uuid,
     canister: data::Canister,
 ) -> CreateCanisterResponse {

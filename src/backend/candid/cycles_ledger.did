@@ -1,0 +1,83 @@
+// a subset of the Candid interface of the Cycles Ledger canister
+// used to provide Cycles Ledger compatible functionality for the Swiss Subnet.
+
+type BlockIndex = nat64;
+
+type CreateCanisterArgs = record {
+  from_subaccount : opt vec nat8;
+  created_at_time : opt nat64;
+  amount : nat;
+  creation_args : opt CmcCreateCanisterArgs;
+};
+
+type LogVisibility = variant {
+  controllers;
+  public;
+  allowed_viewers : vec principal;
+};
+
+type EnvironmentVariable = record {
+  name : text;
+  value : text;
+};
+
+type CmcCreateCanisterArgs = record {
+  // Optional canister settings that, if set, are applied to the newly created canister.
+  // If not specified, the caller is the controller of the canister and the other settings are set to default values.
+  settings : opt CanisterSettings;
+
+  // Optional instructions to select on which subnet the new canister will be created on.
+  subnet_selection : opt SubnetSelection;
+};
+
+type CanisterSettings = record {
+  controllers : opt vec principal;
+  compute_allocation : opt nat;
+  memory_allocation : opt nat;
+  freezing_threshold : opt nat;
+  reserved_cycles_limit : opt nat;
+  wasm_memory_limit : opt nat;
+  wasm_memory_threshold : opt nat;
+  log_visibility : opt LogVisibility;
+  environment_variables : opt vec EnvironmentVariable;
+};
+
+type CreateCanisterSuccess = record {
+  block_id : BlockIndex;
+  canister_id : principal;
+};
+
+type CreateCanisterError = variant {
+  InsufficientFunds : record { balance : nat };
+  TooOld;
+  CreatedInFuture : record { ledger_time : nat64 };
+  TemporarilyUnavailable;
+  Duplicate : record {
+    duplicate_of : nat;
+    // If the original transaction created a canister then this field will contain the canister id.
+    canister_id : opt principal;
+  };
+  FailedToCreate : record {
+    fee_block : opt BlockIndex;
+    refund_block : opt BlockIndex;
+    error : text;
+  };
+  GenericError : record { message : text; error_code : nat };
+};
+
+type SubnetSelection = variant {
+  /// Choose a specific subnet
+  Subnet : record {
+    subnet : principal;
+  };
+  // Choose a random subnet that satisfies the specified properties.
+  Filter : SubnetFilter;
+};
+
+type SubnetFilter = record {
+  subnet_type : opt text;
+};
+
+service : {
+  create_canister : (CreateCanisterArgs) -> (variant { Ok : CreateCanisterSuccess; Err : CreateCanisterError });
+};

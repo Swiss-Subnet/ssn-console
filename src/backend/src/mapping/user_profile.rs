@@ -1,21 +1,20 @@
 use crate::{
     data,
-    dto::{ListUserProfilesResponse, MyUserProfile, UserProfile, UserStatus},
+    dto::{ListUserProfilesResponse, UserProfile, UserStatus},
 };
 use candid::Principal;
 use ic_cdk::api::is_controller;
 
 pub fn map_list_user_profiles_response(
-    profiles: Vec<(data::Uuid, data::UserProfile)>,
+    profiles: Vec<(data::Uuid, data::UserProfile, Vec<Principal>)>,
 ) -> ListUserProfilesResponse {
     profiles
         .into_iter()
-        .map(|(id, profile)| {
-            UserProfile {
-                id: id.to_string(),
-                email: profile.email,
-                status: map_user_status_response(profile.status),
-            }
+        .map(|(id, profile, principals)| UserProfile {
+            id: id.to_string(),
+            email: profile.email,
+            status: map_user_status_response(profile.status),
+            is_admin: principals.iter().any(|p| is_controller(p)),
         })
         .collect()
 }
@@ -24,9 +23,9 @@ pub fn map_get_my_user_profile_response(
     id: data::Uuid,
     principal: &Principal,
     profile: data::UserProfile,
-) -> MyUserProfile {
+) -> UserProfile {
     let is_admin = is_controller(principal);
-    MyUserProfile {
+    UserProfile {
         id: id.to_string(),
         email: profile.email,
         status: map_user_status_response(profile.status),
@@ -38,7 +37,7 @@ pub fn map_create_my_user_profile_response(
     id: data::Uuid,
     principal: &Principal,
     profile: data::UserProfile,
-) -> MyUserProfile {
+) -> UserProfile {
     map_get_my_user_profile_response(id, principal, profile)
 }
 

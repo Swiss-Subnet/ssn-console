@@ -25,7 +25,7 @@ export class CanisterApi {
   }
 
   public async createCanister(): Promise<CreateCanisterResponse> {
-    const res = await this.actor.create_canister();
+    const res = await this.actor.create_my_canister();
 
     return mapCreateCanisterResponse(res);
   }

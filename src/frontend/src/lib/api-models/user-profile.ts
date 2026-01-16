@@ -2,7 +2,6 @@ import { isNotNil } from '@/lib/nil';
 import { fromCandidOpt, toCandidOpt } from '@/lib/utils';
 import type {
   UserProfile as ApiUserProfile,
-  MyUserProfile as ApiMyUserProfile,
   UserStatus as ApiUserStatus,
   ListUserProfilesResponse as ApiListUserProfilesResponse,
   GetMyUserProfileResponse as ApiGetMyUserProfileResponse,
@@ -13,9 +12,9 @@ import type {
 
 export type ListUserProfilesResponse = UserProfile[];
 
-export type GetMyUserProfileResponse = MyUserProfile | null;
+export type GetMyUserProfileResponse = UserProfile | null;
 
-export type CreateMyUserProfileResponse = MyUserProfile;
+export type CreateMyUserProfileResponse = UserProfile;
 
 export type UpdateMyUserProfileRequest = {
   email?: string | null;
@@ -27,12 +26,6 @@ export type UpdateUserProfileRequest = {
 };
 
 export type UserProfile = {
-  id: string;
-  email: string | null;
-  status: UserStatus;
-};
-
-export type MyUserProfile = {
   id: string;
   email: string | null;
   status: UserStatus;
@@ -56,7 +49,7 @@ export function mapGetMyUserProfileResponse(
   const userProfile = fromCandidOpt(res);
 
   if (isNotNil(userProfile)) {
-    return mapMyUserProfileResponse(userProfile);
+    return mapUserProfileResponse(userProfile);
   }
 
   return null;
@@ -65,18 +58,10 @@ export function mapGetMyUserProfileResponse(
 export function mapCreateMyUserProfileResponse(
   res: ApiCreateMyUserProfileResponse,
 ): CreateMyUserProfileResponse {
-  return mapMyUserProfileResponse(res);
+  return mapUserProfileResponse(res);
 }
 
 export function mapUserProfileResponse(res: ApiUserProfile): UserProfile {
-  return {
-    id: res.id,
-    email: fromCandidOpt(res.email),
-    status: mapUserStatusResponse(res.status),
-  };
-}
-
-export function mapMyUserProfileResponse(res: ApiMyUserProfile): MyUserProfile {
   return {
     id: res.id,
     email: fromCandidOpt(res.email),

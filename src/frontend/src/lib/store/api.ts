@@ -1,5 +1,5 @@
 import { BACKEND_CANISTER_ID, SHOULD_FETCH_ROOT_KEY } from '@/env';
-import { CanisterApi, UserProfileApi } from '@/lib/api';
+import { CanisterApi, TrustedPartnerApi, UserProfileApi } from '@/lib/api';
 import { ManagementCanisterApi } from '@/lib/api/management-canister';
 import { isNil } from '@/lib/nil';
 import type { ApiSlice, AppStateCreator } from '@/lib/store/model';
@@ -20,6 +20,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
   userProfileApi: null,
   canisterApi: null,
   managementCanisterApi: null,
+  trustedPartnerApi: null,
 
   initializeApi() {
     const agent = HttpAgent.createSync({
@@ -46,6 +47,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
     const managementCanisterApi = new ManagementCanisterApi(
       managementCanisterActor,
     );
+    const trustedPartnerApi = new TrustedPartnerApi(backendApiActor);
 
     set({
       agent,
@@ -53,6 +55,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
       userProfileApi,
       canisterApi,
       managementCanisterApi,
+      trustedPartnerApi,
     });
   },
 
@@ -89,5 +92,14 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
     }
 
     return managementCanisterApi;
+  },
+
+  getTrustedPartnerApi() {
+    const { trustedPartnerApi } = get();
+    if (isNil(trustedPartnerApi)) {
+      throw new Error('TrustedPartnerApi is not initialized');
+    }
+
+    return trustedPartnerApi;
   },
 });
