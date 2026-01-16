@@ -31,7 +31,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export const EmailPrompt: FC = () => {
-  const { profile, setEmail: setEmailInStore } = useAppStore();
+  const { profile, setEmail } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
 
   const form = useForm<FormData>({
@@ -39,8 +39,13 @@ export const EmailPrompt: FC = () => {
     defaultValues: { email: '' },
   });
 
+  function onEditEmailClicked(): void {
+    form.setValue('email', profile?.email || '');
+    setIsEditing(true);
+  }
+
   // Show registered email if already set
-if (profile?.email && !isEditing) {
+  if (profile?.email && !isEditing) {
     return (
       <Card className="mx-auto mt-8 max-w-md">
         <CardHeader>
@@ -57,10 +62,7 @@ if (profile?.email && !isEditing) {
           <Button
             variant="link"
             size="sm"
-            onClick={() => {
-              form.setValue('email', profile.email ?? '');
-              setIsEditing(true);
-            }}
+            onClick={() => onEditEmailClicked()}
             className="mt-2 p-0"
           >
             Edit
@@ -73,7 +75,7 @@ if (profile?.email && !isEditing) {
   // Show form if no email set
   async function onSubmit(formData: FormData): Promise<void> {
     try {
-      await setEmailInStore(formData.email);
+      await setEmail(formData.email);
       showSuccessToast('Email registered successfully!');
       setIsEditing(false);
       form.reset();

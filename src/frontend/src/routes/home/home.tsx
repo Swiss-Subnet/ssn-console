@@ -1,20 +1,26 @@
 import { H1 } from '@/components/typography/h1';
 import { EmailPrompt } from './email-prompt';
 import type { FC } from 'react';
-import { useAppStore } from '@/lib/store';
+import { selectIsActive, useAppStore } from '@/lib/store';
+import { SignUpPrompt } from '@/routes/home/sign-up-prompt';
 
 const Home: FC = () => {
-  const { isAuthenticated, userProfileApi, identity, profile } = useAppStore();
+  const { isAuthenticated } = useAppStore();
+  const isActive = useAppStore(selectIsActive);
+
   return (
     <>
-      <H1>Swiss Subnet Console</H1>
-      {isAuthenticated && userProfileApi && (
-        <>
-          <EmailPrompt />
-          <div className="mt-3">ID: {profile?.id}</div>
-          <div>Principal: {identity?.getPrincipal().toText()}</div>
-        </>
-      )}
+      <div className="text-center">
+        {isActive ? <H1>Console</H1> : <H1>Console Access Request</H1>}
+
+        <p className="text-muted-foreground mt-2">
+          Secure orchestration for Swiss-domiciled canisters
+        </p>
+      </div>
+
+      {!isAuthenticated && <SignUpPrompt className="mt-8" />}
+
+      {isAuthenticated && <EmailPrompt />}
     </>
   );
 };

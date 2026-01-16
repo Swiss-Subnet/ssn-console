@@ -1,19 +1,12 @@
-import { AuthButton } from '@/components/layout/auth-button';
+import { HeaderMenu } from '@/components/layout/header-menu';
 import { Logo } from '@/components/logo';
 import { ModeToggle } from '@/components/mode-toggle';
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from '@/components/ui/navigation-menu';
-import { selectIsActive, selectIsAdmin, useAppStore } from '@/lib/store';
+import { useAppStore } from '@/lib/store';
 import { type FC } from 'react';
 import { NavLink } from 'react-router';
 
 export const Header: FC = () => {
-  const isActive = useAppStore(selectIsActive);
-  const isAdmin = useAppStore(selectIsAdmin);
+  const { isAuthenticated } = useAppStore();
 
   return (
     <header className="flex w-full flex-row items-center p-3">
@@ -23,29 +16,10 @@ export const Header: FC = () => {
 
       <div className="flex-1" />
 
-      <NavigationMenu>
-        <NavigationMenuList>
-          {isAdmin && (
-            <NavigationMenuItem>
-              <NavigationMenuLink render={<NavLink to="/admin" />}>
-                Admin
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          )}
-
-          {isActive && (
-            <NavigationMenuItem>
-              <NavigationMenuLink render={<NavLink to="/console" />}>
-                Console
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          )}
-        </NavigationMenuList>
-      </NavigationMenu>
-
       <div className="ml-2 flex items-center gap-2">
         <ModeToggle />
-        <AuthButton />
+
+        {isAuthenticated && <HeaderMenu />}
       </div>
     </header>
   );
