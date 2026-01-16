@@ -6,6 +6,7 @@ import { useAppStore } from '@/lib/store';
 import { useState, type FC, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { CheckCircleIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export const EmailPrompt: FC = () => {
   const { profile, setEmail: setEmailInStore } = useAppStore();
@@ -27,12 +28,17 @@ if (profile?.email && !isEditing) {
           <p className="text-muted-foreground text-sm">
             You're signed up with: <span className="font-medium text-foreground">{profile.email}</span>
           </p>
-          <button
-            onClick={() => { setEmail(profile.email ?? ''); setIsEditing(true); }}
-            className="text-sm text-blue-600 hover:underline mt-2"
+          <Button
+            variant="link"
+            size="sm"
+            onClick={() => {
+              setEmail(profile.email ?? '');
+              setIsEditing(true);
+            }}
+            className="mt-2 p-0"
           >
             Edit
-          </button>
+          </Button>
         </CardContent>
       </Card>
     );
