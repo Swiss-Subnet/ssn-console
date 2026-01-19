@@ -6,6 +6,14 @@
     "local": {
       "bind": "127.0.0.1:8000",
       "type": "ephemeral"
+    },
+    "test": {
+      "type": "persistent",
+      "providers": ["https://icp-api.io"]
+    },
+    "production": {
+      "type": "persistent",
+      "providers": ["https://icp-api.io"]
     }
   },
   "canisters": {

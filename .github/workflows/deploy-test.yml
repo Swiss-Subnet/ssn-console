@@ -30,6 +30,7 @@ jobs:
         run: |
           echo "${{ secrets.IDENTITY_PEM }}" > ./test.pem
           dfx identity import --ic --storage-mode plaintext test ./test.pem
+          rm -f ./test.pem
           dfx identity use test
 
       - name: Deploy to test
