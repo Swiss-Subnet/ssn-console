@@ -1,6 +1,7 @@
 import { UserStatus } from '@/lib/api-models';
 import { isNil } from '@/lib/nil';
 import type { AppStateCreator, UsersSlice } from '@/lib/store/model';
+import { showErrorToast } from '@/lib/toast';
 
 export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
   isUsersInitialized: false,
@@ -27,6 +28,8 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
     try {
       const users = await userProfileApi.listUserProfiles();
       set({ users });
+    } catch (err) {
+      showErrorToast('Failed to initialize users', err);
     } finally {
       set({ isUsersInitialized: true });
     }
@@ -57,28 +60,32 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
     } = get();
     const userProfileApi = getUserProfileApi();
 
-    if (!isProfileInitialized || isNil(profile)) {
-      throw new Error('User profile is not initialized');
+    try {
+      if (!isProfileInitialized || isNil(profile)) {
+        throw new Error('User profile is not initialized');
+      }
+
+      if (!isAuthenticated || !profile.isAdmin) {
+        throw new Error('Not authorized to set user status');
+      }
+
+      await userProfileApi.updateUserProfile({
+        userId,
+        status,
+      });
+
+      const { users } = get();
+      if (isNil(users)) {
+        throw new Error('Users are not initialized');
+      }
+
+      set({
+        users: users.map(user =>
+          user.id === userId ? { ...user, status } : user,
+        ),
+      });
+    } catch (err) {
+      showErrorToast('Failed to set user status', err);
     }
-
-    if (!isAuthenticated || !profile.isAdmin) {
-      throw new Error('Not authorized to set user status');
-    }
-
-    await userProfileApi.updateUserProfile({
-      userId,
-      status,
-    });
-
-    const { users } = get();
-    if (isNil(users)) {
-      throw new Error('Users are not initialized');
-    }
-
-    set({
-      users: users.map(user =>
-        user.id === userId ? { ...user, status } : user,
-      ),
-    });
   },
 });

@@ -1,21 +1,11 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { WidthLock } from '@/components/width-lock';
 import { useAppStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
-import {
-  LoaderIcon,
-  LockIcon,
-  ServerIcon,
-  ShieldCheckIcon,
-} from 'lucide-react';
+import { PromptFooter } from '@/routes/home/prompt-footer';
+import { PromptHeader } from '@/routes/home/prompt-header';
+import { LoaderIcon } from 'lucide-react';
 import type { FC } from 'react';
 
 export type SignUpPromptProps = {
@@ -28,18 +18,7 @@ export const SignUpPrompt: FC<SignUpPromptProps> = ({ className }) => {
 
   return (
     <Card className={cn('mx-auto max-w-md', className)}>
-      <CardHeader>
-        <CardTitle className="flex flex-row justify-between">
-          <div className="text-muted-foreground flex flex-row items-center gap-2">
-            <ServerIcon />
-            Status: Restricted
-          </div>
-
-          <Badge variant="destructive">
-            <LockIcon /> Waitlist Active
-          </Badge>
-        </CardTitle>
-      </CardHeader>
+      <PromptHeader />
 
       <CardContent>
         <Button
@@ -58,23 +37,7 @@ export const SignUpPrompt: FC<SignUpPromptProps> = ({ className }) => {
         </Button>
       </CardContent>
 
-      <CardFooter className="mt-2">
-        <div className="grid w-full grid-cols-2 border-t pt-6">
-          <div className="flex items-center gap-2">
-            <ShieldCheckIcon className="text-muted-foreground" />
-            <p className="text-muted-foreground text-xs leading-tight">
-              Swiss Data Protection
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <ServerIcon className="text-muted-foreground" />
-            <p className="text-muted-foreground text-xs leading-tight">
-              Switzerland-based Nodes
-            </p>
-          </div>
-        </div>
-      </CardFooter>
+      <PromptFooter />
     </Card>
   );
 };

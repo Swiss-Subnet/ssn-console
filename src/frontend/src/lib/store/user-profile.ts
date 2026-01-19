@@ -4,28 +4,34 @@ import type {
   AppStateCreator,
   UserProfileSlice,
 } from '@/lib/store/model';
+import { showErrorToast } from '@/lib/toast';
 
 export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   set,
   get,
 ) => ({
   isProfileInitialized: false,
+  isProfileLoading: false,
   profile: null,
 
   async initializeUserProfile() {
+    set({ isProfileLoading: true });
+
     const { getUserProfileApi, isAuthenticated } = get();
     const userProfileApi = getUserProfileApi();
 
     if (!isAuthenticated) {
-      set({ isProfileInitialized: true });
+      set({ isProfileInitialized: true, isProfileLoading: false });
       return;
     }
 
     try {
       const profile = await userProfileApi.getOrCreateMyUserProfile();
       set({ profile });
+    } catch (err) {
+      showErrorToast('Failed to initialize user profile', err);
     } finally {
-      set({ isProfileInitialized: true });
+      set({ isProfileInitialized: true, isProfileLoading: false });
     }
   },
 
@@ -37,25 +43,29 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
     const { getUserProfileApi, isAuthenticated, isProfileInitialized } = get();
     const userProfileApi = getUserProfileApi();
 
-    if (!isProfileInitialized) {
-      throw new Error('User profile is not initialized');
-    }
-
-    if (!isAuthenticated) {
-      return;
-    }
-
-    await userProfileApi.updateMyUserProfile({ email });
-
-    set(state => {
-      if (!state.profile) {
-        return state;
+    try {
+      if (!isProfileInitialized) {
+        throw new Error('User profile is not initialized');
       }
 
-      return {
-        profile: { ...state.profile, email },
-      };
-    });
+      if (!isAuthenticated) {
+        return;
+      }
+
+      await userProfileApi.updateMyUserProfile({ email });
+
+      set(state => {
+        if (!state.profile) {
+          return state;
+        }
+
+        return {
+          profile: { ...state.profile, email },
+        };
+      });
+    } catch (err) {
+      showErrorToast('Failed to update email', err);
+    }
   },
 });
 

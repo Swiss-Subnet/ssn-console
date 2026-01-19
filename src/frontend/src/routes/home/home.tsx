@@ -3,6 +3,7 @@ import { EmailPrompt } from './email-prompt';
 import type { FC } from 'react';
 import { selectIsActive, useAppStore } from '@/lib/store';
 import { SignUpPrompt } from '@/routes/home/sign-up-prompt';
+import { ActivityPrompt } from '@/routes/home/activity-prompt';
 
 const Home: FC = () => {
   const { isAuthenticated } = useAppStore();
@@ -20,7 +21,9 @@ const Home: FC = () => {
 
       {!isAuthenticated && <SignUpPrompt className="mt-8" />}
 
-      {isAuthenticated && <EmailPrompt />}
+      {isAuthenticated && !isActive && <EmailPrompt className="mt-8" />}
+
+      {isAuthenticated && isActive && <ActivityPrompt className="mt-8" />}
     </>
   );
 };
