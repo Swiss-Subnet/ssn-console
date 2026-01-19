@@ -147,6 +147,7 @@ fn get_asset_headers(additional_headers: Vec<HeaderField>) -> Vec<HeaderField> {
         connect_src.push("localhost:8000");
     } else {
         connect_src.push("icp0.io");
+        connect_src.push("icp-api.io");
     }
     let connect_src = connect_src.join(" ");
 
