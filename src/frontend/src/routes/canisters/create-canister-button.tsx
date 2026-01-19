@@ -18,7 +18,7 @@ export const CreateCanisterButton: FC<CreateCanisterButtonProps> = ({
     try {
       await createCanister();
     } catch (err) {
-      showErrorToast('Failed to query canister status', err);
+      showErrorToast('Failed to create canister', err);
     } finally {
       setIsCreating(false);
     }
