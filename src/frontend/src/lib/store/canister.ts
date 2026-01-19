@@ -1,5 +1,5 @@
 import type { AppStateCreator, CanistersSlice } from '@/lib/store/model';
-import { showErrorToast } from '@/lib/toast';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
 
 export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   set,
@@ -175,6 +175,7 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
           }),
         };
       });
+      showSuccessToast('Controller added successfully!');
     } catch (err) {
       showErrorToast('Failed to add controller to canister', err);
     }

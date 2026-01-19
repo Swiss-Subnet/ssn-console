@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/lib/store';
 import { useState, type FC } from 'react';
 import { CheckCircleIcon } from 'lucide-react';
-import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -86,14 +85,9 @@ export const EmailPrompt: FC<EmailPromptProps> = ({ className }) => {
   }
 
   async function onSubmit(formData: FormData): Promise<void> {
-    try {
-      await setEmail(formData.email);
-      showSuccessToast('Email registered successfully!');
-      setIsEditing(false);
-      form.reset();
-    } catch (error) {
-      showErrorToast('Failed to register email', error);
-    }
+    await setEmail(formData.email);
+    setIsEditing(false);
+    form.reset();
   }
 
   return (

@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/lib/store';
-import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { PrincipalTextSchema } from '@dfinity/zod-schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { FC } from 'react';
@@ -39,13 +38,8 @@ export const TrustedPartnerForm: FC<TrustedPartnerFormProps> = ({
   });
 
   async function onSubmit(formData: FormData): Promise<void> {
-    try {
-      await createTrustedPartner(formData);
-      showSuccessToast('Trusted partner added successfully!');
-      form.reset();
-    } catch (error) {
-      showErrorToast('Failed to add partner', error);
-    }
+    await createTrustedPartner(formData);
+    form.reset();
   }
 
   return (

@@ -4,7 +4,7 @@ import type {
   AppStateCreator,
   UserProfileSlice,
 } from '@/lib/store/model';
-import { showErrorToast } from '@/lib/toast';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
 
 export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   set,
@@ -63,6 +63,7 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
           profile: { ...state.profile, email },
         };
       });
+      showSuccessToast('Email registered successfully!');
     } catch (err) {
       showErrorToast('Failed to update email', err);
     }

@@ -7,7 +7,6 @@ import z from 'zod';
 import { PrincipalTextSchema } from '@dfinity/zod-schemas';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import {
   Form,
   FormControl,
@@ -40,13 +39,8 @@ export const AddControllerForm: FC<AddControllerFormProps> = ({
   });
 
   async function onSubmit(formData: FormData): Promise<void> {
-    try {
-      await addController(canisterId, formData.principal);
-      showSuccessToast('Controller added successfully!');
-      form.reset();
-    } catch (error) {
-      showErrorToast('Failed to add controller', error);
-    }
+    await addController(canisterId, formData.principal);
+    form.reset();
   }
 
   return (

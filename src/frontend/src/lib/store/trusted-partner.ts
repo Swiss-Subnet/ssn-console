@@ -1,6 +1,6 @@
 import type { CreateTrustedPartnerRequest } from '@/lib/api-models';
 import type { AppStateCreator, TrustedPartnersSlice } from '@/lib/store/model';
-import { showErrorToast } from '@/lib/toast';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
 
 export const createTrustedPartnerSlice: AppStateCreator<
   TrustedPartnersSlice
@@ -60,6 +60,7 @@ export const createTrustedPartnerSlice: AppStateCreator<
           trustedPartners: [...state.trustedPartners, newTrustedPartner],
         };
       });
+      showSuccessToast('Trusted partner added successfully!');
     } catch (err) {
       showErrorToast('Failed to create trusted partner', err);
     }
