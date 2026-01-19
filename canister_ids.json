@@ -1,6 +1,6 @@
 {
   "backend": {
-    "test": "${TEST_CANISTER_ID}",
+    "test": "r5rta-kyaaa-aaaax-qaaca-cai",
     "production": "rpxez-giaaa-aaaax-qaaba-cai"
   }
 }

@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: test
-      url: https://${TEST_CANISTER_ID}.icp0.io
+      url: https://r5rta-kyaaa-aaaax-qaaca-cai.icp0.io
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
