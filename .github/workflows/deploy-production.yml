@@ -27,7 +27,7 @@ jobs:
         run: |
           echo "${{ secrets.IDENTITY_PEM }}" > ./production.pem
           dfx identity import --ic --storage-mode plaintext production ./production.pem
-          fm -f ./production.pem
+          rm -f ./production.pem
           dfx identity use production
 
       - name: Deploy to production
