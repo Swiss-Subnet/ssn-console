@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { selectIsActive, selectIsAdmin, useAppStore } from '@/lib/store';
-import { showSuccessToast } from '@/lib/toast';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import {
   CircleUserRoundIcon,
   ClipboardIcon,
@@ -35,6 +35,14 @@ export const HeaderMenu: FC = () => {
     if (principal) {
       await navigator.clipboard.writeText(principal);
       showSuccessToast('Principal copied to clipboard!');
+    }
+  }
+
+  async function onLogoutClicked(): Promise<void> {
+    try {
+      await logout();
+    } catch (err) {
+      showErrorToast('Logout failed', err);
     }
   }
 
@@ -83,7 +91,7 @@ export const HeaderMenu: FC = () => {
 
             <DropdownMenuItem
               className="justify-between"
-              onClick={() => logout()}
+              onClick={() => onLogoutClicked()}
             >
               Log Out
               <LogOutIcon />

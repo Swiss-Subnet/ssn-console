@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
 
 export type AddControllerFormProps = {
   canisterId: string;
@@ -39,8 +40,13 @@ export const AddControllerForm: FC<AddControllerFormProps> = ({
   });
 
   async function onSubmit(formData: FormData): Promise<void> {
-    await addController(canisterId, formData.principal);
-    form.reset();
+    try {
+      await addController(canisterId, formData.principal);
+      form.reset();
+      showSuccessToast('Controller added successfully!');
+    } catch (err) {
+      showErrorToast('Failed to add controller to canister', err);
+    }
   }
 
   return (

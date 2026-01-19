@@ -2,6 +2,7 @@ import { LoadingButton } from '@/components/loading-button';
 import { WidthLock } from '@/components/width-lock';
 import { UserStatus, type UserProfile } from '@/lib/api-models';
 import { useAppStore } from '@/lib/store';
+import { showErrorToast } from '@/lib/toast';
 import { useState, type FC } from 'react';
 
 export type UserStatusButtonProps = {
@@ -22,6 +23,8 @@ export const UserStatusToggle: FC<UserStatusButtonProps> = ({ user }) => {
       } else {
         await activateUser(userId);
       }
+    } catch (err) {
+      showErrorToast('Failed to set user status', err);
     } finally {
       setIsSaving(false);
     }

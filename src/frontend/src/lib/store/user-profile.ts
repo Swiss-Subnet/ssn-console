@@ -4,7 +4,6 @@ import type {
   AppStateCreator,
   UserProfileSlice,
 } from '@/lib/store/model';
-import { showErrorToast, showSuccessToast } from '@/lib/toast';
 
 export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   set,
@@ -28,8 +27,6 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
     try {
       const profile = await userProfileApi.getOrCreateMyUserProfile();
       set({ profile });
-    } catch (err) {
-      showErrorToast('Failed to initialize user profile', err);
     } finally {
       set({ isProfileInitialized: true, isProfileLoading: false });
     }
@@ -43,30 +40,25 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
     const { getUserProfileApi, isAuthenticated, isProfileInitialized } = get();
     const userProfileApi = getUserProfileApi();
 
-    try {
-      if (!isProfileInitialized) {
-        throw new Error('User profile is not initialized');
-      }
-
-      if (!isAuthenticated) {
-        return;
-      }
-
-      await userProfileApi.updateMyUserProfile({ email });
-
-      set(state => {
-        if (!state.profile) {
-          return state;
-        }
-
-        return {
-          profile: { ...state.profile, email },
-        };
-      });
-      showSuccessToast('Email registered successfully!');
-    } catch (err) {
-      showErrorToast('Failed to update email', err);
+    if (!isProfileInitialized) {
+      throw new Error('User profile is not initialized');
     }
+
+    if (!isAuthenticated) {
+      return;
+    }
+
+    await userProfileApi.updateMyUserProfile({ email });
+
+    set(state => {
+      if (!state.profile) {
+        return state;
+      }
+
+      return {
+        profile: { ...state.profile, email },
+      };
+    });
   },
 });
 

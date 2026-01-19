@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PromptHeader } from '@/routes/home/prompt-header';
 import { PromptFooter } from '@/routes/home/prompt-footer';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
 
 export type EmailPromptProps = {
   className?: string;
@@ -40,8 +41,13 @@ export const EmailPrompt: FC<EmailPromptProps> = ({ className }) => {
   });
 
   function onEditEmailClicked(): void {
-    form.setValue('email', profile?.email || '');
-    setIsEditing(true);
+    try {
+      form.setValue('email', profile?.email || '');
+      setIsEditing(true);
+      showSuccessToast('Email registered successfully!');
+    } catch (err) {
+      showErrorToast('Failed to update email', err);
+    }
   }
 
   if (profile?.email && !isEditing) {

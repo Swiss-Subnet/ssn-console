@@ -1,5 +1,4 @@
 import type { AppStateCreator, CanistersSlice } from '@/lib/store/model';
-import { showErrorToast, showSuccessToast } from '@/lib/toast';
 
 export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   set,
@@ -60,8 +59,6 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
           }
         }),
       );
-    } catch (err) {
-      showErrorToast('Failed to query canister status', err);
     } finally {
       set({ isCanistersInitialized: true });
     }
@@ -107,8 +104,6 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
           ),
         };
       });
-    } catch (err) {
-      showErrorToast('Failed to query canister status', err);
     } finally {
       set(state => {
         const canisters = state.canisters ?? [];
@@ -127,57 +122,50 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
       get();
     const managementCanisterApi = getManagementCanisterApi();
 
-    try {
-      if (!isCanistersInitialized) {
-        throw new Error('Canisters are not initialized');
-      }
-
-      const canister = canisters?.find(c => c.principal === canisterPrincipal);
-      if (!canister) {
-        throw new Error(
-          `Canister with principal ${canisterPrincipal} not found`,
-        );
-      }
-
-      const existingControllers = canister.status?.settings.controllers ?? [];
-      if (existingControllers.includes(controller)) {
-        throw new Error(
-          `Controller ${controller} is already a controller of canister ${canisterPrincipal}`,
-        );
-      }
-
-      await managementCanisterApi.updateSettings({
-        canisterId: canisterPrincipal,
-        settings: {
-          controllers: [...existingControllers, controller],
-        },
-      });
-
-      set(state => {
-        const canisters = state.canisters ?? [];
-
-        return {
-          canisters: canisters.map(c => {
-            if (c.principal !== canisterPrincipal || !c.status) {
-              return c;
-            }
-
-            return {
-              ...c,
-              status: {
-                ...c.status,
-                settings: {
-                  ...c.status.settings,
-                  controllers: [...c.status.settings.controllers, controller],
-                },
-              },
-            };
-          }),
-        };
-      });
-      showSuccessToast('Controller added successfully!');
-    } catch (err) {
-      showErrorToast('Failed to add controller to canister', err);
+    if (!isCanistersInitialized) {
+      throw new Error('Canisters are not initialized');
     }
+
+    const canister = canisters?.find(c => c.principal === canisterPrincipal);
+    if (!canister) {
+      throw new Error(`Canister with principal ${canisterPrincipal} not found`);
+    }
+
+    const existingControllers = canister.status?.settings.controllers ?? [];
+    if (existingControllers.includes(controller)) {
+      throw new Error(
+        `Controller ${controller} is already a controller of canister ${canisterPrincipal}`,
+      );
+    }
+
+    await managementCanisterApi.updateSettings({
+      canisterId: canisterPrincipal,
+      settings: {
+        controllers: [...existingControllers, controller],
+      },
+    });
+
+    set(state => {
+      const canisters = state.canisters ?? [];
+
+      return {
+        canisters: canisters.map(c => {
+          if (c.principal !== canisterPrincipal || !c.status) {
+            return c;
+          }
+
+          return {
+            ...c,
+            status: {
+              ...c.status,
+              settings: {
+                ...c.status.settings,
+                controllers: [...c.status.settings.controllers, controller],
+              },
+            },
+          };
+        }),
+      };
+    });
   },
 });

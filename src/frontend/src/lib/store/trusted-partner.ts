@@ -1,6 +1,5 @@
 import type { CreateTrustedPartnerRequest } from '@/lib/api-models';
 import type { AppStateCreator, TrustedPartnersSlice } from '@/lib/store/model';
-import { showErrorToast, showSuccessToast } from '@/lib/toast';
 
 export const createTrustedPartnerSlice: AppStateCreator<
   TrustedPartnersSlice
@@ -20,8 +19,6 @@ export const createTrustedPartnerSlice: AppStateCreator<
     try {
       const trustedPartners = await trustedPartnerApi.listTrustedPartners();
       set({ trustedPartners });
-    } catch (err) {
-      showErrorToast('Failed to initialize trusted partners', err);
     } finally {
       set({ isTrustedPartnersInitialized: true });
     }
@@ -39,30 +36,24 @@ export const createTrustedPartnerSlice: AppStateCreator<
     } = get();
     const trustedPartnerApi = getTrustedPartnerApi();
 
-    try {
-      if (!isTrustedPartnersInitialized) {
-        throw new Error('Trusted partners are not initialized');
-      }
-
-      if (!isAuthenticated) {
-        return;
-      }
-
-      const newTrustedPartner =
-        await trustedPartnerApi.createTrustedPartner(req);
-
-      set(state => {
-        if (!state.trustedPartners) {
-          return state;
-        }
-
-        return {
-          trustedPartners: [...state.trustedPartners, newTrustedPartner],
-        };
-      });
-      showSuccessToast('Trusted partner added successfully!');
-    } catch (err) {
-      showErrorToast('Failed to create trusted partner', err);
+    if (!isTrustedPartnersInitialized) {
+      throw new Error('Trusted partners are not initialized');
     }
+
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const newTrustedPartner = await trustedPartnerApi.createTrustedPartner(req);
+
+    set(state => {
+      if (!state.trustedPartners) {
+        return state;
+      }
+
+      return {
+        trustedPartners: [...state.trustedPartners, newTrustedPartner],
+      };
+    });
   },
 });

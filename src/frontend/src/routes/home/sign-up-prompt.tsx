@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { WidthLock } from '@/components/width-lock';
 import { useAppStore } from '@/lib/store';
+import { showErrorToast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { PromptFooter } from '@/routes/home/prompt-footer';
 import { PromptHeader } from '@/routes/home/prompt-header';
@@ -16,6 +17,14 @@ export const SignUpPrompt: FC<SignUpPromptProps> = ({ className }) => {
   const { login, isAuthInitialized, isLoggingIn } = useAppStore();
   const isAuthReady = isAuthInitialized && !isLoggingIn;
 
+  async function onLoginClicked(): Promise<void> {
+    try {
+      await login();
+    } catch (err) {
+      showErrorToast('Login failed', err);
+    }
+  }
+
   return (
     <Card className={cn('mx-auto max-w-md', className)}>
       <PromptHeader />
@@ -24,7 +33,7 @@ export const SignUpPrompt: FC<SignUpPromptProps> = ({ className }) => {
         <Button
           size="lg"
           className="mt-2 w-full"
-          onClick={() => login()}
+          onClick={() => onLoginClicked()}
           disabled={!isAuthReady}
         >
           <WidthLock activeId={isAuthReady ? 'ready' : 'waiting'}>
