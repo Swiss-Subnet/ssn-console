@@ -31,4 +31,6 @@ jobs:
           dfx identity use production
 
       - name: Deploy to production
-        run: dfx deploy --network production
+        run: |
+          export DFX_WARNING=-mainnet_plaintext_identity
+          dfx deploy --network production
