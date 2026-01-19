@@ -45,8 +45,6 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
                 ),
               };
             });
-          } catch (err) {
-            throw err;
           } finally {
             set(state => {
               const canisters = state.canisters ?? [];
