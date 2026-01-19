@@ -1,0 +1,21 @@
+name: Setup Node
+description: Setup Node
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: pnpm/action-setup@v4
+      name: Install pnpm
+      id: pnpm-install
+      with:
+        cache: true
+
+    - name: Install NodeJS
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: '.node-version'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm i --frozen-lockfile

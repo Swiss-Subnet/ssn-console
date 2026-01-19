@@ -1,0 +1,33 @@
+name: Deploy Production
+
+on: workflow_dispatch
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://console.subnet.ch
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Setup DFX
+        uses: ./.github/actions/setup-dfx
+
+      - name: Import DFX identity
+        run: |
+          echo "${{ secrets.IDENTITY_PEM }}" > ./production.pem
+          dfx identity import --ic --storage-mode plaintext production ./production.pem
+          dfx identity use production
+
+      - name: Deploy to production
+        run: dfx deploy --network production
