@@ -1,0 +1,37 @@
+name: Deploy Test
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: test
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+      url: https://r5rta-kyaaa-aaaax-qaaca-cai.icp0.io
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Setup DFX
+        uses: ./.github/actions/setup-dfx
+
+      - name: Import DFX identity
+        run: |
+          echo "${{ secrets.IDENTITY_PEM }}" > ./test.pem
+          dfx identity import --ic --storage-mode plaintext test ./test.pem
+          rm -f ./test.pem
+          dfx identity use test
+
+      - name: Deploy to test
+        run: dfx deploy --network test
