@@ -31,9 +31,9 @@ jobs:
           echo "${{ secrets.IDENTITY_PEM }}" > ./test.pem
           dfx identity import --ic --storage-mode plaintext test ./test.pem
           rm -f ./test.pem
-
-          export DFX_WARNING=-mainnet_plaintext_identity
           dfx identity use test
 
       - name: Deploy to test
-        run: dfx deploy --network test
+        run: |
+          export DFX_WARNING=-mainnet_plaintext_identity
+          dfx deploy --network test
