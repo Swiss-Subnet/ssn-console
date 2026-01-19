@@ -9,11 +9,11 @@
     },
     "test": {
       "type": "persistent",
-      "providers": ["https://icp-api.io"]
+      "providers": ["https://icp0.io"]
     },
     "production": {
       "type": "persistent",
-      "providers": ["https://icp-api.io"]
+      "providers": ["https://icp0.io"]
     }
   },
   "canisters": {
