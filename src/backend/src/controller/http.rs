@@ -92,6 +92,28 @@ fn certify_all_assets() {
             )]),
             encodings: vec![],
         },
+        AssetConfig::File {
+            path: ".well-known/ii-alternative-origins".to_string(),
+            content_type: Some("application/json".to_string()),
+            headers: get_asset_headers(vec![(
+                "cache-control".to_string(),
+                NO_CACHE_ASSET_CACHE_CONTROL.to_string(),
+            )]),
+            fallback_for: vec![],
+            aliased_by: vec![],
+            encodings: vec![],
+        },
+        AssetConfig::File {
+            path: ".well-known/ic-domains".to_string(),
+            content_type: Some("text/plain".to_string()),
+            headers: get_asset_headers(vec![(
+                "cache-control".to_string(),
+                NO_CACHE_ASSET_CACHE_CONTROL.to_string(),
+            )]),
+            fallback_for: vec![],
+            aliased_by: vec![],
+            encodings: vec![],
+        },
     ];
 
     let mut assets = Vec::new();

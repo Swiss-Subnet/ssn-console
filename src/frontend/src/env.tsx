@@ -19,3 +19,7 @@ export const IDENTITY_PROVIDER = IS_LOCAL
 export const BACKEND_CANISTER_ID: string = getEnvVar('CANISTER_ID_BACKEND');
 
 export const SHOULD_FETCH_ROOT_KEY = IS_LOCAL;
+
+export const DERIVATION_ORIGIN = IS_LOCAL
+  ? undefined
+  : 'https://console.subnet.ch';
