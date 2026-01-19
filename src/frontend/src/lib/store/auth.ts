@@ -1,6 +1,11 @@
 import type { AppStateCreator, AuthSlice } from '@/lib/store/model';
+<<<<<<< HEAD
 import { AuthClient } from '@icp-sdk/auth/client';
 import { IDENTITY_PROVIDER } from '@/env';
+=======
+import { AuthClient } from '@dfinity/auth-client';
+import { IDENTITY_PROVIDER, DERIVATION_ORIGIN } from '@/env';
+>>>>>>> aa397ac (Add alternative II origins and update identity provider)
 import { isNil } from '@/lib/nil';
 
 const NANOS_PER_SEC = 1_000_000_000;
@@ -77,6 +82,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
 
     await authClient.login({
       identityProvider: IDENTITY_PROVIDER,
+      derivationOrigin: DERIVATION_ORIGIN,
       onSuccess: async () => {
         const identity = authClient.getIdentity();
         setAgentIdentity(identity);

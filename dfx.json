@@ -22,11 +22,25 @@
       "declarations": {
         "bindings": ["js", "ts"],
         "output": "./dist"
+<<<<<<< HEAD
       },
       "frontend": {},
       "gzip": true,
       "shrink": true,
       "optimize": "cycles"
+=======
+      }
+    },
+    "frontend": {
+      "dependencies": ["backend"],
+      "source": [
+        "src/frontend/dist"],
+      "type": "assets",
+      "build": ["pnpm -F @ssn/backend-api build", "pnpm -F frontend run build"],
+      "declarations": {
+        "bindings": []
+      }
+>>>>>>> aa397ac (Add alternative II origins and update identity provider)
     },
     "internet_identity": {
       "type": "custom",
