@@ -1,11 +1,12 @@
 import type {
   Canister,
   CanisterStatusResponse,
-  MyUserProfile,
+  CreateTrustedPartnerRequest,
+  TrustedPartner,
   UserProfile,
   UserStatus,
 } from '@/lib/api-models';
-import type { CanisterApi, UserProfileApi } from '@/lib/api';
+import type { CanisterApi, TrustedPartnerApi, UserProfileApi } from '@/lib/api';
 import type { ActorSubclass, HttpAgent, Identity } from '@icp-sdk/core/agent';
 import type { AuthClient } from '@icp-sdk/auth/client';
 import type { _SERVICE } from '@ssn/backend-api';
@@ -32,17 +33,19 @@ export type ApiSlice = {
   userProfileApi: UserProfileApi | null;
   canisterApi: CanisterApi | null;
   managementCanisterApi: ManagementCanisterApi | null;
+  trustedPartnerApi: TrustedPartnerApi | null;
 
   initializeApi: () => void;
   setAgentIdentity: (identity: Identity) => void;
   getUserProfileApi: () => UserProfileApi;
   getCanisterApi: () => CanisterApi;
   getManagementCanisterApi: () => ManagementCanisterApi;
+  getTrustedPartnerApi: () => TrustedPartnerApi;
 };
 
 export type UserProfileSlice = {
   isProfileInitialized: boolean;
-  profile: MyUserProfile | null;
+  profile: UserProfile | null;
 
   initializeUserProfile: () => Promise<void>;
   clearUserProfile: () => void;
@@ -79,10 +82,20 @@ export type CanistersSlice = {
   ) => Promise<void>;
 };
 
+export type TrustedPartnersSlice = {
+  isTrustedPartnersInitialized: boolean;
+  trustedPartners: TrustedPartner[] | null;
+
+  initializeTrustedPartners: () => Promise<void>;
+  clearTrustedPartners: () => void;
+  createTrustedPartner: (req: CreateTrustedPartnerRequest) => Promise<void>;
+};
+
 export type AppSlice = AuthSlice &
   ApiSlice &
   UserProfileSlice &
   UsersSlice &
-  CanistersSlice;
+  CanistersSlice &
+  TrustedPartnersSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;

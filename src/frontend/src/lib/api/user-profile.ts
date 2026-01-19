@@ -7,9 +7,9 @@ import {
   type CreateMyUserProfileResponse,
   type GetMyUserProfileResponse,
   type ListUserProfilesResponse,
-  type MyUserProfile,
   type UpdateMyUserProfileRequest,
   type UpdateUserProfileRequest,
+  type UserProfile,
 } from '@/lib/api-models';
 import { isNotNil } from '@/lib/nil';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
@@ -30,7 +30,7 @@ export class UserProfileApi {
     return mapCreateMyUserProfileResponse(res);
   }
 
-  public async getOrCreateMyUserProfile(): Promise<MyUserProfile> {
+  public async getOrCreateMyUserProfile(): Promise<UserProfile> {
     const userProfile = await this.getMyUserProfile();
 
     if (isNotNil(userProfile)) {

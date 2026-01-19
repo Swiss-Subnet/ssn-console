@@ -1,6 +1,7 @@
 import { generateRandomIdentity } from '@dfinity/pic';
 import { anonymousIdentity, controllerIdentity, TestDriver } from '../support';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { Principal } from '@icp-sdk/core/principal';
 
 describe('Canisters', () => {
   let driver: TestDriver;
@@ -42,15 +43,15 @@ describe('Canisters', () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.create_my_user_profile();
-      const aliceCanisterOne = await driver.actor.create_canister();
-      const aliceCanisterTwo = await driver.actor.create_canister();
+      const aliceCanisterOne = await driver.actor.create_my_canister();
+      const aliceCanisterTwo = await driver.actor.create_my_canister();
 
       const bobIdentity = generateRandomIdentity();
       driver.actor.setIdentity(bobIdentity);
       await driver.actor.create_my_user_profile();
-      const bobCanisterOne = await driver.actor.create_canister();
-      const bobCanisterTwo = await driver.actor.create_canister();
-      const bobCanisterThree = await driver.actor.create_canister();
+      const bobCanisterOne = await driver.actor.create_my_canister();
+      const bobCanisterTwo = await driver.actor.create_my_canister();
+      const bobCanisterThree = await driver.actor.create_my_canister();
 
       driver.actor.setIdentity(controllerIdentity);
       const canisters = await driver.actor.list_canisters();
@@ -97,15 +98,15 @@ describe('Canisters', () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.create_my_user_profile();
-      const aliceCanisterOne = await driver.actor.create_canister();
-      const aliceCanisterTwo = await driver.actor.create_canister();
+      const aliceCanisterOne = await driver.actor.create_my_canister();
+      const aliceCanisterTwo = await driver.actor.create_my_canister();
 
       const bobIdentity = generateRandomIdentity();
       driver.actor.setIdentity(bobIdentity);
       await driver.actor.create_my_user_profile();
-      const bobCanisterOne = await driver.actor.create_canister();
-      const bobCanisterTwo = await driver.actor.create_canister();
-      const bobCanisterThree = await driver.actor.create_canister();
+      const bobCanisterOne = await driver.actor.create_my_canister();
+      const bobCanisterTwo = await driver.actor.create_my_canister();
+      const bobCanisterThree = await driver.actor.create_my_canister();
 
       driver.actor.setIdentity(aliceIdentity);
       const canisters = await driver.actor.list_my_canisters();
@@ -124,11 +125,11 @@ describe('Canisters', () => {
     });
   });
 
-  describe('create_canister', () => {
+  describe('create_my_canister', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      await expect(driver.actor.create_canister()).rejects.toThrowError(
+      await expect(driver.actor.create_my_canister()).rejects.toThrowError(
         /Anonymous users are not allowed to perform this action/,
       );
     });
@@ -137,7 +138,7 @@ describe('Canisters', () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      await expect(driver.actor.create_canister()).rejects.toThrowError(
+      await expect(driver.actor.create_my_canister()).rejects.toThrowError(
         new RegExp(
           `User profile for principal ${aliceIdentity.getPrincipal()} does not exist`,
         ),
@@ -149,12 +150,20 @@ describe('Canisters', () => {
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.create_my_user_profile();
 
-      const canister = await driver.actor.create_canister();
+      const canister = await driver.actor.create_my_canister();
+      const controllers = await driver.pic.getControllers(
+        Principal.fromText(canister.principal_id),
+      );
 
       expect(canister).toEqual({
         id: expect.any(String),
         principal_id: expect.any(String),
       });
+      expect(
+        controllers.some(
+          c => c.compareTo(aliceIdentity.getPrincipal()) === 'eq',
+        ),
+      ).toBe(true);
     });
   });
 });

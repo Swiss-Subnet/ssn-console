@@ -1,0 +1,19 @@
+type ListTrustedPartnersResponse = vec TrustedPartner;
+
+type CreateTrustedPartnerRequest = record {
+  principal_id : text;
+  name : text;
+};
+
+type CreateTrustedPartnerResponse = TrustedPartner;
+
+type TrustedPartner = record {
+  id : text;
+  principal_id : text;
+  name : text;
+};
+
+service : {
+  list_trusted_partners : () -> (ListTrustedPartnersResponse) query;
+  create_trusted_partner : (CreateTrustedPartnerRequest) -> (CreateTrustedPartnerResponse);
+};
