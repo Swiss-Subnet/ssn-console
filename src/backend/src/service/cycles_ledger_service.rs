@@ -22,7 +22,7 @@ pub async fn create_canister(
                     .controllers
                     .or_else(|| Some(vec![calling_principal]));
 
-                return settings;
+                settings
             },
         );
     let create_canister_args = management_canister::CreateCanisterArgs {

@@ -80,8 +80,8 @@ describe('Cycles Ledger', () => {
       );
 
       expect(
-        controllers.some(c =>
-          c.compareTo(trustedPartnerIdentity.getPrincipal()),
+        controllers.some(
+          c => c.compareTo(trustedPartnerIdentity.getPrincipal()) === 'eq',
         ),
       ).toBe(true);
     });
@@ -127,8 +127,8 @@ describe('Cycles Ledger', () => {
       );
 
       expect(
-        controllers.some(c =>
-          c.compareTo(trustedPartnerIdentity.getPrincipal()),
+        controllers.some(
+          c => c.compareTo(trustedPartnerIdentity.getPrincipal()) === 'eq',
         ),
       ).toBe(true);
     });
