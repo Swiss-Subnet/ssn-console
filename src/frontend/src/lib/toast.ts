@@ -13,7 +13,6 @@ export function showErrorToast(title: string, description?: Error | unknown) {
   console.error(title, descriptionStr);
   toast.error(title, {
     ...commonToastOptions,
-    description: descriptionStr,
   });
 }
 

@@ -8,10 +8,10 @@ export const createTrustedPartnerSlice: AppStateCreator<
   trustedPartners: null,
 
   async initializeTrustedPartners() {
-    const { getTrustedPartnerApi, isAuthenticated } = get();
+    const { getTrustedPartnerApi, isAuthenticated, profile } = get();
     const trustedPartnerApi = getTrustedPartnerApi();
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !profile?.isAdmin) {
       set({ isTrustedPartnersInitialized: true });
       return;
     }
