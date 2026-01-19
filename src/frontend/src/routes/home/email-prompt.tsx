@@ -41,13 +41,8 @@ export const EmailPrompt: FC<EmailPromptProps> = ({ className }) => {
   });
 
   function onEditEmailClicked(): void {
-    try {
-      form.setValue('email', profile?.email || '');
-      setIsEditing(true);
-      showSuccessToast('Email registered successfully!');
-    } catch (err) {
-      showErrorToast('Failed to update email', err);
-    }
+    form.setValue('email', profile?.email || '');
+    setIsEditing(true);
   }
 
   if (profile?.email && !isEditing) {
@@ -91,9 +86,14 @@ export const EmailPrompt: FC<EmailPromptProps> = ({ className }) => {
   }
 
   async function onSubmit(formData: FormData): Promise<void> {
-    await setEmail(formData.email);
-    setIsEditing(false);
-    form.reset();
+    try {
+      await setEmail(formData.email);
+      setIsEditing(false);
+      form.reset();
+      showSuccessToast('Email registered successfully!');
+    } catch (err) {
+      showErrorToast('Failed to update email', err);
+    }
   }
 
   return (
