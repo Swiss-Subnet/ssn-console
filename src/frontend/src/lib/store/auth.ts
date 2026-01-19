@@ -2,6 +2,7 @@ import type { AppStateCreator, AuthSlice } from '@/lib/store/model';
 import { AuthClient } from '@icp-sdk/auth/client';
 import { DERIVATION_ORIGIN, IDENTITY_PROVIDER } from '@/env';
 import { isNil } from '@/lib/nil';
+import { AnonymousIdentity } from '@icp-sdk/core/agent';
 
 const NANOS_PER_SEC = 1_000_000_000;
 const SECS_PER_MIN = 60;
@@ -36,13 +37,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
     const { setAgentIdentity, initializeData } = get();
 
     try {
-      const authClient = await AuthClient.create({
-        loginOptions: {
-          maxTimeToLive: BigInt(
-            7 * HOURS_PER_DAY * MINS_PER_HOUR * SECS_PER_MIN * NANOS_PER_SEC,
-          ), // 7 days
-        },
-      });
+      const authClient = await AuthClient.create();
       const isAuthenticated = await authClient.isAuthenticated();
       const identity = authClient.getIdentity();
       setAgentIdentity(identity);
@@ -55,13 +50,8 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       });
 
       await initializeData();
-    } catch (err) {
-      console.error(err);
-
-      set({
-        error: 'Failed to initialize auth client',
-        isAuthInitialized: true,
-      });
+    } finally {
+      set({ isAuthInitialized: true });
     }
   },
 
@@ -75,26 +65,30 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       isLoggingIn: true,
     });
 
-    await authClient.login({
-      identityProvider: IDENTITY_PROVIDER,
-      derivationOrigin: DERIVATION_ORIGIN,
-      onSuccess: async () => {
-        const identity = authClient.getIdentity();
-        setAgentIdentity(identity);
+    await new Promise<void>(async (resolve, reject) => {
+      await authClient.login({
+        identityProvider: IDENTITY_PROVIDER,
+        derivationOrigin: DERIVATION_ORIGIN,
+        maxTimeToLive: BigInt(
+          7 * HOURS_PER_DAY * MINS_PER_HOUR * SECS_PER_MIN * NANOS_PER_SEC,
+        ), // 7 days
+        onSuccess: async () => {
+          const identity = authClient.getIdentity();
+          setAgentIdentity(identity);
 
-        set({
-          isAuthenticated: true,
-          isLoggingIn: false,
-          identity,
-          error: null,
-        });
-        await initializeData();
-      },
-      onError: err => {
-        console.error(err);
-
-        set({ error: err || 'Login failed', isLoggingIn: false });
-      },
+          set({
+            isAuthenticated: true,
+            isLoggingIn: false,
+            identity,
+          });
+          await initializeData();
+          resolve();
+        },
+        onError: err => {
+          reject(err);
+          set({ isLoggingIn: false });
+        },
+      });
     });
   },
 
@@ -111,17 +105,20 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       throw new Error('AuthClient is not initialized');
     }
 
-    await authClient.logout();
-    const identity = authClient.getIdentity();
-    setAgentIdentity(identity);
+    try {
+      await authClient.logout();
+    } finally {
+      const identity = new AnonymousIdentity();
+      setAgentIdentity(identity);
+      set({
+        isAuthenticated: false,
+        identity,
+      });
 
-    clearUserProfile();
-    clearUsers();
-    clearCanisters();
-    clearTrustedPartners();
-    set({
-      isAuthenticated: false,
-      identity,
-    });
+      clearUserProfile();
+      clearUsers();
+      clearCanisters();
+      clearTrustedPartners();
+    }
   },
 });

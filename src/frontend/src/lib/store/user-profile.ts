@@ -10,14 +10,17 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   get,
 ) => ({
   isProfileInitialized: false,
+  isProfileLoading: false,
   profile: null,
 
   async initializeUserProfile() {
+    set({ isProfileLoading: true });
+
     const { getUserProfileApi, isAuthenticated } = get();
     const userProfileApi = getUserProfileApi();
 
     if (!isAuthenticated) {
-      set({ isProfileInitialized: true });
+      set({ isProfileInitialized: true, isProfileLoading: false });
       return;
     }
 
@@ -25,7 +28,7 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
       const profile = await userProfileApi.getOrCreateMyUserProfile();
       set({ profile });
     } finally {
-      set({ isProfileInitialized: true });
+      set({ isProfileInitialized: true, isProfileLoading: false });
     }
   },
 

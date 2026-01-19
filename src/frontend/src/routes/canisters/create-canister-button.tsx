@@ -1,5 +1,6 @@
 import { LoadingButton } from '@/components/loading-button';
 import { useAppStore } from '@/lib/store';
+import { showErrorToast } from '@/lib/toast';
 import { useState, type FC } from 'react';
 
 export type CreateCanisterButtonProps = {
@@ -12,10 +13,12 @@ export const CreateCanisterButton: FC<CreateCanisterButtonProps> = ({
   const { createCanister } = useAppStore();
   const [isCreating, setIsCreating] = useState(false);
 
-  async function onButtonClicked(): Promise<void> {
+  async function onCreateCanisterClicked(): Promise<void> {
     setIsCreating(true);
     try {
       await createCanister();
+    } catch (err) {
+      showErrorToast('Failed to create canister', err);
     } finally {
       setIsCreating(false);
     }
@@ -26,7 +29,7 @@ export const CreateCanisterButton: FC<CreateCanisterButtonProps> = ({
       variant="default"
       isLoading={isCreating}
       className={className}
-      onClick={() => onButtonClicked()}
+      onClick={() => onCreateCanisterClicked()}
     >
       Create Canister
     </LoadingButton>

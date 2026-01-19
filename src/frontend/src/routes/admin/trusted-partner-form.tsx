@@ -41,10 +41,10 @@ export const TrustedPartnerForm: FC<TrustedPartnerFormProps> = ({
   async function onSubmit(formData: FormData): Promise<void> {
     try {
       await createTrustedPartner(formData);
-      showSuccessToast('Trusted partner added successfully!');
       form.reset();
-    } catch (error) {
-      showErrorToast('Failed to add partner', error);
+      showSuccessToast('Trusted partner added successfully!');
+    } catch (err) {
+      showErrorToast('Failed to create trusted partner', err);
     }
   }
 

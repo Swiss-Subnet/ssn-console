@@ -19,7 +19,6 @@ export type AuthSlice = {
   isAuthenticated: boolean;
   identity: Identity | null;
   authClient: AuthClient | null;
-  error: string | null;
 
   initializeData: () => Promise<void>;
   initializeAuth: () => Promise<void>;
@@ -45,6 +44,7 @@ export type ApiSlice = {
 
 export type UserProfileSlice = {
   isProfileInitialized: boolean;
+  isProfileLoading: boolean;
   profile: UserProfile | null;
 
   initializeUserProfile: () => Promise<void>;
