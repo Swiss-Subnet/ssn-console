@@ -28,6 +28,8 @@ jobs:
           echo "${{ secrets.IDENTITY_PEM }}" > ./production.pem
           dfx identity import --ic --storage-mode plaintext production ./production.pem
           rm -f ./production.pem
+
+          export DFX_WARNING=-mainnet_plaintext_identity
           dfx identity use production
 
       - name: Deploy to production
