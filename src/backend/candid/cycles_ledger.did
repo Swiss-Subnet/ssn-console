@@ -1,7 +1,7 @@
 // a subset of the Candid interface of the Cycles Ledger canister
 // used to provide Cycles Ledger compatible functionality for the Swiss Subnet.
 
-type BlockIndex = nat64;
+type BlockIndex = nat;
 
 type CreateCanisterArgs = record {
   from_subaccount : opt vec nat8;

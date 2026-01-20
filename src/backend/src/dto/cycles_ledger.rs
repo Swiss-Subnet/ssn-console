@@ -1,7 +1,7 @@
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_cdk::management_canister::CanisterSettings;
 
-pub type BlockIndex = u64;
+pub type BlockIndex = Nat;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct CreateCanisterArgs {

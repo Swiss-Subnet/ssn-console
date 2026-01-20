@@ -1,7 +1,7 @@
 use crate::dto::{
     CreateCanisterArgs, CreateCanisterError, CreateCanisterResult, CreateCanisterSuccess,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use ic_cdk::management_canister;
 
 pub async fn create_canister(
@@ -41,7 +41,7 @@ pub async fn create_canister(
     };
 
     CreateCanisterResult::Ok(CreateCanisterSuccess {
-        block_id: 0,
+        block_id: Nat::from(0u64),
         canister_id: result.canister_id,
     })
 }
