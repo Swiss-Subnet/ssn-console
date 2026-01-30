@@ -2,8 +2,9 @@ use super::{
     memory::{
         init_user_profile_principal_index, init_user_profiles, UserProfileMemory,
         UserProfilePrincipalIndexMemory,
+        init_user_stats, UserStatsMemory,
     },
-    UserProfile, Uuid,
+    UserProfile, UserStatus, UserStatsData, Uuid,
 };
 use crate::data::{
     memory::{init_user_profile_id_principal_index, UserProfileIdPrincipalIndexMemory},
@@ -73,10 +74,56 @@ pub fn update_user_profile(user_id: Uuid, user_profile: UserProfile) -> Result<(
     })
 }
 
+pub fn get_user_stats() -> UserStatsData {
+    with_state(|s| s.stats.get().clone())
+}
+
+pub fn increment_user_count(is_active: bool) {
+    mutate_state(|s| {
+        let mut stats = s.stats.get().clone();
+        stats.total += 1;
+        if is_active {
+            stats.active += 1;
+        } else {
+            stats.inactive += 1;
+        }
+        s.stats.set(stats);
+    });
+}
+
+pub fn update_user_status_count(was_active: bool, is_active: bool) {
+    if was_active == is_active {
+        return;
+    }
+    mutate_state(|s| {
+        let mut stats = s.stats.get().clone();
+        if is_active {
+            stats.active += 1;
+            stats.inactive -= 1;
+        } else {
+            stats.active -= 1;
+            stats.inactive += 1;
+        }
+        s.stats.set(stats);
+    });
+}
+
+pub fn initialize_stats_from_existing() {
+    let users = list_user_profiles();
+    let total = users.len() as u64;
+    let active = users.iter().filter(|(_, p, _)| p.status == UserStatus::Active).count() as u64;
+    let inactive = total - active;
+
+    mutate_state(|s| {
+        s.stats.set(UserStatsData { total, active, inactive });
+    });
+}
+
 struct UserProfileState {
     profiles: UserProfileMemory,
     principal_index: UserProfilePrincipalIndexMemory,
     id_principal_index: UserProfileIdPrincipalIndexMemory,
+    stats: UserStatsMemory,
 }
 
 impl Default for UserProfileState {
@@ -85,6 +132,7 @@ impl Default for UserProfileState {
             profiles: init_user_profiles(),
             principal_index: init_user_profile_principal_index(),
             id_principal_index: init_user_profile_id_principal_index(),
+            stats: init_user_stats(),
         }
     }
 }

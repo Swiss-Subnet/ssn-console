@@ -109,3 +109,17 @@ export function mapUserStatusResponse(status: ApiUserStatus): UserStatus {
 
   throw new Error('Unknown user status response');
 }
+
+export type UserStats = {
+  total: number;
+  active: number;
+  inactive: number;
+};
+
+export function mapUserStatsResponse(res: { total: bigint; active: bigint; inactive: bigint }): UserStats {
+  return {
+    total: Number(res.total),
+    active: Number(res.active),
+    inactive: Number(res.inactive),
+  };
+}

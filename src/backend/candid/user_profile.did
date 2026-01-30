@@ -25,9 +25,16 @@ type UserStatus = variant {
   Inactive;
 };
 
+type UserStats = record {
+  total : nat64;
+  active : nat64;
+  inactive : nat64;
+};
+
 service : {
   list_user_profiles : () -> (ListUserProfilesResponse) query;
   update_user_profile : (UpdateUserProfileRequest) -> ();
+  get_user_stats : () -> (UserStats) query;
 
   get_my_user_profile : () -> (GetMyUserProfileResponse) query;
   create_my_user_profile : () -> (CreateMyUserProfileResponse);
