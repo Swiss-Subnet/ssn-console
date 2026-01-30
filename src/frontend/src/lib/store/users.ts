@@ -5,6 +5,7 @@ import type { AppStateCreator, UsersSlice } from '@/lib/store/model';
 export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
   isUsersInitialized: false,
   users: null,
+  userStats: null,
 
   async initializeUsers() {
     const {
@@ -81,4 +82,17 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
       ),
     });
   },
+
+  async fetchUserStats() {
+    const { getUserProfileApi, isAuthenticated, profile } = get();
+
+    if (!isAuthenticated || !profile?.isAdmin) {
+      return;
+    }
+
+    const userProfileApi = getUserProfileApi();
+    const userStats = await userProfileApi.getUserStats();
+    set({ userStats });
+  },
+
 });

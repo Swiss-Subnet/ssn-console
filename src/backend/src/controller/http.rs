@@ -13,8 +13,7 @@ fn init() {
     certify_all_assets();
 }
 
-#[post_upgrade]
-fn post_upgrade() {
+pub fn post_upgrade_init() {
     init();
 }
 

@@ -22,3 +22,5 @@ pub(super) const CANISTER_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(4);
 
 pub(super) const TRUSTED_PARTNERS_MEMORY_ID: MemoryId = MemoryId::new(5);
 pub(super) const TRUSTED_PARTNER_PRINCIPAL_INDEX_MEMORY_ID: MemoryId = MemoryId::new(6);
+
+pub(super) const USER_STATS_MEMORY_ID: MemoryId = MemoryId::new(7);
