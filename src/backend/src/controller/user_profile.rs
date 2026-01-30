@@ -1,7 +1,7 @@
 use crate::{
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, ListUserProfilesResponse,
-        UpdateMyUserProfileRequest, UpdateUserProfileRequest,
+        UpdateMyUserProfileRequest, UpdateUserProfileRequest, UserStats,
     },
     service::{access_control_service, user_profile_service},
 };
@@ -62,4 +62,14 @@ fn update_my_user_profile(req: UpdateMyUserProfileRequest) {
     if let Err(err) = user_profile_service::update_my_user_profile(calling_principal, req) {
         trap(&err);
     }
+}
+
+#[query]
+fn get_user_stats() -> UserStats {
+    let calling_principal = msg_caller();
+    if let Err(err) = access_control_service::assert_controller(&calling_principal) {
+        trap(&err);
+    }
+
+    user_profile_service::get_user_stats()
 }

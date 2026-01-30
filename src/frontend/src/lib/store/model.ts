@@ -5,6 +5,7 @@ import type {
   TrustedPartner,
   UserProfile,
   UserStatus,
+  UserStats,
 } from '@/lib/api-models';
 import type { CanisterApi, TrustedPartnerApi, UserProfileApi } from '@/lib/api';
 import type { ActorSubclass, HttpAgent, Identity } from '@icp-sdk/core/agent';
@@ -56,12 +57,14 @@ export type UserProfileSlice = {
 export type UsersSlice = {
   isUsersInitialized: boolean;
   users: UserProfile[] | null;
+  userStats: UserStats | null;
 
   initializeUsers: () => Promise<void>;
   clearUsers: () => void;
   activateUser: (userId: string) => Promise<void>;
   deactivateUser: (userId: string) => Promise<void>;
   setUserStatus: (userId: string, status: UserStatus) => Promise<void>;
+   fetchUserStats: () => Promise<void>;
 };
 
 export type CanisterState = Canister & {
