@@ -22,6 +22,8 @@ pub fn update_user_profile(req: UpdateUserProfileRequest) -> Result<(), String> 
         user_profile_repository::get_user_profile_by_user_id(&user_id)
             .ok_or_else(|| format!("User profile for user with id {} does not exist", user_id))?;
 
+    let old_was_active = current_user_profile.status == UserStatus::Active;
+
     if let Some(status) = req.status {
         let new_status = map_user_status_request(status);
         if current_user_profile.status != new_status {
@@ -32,7 +34,10 @@ pub fn update_user_profile(req: UpdateUserProfileRequest) -> Result<(), String> 
         }
     }
 
+    let new_is_active = current_user_profile.status == UserStatus::Active;
+
     user_profile_repository::update_user_profile(user_id, current_user_profile)?;
+    user_profile_repository::update_user_status_count(old_was_active, new_is_active);
 
     Ok(())
 }

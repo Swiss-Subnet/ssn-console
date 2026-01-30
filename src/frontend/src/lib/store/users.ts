@@ -31,7 +31,7 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
         userProfileApi.getUserStats(),
       ]);
       set({ users, userStats });
-    }finally {
+    } finally {
       set({ isUsersInitialized: true });
     }
   },
