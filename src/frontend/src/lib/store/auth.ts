@@ -37,7 +37,11 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
     const { setAgentIdentity, initializeData } = get();
 
     try {
-      const authClient = await AuthClient.create();
+      const authClient = await AuthClient.create({
+        idleOptions: {
+          disableIdle: true,
+        },
+      });
       const isAuthenticated = await authClient.isAuthenticated();
       const identity = authClient.getIdentity();
       setAgentIdentity(identity);
