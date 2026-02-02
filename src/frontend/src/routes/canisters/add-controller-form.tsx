@@ -14,7 +14,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from '@/components/form';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 
 export type AddControllerFormProps = {

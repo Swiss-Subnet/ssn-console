@@ -5,7 +5,6 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPositioner,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -54,51 +53,49 @@ export const HeaderMenu: FC = () => {
         <CircleUserRoundIcon />
       </DropdownMenuTrigger>
 
-      <DropdownMenuPositioner align="end">
-        <DropdownMenuContent className="w-56">
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Your Principal</DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Your Principal</DropdownMenuLabel>
 
-            <DropdownMenuItem onClick={() => onPrincipalClicked()}>
-              <p className="truncate">{principal}</p>
+          <DropdownMenuItem onClick={() => onPrincipalClicked()}>
+            <p className="truncate">{principal}</p>
 
-              <ClipboardIcon />
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
+            <ClipboardIcon />
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
 
-          <DropdownMenuSeparator />
+        <DropdownMenuSeparator />
 
-          <DropdownMenuGroup>
-            {isAdmin && (
-              <DropdownMenuItem
-                className="justify-between"
-                render={<NavLink to="/admin" />}
-              >
-                Admin
-                <CogIcon />
-              </DropdownMenuItem>
-            )}
-
-            {isActive && (
-              <DropdownMenuItem
-                className="justify-between"
-                render={<NavLink to="/canisters" />}
-              >
-                Canisters
-                <ServerIcon />
-              </DropdownMenuItem>
-            )}
-
+        <DropdownMenuGroup>
+          {isAdmin && (
             <DropdownMenuItem
               className="justify-between"
-              onClick={() => onLogoutClicked()}
+              render={<NavLink to="/admin" />}
             >
-              Log Out
-              <LogOutIcon />
+              Admin
+              <CogIcon />
             </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenuPositioner>
+          )}
+
+          {isActive && (
+            <DropdownMenuItem
+              className="justify-between"
+              render={<NavLink to="/canisters" />}
+            >
+              Canisters
+              <ServerIcon />
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuItem
+            className="justify-between"
+            onClick={() => onLogoutClicked()}
+          >
+            Log Out
+            <LogOutIcon />
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };
