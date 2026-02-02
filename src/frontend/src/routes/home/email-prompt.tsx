@@ -14,7 +14,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from '@/components/form';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PromptHeader } from '@/routes/home/prompt-header';
