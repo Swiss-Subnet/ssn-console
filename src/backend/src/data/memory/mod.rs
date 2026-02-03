@@ -1,5 +1,5 @@
 mod memory_manager;
-pub(super) use memory_manager::*;
+use memory_manager::*;
 
 mod canister_memory;
 mod trusted_partner_memory;
