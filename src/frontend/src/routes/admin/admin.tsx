@@ -11,16 +11,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useAppStore } from '@/lib/store';
-import { type FC, useEffect } from 'react';
+import { type FC } from 'react';
 
 const Admin: FC = () => {
   useRequireAdminAuth();
 
-  const { userStats, fetchUserStats } = useAppStore();
-
-  useEffect(() => {
-    fetchUserStats();
-  }, [fetchUserStats]);
+  const { userStats} = useAppStore();
 
   return (
     <>

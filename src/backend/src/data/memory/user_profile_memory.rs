@@ -23,6 +23,10 @@ pub fn init_user_profile_id_principal_index() -> UserProfileIdPrincipalIndexMemo
     UserProfileIdPrincipalIndexMemory::init(get_user_profile_id_principal_index_memory())
 }
 
+pub fn init_user_stats() -> UserStatsMemory {
+    UserStatsMemory::init(get_memory(USER_STATS_MEMORY_ID), UserStatsData::default())
+}
+
 fn get_user_profiles_memory() -> Memory {
     get_memory(USER_PROFILES_MEMORY_ID)
 }
@@ -35,6 +39,6 @@ fn get_user_profile_id_principal_index_memory() -> Memory {
     get_memory(USER_PROFILE_ID_PRINCIPAL_INDEX_MEMORY_ID)
 }
 
-pub fn init_user_stats() -> UserStatsMemory {
-    UserStatsMemory::init(get_memory(USER_STATS_MEMORY_ID), UserStatsData::default())
+fn get_user_stats_memory() -> Memory {
+    get_memory(USER_STATS_MEMORY_ID)
 }

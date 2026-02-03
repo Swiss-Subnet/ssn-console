@@ -2,11 +2,12 @@ use crate::{
     data::{user_profile_repository, UserProfile, Uuid, UserStatus},
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, ListUserProfilesResponse,
-        UpdateMyUserProfileRequest, UpdateUserProfileRequest,UserStats
+        UpdateMyUserProfileRequest, UpdateUserProfileRequest, GetUserStatsResponse
     },
     mapping::{
         map_create_my_user_profile_response, map_get_my_user_profile_response,
         map_list_user_profiles_response, map_user_status_request,
+        map_get_user_stats_response
     },
 };
 use candid::Principal;
@@ -21,16 +22,17 @@ pub fn update_user_profile(req: UpdateUserProfileRequest) -> Result<(), String> 
         user_profile_repository::get_user_profile_by_user_id(&user_id)
             .ok_or_else(|| format!("User profile for user with id {} does not exist", user_id))?;
 
-    let old_was_active = current_user_profile.status == UserStatus::Active;
-
     if let Some(status) = req.status {
-        current_user_profile.status = map_user_status_request(status);
+        let new_status = map_user_status_request(status);
+        if current_user_profile.status != new_status {
+            let old_was_active = current_user_profile.status == UserStatus::Active;
+            current_user_profile.status = new_status;
+            let new_is_active = current_user_profile.status == UserStatus::Active;
+            user_profile_repository::update_user_status_count(old_was_active, new_is_active);
+        }
     }
 
-    let new_is_active = current_user_profile.status == UserStatus::Active;
-
     user_profile_repository::update_user_profile(user_id, current_user_profile)?;
-    user_profile_repository::update_user_status_count(old_was_active, new_is_active);
 
     Ok(())
 }
@@ -83,11 +85,6 @@ pub fn update_my_user_profile(
     Ok(())
 }
 
-pub fn get_user_stats() -> UserStats {
-    let stats = user_profile_repository::get_user_stats();
-    UserStats {
-        total: stats.total,
-        active: stats.active,
-        inactive: stats.inactive,
-    }
+pub fn get_user_stats() -> GetUserStatsResponse {
+    map_get_user_stats_response(user_profile_repository::get_user_stats())
 }

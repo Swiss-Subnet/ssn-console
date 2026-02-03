@@ -8,6 +8,7 @@ import type {
   CreateMyUserProfileResponse as ApiCreateMyUserProfileResponse,
   UpdateMyUserProfileRequest as ApiUpdateMyUserProfileRequest,
   UpdateUserProfileRequest as ApiUpdateUserProfileRequest,
+  GetUserStatsResponse,
 } from '@ssn/backend-api';
 
 export type ListUserProfilesResponse = UserProfile[];
@@ -116,7 +117,7 @@ export type UserStats = {
   inactive: number;
 };
 
-export function mapUserStatsResponse(res: { total: bigint; active: bigint; inactive: bigint }): UserStats {
+export function mapUserStatsResponse(res: GetUserStatsResponse): UserStats {
   return {
     total: Number(res.total),
     active: Number(res.active),

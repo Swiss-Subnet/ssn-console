@@ -9,12 +9,8 @@ use include_dir::{include_dir, Dir};
 use std::cell::RefCell;
 
 #[init]
-fn init() {
+pub fn init() {
     certify_all_assets();
-}
-
-pub fn post_upgrade_init() {
-    init();
 }
 
 #[query]

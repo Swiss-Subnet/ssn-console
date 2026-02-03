@@ -22,7 +22,7 @@ fn export_candid() -> String {
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
-    controller::http::post_upgrade_init();
+    controller::http::init();
     data::user_profile_repository::initialize_stats_from_existing();
 }
 

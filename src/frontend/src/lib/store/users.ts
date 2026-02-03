@@ -26,9 +26,12 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
     }
 
     try {
-      const users = await userProfileApi.listUserProfiles();
-      set({ users });
-    } finally {
+      const [users, userStats] = await Promise.all([
+        userProfileApi.listUserProfiles(),
+        userProfileApi.getUserStats(),
+      ]);
+      set({ users, userStats });
+    }finally {
       set({ isUsersInitialized: true });
     }
   },
