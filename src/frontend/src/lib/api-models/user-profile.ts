@@ -8,7 +8,7 @@ import type {
   CreateMyUserProfileResponse as ApiCreateMyUserProfileResponse,
   UpdateMyUserProfileRequest as ApiUpdateMyUserProfileRequest,
   UpdateUserProfileRequest as ApiUpdateUserProfileRequest,
-  GetUserStatsResponse,
+  GetUserStatsResponse as ApiGetUserStatsResponse,
 } from '@ssn/backend-api';
 
 export type ListUserProfilesResponse = UserProfile[];
@@ -111,13 +111,13 @@ export function mapUserStatusResponse(status: ApiUserStatus): UserStatus {
   throw new Error('Unknown user status response');
 }
 
-export type UserStats = {
+export type GetUserStatsResponse = {
   total: number;
   active: number;
   inactive: number;
 };
 
-export function mapUserStatsResponse(res: GetUserStatsResponse): UserStats {
+export function mapUserStatsResponse(res: ApiGetUserStatsResponse): GetUserStatsResponse {
   return {
     total: Number(res.total),
     active: Number(res.active),
