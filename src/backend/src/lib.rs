@@ -20,6 +20,12 @@ fn export_candid() -> String {
     __export_service()
 }
 
+#[ic_cdk::post_upgrade]
+fn post_upgrade() {
+    controller::http::init();
+    data::user_profile_repository::initialize_stats_from_existing();
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

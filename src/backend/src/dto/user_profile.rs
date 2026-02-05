@@ -31,3 +31,10 @@ pub enum UserStatus {
     Active,
     Inactive,
 }
+
+#[derive(Debug, Clone, CandidType)]
+pub struct GetUserStatsResponse {
+    pub total: u64,
+    pub active: u64,
+    pub inactive: u64,
+}

@@ -5,6 +5,7 @@ import type { AppStateCreator, UsersSlice } from '@/lib/store/model';
 export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
   isUsersInitialized: false,
   users: null,
+  userStats: null,
 
   async initializeUsers() {
     const {
@@ -25,8 +26,11 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
     }
 
     try {
-      const users = await userProfileApi.listUserProfiles();
-      set({ users });
+      const [users, userStats] = await Promise.all([
+        userProfileApi.listUserProfiles(),
+        userProfileApi.getUserStats(),
+      ]);
+      set({ users, userStats });
     } finally {
       set({ isUsersInitialized: true });
     }

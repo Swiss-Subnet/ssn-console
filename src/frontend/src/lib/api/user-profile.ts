@@ -4,12 +4,14 @@ import {
   mapListUserProfilesResponse,
   mapUpdateMyUserProfileRequest,
   mapUpdateUserProfileRequest,
+  mapUserStatsResponse,
   type CreateMyUserProfileResponse,
   type GetMyUserProfileResponse,
   type ListUserProfilesResponse,
   type UpdateMyUserProfileRequest,
   type UpdateUserProfileRequest,
   type UserProfile,
+  type GetUserStatsResponse,
 } from '@/lib/api-models';
 import { isNotNil } from '@/lib/nil';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
@@ -55,4 +57,10 @@ export class UserProfileApi {
   public async updateUserProfile(req: UpdateUserProfileRequest): Promise<void> {
     await this.actor.update_user_profile(mapUpdateUserProfileRequest(req));
   }
+
+  public async getUserStats(): Promise<GetUserStatsResponse> {
+    const res = await this.actor.get_user_stats();
+    return mapUserStatsResponse(res);
+  }
+
 }

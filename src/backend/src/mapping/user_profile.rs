@@ -1,6 +1,7 @@
 use crate::{
     data,
-    dto::{ListUserProfilesResponse, UserProfile, UserStatus},
+    data::{UserStatsData},
+    dto::{ListUserProfilesResponse, UserProfile, UserStatus, GetUserStatsResponse},
 };
 use candid::Principal;
 use ic_cdk::api::is_controller;
@@ -52,5 +53,13 @@ pub fn map_user_status_response(status: data::UserStatus) -> UserStatus {
     match status {
         data::UserStatus::Active => UserStatus::Active,
         data::UserStatus::Inactive => UserStatus::Inactive,
+    }
+}
+
+pub fn map_get_user_stats_response(stats: UserStatsData) -> GetUserStatsResponse {
+    GetUserStatsResponse {
+        total: stats.total,
+        active: stats.active,
+        inactive: stats.inactive,
     }
 }

@@ -1,12 +1,13 @@
 use crate::{
-    data::{user_profile_repository, UserProfile, Uuid},
+    data::{user_profile_repository, UserProfile, Uuid, UserStatus},
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, ListUserProfilesResponse,
-        UpdateMyUserProfileRequest, UpdateUserProfileRequest,
+        UpdateMyUserProfileRequest, UpdateUserProfileRequest, GetUserStatsResponse
     },
     mapping::{
         map_create_my_user_profile_response, map_get_my_user_profile_response,
         map_list_user_profiles_response, map_user_status_request,
+        map_get_user_stats_response
     },
 };
 use candid::Principal;
@@ -22,7 +23,13 @@ pub fn update_user_profile(req: UpdateUserProfileRequest) -> Result<(), String> 
             .ok_or_else(|| format!("User profile for user with id {} does not exist", user_id))?;
 
     if let Some(status) = req.status {
-        current_user_profile.status = map_user_status_request(status);
+        let new_status = map_user_status_request(status);
+        if current_user_profile.status != new_status {
+            let old_was_active = current_user_profile.status == UserStatus::Active;
+            current_user_profile.status = new_status;
+            let new_is_active = current_user_profile.status == UserStatus::Active;
+            user_profile_repository::update_user_status_count(old_was_active, new_is_active);
+        }
     }
 
     user_profile_repository::update_user_profile(user_id, current_user_profile)?;
@@ -47,6 +54,7 @@ pub fn create_my_user_profile(
 
     let profile = UserProfile::default();
     let id = user_profile_repository::create_user_profile(calling_principal, profile.clone());
+    user_profile_repository::increment_user_count(profile.status == UserStatus::Active);
     Ok(map_create_my_user_profile_response(
         id,
         &calling_principal,
@@ -75,4 +83,8 @@ pub fn update_my_user_profile(
     user_profile_repository::update_user_profile(user_id, current_user_profile)?;
 
     Ok(())
+}
+
+pub fn get_user_stats() -> GetUserStatsResponse {
+    map_get_user_stats_response(user_profile_repository::get_user_stats())
 }
