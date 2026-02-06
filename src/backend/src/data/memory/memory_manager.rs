@@ -24,3 +24,9 @@ pub(super) const TRUSTED_PARTNERS_MEMORY_ID: MemoryId = MemoryId::new(5);
 pub(super) const TRUSTED_PARTNER_PRINCIPAL_INDEX_MEMORY_ID: MemoryId = MemoryId::new(6);
 
 pub(super) const USER_STATS_MEMORY_ID: MemoryId = MemoryId::new(7);
+
+pub(super) const TERMS_AND_CONDITIONS_MEMORY_ID: MemoryId = MemoryId::new(8);
+pub(super) const TERMS_AND_CONDITIONS_CREATED_AT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(9);
+
+pub(super) const TERMS_AND_CONDITIONS_RESPONSE_MEMORY_ID: MemoryId = MemoryId::new(10);
+pub(super) const TERMS_AND_CONDITIONS_RESPONSE_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);

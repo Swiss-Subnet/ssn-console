@@ -1,4 +1,3 @@
-import type { CreateTrustedPartnerRequest } from '@/lib/api-models';
 import type { AppStateCreator, TrustedPartnersSlice } from '@/lib/store/model';
 
 export const createTrustedPartnerSlice: AppStateCreator<
@@ -28,27 +27,34 @@ export const createTrustedPartnerSlice: AppStateCreator<
     set({ trustedPartners: null });
   },
 
-  createTrustedPartner: async (req: CreateTrustedPartnerRequest) => {
+  async createTrustedPartner(req) {
     const {
       getTrustedPartnerApi,
       isAuthenticated,
       isTrustedPartnersInitialized,
+      profile,
     } = get();
-    const trustedPartnerApi = getTrustedPartnerApi();
 
     if (!isTrustedPartnersInitialized) {
-      throw new Error('Trusted partners are not initialized');
+      throw new Error(
+        'Trusted partners must be initialized before creating new trusted partners',
+      );
     }
-
     if (!isAuthenticated) {
-      return;
+      throw new Error('User must be authenticated to create trusted partners');
+    }
+    if (!profile?.isAdmin) {
+      throw new Error('User must be an admin to create trusted partners');
     }
 
+    const trustedPartnerApi = getTrustedPartnerApi();
     const newTrustedPartner = await trustedPartnerApi.createTrustedPartner(req);
 
     set(state => {
       if (!state.trustedPartners) {
-        return state;
+        return {
+          trustedPartners: [newTrustedPartner],
+        };
       }
 
       return {

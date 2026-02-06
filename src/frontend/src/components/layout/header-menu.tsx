@@ -15,6 +15,7 @@ import {
   ClipboardIcon,
   CogIcon,
   LogOutIcon,
+  ScrollTextIcon,
   ServerIcon,
 } from 'lucide-react';
 import { useMemo, type FC } from 'react';
@@ -84,6 +85,16 @@ export const HeaderMenu: FC = () => {
             >
               Canisters
               <ServerIcon />
+            </DropdownMenuItem>
+          )}
+
+          {isActive && (
+            <DropdownMenuItem
+              className="justify-between"
+              render={<NavLink to="/terms-and-conditions" />}
+            >
+              Terms and Conditions
+              <ScrollTextIcon />
             </DropdownMenuItem>
           )}
 

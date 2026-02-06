@@ -30,7 +30,7 @@ fn list_my_canisters() -> ListMyCanistersResponse {
 #[update]
 async fn create_my_canister() -> CreateCanisterResponse {
     let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
+    if let Err(err) = access_control_service::assert_accepted_terms_of_service(&calling_principal) {
         trap(&err);
     }
 

@@ -12,11 +12,12 @@ import {
 } from '@/components/ui/card';
 import { useAppStore } from '@/lib/store';
 import { type FC } from 'react';
+import { TermsAndConditionsForm } from '@/routes/admin/terms-and-conditions-form';
 
 const Admin: FC = () => {
   useRequireAdminAuth();
 
-  const { userStats} = useAppStore();
+  const { userStats } = useAppStore();
 
   return (
     <>
@@ -45,11 +46,16 @@ const Admin: FC = () => {
           </CardHeader>
         </Card>
       </div>
+
       <H2 className="mt-10">Users</H2>
       <UserTable className="mt-3" />
+
       <H2 className="mt-10">Trusted Partners</H2>
       <TrustedPartnerTable className="mt-3" />
       <TrustedPartnerForm className="mt-12" />
+
+      <H2 className="mt-10">Terms and Conditions</H2>
+      <TermsAndConditionsForm className="mt-3" />
     </>
   );
 };
