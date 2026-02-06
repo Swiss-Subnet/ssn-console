@@ -1,0 +1,30 @@
+type GetLatestTermsAndConditionsResponse = opt TermsAndConditions;
+
+type TermsAndConditions = record {
+  id : text;
+  content : text;
+  comment : text;
+  created_at : nat64;
+  has_accepted : bool;
+};
+
+type CreateTermsAndConditionsRequest = record {
+  content : text;
+  comment : text;
+};
+
+type UpsertTermsAndConditionsResponseRequest = record {
+  terms_and_conditions_id : text;
+  response_type : TermsAndConditionsResponseType;
+};
+
+type TermsAndConditionsResponseType = variant {
+  Accept;
+  Reject;
+};
+
+service : {
+  get_latest_terms_and_conditions : () -> (GetLatestTermsAndConditionsResponse) query;
+  upsert_terms_and_conditions_response : (UpsertTermsAndConditionsResponseRequest) -> ();
+  create_terms_and_conditions : (CreateTermsAndConditionsRequest) -> ();
+};

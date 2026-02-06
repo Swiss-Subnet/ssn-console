@@ -1,12 +1,13 @@
 use crate::utils::with_random_bytes;
 use core::fmt::{Display, Formatter};
 use ic_stable_structures::{storable::Bound, Storable};
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use uuid::{Builder, Uuid as UuidImpl};
 
 const UUID_SIZE: usize = 16;
 
-#[derive(Debug, Clone, Copy, Default, Ord, PartialOrd, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, Ord, PartialOrd, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Uuid(UuidImpl);
 
 impl Uuid {

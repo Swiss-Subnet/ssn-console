@@ -23,6 +23,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       initializeUsers,
       initializeCanisters,
       initializeTrustedPartners,
+      initializeTermsAndConditions,
     } = get();
 
     await initializeUserProfile();
@@ -30,6 +31,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       initializeUsers(),
       initializeCanisters(),
       initializeTrustedPartners(),
+      initializeTermsAndConditions(),
     ]);
   },
 
