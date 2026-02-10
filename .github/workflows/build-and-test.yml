@@ -1,0 +1,31 @@
+name: Build and Test
+
+on:
+  pull_request:
+
+concurrency:
+  group: pr-${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup NodeJS
+        uses: ./.github/actions/setup-node
+
+      - name: Setup DFX
+        uses: ./.github/actions/setup-dfx
+
+      - name: DFX build
+        run: dfx build --check
+
+      - name: Cargo clippy
+        run: cargo clippy --all-targets --all-features
+
+      - name: pic-js tests
+        run: pnpm -F backend-tests test

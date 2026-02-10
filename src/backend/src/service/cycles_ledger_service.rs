@@ -10,8 +10,7 @@ pub async fn create_canister(
 ) -> CreateCanisterResult {
     let create_canister_settings = args
         .creation_args
-        .map(|creation_args| creation_args.settings)
-        .flatten()
+        .and_then(|creation_args| creation_args.settings)
         .map_or_else(
             || management_canister::CanisterSettings {
                 controllers: Some(vec![calling_principal]),

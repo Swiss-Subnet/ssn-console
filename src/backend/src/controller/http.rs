@@ -116,10 +116,10 @@ fn certify_all_assets() {
 
     ASSET_ROUTER.with_borrow_mut(|asset_router| {
         if let Err(err) = asset_router.certify_assets(assets, asset_configs) {
-            ic_cdk::trap(&format!("Failed to certify assets: {}", err));
+            ic_cdk::trap(format!("Failed to certify assets: {}", err));
         }
 
-        certified_data_set(&asset_router.root_hash());
+        certified_data_set(asset_router.root_hash());
     });
 }
 

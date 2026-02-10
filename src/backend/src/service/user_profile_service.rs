@@ -1,10 +1,12 @@
 use crate::{
-    data::{UserProfile, UserStatus, Uuid, organization_repository, user_profile_repository},
+    data::{organization_repository, user_profile_repository, UserProfile, UserStatus, Uuid},
     dto::{
-        CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse, ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest
+        CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
+        ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
     },
     mapping::{
-        map_create_my_user_profile_response, map_get_my_user_profile_response, map_get_user_stats_response, map_list_user_profiles_response, map_user_status_request
+        map_create_my_user_profile_response, map_get_my_user_profile_response,
+        map_get_user_stats_response, map_list_user_profiles_response, map_user_status_request,
     },
 };
 use candid::Principal;

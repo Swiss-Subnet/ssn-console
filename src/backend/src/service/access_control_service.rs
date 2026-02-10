@@ -32,15 +32,17 @@ pub fn assert_trusted_partner(calling_principal: &Principal) -> Result<(), Strin
     Ok(())
 }
 
-pub fn assert_accepted_latest_terms_and_conditions(calling_principal: &Principal) -> Result<(), String> {
+pub fn assert_accepted_latest_terms_and_conditions(
+    calling_principal: &Principal,
+) -> Result<(), String> {
     assert_authenticated(calling_principal)?;
 
     if is_controller(calling_principal) {
-        return Ok(())
+        return Ok(());
     }
 
-    let user_id = user_profile_repository::get_user_id_by_principal(&calling_principal)
-        .ok_or_else(|| {
+    let user_id =
+        user_profile_repository::get_user_id_by_principal(calling_principal).ok_or_else(|| {
             format!(
                 "User profile for principal {} does not exist",
                 calling_principal
@@ -48,7 +50,9 @@ pub fn assert_accepted_latest_terms_and_conditions(calling_principal: &Principal
         })?;
 
     if !terms_and_conditions_repository::has_accepted_latest_terms_and_conditions(user_id) {
-        return Err("The latest terms and conditions must be accepted to perform this action".to_string());
+        return Err(
+            "The latest terms and conditions must be accepted to perform this action".to_string(),
+        );
     }
 
     Ok(())

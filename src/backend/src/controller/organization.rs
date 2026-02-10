@@ -1,5 +1,5 @@
 use crate::{
-    dto::{ListMyOrganizationsResponse},
+    dto::ListMyOrganizationsResponse,
     service::{access_control_service, organization_service},
 };
 use ic_cdk::{api::msg_caller, *};

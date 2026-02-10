@@ -10,9 +10,7 @@ use crate::data::{
 use std::cell::RefCell;
 
 pub fn get_latest_terms_and_conditions(user_id: Uuid) -> Option<(Uuid, TermsAndConditions, bool)> {
-    let Some(latest_id) = get_latest_terms_and_condition_id() else {
-        return None;
-    };
+    let latest_id = get_latest_terms_and_condition_id()?;
 
     let has_accepted = has_accepted_terms_and_conditions(user_id, latest_id);
 
@@ -69,7 +67,7 @@ pub fn upsert_terms_and_conditions_response(
                 terms_and_conditions_response.user_id,
                 terms_and_conditions_response.terms_and_conditions_id,
             ))
-            .unwrap_or_else(|| Uuid::new());
+            .unwrap_or_else(Uuid::new);
 
         s.terms_and_conditions_responses
             .insert(id, terms_and_conditions_response.clone());
