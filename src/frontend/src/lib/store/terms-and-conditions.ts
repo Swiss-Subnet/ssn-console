@@ -27,6 +27,10 @@ export const createTermsAndConditionsSlice: AppStateCreator<
     }
   },
 
+  clearTermsAndConditions() {
+    set({ termsAndConditions: null });
+  },
+
   async upsertTermsAndConditionsResponse(req) {
     const {
       getTermsAndConditionsApi,

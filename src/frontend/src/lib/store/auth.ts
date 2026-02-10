@@ -105,6 +105,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       clearUsers,
       clearCanisters,
       clearTrustedPartners,
+      clearTermsAndConditions,
       setAgentIdentity,
     } = get();
     if (isNil(authClient)) {
@@ -125,6 +126,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       clearUsers();
       clearCanisters();
       clearTrustedPartners();
+      clearTermsAndConditions();
     }
   },
 });

@@ -213,6 +213,29 @@ describe('Canisters', () => {
       );
     });
 
+    it('should create a canister for a controller without accepting terms and conditions', async () => {
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.create_terms_and_conditions({
+        content: 'Terms and conditions content',
+        comment: 'Terms and conditions comment',
+      });
+      const canister = await driver.actor.create_my_canister();
+      const controllers = await driver.pic.getControllers(
+        Principal.fromText(canister.principal_id),
+      );
+
+      expect(canister).toEqual({
+        id: expect.any(String),
+        principal_id: expect.any(String),
+      });
+      expect(
+        controllers.some(
+          c => c.compareTo(controllerIdentity.getPrincipal()) === 'eq',
+        ),
+      ).toBe(true);
+    });
+
     it('should create a canister for a user who has accepted the latest terms and conditions', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);

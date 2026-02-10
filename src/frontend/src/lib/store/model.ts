@@ -108,6 +108,7 @@ export type TermsAndConditionsSlice = {
   termsAndConditions: TermsAndConditions | null;
 
   initializeTermsAndConditions: () => Promise<void>;
+  clearTermsAndConditions: () => void;
   upsertTermsAndConditionsResponse: (
     req: UpsertTermsAndConditionsResponseRequest,
   ) => Promise<void>;
