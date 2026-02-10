@@ -62,5 +62,4 @@ export class UserProfileApi {
     const res = await this.actor.get_user_stats();
     return mapUserStatsResponse(res);
   }
-
 }

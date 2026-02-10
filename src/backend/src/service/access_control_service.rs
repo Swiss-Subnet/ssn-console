@@ -32,7 +32,7 @@ pub fn assert_trusted_partner(calling_principal: &Principal) -> Result<(), Strin
     Ok(())
 }
 
-pub fn assert_accepted_terms_of_service(calling_principal: &Principal) -> Result<(), String> {
+pub fn assert_accepted_latest_terms_and_conditions(calling_principal: &Principal) -> Result<(), String> {
     assert_authenticated(calling_principal)?;
 
     let user_id = user_profile_repository::get_user_id_by_principal(&calling_principal)
@@ -44,7 +44,7 @@ pub fn assert_accepted_terms_of_service(calling_principal: &Principal) -> Result
         })?;
 
     if !terms_and_conditions_repository::has_accepted_latest_terms_and_conditions(user_id) {
-        return Err("Terms of service must be accepted to perform this action".to_string());
+        return Err("The latest terms and conditions must be accepted to perform this action".to_string());
     }
 
     Ok(())

@@ -18,7 +18,7 @@ fn get_latest_terms_and_conditions() -> GetLatestTermsAndConditionsResponse
     match terms_and_conditions_service::get_latest_terms_and_conditions(calling_principal)
     {
         Ok(response) => response,
-        Err(err) => trap(err),
+        Err(err) => trap(&err),
     }
 }
 

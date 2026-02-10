@@ -5,7 +5,7 @@ import { useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
 
 export const App: FC = () => {
-  const { initializeAuth, initializeApi, isTermsAndConditionsInitialized, termsAndConditions } = useAppStore();
+  const { initializeAuth, initializeApi } = useAppStore();
 
   useEffect(() => {
     try {
@@ -20,10 +20,6 @@ export const App: FC = () => {
       showErrorToast('Failed to initialize auth client', err);
     }
   }, [initializeApi, initializeAuth]);
-
-  useEffect(() => {
-
-  }, [isTermsAndConditionsInitialized, termsAndConditions]);
 
   return (
     <ThemeProvider>

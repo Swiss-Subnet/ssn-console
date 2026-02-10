@@ -108,9 +108,13 @@ export type TermsAndConditionsSlice = {
   termsAndConditions: TermsAndConditions | null;
 
   initializeTermsAndConditions: () => Promise<void>;
-  upsertTermsAndConditionsResponse: (req: UpsertTermsAndConditionsResponseRequest) => Promise<void>;
-  createTermsAndConditions: (req: CreateTermsAndConditionsRequest) => Promise<void>;
-}
+  upsertTermsAndConditionsResponse: (
+    req: UpsertTermsAndConditionsResponseRequest,
+  ) => Promise<void>;
+  createTermsAndConditions: (
+    req: CreateTermsAndConditionsRequest,
+  ) => Promise<void>;
+};
 
 export type AppSlice = AuthSlice &
   ApiSlice &

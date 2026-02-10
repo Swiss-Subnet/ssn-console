@@ -56,7 +56,12 @@ export const createTermsAndConditionsSlice: AppStateCreator<
   },
 
   async createTermsAndConditions(req) {
-    const { profile, isTermsAndConditionsInitialized, isAuthenticated, getTermsAndConditionsApi } = get();
+    const {
+      profile,
+      isTermsAndConditionsInitialized,
+      isAuthenticated,
+      getTermsAndConditionsApi,
+    } = get();
 
     if (!isTermsAndConditionsInitialized) {
       throw new Error(

@@ -11,6 +11,7 @@ const useReturnTo = (): ((to: string) => void) => {
     (to: string) => {
       if (location.pathname !== to) {
         navigate(to);
+        return;
       }
     },
     [location.pathname, navigate],
@@ -33,12 +34,20 @@ export const useRequireAuth = (): void => {
 
     if (!isActive) {
       returnTo('/');
+      return;
     }
 
     if (isNotNil(termsAndConditions) && !termsAndConditions.hasAccepted) {
       returnTo('/terms-and-conditions');
+      return;
     }
-  }, [isProfileInitialized, isActive, returnTo]);
+  }, [
+    isProfileInitialized,
+    isTermsAndConditionsInitialized,
+    termsAndConditions,
+    isActive,
+    returnTo,
+  ]);
 };
 
 export const useRequireAdminAuth = (): void => {
@@ -49,6 +58,7 @@ export const useRequireAdminAuth = (): void => {
   useEffect(() => {
     if (isProfileInitialized && !isAdmin) {
       returnTo('/');
+      return;
     }
   }, [isProfileInitialized, isAdmin, returnTo]);
 };

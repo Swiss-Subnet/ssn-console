@@ -1,4 +1,20 @@
 {
   "typescript.preferences.importModuleSpecifier": "non-relative",
-  "javascript.preferences.importModuleSpecifier": "non-relative"
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "editor.rulers": [80],
+
+  "[typescriptreact]": {
+    "editor.wordWrapColumn": 80,
+    "editor.wordWrap": "bounded"
+  },
+
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
 }

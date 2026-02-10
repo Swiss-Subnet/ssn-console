@@ -15,5 +15,5 @@ export const useAppStore = create<AppSlice>()((...a) => ({
   ...createUsersSlice(...a),
   ...createCanistersSlice(...a),
   ...createTrustedPartnerSlice(...a),
-  ...createTermsAndConditionsSlice(...a)
+  ...createTermsAndConditionsSlice(...a),
 }));
