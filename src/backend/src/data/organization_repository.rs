@@ -13,7 +13,7 @@ pub fn add_default_org(user_id: Uuid) {
         name: "Default Organization".to_string(),
     };
 
-    if list_user_org_ids(user_id).len() > 0 {
+    if !list_user_org_ids(user_id).is_empty() {
         return;
     }
 
