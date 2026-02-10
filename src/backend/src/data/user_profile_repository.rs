@@ -1,10 +1,9 @@
 use super::{
     memory::{
-        init_user_profile_principal_index, init_user_profiles, UserProfileMemory,
-        UserProfilePrincipalIndexMemory,
-        init_user_stats, UserStatsMemory,
+        init_user_profile_principal_index, init_user_profiles, init_user_stats, UserProfileMemory,
+        UserProfilePrincipalIndexMemory, UserStatsMemory,
     },
-    UserProfile, UserStatus, UserStatsData, Uuid,
+    UserProfile, UserStatsData, Uuid,
 };
 use crate::data::{
     memory::{init_user_profile_id_principal_index, UserProfileIdPrincipalIndexMemory},
@@ -25,6 +24,10 @@ pub fn list_user_profiles() -> Vec<(Uuid, UserProfile, Vec<Principal>)> {
             })
             .collect()
     })
+}
+
+pub fn list_user_ids() -> Vec<Uuid> {
+    with_state(|s| s.profiles.iter().map(|e| e.into_pair().0).collect())
 }
 
 pub fn get_user_profile_by_principal(principal: &Principal) -> Option<(Uuid, UserProfile)> {
@@ -105,17 +108,6 @@ pub fn update_user_status_count(was_active: bool, is_active: bool) {
             stats.inactive += 1;
         }
         s.stats.set(stats);
-    });
-}
-
-pub fn initialize_stats_from_existing() {
-    let users = list_user_profiles();
-    let total = users.len() as u64;
-    let active = users.iter().filter(|(_, p, _)| p.status == UserStatus::Active).count() as u64;
-    let inactive = total - active;
-
-    mutate_state(|s| {
-        s.stats.set(UserStatsData { total, active, inactive });
     });
 }
 

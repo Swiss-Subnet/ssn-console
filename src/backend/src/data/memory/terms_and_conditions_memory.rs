@@ -19,10 +19,10 @@ pub fn init_terms_and_conditions_created_at_index_memory() -> TermsAndConditions
     TermsAndConditionsCreatedAtIndexMemory::init(get_terms_and_conditions_created_at_index_memory())
 }
 
-pub fn get_terms_and_conditions_memory() -> Memory {
+fn get_terms_and_conditions_memory() -> Memory {
     get_memory(TERMS_AND_CONDITIONS_MEMORY_ID)
 }
 
-pub fn get_terms_and_conditions_created_at_index_memory() -> Memory {
+fn get_terms_and_conditions_created_at_index_memory() -> Memory {
     get_memory(TERMS_AND_CONDITIONS_CREATED_AT_INDEX_MEMORY_ID)
 }

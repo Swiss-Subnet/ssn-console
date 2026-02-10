@@ -215,6 +215,13 @@ describe('User Profile', () => {
 
       const [fetchedProfile] = await driver.actor.get_my_user_profile();
       expect(fetchedProfile).toEqual(aliceProfile);
+
+      const organizations = await driver.actor.list_my_organizations();
+      expect(organizations).toHaveLength(1);
+      expect(organizations[0]).toEqual({
+        id: expect.any(String),
+        name: 'Default Organization',
+      });
     });
 
     it('should create an admin user profile', async () => {
@@ -230,6 +237,13 @@ describe('User Profile', () => {
 
       const [fetchedProfile] = await driver.actor.get_my_user_profile();
       expect(fetchedProfile).toEqual(adminProfile);
+
+      const organizations = await driver.actor.list_my_organizations();
+      expect(organizations).toHaveLength(1);
+      expect(organizations[0]).toEqual({
+        id: expect.any(String),
+        name: 'Default Organization',
+      });
     });
 
     it('should return an error if the user profile already exists', async () => {

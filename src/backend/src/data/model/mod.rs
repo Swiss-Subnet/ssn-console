@@ -1,4 +1,5 @@
 mod canister;
+mod organization;
 mod principal;
 mod terms_and_conditions_response;
 mod terms_and_conditions;
@@ -8,6 +9,7 @@ mod uuid;
 mod user_stats;
 
 pub use canister::*;
+pub use organization::*;
 pub use principal::*;
 pub use terms_and_conditions_response::*;
 pub use terms_and_conditions::*;

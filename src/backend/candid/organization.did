@@ -1,0 +1,10 @@
+type ListMyOrganizationsResponse = vec Organization;
+
+type Organization = record {
+  id : text;
+  name : text;
+};
+
+service : {
+  list_my_organizations : () -> (ListMyOrganizationsResponse) query;
+};
