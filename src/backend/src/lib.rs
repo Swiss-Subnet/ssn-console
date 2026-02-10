@@ -2,6 +2,7 @@ use candid::export_service;
 use dto::*;
 use ic_cdk::*;
 use ic_http_certification::{HttpRequest, HttpResponse};
+use service::organization_service;
 
 mod controller;
 mod data;
@@ -23,7 +24,7 @@ fn export_candid() -> String {
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
     controller::http::init();
-    data::user_profile_repository::initialize_stats_from_existing();
+    organization_service::init();
 }
 
 #[cfg(test)]

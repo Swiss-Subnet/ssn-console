@@ -30,3 +30,7 @@ pub(super) const TERMS_AND_CONDITIONS_CREATED_AT_INDEX_MEMORY_ID: MemoryId = Mem
 
 pub(super) const TERMS_AND_CONDITIONS_RESPONSE_MEMORY_ID: MemoryId = MemoryId::new(10);
 pub(super) const TERMS_AND_CONDITIONS_RESPONSE_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
+
+pub(super) const ORGANIZATION_MEMORY_ID: MemoryId = MemoryId::new(12);
+pub(super) const ORGANIZATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(13);
+pub(super) const USER_ORGANIZATION_INDEX_MEMORY_ID: MemoryId = MemoryId::new(14);

@@ -89,3 +89,35 @@ To top up cycles for a canister, use the following command:
 ```shell
 dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
 ```
+
+### Canister history
+
+Encode the call args for the management canister:
+
+```shell
+./didc encode --defs ./src/management-canister/ic.did --types '(canister_info_args)' '(
+  record {
+    canister_id = principal "${CYCLES_WALLET_PRINCIPAL}";
+    num_requested_changes = opt 100;
+  }
+)'
+```
+
+Make the call to your cycles wallet:
+
+```shell
+dfx canister call --ic --candid ./cycles_wallet.did ${CYCLES_WALLET_PRINCIPAL} wallet_call
+```
+
+Enter the following options into Candid assist:
+
+- `hex`: `${ARGS_HEX}`
+- `0`
+- `canister_info`
+- `aaaaa-aa`
+
+Decode the output:
+
+```shell
+./didc decode --defs ./src/management-canister/ic.did --types '(canister_info_result)' ${RESULT_HEX}
+```
