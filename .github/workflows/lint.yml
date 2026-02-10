@@ -1,0 +1,32 @@
+name: Lint
+
+on:
+  pull_request:
+
+concurrency:
+  group: pr-${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint_rust:
+    name: Lint Rust
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cargo fmt
+        run: cargo fmt -- --check
+
+  lint_typescript:
+    name: Lint TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup NodeJS
+        uses: ./.github/actions/setup-node
+
+      - name: Check TypeScript formatting
+        run: pnpm format:check

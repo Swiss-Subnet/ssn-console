@@ -1,7 +1,7 @@
 use crate::{
     data,
-    data::{UserStatsData},
-    dto::{ListUserProfilesResponse, UserProfile, UserStatus, GetUserStatsResponse},
+    data::UserStatsData,
+    dto::{GetUserStatsResponse, ListUserProfilesResponse, UserProfile, UserStatus},
 };
 use candid::Principal;
 use ic_cdk::api::is_controller;
@@ -15,7 +15,7 @@ pub fn map_list_user_profiles_response(
             id: id.to_string(),
             email: profile.email,
             status: map_user_status_response(profile.status),
-            is_admin: principals.iter().any(|p| is_controller(p)),
+            is_admin: principals.iter().any(is_controller),
         })
         .collect()
 }

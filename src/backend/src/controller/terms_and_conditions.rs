@@ -8,15 +8,13 @@ use crate::{
 use ic_cdk::{api::msg_caller, *};
 
 #[query]
-fn get_latest_terms_and_conditions() -> GetLatestTermsAndConditionsResponse
-{
+fn get_latest_terms_and_conditions() -> GetLatestTermsAndConditionsResponse {
     let calling_principal = msg_caller();
     if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
         trap(&err);
     }
 
-    match terms_and_conditions_service::get_latest_terms_and_conditions(calling_principal)
-    {
+    match terms_and_conditions_service::get_latest_terms_and_conditions(calling_principal) {
         Ok(response) => response,
         Err(err) => trap(&err),
     }

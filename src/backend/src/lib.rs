@@ -7,10 +7,10 @@ use service::organization_service;
 mod controller;
 mod data;
 mod dto;
+mod env;
 mod mapping;
 mod service;
 mod utils;
-mod env;
 
 #[macro_use]
 extern crate dotenv_codegen;

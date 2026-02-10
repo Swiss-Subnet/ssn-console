@@ -2,7 +2,8 @@ use crate::{
     data::{canister_repository, user_profile_repository, Canister},
     dto::{CreateCanisterResponse, ListCanistersResponse, ListMyCanistersResponse},
     mapping::{
-        map_create_my_canister_response, map_list_canisters_response, map_list_my_canisters_response,
+        map_create_my_canister_response, map_list_canisters_response,
+        map_list_my_canisters_response,
     },
 };
 use candid::Principal;
