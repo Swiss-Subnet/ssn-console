@@ -1,5 +1,8 @@
 use crate::{
-    data::{organization_repository, user_profile_repository, UserProfile, UserStatus, Uuid},
+    data::{
+        organization_repository, project_repository, team_repository, user_profile_repository,
+        UserProfile, UserStatus, Uuid,
+    },
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
         ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
@@ -52,12 +55,14 @@ pub fn create_my_user_profile(
     }
 
     let profile = UserProfile::default();
-    let id = user_profile_repository::create_user_profile(calling_principal, profile.clone());
+    let user_id = user_profile_repository::create_user_profile(calling_principal, profile.clone());
     user_profile_repository::increment_user_count(profile.status == UserStatus::Active);
-    organization_repository::add_default_org(id);
+    let org_id = organization_repository::add_default_org(user_id);
+    let team_id = team_repository::add_default_team(user_id, org_id);
+    let _project_id = project_repository::add_default_project(team_id, org_id);
 
     Ok(map_create_my_user_profile_response(
-        id,
+        user_id,
         &calling_principal,
         profile,
     ))
