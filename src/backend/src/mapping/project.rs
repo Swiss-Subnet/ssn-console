@@ -3,7 +3,7 @@ use crate::{
     dto::{ListMyProjectsResponse, Project},
 };
 
-pub fn map_list_user_projects_response(
+pub fn map_list_my_projects_response(
     projects: Vec<(data::Uuid, data::Project)>,
 ) -> ListMyProjectsResponse {
     projects
