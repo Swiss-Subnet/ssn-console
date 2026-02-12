@@ -2,7 +2,7 @@ use super::{
     memory::{
         init_organization_project_index, init_project_team_index, init_projects,
         init_team_project_index, OrganizationProjectIndexMemory, ProjectMemory,
-        ProjectUserIndexMemory, UserProjectIndexMemory,
+        ProjectTeamIndexMemory, TeamProjectIndexMemory,
     },
     Project, Uuid,
 };
@@ -39,8 +39,8 @@ pub fn list_team_project_ids(team_id: Uuid) -> Vec<Uuid> {
 
 struct ProjectState {
     projects: ProjectMemory,
-    project_team_index: ProjectUserIndexMemory,
-    team_project_index: UserProjectIndexMemory,
+    project_team_index: ProjectTeamIndexMemory,
+    team_project_index: TeamProjectIndexMemory,
     organization_project_index: OrganizationProjectIndexMemory,
 }
 

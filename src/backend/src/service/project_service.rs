@@ -1,20 +1,19 @@
-use std::collections::HashSet;
-
 use crate::{
-    data::{project_repository, team_repository},
-    mapping::map_list_user_projects_response,
+    data::{project_repository, team_repository, user_profile_repository},
+    dto::ListMyProjectsResponse,
+    mapping::map_list_my_projects_response,
 };
 use candid::Principal;
+use std::collections::HashSet;
 
-pub fn list_my_projects(calling_principal: Principal) -> Result<Vec<crate::dto::Project>, String> {
-    let user_id =
-        crate::data::user_profile_repository::get_user_id_by_principal(&calling_principal)
-            .ok_or_else(|| {
-                format!(
-                    "User profile for principal {} does not exist",
-                    calling_principal
-                )
-            })?;
+pub fn list_my_projects(calling_principal: Principal) -> Result<ListMyProjectsResponse, String> {
+    let user_id = user_profile_repository::get_user_id_by_principal(&calling_principal)
+        .ok_or_else(|| {
+            format!(
+                "User profile for principal {} does not exist",
+                calling_principal
+            )
+        })?;
 
     let mut project_ids = HashSet::new();
     for team_id in team_repository::list_user_team_ids(user_id) {
@@ -30,5 +29,5 @@ pub fn list_my_projects(calling_principal: Principal) -> Result<Vec<crate::dto::
         })
         .collect::<Vec<_>>();
 
-    Ok(map_list_user_projects_response(projects))
+    Ok(map_list_my_projects_response(projects))
 }
