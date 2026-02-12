@@ -34,3 +34,13 @@ pub(super) const TERMS_AND_CONDITIONS_RESPONSE_USER_INDEX_MEMORY_ID: MemoryId = 
 pub(super) const ORGANIZATION_MEMORY_ID: MemoryId = MemoryId::new(12);
 pub(super) const ORGANIZATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(13);
 pub(super) const USER_ORGANIZATION_INDEX_MEMORY_ID: MemoryId = MemoryId::new(14);
+
+pub(super) const TEAM_MEMORY_ID: MemoryId = MemoryId::new(15);
+pub(super) const TEAM_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(16);
+pub(super) const USER_TEAM_INDEX_MEMORY_ID: MemoryId = MemoryId::new(17);
+pub(super) const ORGANIZATION_TEAM_INDEX_MEMORY_ID: MemoryId = MemoryId::new(18);
+
+pub(super) const PROJECT_MEMORY_ID: MemoryId = MemoryId::new(19);
+pub(super) const PROJECT_TEAM_INDEX_MEMORY_ID: MemoryId = MemoryId::new(20);
+pub(super) const TEAM_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(21);
+pub(super) const ORGANIZATION_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(22);
