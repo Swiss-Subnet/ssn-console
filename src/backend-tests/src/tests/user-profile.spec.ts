@@ -222,6 +222,20 @@ describe('User Profile', () => {
         id: expect.any(String),
         name: 'Default Organization',
       });
+
+      const projects = await driver.actor.list_my_projects();
+      expect(projects).toHaveLength(1);
+      expect(projects[0]).toEqual({
+        id: expect.any(String),
+        name: 'Default Project',
+      });
+
+      const teams = await driver.actor.list_my_teams();
+      expect(teams).toHaveLength(1);
+      expect(teams[0]).toEqual({
+        id: expect.any(String),
+        name: 'Default Team',
+      });
     });
 
     it('should create an admin user profile', async () => {
@@ -243,6 +257,20 @@ describe('User Profile', () => {
       expect(organizations[0]).toEqual({
         id: expect.any(String),
         name: 'Default Organization',
+      });
+
+      const projects = await driver.actor.list_my_projects();
+      expect(projects).toHaveLength(1);
+      expect(projects[0]).toEqual({
+        id: expect.any(String),
+        name: 'Default Project',
+      });
+
+      const teams = await driver.actor.list_my_teams();
+      expect(teams).toHaveLength(1);
+      expect(teams[0]).toEqual({
+        id: expect.any(String),
+        name: 'Default Team',
       });
     });
 
