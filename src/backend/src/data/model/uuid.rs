@@ -7,7 +7,9 @@ use uuid::{Builder, Uuid as UuidImpl};
 
 const UUID_SIZE: usize = 16;
 
-#[derive(Debug, Clone, Copy, Default, Ord, PartialOrd, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, Default, Ord, PartialOrd, PartialEq, Eq, Hash, Serialize, Deserialize,
+)]
 pub struct Uuid(UuidImpl);
 
 impl Uuid {

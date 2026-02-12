@@ -7,24 +7,22 @@ use super::{
 };
 use std::cell::RefCell;
 
-pub fn add_default_org(user_id: Uuid) {
+pub fn add_default_org(user_id: Uuid) -> Uuid {
     let org_id = Uuid::new();
     let org = Organization {
         name: "Default Organization".to_string(),
     };
 
-    if !list_user_org_ids(user_id).is_empty() {
-        return;
-    }
-
     mutate_state(|s| {
         s.organizations.insert(org_id, org);
         s.organization_user_index.insert((org_id, user_id));
         s.user_organization_index.insert((user_id, org_id));
-    })
+    });
+
+    org_id
 }
 
-fn list_user_org_ids(user_id: Uuid) -> Vec<Uuid> {
+pub fn list_user_org_ids(user_id: Uuid) -> Vec<Uuid> {
     with_state(|s| {
         s.user_organization_index
             .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))

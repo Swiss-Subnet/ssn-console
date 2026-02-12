@@ -1,6 +1,8 @@
 mod canister;
 mod organization;
 mod principal;
+mod project;
+mod team;
 mod terms_and_conditions;
 mod terms_and_conditions_response;
 mod trusted_partner;
@@ -11,6 +13,8 @@ mod uuid;
 pub use canister::*;
 pub use organization::*;
 pub use principal::*;
+pub use project::*;
+pub use team::*;
 pub use terms_and_conditions::*;
 pub use terms_and_conditions_response::*;
 pub use trusted_partner::*;

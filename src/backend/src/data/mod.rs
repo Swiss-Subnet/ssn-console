@@ -4,6 +4,8 @@ pub use model::*;
 
 pub mod canister_repository;
 pub mod organization_repository;
+pub mod project_repository;
+pub mod team_repository;
 pub mod terms_and_conditions_repository;
 pub mod trusted_partner_repository;
 pub mod user_profile_repository;
