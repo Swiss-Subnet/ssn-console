@@ -203,9 +203,9 @@ describe('Canisters', () => {
         throw new Error('Terms and conditions not found');
       }
 
-      await driver.actor.upsert_terms_and_conditions_response({
+      await driver.actor.upsert_terms_and_conditions_decision({
         terms_and_conditions_id: termsAndConditions.id,
-        response_type: { Reject: null },
+        decision_type: { Reject: null },
       });
 
       await expect(driver.actor.create_my_canister()).rejects.toThrowError(
@@ -255,9 +255,9 @@ describe('Canisters', () => {
         throw new Error('Terms and conditions not found');
       }
 
-      await driver.actor.upsert_terms_and_conditions_response({
+      await driver.actor.upsert_terms_and_conditions_decision({
         terms_and_conditions_id: termsAndConditions.id,
-        response_type: { Accept: null },
+        decision_type: { Accept: null },
       });
 
       const canister = await driver.actor.create_my_canister();
