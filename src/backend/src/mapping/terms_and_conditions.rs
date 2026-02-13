@@ -1,8 +1,8 @@
 use crate::{
     data::{self, Uuid},
     dto::{
-        CreateTermsAndConditionsRequest, CreateTermsAndConditionsResponseRequest,
-        GetLatestTermsAndConditionsResponse, TermsAndConditions, TermsAndConditionsResponseType,
+        CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse, TermsAndConditions,
+        TermsAndConditionsDecisionType, UpsertTermsAndConditionsDecisionRequest,
     },
 };
 
@@ -18,18 +18,18 @@ pub fn map_get_latest_terms_and_conditions_response(
     })
 }
 
-pub fn map_create_terms_and_conditions_response_request(
-    req: CreateTermsAndConditionsResponseRequest,
+pub fn map_create_terms_and_conditions_decision_request(
+    req: UpsertTermsAndConditionsDecisionRequest,
     user_id: data::Uuid,
     created_at: u64,
-) -> Result<data::TermsAndConditionsResponse, String> {
-    Ok(data::TermsAndConditionsResponse {
+) -> Result<data::TermsAndConditionsDecision, String> {
+    Ok(data::TermsAndConditionsDecision {
         terms_and_conditions_id: Uuid::try_from(req.terms_and_conditions_id.as_str())?,
         user_id,
         created_at,
-        response_type: match req.response_type {
-            TermsAndConditionsResponseType::Accept => data::TermsAndConditionsResponseType::Accept,
-            TermsAndConditionsResponseType::Reject => data::TermsAndConditionsResponseType::Reject,
+        decision_type: match req.decision_type {
+            TermsAndConditionsDecisionType::Accept => data::TermsAndConditionsDecisionType::Accept,
+            TermsAndConditionsDecisionType::Reject => data::TermsAndConditionsDecisionType::Reject,
         },
     })
 }

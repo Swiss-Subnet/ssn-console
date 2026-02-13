@@ -1,7 +1,7 @@
 import type {
   TermsAndConditions as ApiTermsAndConditions,
   GetLatestTermsAndConditionsResponse as ApiGetLatestTermsAndConditionsResponse,
-  UpsertTermsAndConditionsResponseRequest as ApiUpsertTermsAndConditionsResponseRequest,
+  UpsertTermsAndConditionsDecisionRequest as ApiUpsertTermsAndConditionsDecisionRequest,
   CreateTermsAndConditionsRequest as ApiCreateTermsAndConditionsRequest,
 } from '@ssn/backend-api';
 import DOMPurify from 'dompurify';
@@ -53,23 +53,23 @@ export function mapCreateTermsAndConditionsRequest(
   };
 }
 
-export type UpsertTermsAndConditionsResponseRequest = {
+export type UpsertTermsAndConditionsDecisionRequest = {
   termsAndConditionsId: string;
-  responseType: TermsAndConditionsResponseType;
+  decisionType: TermsAndConditionsDecisionType;
 };
 
-export enum TermsAndConditionsResponseType {
-  Accepted = 'Accepted',
-  Rejected = 'Rejected',
+export enum TermsAndConditionsDecisionType {
+  Accept = 'Accept',
+  Reject = 'Reject',
 }
 
-export function mapUpsertTermsAndConditionsResponseRequest(
-  req: UpsertTermsAndConditionsResponseRequest,
-): ApiUpsertTermsAndConditionsResponseRequest {
+export function mapUpsertTermsAndConditionsDecisionRequest(
+  req: UpsertTermsAndConditionsDecisionRequest,
+): ApiUpsertTermsAndConditionsDecisionRequest {
   return {
     terms_and_conditions_id: req.termsAndConditionsId,
-    response_type:
-      req.responseType === TermsAndConditionsResponseType.Accepted
+    decision_type:
+      req.decisionType === TermsAndConditionsDecisionType.Accept
         ? { Accept: null }
         : { Reject: null },
   };

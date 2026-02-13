@@ -7,20 +7,20 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TermsAndConditionsResponse {
+pub struct TermsAndConditionsDecision {
     pub terms_and_conditions_id: Uuid,
     pub user_id: Uuid,
     pub created_at: u64,
-    pub response_type: TermsAndConditionsResponseType,
+    pub decision_type: TermsAndConditionsDecisionType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum TermsAndConditionsResponseType {
+pub enum TermsAndConditionsDecisionType {
     Accept,
     Reject,
 }
 
-impl Storable for TermsAndConditionsResponse {
+impl Storable for TermsAndConditionsDecision {
     fn into_bytes(self) -> Vec<u8> {
         serialize_cbor(&self)
     }
