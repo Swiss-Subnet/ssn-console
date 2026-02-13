@@ -1,7 +1,7 @@
 use crate::{
     dto::{
-        CreateTermsAndConditionsRequest, CreateTermsAndConditionsResponseRequest,
-        GetLatestTermsAndConditionsResponse,
+        CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse,
+        UpsertTermsAndConditionsDecisionRequest,
     },
     service::{access_control_service, terms_and_conditions_service},
 };
@@ -21,14 +21,14 @@ fn get_latest_terms_and_conditions() -> GetLatestTermsAndConditionsResponse {
 }
 
 #[update]
-fn upsert_terms_and_conditions_response(req: CreateTermsAndConditionsResponseRequest) {
+fn upsert_terms_and_conditions_decision(req: UpsertTermsAndConditionsDecisionRequest) {
     let calling_principal = msg_caller();
     if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
         trap(&err);
     }
 
     if let Err(err) =
-        terms_and_conditions_service::upsert_terms_and_conditions_response(calling_principal, req)
+        terms_and_conditions_service::upsert_terms_and_conditions_decision(calling_principal, req)
     {
         trap(&err);
     }

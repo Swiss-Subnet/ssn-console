@@ -1,6 +1,6 @@
 import { LoadingButton } from '@/components/loading-button';
 import { H1 } from '@/components/typography/h1';
-import { TermsAndConditionsResponseType } from '@/lib/api-models';
+import { TermsAndConditionsDecisionType } from '@/lib/api-models';
 import { isNil } from '@/lib/nil';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
@@ -9,8 +9,10 @@ import { useNavigate } from 'react-router';
 
 const TermsAndConditions: FC = () => {
   const navigate = useNavigate();
-  const { termsAndConditions, upsertTermsAndConditionsResponse } =
-    useAppStore();
+  const {
+    termsAndConditions,
+    upsertTermsAndConditionsDecision: upsertTermsAndConditionsDecision,
+  } = useAppStore();
 
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
@@ -22,9 +24,9 @@ const TermsAndConditions: FC = () => {
 
     setIsDeclining(true);
     try {
-      await upsertTermsAndConditionsResponse({
+      await upsertTermsAndConditionsDecision({
         termsAndConditionsId: termsAndConditions.id,
-        responseType: TermsAndConditionsResponseType.Rejected,
+        decisionType: TermsAndConditionsDecisionType.Reject,
       });
     } catch (err) {
       showErrorToast('Failed to decline terms and conditions', err);
@@ -41,9 +43,9 @@ const TermsAndConditions: FC = () => {
 
     setIsAccepting(true);
     try {
-      await upsertTermsAndConditionsResponse({
+      await upsertTermsAndConditionsDecision({
         termsAndConditionsId: termsAndConditions.id,
-        responseType: TermsAndConditionsResponseType.Accepted,
+        decisionType: TermsAndConditionsDecisionType.Accept,
       });
       navigate('/canisters');
     } catch (err) {

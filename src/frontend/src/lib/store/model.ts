@@ -7,7 +7,7 @@ import type {
   UserStatus,
   GetUserStatsResponse,
   TermsAndConditions,
-  UpsertTermsAndConditionsResponseRequest,
+  UpsertTermsAndConditionsDecisionRequest,
   CreateTermsAndConditionsRequest,
 } from '@/lib/api-models';
 import type {
@@ -109,8 +109,8 @@ export type TermsAndConditionsSlice = {
 
   initializeTermsAndConditions: () => Promise<void>;
   clearTermsAndConditions: () => void;
-  upsertTermsAndConditionsResponse: (
-    req: UpsertTermsAndConditionsResponseRequest,
+  upsertTermsAndConditionsDecision: (
+    req: UpsertTermsAndConditionsDecisionRequest,
   ) => Promise<void>;
   createTermsAndConditions: (
     req: CreateTermsAndConditionsRequest,
