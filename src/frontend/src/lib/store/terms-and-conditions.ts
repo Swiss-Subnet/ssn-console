@@ -31,7 +31,7 @@ export const createTermsAndConditionsSlice: AppStateCreator<
     set({ termsAndConditions: null });
   },
 
-  async upsertTermsAndConditionsResponse(req) {
+  async upsertTermsAndConditionsDecision(req) {
     const {
       getTermsAndConditionsApi,
       initializeTermsAndConditions,
@@ -55,7 +55,7 @@ export const createTermsAndConditionsSlice: AppStateCreator<
     }
 
     const termsAndConditionsApi = getTermsAndConditionsApi();
-    await termsAndConditionsApi.upsertTermsAndConditionsResponse(req);
+    await termsAndConditionsApi.upsertTermsAndConditionsDecision(req);
     await initializeTermsAndConditions();
   },
 
