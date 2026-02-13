@@ -13,18 +13,18 @@ type CreateTermsAndConditionsRequest = record {
   comment : text;
 };
 
-type UpsertTermsAndConditionsResponseRequest = record {
+type UpsertTermsAndConditionsDecisionRequest = record {
   terms_and_conditions_id : text;
-  response_type : TermsAndConditionsResponseType;
+  decision_type : TermsAndConditionsDecisionType;
 };
 
-type TermsAndConditionsResponseType = variant {
+type TermsAndConditionsDecisionType = variant {
   Accept;
   Reject;
 };
 
 service : {
   get_latest_terms_and_conditions : () -> (GetLatestTermsAndConditionsResponse) query;
-  upsert_terms_and_conditions_response : (UpsertTermsAndConditionsResponseRequest) -> ();
+  upsert_terms_and_conditions_decision : (UpsertTermsAndConditionsDecisionRequest) -> ();
   create_terms_and_conditions : (CreateTermsAndConditionsRequest) -> ();
 };

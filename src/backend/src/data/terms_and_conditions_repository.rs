@@ -1,11 +1,11 @@
 use crate::data::{
     memory::{
         init_terms_and_conditions, init_terms_and_conditions_created_at_index_memory,
-        init_terms_and_conditions_response, init_terms_and_conditions_response_user_index,
-        TermsAndConditionsCreatedAtIndexMemory, TermsAndConditionsMemory,
-        TermsAndConditionsResponseMemory, TermsAndConditionsResponseUserIndexMemory,
+        init_terms_and_conditions_decision, init_terms_and_conditions_decision_user_index,
+        TermsAndConditionsCreatedAtIndexMemory, TermsAndConditionsDecisionMemory,
+        TermsAndConditionsDecisionUserIndexMemory, TermsAndConditionsMemory,
     },
-    TermsAndConditions, TermsAndConditionsResponse, TermsAndConditionsResponseType, Uuid,
+    TermsAndConditions, TermsAndConditionsDecision, TermsAndConditionsDecisionType, Uuid,
 };
 use std::cell::RefCell;
 
@@ -39,43 +39,43 @@ fn get_latest_terms_and_condition_id() -> Option<Uuid> {
 
 fn has_accepted_terms_and_conditions(user_id: Uuid, terms_and_conditions_id: Uuid) -> bool {
     with_state(|s| {
-        s.terms_and_conditions_responses_user_index
+        s.terms_and_conditions_decisions_user_index
             .get(&(user_id, terms_and_conditions_id))
-            .and_then(|response_id| s.terms_and_conditions_responses.get(&response_id))
-            .map(|response| response.response_type == TermsAndConditionsResponseType::Accept)
+            .and_then(|response_id| s.terms_and_conditions_decisions.get(&response_id))
+            .map(|response| response.decision_type == TermsAndConditionsDecisionType::Accept)
             .unwrap_or(false)
     })
 }
 
-pub fn upsert_terms_and_conditions_response(
-    terms_and_conditions_response: TermsAndConditionsResponse,
+pub fn upsert_terms_and_conditions_decision(
+    terms_and_conditions_decision: TermsAndConditionsDecision,
 ) -> Result<Uuid, String> {
     mutate_state(|s| {
         if !s
             .terms_and_conditions
-            .contains_key(&terms_and_conditions_response.terms_and_conditions_id)
+            .contains_key(&terms_and_conditions_decision.terms_and_conditions_id)
         {
             return Err(format!(
                 "Terms and conditions with id {} does not exist",
-                terms_and_conditions_response.terms_and_conditions_id
+                terms_and_conditions_decision.terms_and_conditions_id
             ));
         }
 
         let id = s
-            .terms_and_conditions_responses_user_index
+            .terms_and_conditions_decisions_user_index
             .get(&(
-                terms_and_conditions_response.user_id,
-                terms_and_conditions_response.terms_and_conditions_id,
+                terms_and_conditions_decision.user_id,
+                terms_and_conditions_decision.terms_and_conditions_id,
             ))
             .unwrap_or_else(Uuid::new);
 
-        s.terms_and_conditions_responses
-            .insert(id, terms_and_conditions_response.clone());
+        s.terms_and_conditions_decisions
+            .insert(id, terms_and_conditions_decision.clone());
 
-        s.terms_and_conditions_responses_user_index.insert(
+        s.terms_and_conditions_decisions_user_index.insert(
             (
-                terms_and_conditions_response.user_id,
-                terms_and_conditions_response.terms_and_conditions_id,
+                terms_and_conditions_decision.user_id,
+                terms_and_conditions_decision.terms_and_conditions_id,
             ),
             id,
         );
@@ -100,8 +100,8 @@ pub fn create_terms_and_conditions(terms_and_conditions: TermsAndConditions) -> 
 struct TermsAndConditionsState {
     terms_and_conditions: TermsAndConditionsMemory,
     terms_and_conditions_created_at_index: TermsAndConditionsCreatedAtIndexMemory,
-    terms_and_conditions_responses: TermsAndConditionsResponseMemory,
-    terms_and_conditions_responses_user_index: TermsAndConditionsResponseUserIndexMemory,
+    terms_and_conditions_decisions: TermsAndConditionsDecisionMemory,
+    terms_and_conditions_decisions_user_index: TermsAndConditionsDecisionUserIndexMemory,
 }
 
 impl Default for TermsAndConditionsState {
@@ -110,9 +110,9 @@ impl Default for TermsAndConditionsState {
             terms_and_conditions: init_terms_and_conditions(),
             terms_and_conditions_created_at_index:
                 init_terms_and_conditions_created_at_index_memory(),
-            terms_and_conditions_responses: init_terms_and_conditions_response(),
-            terms_and_conditions_responses_user_index:
-                init_terms_and_conditions_response_user_index(),
+            terms_and_conditions_decisions: init_terms_and_conditions_decision(),
+            terms_and_conditions_decisions_user_index:
+                init_terms_and_conditions_decision_user_index(),
         }
     }
 }

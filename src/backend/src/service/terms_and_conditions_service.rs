@@ -1,11 +1,11 @@
 use crate::{
     data::{terms_and_conditions_repository, user_profile_repository},
     dto::{
-        CreateTermsAndConditionsRequest, CreateTermsAndConditionsResponseRequest,
-        GetLatestTermsAndConditionsResponse,
+        CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse,
+        UpsertTermsAndConditionsDecisionRequest,
     },
     mapping::{
-        map_create_terms_and_conditions_request, map_create_terms_and_conditions_response_request,
+        map_create_terms_and_conditions_decision_request, map_create_terms_and_conditions_request,
         map_get_latest_terms_and_conditions_response,
     },
 };
@@ -30,9 +30,9 @@ pub fn get_latest_terms_and_conditions(
     ))
 }
 
-pub fn upsert_terms_and_conditions_response(
+pub fn upsert_terms_and_conditions_decision(
     calling_principal: Principal,
-    req: CreateTermsAndConditionsResponseRequest,
+    req: UpsertTermsAndConditionsDecisionRequest,
 ) -> Result<(), String> {
     if is_controller(&calling_principal) {
         return Err("Controllers do not need to accept terms and conditions".to_string());
@@ -47,9 +47,9 @@ pub fn upsert_terms_and_conditions_response(
         })?;
 
     let current_time = time();
-    let req = map_create_terms_and_conditions_response_request(req, user_id, current_time)?;
+    let req = map_create_terms_and_conditions_decision_request(req, user_id, current_time)?;
 
-    let _id = terms_and_conditions_repository::upsert_terms_and_conditions_response(req)?;
+    let _id = terms_and_conditions_repository::upsert_terms_and_conditions_decision(req)?;
 
     Ok(())
 }

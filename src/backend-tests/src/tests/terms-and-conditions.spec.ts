@@ -115,14 +115,14 @@ describe('Terms and Conditions', () => {
     });
   });
 
-  describe('upsert_terms_and_conditions_response', () => {
+  describe('upsert_terms_and_conditions_decision', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
       await expect(
-        driver.actor.upsert_terms_and_conditions_response({
+        driver.actor.upsert_terms_and_conditions_decision({
           terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
-          response_type: { Accept: null },
+          decision_type: { Accept: null },
         }),
       ).rejects.toThrowError(
         /Anonymous users are not allowed to perform this action/,
@@ -134,9 +134,9 @@ describe('Terms and Conditions', () => {
       driver.actor.setIdentity(aliceIdentity);
 
       await expect(
-        driver.actor.upsert_terms_and_conditions_response({
+        driver.actor.upsert_terms_and_conditions_decision({
           terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
-          response_type: { Accept: null },
+          decision_type: { Accept: null },
         }),
       ).rejects.toThrowError(
         new RegExp(
@@ -151,9 +151,9 @@ describe('Terms and Conditions', () => {
       await driver.actor.create_my_user_profile();
 
       await expect(
-        driver.actor.upsert_terms_and_conditions_response({
+        driver.actor.upsert_terms_and_conditions_decision({
           terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
-          response_type: { Accept: null },
+          decision_type: { Accept: null },
         }),
       ).rejects.toThrowError(
         new RegExp(
@@ -167,9 +167,9 @@ describe('Terms and Conditions', () => {
       await driver.actor.create_my_user_profile();
 
       await expect(
-        driver.actor.upsert_terms_and_conditions_response({
+        driver.actor.upsert_terms_and_conditions_decision({
           terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
-          response_type: { Accept: null },
+          decision_type: { Accept: null },
         }),
       ).rejects.toThrowError(
         new RegExp(`Controllers do not need to accept terms and conditions`),
@@ -195,9 +195,9 @@ describe('Terms and Conditions', () => {
         throw new Error('Terms and conditions not found');
       }
 
-      await driver.actor.upsert_terms_and_conditions_response({
+      await driver.actor.upsert_terms_and_conditions_decision({
         terms_and_conditions_id: termsAndConditions.id,
-        response_type: { Accept: null },
+        decision_type: { Accept: null },
       });
 
       const [termsAndConditionsAfterAccepting] =
@@ -230,9 +230,9 @@ describe('Terms and Conditions', () => {
         throw new Error('Terms and conditions not found');
       }
 
-      await driver.actor.upsert_terms_and_conditions_response({
+      await driver.actor.upsert_terms_and_conditions_decision({
         terms_and_conditions_id: termsAndConditions.id,
-        response_type: { Reject: null },
+        decision_type: { Reject: null },
       });
 
       const [termsAndConditionsAfterRejecting] =
