@@ -15,13 +15,7 @@ pub fn list_canisters() -> ListCanistersResponse {
 }
 
 pub fn list_my_canisters(calling_principal: Principal) -> Result<ListMyCanistersResponse, String> {
-    let Some(user_id) = user_profile_repository::get_user_id_by_principal(&calling_principal)
-    else {
-        return Err(format!(
-            "User profile for principal {} does not exist",
-            calling_principal.to_text()
-        ));
-    };
+    let user_id = user_profile_repository::assert_user_id_by_principal(&calling_principal)?;
 
     let canisters = canister_repository::list_canisters_by_user(user_id);
     Ok(map_list_my_canisters_response(canisters))
@@ -30,13 +24,7 @@ pub fn list_my_canisters(calling_principal: Principal) -> Result<ListMyCanisters
 pub async fn create_my_canister(
     calling_principal: Principal,
 ) -> Result<CreateCanisterResponse, String> {
-    let Some(user_id) = user_profile_repository::get_user_id_by_principal(&calling_principal)
-    else {
-        return Err(format!(
-            "User profile for principal {} does not exist",
-            calling_principal.to_text()
-        ));
-    };
+    let user_id = user_profile_repository::assert_user_id_by_principal(&calling_principal)?;
 
     let create_canister_args = CreateCanisterArgs {
         settings: Some(CanisterSettings {

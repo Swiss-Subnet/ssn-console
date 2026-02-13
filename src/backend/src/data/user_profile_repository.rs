@@ -40,6 +40,11 @@ pub fn get_user_profile_by_user_id(user_id: &Uuid) -> Option<UserProfile> {
     with_state(|s| s.profiles.get(user_id))
 }
 
+pub fn assert_user_id_by_principal(principal: &Principal) -> Result<Uuid, String> {
+    get_user_id_by_principal(principal)
+        .ok_or_else(|| format!("User profile for principal {} does not exist", principal))
+}
+
 pub fn get_user_id_by_principal(principal: &Principal) -> Option<Uuid> {
     with_state(|s| s.principal_index.get(principal))
 }

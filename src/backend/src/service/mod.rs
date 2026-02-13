@@ -1,4 +1,5 @@
 pub mod access_control_service;
+pub mod approval_policy_service;
 pub mod canister_service;
 pub mod cycles_ledger_service;
 pub mod organization_service;

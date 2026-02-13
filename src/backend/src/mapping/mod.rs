@@ -1,3 +1,4 @@
+mod approval_policy;
 mod canister;
 mod organization;
 mod project;
@@ -6,6 +7,7 @@ mod terms_and_conditions;
 mod trusted_partner;
 mod user_profile;
 
+pub use approval_policy::*;
 pub use canister::*;
 pub use organization::*;
 pub use project::*;

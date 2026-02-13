@@ -15,13 +15,7 @@ use ic_cdk::api::{is_controller, time};
 pub fn get_latest_terms_and_conditions(
     calling_principal: Principal,
 ) -> Result<GetLatestTermsAndConditionsResponse, String> {
-    let user_id = user_profile_repository::get_user_id_by_principal(&calling_principal)
-        .ok_or_else(|| {
-            format!(
-                "User profile for principal {} does not exist",
-                calling_principal
-            )
-        })?;
+    let user_id = user_profile_repository::assert_user_id_by_principal(&calling_principal)?;
 
     let terms_and_conditions =
         terms_and_conditions_repository::get_latest_terms_and_conditions(user_id);
@@ -38,13 +32,7 @@ pub fn upsert_terms_and_conditions_decision(
         return Err("Controllers do not need to accept terms and conditions".to_string());
     }
 
-    let user_id = user_profile_repository::get_user_id_by_principal(&calling_principal)
-        .ok_or_else(|| {
-            format!(
-                "User profile for principal {} does not exist",
-                calling_principal
-            )
-        })?;
+    let user_id = user_profile_repository::assert_user_id_by_principal(&calling_principal)?;
 
     let current_time = time();
     let req = map_create_terms_and_conditions_decision_request(req, user_id, current_time)?;
@@ -58,13 +46,7 @@ pub fn create_terms_and_conditions(
     calling_principal: Principal,
     req: CreateTermsAndConditionsRequest,
 ) -> Result<(), String> {
-    let user_id = user_profile_repository::get_user_id_by_principal(&calling_principal)
-        .ok_or_else(|| {
-            format!(
-                "User profile for principal {} does not exist",
-                calling_principal
-            )
-        })?;
+    let user_id = user_profile_repository::assert_user_id_by_principal(&calling_principal)?;
 
     let current_time = time();
     let req = map_create_terms_and_conditions_request(req, user_id, current_time)?;

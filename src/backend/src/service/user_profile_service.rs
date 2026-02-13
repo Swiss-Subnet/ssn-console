@@ -1,7 +1,8 @@
 use crate::{
     data::{
-        organization_repository, project_repository, team_repository, user_profile_repository,
-        UserProfile, UserStatus, Uuid,
+        approval_policy_repository, organization_repository, project_repository, team_repository,
+        user_profile_repository, ApprovalPolicy, OperationType, PolicyType, UserProfile,
+        UserStatus, Uuid,
     },
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
@@ -59,7 +60,21 @@ pub fn create_my_user_profile(
     user_profile_repository::increment_user_count(profile.status == UserStatus::Active);
     let org_id = organization_repository::add_default_org(user_id);
     let team_id = team_repository::add_default_team(user_id, org_id);
-    let _project_id = project_repository::add_default_project(team_id, org_id);
+    let project_id = project_repository::add_default_project(team_id, org_id);
+    approval_policy_repository::upsert_approval_policy(
+        project_id,
+        OperationType::CreateCanister,
+        ApprovalPolicy {
+            policy_type: PolicyType::AutoApprove,
+        },
+    );
+    approval_policy_repository::upsert_approval_policy(
+        project_id,
+        OperationType::AddCanisterController,
+        ApprovalPolicy {
+            policy_type: PolicyType::AutoApprove,
+        },
+    );
 
     Ok(map_create_my_user_profile_response(
         user_id,

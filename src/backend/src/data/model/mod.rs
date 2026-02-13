@@ -1,3 +1,4 @@
+mod approval_policy;
 mod canister;
 mod organization;
 mod principal;
@@ -10,6 +11,7 @@ mod user_profile;
 mod user_stats;
 mod uuid;
 
+pub use approval_policy::*;
 pub use canister::*;
 pub use organization::*;
 pub use principal::*;

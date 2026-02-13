@@ -236,6 +236,22 @@ describe('User Profile', () => {
         id: expect.any(String),
         name: 'Default Team',
       });
+
+      const approvalPolicies =
+        await driver.actor.list_project_approval_policies({
+          project_id: projects[0].id,
+        });
+      expect(approvalPolicies).toHaveLength(2);
+      expect(approvalPolicies).toContainEqual({
+        id: expect.any(String),
+        operation_type: 'CreateCanister',
+        policy_type: 'AutoApprove',
+      });
+      expect(approvalPolicies).toContainEqual({
+        id: expect.any(String),
+        operation_type: 'AddCanisterController',
+        policy_type: 'AutoApprove',
+      });
     });
 
     it('should create an admin user profile', async () => {
@@ -271,6 +287,22 @@ describe('User Profile', () => {
       expect(teams[0]).toEqual({
         id: expect.any(String),
         name: 'Default Team',
+      });
+
+      const approvalPolicies =
+        await driver.actor.list_project_approval_policies({
+          project_id: projects[0].id,
+        });
+      expect(approvalPolicies).toHaveLength(2);
+      expect(approvalPolicies).toContainEqual({
+        id: expect.any(String),
+        operation_type: 'CreateCanister',
+        policy_type: 'AutoApprove',
+      });
+      expect(approvalPolicies).toContainEqual({
+        id: expect.any(String),
+        operation_type: 'AddCanisterController',
+        policy_type: 'AutoApprove',
       });
     });
 

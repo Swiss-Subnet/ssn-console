@@ -1,3 +1,4 @@
+import service "./candid/approval_policies.did";
 import service "./candid/canister.did";
 import service "./candid/cycles_ledger.did";
 import service "./candid/http.did";

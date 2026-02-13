@@ -44,3 +44,7 @@ pub(super) const PROJECT_MEMORY_ID: MemoryId = MemoryId::new(19);
 pub(super) const PROJECT_TEAM_INDEX_MEMORY_ID: MemoryId = MemoryId::new(20);
 pub(super) const TEAM_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(21);
 pub(super) const ORGANIZATION_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(22);
+
+pub(super) const APPROVAL_POLICY_MEMORY_ID: MemoryId = MemoryId::new(23);
+pub(super) const PROJECT_OPERATION_TYPE_APPROVAL_POLICY_INDEX_MEMORY_ID: MemoryId =
+    MemoryId::new(24);
