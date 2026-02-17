@@ -1,6 +1,5 @@
 import type {
   Canister,
-  CanisterStatusResponse,
   CreateTrustedPartnerRequest,
   TrustedPartner,
   UserProfile,
@@ -76,22 +75,17 @@ export type UsersSlice = {
   setUserStatus: (userId: string, status: UserStatus) => Promise<void>;
 };
 
-export type CanisterState = Canister & {
-  isLoading: boolean;
-  status: CanisterStatusResponse | null;
-};
-
 export type CanistersSlice = {
   isCanistersInitialized: boolean;
-  canisters: CanisterState[] | null;
+  isCanistersLoading: boolean;
+  canisters: Canister[] | null;
 
   initializeCanisters: () => Promise<void>;
+  refreshCanisters: () => Promise<void>;
   clearCanisters: () => void;
   createCanister: () => Promise<void>;
-  addController: (
-    canisterPrincipal: string,
-    controller: string,
-  ) => Promise<void>;
+  addMissingController: (canisterId: string) => Promise<void>;
+  addController: (canisterId: string, controllerId: string) => Promise<void>;
 };
 
 export type TrustedPartnersSlice = {

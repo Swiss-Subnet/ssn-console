@@ -1,3 +1,4 @@
+import { CanisterStatus } from '@/lib/api-models/canister';
 import { fromCandidOpt, toCandidOpt } from '@/lib/utils';
 import { Principal } from '@icp-sdk/core/principal';
 import type {
@@ -55,12 +56,6 @@ export interface CanisterStatusResponse {
   balance: { blob: Uint8Array; nat: bigint }[];
   cycles: bigint;
   reservedCycles: bigint;
-}
-
-export enum CanisterStatus {
-  Running = 'running',
-  Stopping = 'stopping',
-  Stopped = 'stopped',
 }
 
 export function mapCanisterStatusResponse(

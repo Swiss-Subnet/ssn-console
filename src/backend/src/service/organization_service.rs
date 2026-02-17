@@ -1,6 +1,6 @@
 use crate::data::{
-    approval_policy_repository, project_repository, team_repository, ApprovalPolicy, OperationType,
-    PolicyType,
+    approval_policy_repository, canister_repository, project_repository, team_repository,
+    ApprovalPolicy, OperationType, PolicyType,
 };
 use crate::dto::ListMyOrganizationsResponse;
 use crate::{
@@ -42,6 +42,15 @@ pub fn init() {
                 policy_type: PolicyType::AutoApprove,
             },
         );
+
+        let canister_ids = canister_repository::list_canister_ids_by_project(user_id);
+        for canister_id in canister_ids {
+            canister_repository::move_canister_from_user_to_project(
+                user_id,
+                project_id,
+                canister_id,
+            );
+        }
     }
 }
 

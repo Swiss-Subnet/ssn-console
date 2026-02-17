@@ -1,8 +1,13 @@
 import { PocketIc, type Actor, type CanisterFixture } from '@dfinity/pic';
 import { inject } from 'vitest';
-import { type _SERVICE as BackendService, idlFactory } from '@ssn/backend-api';
+import {
+  type _SERVICE as BackendService,
+  idlFactory,
+  type Project,
+  type Proposal,
+} from '@ssn/backend-api';
 import { resolve } from 'node:path';
-import type { Principal } from '@icp-sdk/core/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { controllerIdentity } from './identity';
 
 export const BACKEND_WASM_PATH = resolve(
@@ -50,15 +55,24 @@ export class TestDriver {
     });
   }
 
-  public async resetBackendCanister(): Promise<void> {
-    await this.pic.reinstallCode({
-      canisterId: this.canisterId,
-      wasm: BACKEND_WASM_PATH,
-      sender: controllerIdentity.getPrincipal(),
-    });
-  }
-
   public async tearDown(): Promise<void> {
     await this.pic.tearDown();
+  }
+
+  public async getDefaultProject(): Promise<Project> {
+    const [project] = await this.actor.list_my_projects();
+
+    return project;
+  }
+
+  public async createCanister(): Promise<Proposal> {
+    const project = await this.getDefaultProject();
+
+    return await this.actor.create_proposal({
+      project_id: project.id,
+      operation: {
+        CreateCanister: null,
+      },
+    });
   }
 }

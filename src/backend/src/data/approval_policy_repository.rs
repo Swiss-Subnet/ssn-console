@@ -23,6 +23,17 @@ pub fn list_project_approval_policies(
     })
 }
 
+pub fn get_project_approval_policy_by_operation_type(
+    project_id: Uuid,
+    operation_type: OperationType,
+) -> Option<ApprovalPolicy> {
+    with_state(|s| {
+        s.project_operation_type_approval_policy_index
+            .get(&(project_id, operation_type))
+            .and_then(|id| s.approval_policies.get(&id))
+    })
+}
+
 pub fn upsert_approval_policy(
     project_id: Uuid,
     operation_type: OperationType,

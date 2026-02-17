@@ -8,6 +8,14 @@ pub struct ApprovalPolicy {
     pub policy_type: PolicyType,
 }
 
+impl Default for ApprovalPolicy {
+    fn default() -> Self {
+        Self {
+            policy_type: PolicyType::AutoApprove,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum PolicyType {
     AutoApprove,

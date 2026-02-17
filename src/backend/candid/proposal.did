@@ -1,0 +1,33 @@
+type CreateProposalRequest = record {
+  project_id : text;
+  operation : ProposalOperation;
+};
+
+type CreateProposalResponse = Proposal;
+
+type Proposal = record {
+  id : text;
+  project_id : text;
+  status : ProposalStatus;
+  operation : ProposalOperation;
+};
+
+type ProposalStatus = variant {
+  Open;
+  Rejected;
+  Executing;
+  Executed;
+  Failed;
+};
+
+type ProposalOperation = variant {
+  CreateCanister;
+  AddCanisterController : record {
+    canister_id : principal;
+    controller_id : principal;
+  };
+};
+
+service : {
+  create_proposal : (CreateProposalRequest) -> (CreateProposalResponse);
+};
