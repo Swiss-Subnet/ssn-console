@@ -4,8 +4,9 @@ import { TermsAndConditionsDecisionType } from '@/lib/api-models';
 import { isNil } from '@/lib/nil';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
-import { useState, type FC } from 'react';
+import { useMemo, useState, type FC } from 'react';
 import { useNavigate } from 'react-router';
+import DOMPurify from 'dompurify';
 
 const TermsAndConditions: FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,11 @@ const TermsAndConditions: FC = () => {
 
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
+
+  const sanitizedContent = useMemo(
+    () => DOMPurify.sanitize(termsAndConditions?.content ?? ''),
+    [termsAndConditions?.content],
+  );
 
   async function onDeclineTermsAndConditions(): Promise<void> {
     if (isNil(termsAndConditions)) {
@@ -77,7 +83,7 @@ const TermsAndConditions: FC = () => {
 
       <div
         className="prose dark:prose-invert mt-10 min-w-full"
-        dangerouslySetInnerHTML={{ __html: termsAndConditions?.content ?? '' }}
+        dangerouslySetInnerHTML={{ __html: sanitizedContent }}
       />
 
       <div className="mb-10 flex flex-row justify-end space-x-2">

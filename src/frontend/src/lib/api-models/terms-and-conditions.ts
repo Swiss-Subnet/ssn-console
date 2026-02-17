@@ -4,7 +4,6 @@ import type {
   UpsertTermsAndConditionsDecisionRequest as ApiUpsertTermsAndConditionsDecisionRequest,
   CreateTermsAndConditionsRequest as ApiCreateTermsAndConditionsRequest,
 } from '@ssn/backend-api';
-import DOMPurify from 'dompurify';
 import { micromark } from 'micromark';
 
 export type GetLatestTermsAndConditionsResponse = TermsAndConditions | null;
@@ -32,7 +31,7 @@ export function mapTermsAndConditionsResponse(
 ): TermsAndConditions {
   return {
     id: res.id,
-    content: DOMPurify.sanitize(micromark(res.content)),
+    content: micromark(res.content),
     comment: res.comment,
     createdAt: new Date(Number(res.created_at / 1_000_000n)),
     hasAccepted: res.has_accepted,
