@@ -1,0 +1,18 @@
+use crate::{
+    dto::ListMyProjectsResponse,
+    service::{access_control_service, project_service},
+};
+use ic_cdk::{api::msg_caller, *};
+
+#[query]
+fn list_my_projects() -> ListMyProjectsResponse {
+    let calling_principal = msg_caller();
+    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
+        trap(&err);
+    }
+
+    match project_service::list_my_projects(calling_principal) {
+        Ok(response) => response,
+        Err(err) => trap(&err),
+    }
+}

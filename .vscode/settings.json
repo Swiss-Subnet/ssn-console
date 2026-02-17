@@ -1,4 +1,23 @@
 {
   "typescript.preferences.importModuleSpecifier": "non-relative",
-  "javascript.preferences.importModuleSpecifier": "non-relative"
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "editor.rulers": [80],
+
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+  "[typescriptreact]": {
+    "editor.wordWrapColumn": 80,
+    "editor.wordWrap": "bounded"
+  },
+
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
 }

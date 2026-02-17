@@ -1,7 +1,7 @@
 use crate::{
     dto::{
-        CreateMyUserProfileResponse, GetMyUserProfileResponse, ListUserProfilesResponse,
-        UpdateMyUserProfileRequest, UpdateUserProfileRequest, GetUserStatsResponse,
+        CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
+        ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
     },
     service::{access_control_service, user_profile_service},
 };

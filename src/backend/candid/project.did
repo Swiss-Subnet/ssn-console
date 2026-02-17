@@ -1,0 +1,10 @@
+type ListMyProjectsResponse = vec Project;
+
+type Project = record {
+  id : text;
+  name : text;
+};
+
+service : {
+  list_my_projects : () -> (ListMyProjectsResponse) query;
+};

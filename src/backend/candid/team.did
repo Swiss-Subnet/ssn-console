@@ -1,0 +1,10 @@
+type ListMyTeamsResponse = vec Team;
+
+type Team = record {
+  id : text;
+  name : text;
+};
+
+service : {
+  list_my_teams : () -> (ListMyTeamsResponse) query;
+};

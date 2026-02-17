@@ -165,5 +165,115 @@ describe('Canisters', () => {
         ),
       ).toBe(true);
     });
+
+    it('should return an error for a user who has not accepted the latest terms and conditions', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.create_terms_and_conditions({
+        content: 'Terms and conditions content',
+        comment: 'Terms and conditions comment',
+      });
+
+      driver.actor.setIdentity(aliceIdentity);
+      await expect(driver.actor.create_my_canister()).rejects.toThrowError(
+        /The latest terms and conditions must be accepted to perform this action/,
+      );
+    });
+
+    it('should return an error for a user who has explicitly rejected the latest terms and conditions', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.create_terms_and_conditions({
+        content: 'Terms and conditions content',
+        comment: 'Terms and conditions comment',
+      });
+
+      driver.actor.setIdentity(aliceIdentity);
+      const [termsAndConditions] =
+        await driver.actor.get_latest_terms_and_conditions();
+      if (!termsAndConditions) {
+        throw new Error('Terms and conditions not found');
+      }
+
+      await driver.actor.upsert_terms_and_conditions_decision({
+        terms_and_conditions_id: termsAndConditions.id,
+        decision_type: { Reject: null },
+      });
+
+      await expect(driver.actor.create_my_canister()).rejects.toThrowError(
+        /The latest terms and conditions must be accepted to perform this action/,
+      );
+    });
+
+    it('should create a canister for a controller without accepting terms and conditions', async () => {
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.create_terms_and_conditions({
+        content: 'Terms and conditions content',
+        comment: 'Terms and conditions comment',
+      });
+      const canister = await driver.actor.create_my_canister();
+      const controllers = await driver.pic.getControllers(
+        Principal.fromText(canister.principal_id),
+      );
+
+      expect(canister).toEqual({
+        id: expect.any(String),
+        principal_id: expect.any(String),
+      });
+      expect(
+        controllers.some(
+          c => c.compareTo(controllerIdentity.getPrincipal()) === 'eq',
+        ),
+      ).toBe(true);
+    });
+
+    it('should create a canister for a user who has accepted the latest terms and conditions', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.create_terms_and_conditions({
+        content: 'Terms and conditions content',
+        comment: 'Terms and conditions comment',
+      });
+
+      driver.actor.setIdentity(aliceIdentity);
+      const [termsAndConditions] =
+        await driver.actor.get_latest_terms_and_conditions();
+      if (!termsAndConditions) {
+        throw new Error('Terms and conditions not found');
+      }
+
+      await driver.actor.upsert_terms_and_conditions_decision({
+        terms_and_conditions_id: termsAndConditions.id,
+        decision_type: { Accept: null },
+      });
+
+      const canister = await driver.actor.create_my_canister();
+      const controllers = await driver.pic.getControllers(
+        Principal.fromText(canister.principal_id),
+      );
+
+      expect(canister).toEqual({
+        id: expect.any(String),
+        principal_id: expect.any(String),
+      });
+      expect(
+        controllers.some(
+          c => c.compareTo(aliceIdentity.getPrincipal()) === 'eq',
+        ),
+      ).toBe(true);
+    });
   });
 });

@@ -1,38 +1,64 @@
+import { isNotNil } from '@/lib/nil';
 import { selectIsActive, selectIsAdmin, useAppStore } from '@/lib/store';
 import { useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
-const useReturnHome = (): (() => void) => {
+const useReturnTo = (): ((to: string) => void) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  return useCallback(() => {
-    if (location.pathname !== '/') {
-      navigate('/');
-    }
-  }, [location.pathname, navigate]);
+  return useCallback(
+    (to: string) => {
+      if (location.pathname !== to) {
+        navigate(to);
+        return;
+      }
+    },
+    [location.pathname, navigate],
+  );
 };
 
 export const useRequireAuth = (): void => {
-  const { isProfileInitialized } = useAppStore();
+  const {
+    isProfileInitialized,
+    isTermsAndConditionsInitialized,
+    termsAndConditions,
+  } = useAppStore();
   const isActive = useAppStore(selectIsActive);
-  const returnHome = useReturnHome();
+  const returnTo = useReturnTo();
 
   useEffect(() => {
-    if (isProfileInitialized && !isActive) {
-      returnHome();
+    if (!isProfileInitialized || !isTermsAndConditionsInitialized) {
+      return;
     }
-  }, [isProfileInitialized, isActive, returnHome]);
+
+    if (!isActive) {
+      returnTo('/');
+      return;
+    }
+
+    if (isNotNil(termsAndConditions) && !termsAndConditions.hasAccepted) {
+      returnTo('/terms-and-conditions');
+      return;
+    }
+  }, [
+    isProfileInitialized,
+    isTermsAndConditionsInitialized,
+    termsAndConditions,
+    isActive,
+    returnTo,
+  ]);
 };
 
 export const useRequireAdminAuth = (): void => {
   const { isProfileInitialized } = useAppStore();
   const isAdmin = useAppStore(selectIsAdmin);
-  const returnHome = useReturnHome();
+  const returnTo = useReturnTo();
 
   useEffect(() => {
     if (isProfileInitialized && !isAdmin) {
-      returnHome();
+      returnTo('/');
+      return;
     }
-  }, [isProfileInitialized, isAdmin, returnHome]);
+  }, [isProfileInitialized, isAdmin, returnTo]);
 };

@@ -1,13 +1,23 @@
 mod canister;
+mod organization;
 mod principal;
+mod project;
+mod team;
+mod terms_and_conditions;
+mod terms_and_conditions_decision;
 mod trusted_partner;
 mod user_profile;
-mod uuid;
 mod user_stats;
+mod uuid;
 
 pub use canister::*;
+pub use organization::*;
 pub use principal::*;
+pub use project::*;
+pub use team::*;
+pub use terms_and_conditions::*;
+pub use terms_and_conditions_decision::*;
 pub use trusted_partner::*;
 pub use user_profile::*;
-pub use uuid::*;
 pub use user_stats::*;
+pub use uuid::*;

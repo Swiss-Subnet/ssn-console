@@ -117,7 +117,9 @@ export type GetUserStatsResponse = {
   inactive: number;
 };
 
-export function mapUserStatsResponse(res: ApiGetUserStatsResponse): GetUserStatsResponse {
+export function mapUserStatsResponse(
+  res: ApiGetUserStatsResponse,
+): GetUserStatsResponse {
   return {
     total: Number(res.total),
     active: Number(res.active),

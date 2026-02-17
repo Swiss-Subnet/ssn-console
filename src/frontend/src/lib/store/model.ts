@@ -6,13 +6,21 @@ import type {
   UserProfile,
   UserStatus,
   GetUserStatsResponse,
+  TermsAndConditions,
+  UpsertTermsAndConditionsDecisionRequest,
+  CreateTermsAndConditionsRequest,
 } from '@/lib/api-models';
-import type { CanisterApi, TrustedPartnerApi, UserProfileApi } from '@/lib/api';
+import type {
+  CanisterApi,
+  TrustedPartnerApi,
+  UserProfileApi,
+  ManagementCanisterApi,
+  TermsAndConditionsApi,
+} from '@/lib/api';
 import type { ActorSubclass, HttpAgent, Identity } from '@icp-sdk/core/agent';
 import type { AuthClient } from '@icp-sdk/auth/client';
 import type { _SERVICE } from '@ssn/backend-api';
 import type { StateCreator } from 'zustand';
-import type { ManagementCanisterApi } from '@/lib/api/management-canister';
 
 export type AuthSlice = {
   isAuthInitialized: boolean;
@@ -34,6 +42,7 @@ export type ApiSlice = {
   canisterApi: CanisterApi | null;
   managementCanisterApi: ManagementCanisterApi | null;
   trustedPartnerApi: TrustedPartnerApi | null;
+  termsAndConditionsApi: TermsAndConditionsApi | null;
 
   initializeApi: () => void;
   setAgentIdentity: (identity: Identity) => void;
@@ -41,6 +50,7 @@ export type ApiSlice = {
   getCanisterApi: () => CanisterApi;
   getManagementCanisterApi: () => ManagementCanisterApi;
   getTrustedPartnerApi: () => TrustedPartnerApi;
+  getTermsAndConditionsApi: () => TermsAndConditionsApi;
 };
 
 export type UserProfileSlice = {
@@ -93,11 +103,26 @@ export type TrustedPartnersSlice = {
   createTrustedPartner: (req: CreateTrustedPartnerRequest) => Promise<void>;
 };
 
+export type TermsAndConditionsSlice = {
+  isTermsAndConditionsInitialized: boolean;
+  termsAndConditions: TermsAndConditions | null;
+
+  initializeTermsAndConditions: () => Promise<void>;
+  clearTermsAndConditions: () => void;
+  upsertTermsAndConditionsDecision: (
+    req: UpsertTermsAndConditionsDecisionRequest,
+  ) => Promise<void>;
+  createTermsAndConditions: (
+    req: CreateTermsAndConditionsRequest,
+  ) => Promise<void>;
+};
+
 export type AppSlice = AuthSlice &
   ApiSlice &
   UserProfileSlice &
   UsersSlice &
   CanistersSlice &
-  TrustedPartnersSlice;
+  TrustedPartnersSlice &
+  TermsAndConditionsSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;

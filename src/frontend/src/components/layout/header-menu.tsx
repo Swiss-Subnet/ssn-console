@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { isNotNil } from '@/lib/nil';
 import { selectIsActive, selectIsAdmin, useAppStore } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import {
@@ -15,13 +16,14 @@ import {
   ClipboardIcon,
   CogIcon,
   LogOutIcon,
+  ScrollTextIcon,
   ServerIcon,
 } from 'lucide-react';
 import { useMemo, type FC } from 'react';
 import { NavLink } from 'react-router';
 
 export const HeaderMenu: FC = () => {
-  const { identity, logout } = useAppStore();
+  const { identity, logout, termsAndConditions } = useAppStore();
   const isActive = useAppStore(selectIsActive);
   const isAdmin = useAppStore(selectIsAdmin);
 
@@ -84,6 +86,16 @@ export const HeaderMenu: FC = () => {
             >
               Canisters
               <ServerIcon />
+            </DropdownMenuItem>
+          )}
+
+          {isActive && isNotNil(termsAndConditions) && (
+            <DropdownMenuItem
+              className="justify-between"
+              render={<NavLink to="/terms-and-conditions" />}
+            >
+              Terms and Conditions
+              <ScrollTextIcon />
             </DropdownMenuItem>
           )}
 

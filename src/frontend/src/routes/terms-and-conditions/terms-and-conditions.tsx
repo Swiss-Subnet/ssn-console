@@ -1,0 +1,115 @@
+import { LoadingButton } from '@/components/loading-button';
+import { H1 } from '@/components/typography/h1';
+import { TermsAndConditionsDecisionType } from '@/lib/api-models';
+import { isNil } from '@/lib/nil';
+import { useAppStore } from '@/lib/store';
+import { showErrorToast } from '@/lib/toast';
+import { useMemo, useState, type FC } from 'react';
+import { useNavigate } from 'react-router';
+import DOMPurify from 'dompurify';
+
+const TermsAndConditions: FC = () => {
+  const navigate = useNavigate();
+  const {
+    termsAndConditions,
+    upsertTermsAndConditionsDecision: upsertTermsAndConditionsDecision,
+  } = useAppStore();
+
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isDeclining, setIsDeclining] = useState(false);
+
+  const sanitizedContent = useMemo(
+    () => DOMPurify.sanitize(termsAndConditions?.content ?? ''),
+    [termsAndConditions?.content],
+  );
+
+  async function onDeclineTermsAndConditions(): Promise<void> {
+    if (isNil(termsAndConditions)) {
+      throw new Error('Cannot decline terms and conditions when none exist');
+    }
+
+    setIsDeclining(true);
+    try {
+      await upsertTermsAndConditionsDecision({
+        termsAndConditionsId: termsAndConditions.id,
+        decisionType: TermsAndConditionsDecisionType.Reject,
+      });
+    } catch (err) {
+      showErrorToast('Failed to decline terms and conditions', err);
+    } finally {
+      navigate('/');
+      setIsDeclining(false);
+    }
+  }
+
+  async function onAcceptTermsAndConditions(): Promise<void> {
+    if (isNil(termsAndConditions)) {
+      throw new Error('Cannot accept terms and conditions when none exist');
+    }
+
+    setIsAccepting(true);
+    try {
+      await upsertTermsAndConditionsDecision({
+        termsAndConditionsId: termsAndConditions.id,
+        decisionType: TermsAndConditionsDecisionType.Accept,
+      });
+      navigate('/canisters');
+    } catch (err) {
+      showErrorToast('Failed to accept terms and conditions', err);
+    } finally {
+      setIsAccepting(false);
+    }
+  }
+
+  return (
+    <>
+      <H1>Terms and Conditions</H1>
+
+      <div className="mt-10">
+        <p>
+          Please read the terms and conditions carefully before accepting them.
+        </p>
+
+        <p className="mt-3">
+          <span className="mr-2 font-bold">Effective from:</span>
+          {termsAndConditions?.createdAt?.toLocaleDateString()}
+        </p>
+
+        <p className="mt-3 flex flex-row items-center">
+          <span className="mr-2 font-bold">Comment:</span>
+          {termsAndConditions?.comment}
+        </p>
+      </div>
+
+      <div
+        className="prose dark:prose-invert mt-10 min-w-full"
+        dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+      />
+
+      <div className="mb-10 flex flex-row justify-end space-x-2">
+        <LoadingButton
+          type="button"
+          variant="ghost"
+          size="lg"
+          disabled={isAccepting || isDeclining}
+          isLoading={isDeclining}
+          onClick={() => onDeclineTermsAndConditions()}
+        >
+          Decline
+        </LoadingButton>
+
+        <LoadingButton
+          type="button"
+          size="lg"
+          disabled={isAccepting || isDeclining}
+          isLoading={isAccepting}
+          onClick={() => onAcceptTermsAndConditions()}
+        >
+          Accept
+        </LoadingButton>
+      </div>
+    </>
+  );
+};
+
+export default TermsAndConditions;

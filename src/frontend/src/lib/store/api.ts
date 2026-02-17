@@ -1,6 +1,11 @@
 import { BACKEND_CANISTER_ID, SHOULD_FETCH_ROOT_KEY } from '@/env';
-import { CanisterApi, TrustedPartnerApi, UserProfileApi } from '@/lib/api';
-import { ManagementCanisterApi } from '@/lib/api/management-canister';
+import {
+  CanisterApi,
+  TrustedPartnerApi,
+  UserProfileApi,
+  ManagementCanisterApi,
+  TermsAndConditionsApi,
+} from '@/lib/api';
 import { isNil } from '@/lib/nil';
 import type { ApiSlice, AppStateCreator } from '@/lib/store/model';
 import { Actor, HttpAgent } from '@icp-sdk/core/agent';
@@ -21,6 +26,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
   canisterApi: null,
   managementCanisterApi: null,
   trustedPartnerApi: null,
+  termsAndConditionsApi: null,
 
   initializeApi() {
     const agent = HttpAgent.createSync({
@@ -48,6 +54,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
       managementCanisterActor,
     );
     const trustedPartnerApi = new TrustedPartnerApi(backendApiActor);
+    const termsAndConditionsApi = new TermsAndConditionsApi(backendApiActor);
 
     set({
       agent,
@@ -56,6 +63,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
       canisterApi,
       managementCanisterApi,
       trustedPartnerApi,
+      termsAndConditionsApi,
     });
   },
 
@@ -101,5 +109,14 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
     }
 
     return trustedPartnerApi;
+  },
+
+  getTermsAndConditionsApi() {
+    const { termsAndConditionsApi } = get();
+    if (isNil(termsAndConditionsApi)) {
+      throw new Error('TermsAndConditionsApi is not initialized');
+    }
+
+    return termsAndConditionsApi;
   },
 });

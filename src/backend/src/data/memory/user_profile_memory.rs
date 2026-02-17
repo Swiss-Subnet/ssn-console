@@ -1,4 +1,6 @@
-use super::{Memory, USER_PROFILES_MEMORY_ID, USER_PROFILE_PRINCIPAL_INDEX_MEMORY_ID, USER_STATS_MEMORY_ID};
+use super::{
+    Memory, USER_PROFILES_MEMORY_ID, USER_PROFILE_PRINCIPAL_INDEX_MEMORY_ID, USER_STATS_MEMORY_ID,
+};
 use crate::data::{
     memory::{get_memory, USER_PROFILE_ID_PRINCIPAL_INDEX_MEMORY_ID},
     UserProfile, UserStatsData, Uuid,
@@ -24,7 +26,7 @@ pub fn init_user_profile_id_principal_index() -> UserProfileIdPrincipalIndexMemo
 }
 
 pub fn init_user_stats() -> UserStatsMemory {
-    UserStatsMemory::init(get_memory(USER_STATS_MEMORY_ID), UserStatsData::default())
+    UserStatsMemory::init(get_user_stats_memory(), UserStatsData::default())
 }
 
 fn get_user_profiles_memory() -> Memory {

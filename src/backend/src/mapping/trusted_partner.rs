@@ -1,9 +1,8 @@
-use candid::Principal;
-
 use crate::{
     data::{self},
     dto::{CreateTrustedPartnerRequest, ListTrustedPartnersResponse, TrustedPartner},
 };
+use candid::Principal;
 
 pub fn map_list_trusted_partners_response(
     trusted_partners: Vec<(data::Uuid, data::TrustedPartner)>,

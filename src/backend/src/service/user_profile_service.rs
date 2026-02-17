@@ -1,13 +1,15 @@
 use crate::{
-    data::{user_profile_repository, UserProfile, Uuid, UserStatus},
+    data::{
+        organization_repository, project_repository, team_repository, user_profile_repository,
+        UserProfile, UserStatus, Uuid,
+    },
     dto::{
-        CreateMyUserProfileResponse, GetMyUserProfileResponse, ListUserProfilesResponse,
-        UpdateMyUserProfileRequest, UpdateUserProfileRequest, GetUserStatsResponse
+        CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
+        ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
     },
     mapping::{
         map_create_my_user_profile_response, map_get_my_user_profile_response,
-        map_list_user_profiles_response, map_user_status_request,
-        map_get_user_stats_response
+        map_get_user_stats_response, map_list_user_profiles_response, map_user_status_request,
     },
 };
 use candid::Principal;
@@ -53,10 +55,14 @@ pub fn create_my_user_profile(
     }
 
     let profile = UserProfile::default();
-    let id = user_profile_repository::create_user_profile(calling_principal, profile.clone());
+    let user_id = user_profile_repository::create_user_profile(calling_principal, profile.clone());
     user_profile_repository::increment_user_count(profile.status == UserStatus::Active);
+    let org_id = organization_repository::add_default_org(user_id);
+    let team_id = team_repository::add_default_team(user_id, org_id);
+    let _project_id = project_repository::add_default_project(team_id, org_id);
+
     Ok(map_create_my_user_profile_response(
-        id,
+        user_id,
         &calling_principal,
         profile,
     ))
