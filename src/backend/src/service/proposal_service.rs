@@ -1,19 +1,34 @@
+use candid::Principal;
 use crate::{
     data::{
-        approval_policy_repository, proposal_repository, OperationType, PolicyType, Proposal,
-        ProposalOperation, Uuid,
+        approval_policy_repository, project_repository, proposal_repository, team_repository,
+        user_profile_repository, OperationType, PolicyType, Proposal, ProposalOperation, Uuid,
     },
     dto::{CreateProposalRequest, CreateProposalResponse},
     mapping::{map_create_proposal_request, map_create_proposal_response},
     service::canister_service,
 };
 
-pub async fn create_proposal(req: CreateProposalRequest) -> Result<CreateProposalResponse, String> {
+pub async fn create_proposal(
+    calling_principal: &Principal,
+    req: CreateProposalRequest,
+) -> Result<CreateProposalResponse, String> {
     let (project_id, proposal) = map_create_proposal_request(req)?;
+
+    let user_id = user_profile_repository::assert_user_id_by_principal(calling_principal)?;
+    let team_ids = team_repository::list_user_team_ids(user_id);
+    if !project_repository::any_teams_have_project(&team_ids, project_id) {
+        return Err(format!(
+            "User with id {user_id} does not have access to project with id {project_id}"
+        ));
+    }
 
     let proposal_id = proposal_repository::create_proposal(project_id, proposal.clone());
 
     process_proposal(project_id, proposal_id, proposal.clone()).await?;
+
+    let proposal = proposal_repository::get_proposal(&proposal_id)
+        .ok_or_else(|| format!("Could not find proposal {proposal_id} after processing"))?;
 
     Ok(map_create_proposal_response(proposal_id, proposal))
 }

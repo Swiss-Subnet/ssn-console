@@ -13,7 +13,7 @@ async fn create_proposal(request: CreateProposalRequest) -> CreateProposalRespon
         trap(&err);
     }
 
-    match proposal_service::create_proposal(request).await {
+    match proposal_service::create_proposal(&calling_principal, request).await {
         Ok(response) => response,
         Err(err) => trap(&err),
     }

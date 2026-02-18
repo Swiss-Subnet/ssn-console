@@ -5,6 +5,10 @@ import { Principal } from '@icp-sdk/core/principal';
 import type { Canister } from '@ssn/backend-api';
 
 describe('Canisters', () => {
+  const projectId = '9c9cfd54-b456-42bb-892f-6bc7b1907aeb';
+  const canisterId = Principal.fromUint8Array(new Uint8Array([0]));
+  const controllerId = Principal.fromUint8Array(new Uint8Array([1]));
+
   let driver: TestDriver;
 
   async function expectCanister(canister: Canister): Promise<void> {
@@ -106,15 +110,17 @@ describe('Canisters', () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.createCanister();
-      await driver.createCanister();
+      const aliceProject = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
+      await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
 
       const bobIdentity = generateRandomIdentity();
       driver.actor.setIdentity(bobIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.createCanister();
-      await driver.createCanister();
-      await driver.createCanister();
+      const bobProject = await driver.getDefaultProject();
+      await driver.proposals.createCanister(bobIdentity, bobProject.id);
+      await driver.proposals.createCanister(bobIdentity, bobProject.id);
+      await driver.proposals.createCanister(bobIdentity, bobProject.id);
 
       driver.actor.setIdentity(aliceIdentity);
       const aliceCanisters = await driver.actor.list_my_canisters();
@@ -133,13 +139,71 @@ describe('Canisters', () => {
     });
   });
 
-  describe('create_my_canister', () => {
+  describe('create_canister', () => {
+    it('should return an error for an anonymous user', async () => {
+      driver.actor.setIdentity(anonymousIdentity);
+
+      await expect(
+        driver.proposals.createCanister(anonymousIdentity, projectId),
+      ).rejects.toThrowError(
+        /Anonymous users are not allowed to perform this action/,
+      );
+    });
+
+    it('should return an error for a user without a profile', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+
+      await expect(
+        driver.proposals.createCanister(aliceIdentity, projectId),
+      ).rejects.toThrowError(
+        new RegExp(
+          `User profile for principal ${aliceIdentity.getPrincipal()} does not exist`,
+        ),
+      );
+    });
+
+    it('should return an error for a project the user does not have access to', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      const aliceProfile = await driver.actor.create_my_user_profile();
+
+      const bobIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(bobIdentity);
+      await driver.actor.create_my_user_profile();
+      const bobProject = await driver.getDefaultProject();
+
+      await expect(
+        driver.proposals.createCanister(aliceIdentity, bobProject.id),
+      ).rejects.toThrowError(
+        new RegExp(
+          `User with id ${aliceProfile.id} does not have access to project with id ${bobProject.id}`,
+        ),
+      );
+    });
+
+    it('should return an error for a project that does not exist', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      const aliceProfile = await driver.actor.create_my_user_profile();
+
+      await expect(
+        driver.proposals.createCanister(aliceIdentity, projectId),
+      ).rejects.toThrowError(
+        new RegExp(
+          `User with id ${aliceProfile.id} does not have access to project with id ${projectId}`,
+        ),
+      );
+    });
+
     it('should create a canister for a valid user', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.create_my_user_profile();
 
-      await driver.createCanister();
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
       const [canister] = await driver.actor.list_my_canisters();
       await expectCanister(canister);
     });
@@ -156,8 +220,10 @@ describe('Canisters', () => {
         comment: 'Terms and conditions comment',
       });
 
-      driver.actor.setIdentity(aliceIdentity);
-      await expect(driver.createCanister()).rejects.toThrowError(
+      const project = await driver.getDefaultProject();
+      await expect(
+        driver.proposals.createCanister(aliceIdentity, project.id),
+      ).rejects.toThrowError(
         /The latest terms and conditions must be accepted to perform this action/,
       );
     });
@@ -186,7 +252,10 @@ describe('Canisters', () => {
         decision_type: { Reject: null },
       });
 
-      await expect(driver.createCanister()).rejects.toThrowError(
+      const project = await driver.getDefaultProject();
+      await expect(
+        driver.proposals.createCanister(aliceIdentity, project.id),
+      ).rejects.toThrowError(
         /The latest terms and conditions must be accepted to perform this action/,
       );
     });
@@ -198,7 +267,9 @@ describe('Canisters', () => {
         content: 'Terms and conditions content',
         comment: 'Terms and conditions comment',
       });
-      await driver.createCanister();
+
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(controllerIdentity, project.id);
       const [canister] = await driver.actor.list_my_canisters();
       await expectCanister(canister);
     });
@@ -227,9 +298,308 @@ describe('Canisters', () => {
         decision_type: { Accept: null },
       });
 
-      await driver.createCanister();
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
       const [canister] = await driver.actor.list_my_canisters();
       await expectCanister(canister);
+    });
+  });
+
+  describe('add_canister_controller', () => {
+    it('should return an error for an anonymous user', async () => {
+      driver.actor.setIdentity(anonymousIdentity);
+
+      await expect(
+        driver.proposals.addCanisterController(
+          anonymousIdentity,
+          projectId,
+          canisterId,
+          controllerId,
+        ),
+      ).rejects.toThrowError(
+        /Anonymous users are not allowed to perform this action/,
+      );
+    });
+
+    it('should return an error for a user without a profile', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+
+      await expect(
+        driver.proposals.addCanisterController(
+          aliceIdentity,
+          projectId,
+          canisterId,
+          controllerId,
+        ),
+      ).rejects.toThrowError(
+        new RegExp(
+          `User profile for principal ${aliceIdentity.getPrincipal()} does not exist`,
+        ),
+      );
+    });
+
+    it('should return an error for a project the user does not have access to', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      const aliceProfile = await driver.actor.create_my_user_profile();
+
+      const bobIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(bobIdentity);
+      await driver.actor.create_my_user_profile();
+      const bobProject = await driver.getDefaultProject();
+
+      await expect(
+        driver.proposals.addCanisterController(
+          aliceIdentity,
+          bobProject.id,
+          canisterId,
+          controllerId,
+        ),
+      ).rejects.toThrowError(
+        new RegExp(
+          `User with id ${aliceProfile.id} does not have access to project with id ${bobProject.id}`,
+        ),
+      );
+    });
+
+    it('should return an error for a project that does not exist', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      const aliceProfile = await driver.actor.create_my_user_profile();
+
+      await expect(
+        driver.proposals.addCanisterController(
+          aliceIdentity,
+          projectId,
+          canisterId,
+          controllerId,
+        ),
+      ).rejects.toThrowError(
+        new RegExp(
+          `User with id ${aliceProfile.id} does not have access to project with id ${projectId}`,
+        ),
+      );
+    });
+
+    it('should return an error for a canister that does not exist', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+      const project = await driver.getDefaultProject();
+
+      const proposal = await driver.proposals.addCanisterController(
+        aliceIdentity,
+        project.id,
+        canisterId,
+        controllerId,
+      );
+
+      if (!('Failed' in proposal.status)) {
+        throw new Error('Expected a failed proposal');
+      }
+      expect(proposal.status.Failed).toMatch(
+        new RegExp(`Failed to get canister_status for canister ${canisterId}`),
+      );
+    });
+
+    it('should return an error if the controller has already been added', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+      const [canister] = await driver.actor.list_my_canisters();
+      const canisterId = Principal.fromText(canister.principal_id);
+
+      await driver.proposals.addCanisterController(
+        aliceIdentity,
+        project.id,
+        canisterId,
+        controllerId,
+      );
+
+      const proposal = await driver.proposals.addCanisterController(
+        aliceIdentity,
+        project.id,
+        canisterId,
+        controllerId,
+      );
+
+      if (!('Failed' in proposal.status)) {
+        throw new Error('Expected a failed proposal');
+      }
+      expect(proposal.status.Failed).toMatch(
+        new RegExp(
+          `Controller ${controllerId} is already a controller of canister ${canisterId}`,
+        ),
+      );
+    });
+
+    it('should add a controller for a valid user and canister', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+      const [canister] = await driver.actor.list_my_canisters();
+
+      await driver.proposals.addCanisterController(
+        aliceIdentity,
+        project.id,
+        Principal.fromText(canister.principal_id),
+        controllerId,
+      );
+
+      const controllers = await driver.pic.getControllers(
+        Principal.fromText(canister.principal_id),
+      );
+      const hasCorrectController = controllers.some(
+        c => c.compareTo(controllerId) === 'eq',
+      );
+      expect(hasCorrectController).toBe(true);
+    });
+
+    it('should return an error for a user who has not accepted the latest terms and conditions', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+      const [canister] = await driver.actor.list_my_canisters();
+
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.create_terms_and_conditions({
+        content: 'Terms and conditions content',
+        comment: 'Terms and conditions comment',
+      });
+
+      await expect(
+        driver.proposals.addCanisterController(
+          aliceIdentity,
+          project.id,
+          Principal.fromText(canister.principal_id),
+          controllerId,
+        ),
+      ).rejects.toThrowError(
+        /The latest terms and conditions must be accepted to perform this action/,
+      );
+    });
+
+    it('should return an error for a user who has explicitly rejected the latest terms and conditions', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+      const [canister] = await driver.actor.list_my_canisters();
+
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.create_terms_and_conditions({
+        content: 'Terms and conditions content',
+        comment: 'Terms and conditions comment',
+      });
+
+      driver.actor.setIdentity(aliceIdentity);
+      const [termsAndConditions] =
+        await driver.actor.get_latest_terms_and_conditions();
+      if (!termsAndConditions) {
+        throw new Error('Terms and conditions not found');
+      }
+
+      await driver.actor.upsert_terms_and_conditions_decision({
+        terms_and_conditions_id: termsAndConditions.id,
+        decision_type: { Reject: null },
+      });
+
+      await expect(
+        driver.proposals.addCanisterController(
+          aliceIdentity,
+          project.id,
+          Principal.fromText(canister.principal_id),
+          controllerId,
+        ),
+      ).rejects.toThrowError(
+        /The latest terms and conditions must be accepted to perform this action/,
+      );
+    });
+
+    it('should add a controller for a controller without accepting terms and conditions', async () => {
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.create_terms_and_conditions({
+        content: 'Terms and conditions content',
+        comment: 'Terms and conditions comment',
+      });
+
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(controllerIdentity, project.id);
+      const [canister] = await driver.actor.list_my_canisters();
+
+      await driver.proposals.addCanisterController(
+        controllerIdentity,
+        project.id,
+        Principal.fromText(canister.principal_id),
+        controllerId,
+      );
+
+      const controllers = await driver.pic.getControllers(
+        Principal.fromText(canister.principal_id),
+      );
+      const hasCorrectController = controllers.some(
+        c => c.compareTo(controllerId) === 'eq',
+      );
+      expect(hasCorrectController).toBe(true);
+    });
+
+    it('should add a controller for a user who has accepted the latest terms and conditions', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+
+      driver.actor.setIdentity(controllerIdentity);
+      await driver.actor.create_my_user_profile();
+      await driver.actor.create_terms_and_conditions({
+        content: 'Terms and conditions content',
+        comment: 'Terms and conditions comment',
+      });
+
+      driver.actor.setIdentity(aliceIdentity);
+      const [termsAndConditions] =
+        await driver.actor.get_latest_terms_and_conditions();
+      if (!termsAndConditions) {
+        throw new Error('Terms and conditions not found');
+      }
+
+      await driver.actor.upsert_terms_and_conditions_decision({
+        terms_and_conditions_id: termsAndConditions.id,
+        decision_type: { Accept: null },
+      });
+
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+      const [canister] = await driver.actor.list_my_canisters();
+
+      await driver.proposals.addCanisterController(
+        aliceIdentity,
+        project.id,
+        Principal.fromText(canister.principal_id),
+        controllerId,
+      );
+
+      const controllers = await driver.pic.getControllers(
+        Principal.fromText(canister.principal_id),
+      );
+      const hasCorrectController = controllers.some(
+        c => c.compareTo(controllerId) === 'eq',
+      );
+      expect(hasCorrectController).toBe(true);
     });
   });
 });

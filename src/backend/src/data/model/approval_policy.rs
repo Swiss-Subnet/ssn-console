@@ -25,6 +25,7 @@ pub enum PolicyType {
 #[repr(u8)]
 pub enum OperationType {
     CreateCanister = 0,
+    Noop = 254,
     AddCanisterController = 255,
 }
 
@@ -80,10 +81,10 @@ impl Storable for OperationType {
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        match bytes[0] {
-            0 => OperationType::CreateCanister,
-            255 => OperationType::AddCanisterController,
-            n => panic!("Invalid OperationType: {}", n),
+        match bytes.first() {
+            Some(0) => OperationType::CreateCanister,
+            Some(255) => OperationType::AddCanisterController,
+            _ => OperationType::Noop,
         }
     }
 

@@ -23,12 +23,12 @@ pub async fn list_my_canisters(
     let team_id = team_repository::list_user_team_ids(user_id)
         .first()
         .cloned()
-        .expect("User does not have a default team.");
+        .ok_or("User does not have a default team.")?;
 
     let project_id = project_repository::list_team_project_ids(team_id)
         .first()
         .cloned()
-        .expect("User's default team does not have a default project.");
+        .ok_or("User's default team does not have a default project.")?;
 
     let project_canisters = canister_repository::list_canisters_by_project(project_id);
     let canister_futures = project_canisters.iter().map(|(id, canister)| async move {

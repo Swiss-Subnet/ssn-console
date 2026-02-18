@@ -18,6 +18,10 @@ pub fn create_proposal(project_id: Uuid, proposal: Proposal) -> Uuid {
     proposal_id
 }
 
+pub fn get_proposal(proposal_id: &Uuid) -> Option<Proposal> {
+    with_state(|s| s.proposals.get(proposal_id))
+}
+
 pub fn set_proposal_executing(proposal_id: Uuid) -> Result<(), String> {
     set_proposal_status(proposal_id, ProposalStatus::Executing)
 }
@@ -59,6 +63,10 @@ impl Default for ProposalState {
 
 thread_local! {
     static STATE: RefCell<ProposalState> = RefCell::new(ProposalState::default());
+}
+
+fn with_state<R>(f: impl FnOnce(&ProposalState) -> R) -> R {
+    STATE.with(|s| f(&s.borrow()))
 }
 
 fn mutate_state<R>(f: impl FnOnce(&mut ProposalState) -> R) -> R {

@@ -27,8 +27,8 @@ export type CanisterGridEntryProps = {
 export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
   const isMissingController = useMemo(
     () =>
-      canister.info?.settings.controllers.includes(BACKEND_CANISTER_ID) !==
-      true,
+      isNotNil(canister.info) &&
+      canister.info.settings.controllers.includes(BACKEND_CANISTER_ID) !== true,
     [canister],
   );
 

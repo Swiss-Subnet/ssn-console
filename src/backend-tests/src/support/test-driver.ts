@@ -4,11 +4,11 @@ import {
   type _SERVICE as BackendService,
   idlFactory,
   type Project,
-  type Proposal,
 } from '@ssn/backend-api';
 import { resolve } from 'node:path';
 import { Principal } from '@icp-sdk/core/principal';
 import { controllerIdentity } from './identity';
+import { ProposalDriver } from './proposal-driver';
 
 export const BACKEND_WASM_PATH = resolve(
   __dirname,
@@ -24,6 +24,8 @@ export const BACKEND_WASM_PATH = resolve(
 );
 
 export class TestDriver {
+  public readonly proposals: ProposalDriver;
+
   public get actor(): Actor<BackendService> {
     return this.fixture.actor;
   }
@@ -35,7 +37,9 @@ export class TestDriver {
   private constructor(
     public readonly pic: PocketIc,
     private readonly fixture: CanisterFixture<BackendService>,
-  ) {}
+  ) {
+    this.proposals = new ProposalDriver(pic, fixture.canisterId);
+  }
 
   public static async create(initialDate = new Date()): Promise<TestDriver> {
     const pic = await PocketIc.create(inject('PIC_URL'));
@@ -63,16 +67,5 @@ export class TestDriver {
     const [project] = await this.actor.list_my_projects();
 
     return project;
-  }
-
-  public async createCanister(): Promise<Proposal> {
-    const project = await this.getDefaultProject();
-
-    return await this.actor.create_proposal({
-      project_id: project.id,
-      operation: {
-        CreateCanister: null,
-      },
-    });
   }
 }

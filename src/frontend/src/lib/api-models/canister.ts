@@ -39,6 +39,7 @@ export type CanisterInfo = {
   };
   cycles: bigint;
   reservedCycles: bigint;
+  idleCyclesBurnedPerDay: bigint;
   queryStats: {
     numCallsTotal: bigint;
     numInstructionsTotal: bigint;
@@ -113,6 +114,7 @@ export function mapCanisterResponse(res: ApiCanister): Canister {
       },
       cycles: canisterInfo.cycles,
       reservedCycles: canisterInfo.reserved_cycles,
+      idleCyclesBurnedPerDay: canisterInfo.idle_cycles_burned_per_day,
       queryStats: {
         numCallsTotal: canisterInfo.query_stats.num_calls_total,
         numInstructionsTotal: canisterInfo.query_stats.num_instructions_total,

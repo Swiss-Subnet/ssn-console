@@ -17,7 +17,7 @@ type ProposalStatus = variant {
   Rejected;
   Executing;
   Executed;
-  Failed;
+  Failed : text;
 };
 
 type ProposalOperation = variant {
