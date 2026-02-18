@@ -1,4 +1,3 @@
-use candid::Principal;
 use crate::{
     data::{
         approval_policy_repository, project_repository, proposal_repository, team_repository,
@@ -8,6 +7,7 @@ use crate::{
     mapping::{map_create_proposal_request, map_create_proposal_response},
     service::canister_service,
 };
+use candid::Principal;
 
 pub async fn create_proposal(
     calling_principal: &Principal,
