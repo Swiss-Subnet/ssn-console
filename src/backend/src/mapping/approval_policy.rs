@@ -6,10 +6,12 @@ use crate::{
 pub fn map_list_project_approval_policies_response(
     policies: Vec<(data::Uuid, data::OperationType, data::ApprovalPolicy)>,
 ) -> ListProjectApprovalPoliciesResponse {
-    policies
-        .into_iter()
-        .map(map_approval_policy_response)
-        .collect()
+    ListProjectApprovalPoliciesResponse {
+        approval_policies: policies
+            .into_iter()
+            .map(map_approval_policy_response)
+            .collect(),
+    }
 }
 
 pub fn map_approval_policy_response(

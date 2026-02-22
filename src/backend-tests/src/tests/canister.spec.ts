@@ -395,10 +395,11 @@ describe('Canisters', () => {
         controllerId,
       );
 
-      if (!('Failed' in proposal.status)) {
+      const [status] = proposal.status;
+      if (!status || !('Failed' in status)) {
         throw new Error('Expected a failed proposal');
       }
-      expect(proposal.status.Failed).toMatch(
+      expect(status.Failed.message).toMatch(
         new RegExp(`Failed to get canister_status for canister ${canisterId}`),
       );
     });
@@ -427,10 +428,11 @@ describe('Canisters', () => {
         controllerId,
       );
 
-      if (!('Failed' in proposal.status)) {
+      const [status] = proposal.status;
+      if (!status || !('Failed' in status)) {
         throw new Error('Expected a failed proposal');
       }
-      expect(proposal.status.Failed).toMatch(
+      expect(status.Failed.message).toMatch(
         new RegExp(
           `Controller ${controllerId} is already a controller of canister ${canisterId}`,
         ),

@@ -6,7 +6,10 @@ pub struct ListProjectApprovalPoliciesRequest {
     pub project_id: String,
 }
 
-pub type ListProjectApprovalPoliciesResponse = Vec<ApprovalPolicy>;
+#[derive(Debug, Clone, Serialize, CandidType, Deserialize)]
+pub struct ListProjectApprovalPoliciesResponse {
+    pub approval_policies: Vec<ApprovalPolicy>,
+}
 
 #[derive(Debug, Clone, Serialize, CandidType, Deserialize)]
 pub struct ApprovalPolicy {

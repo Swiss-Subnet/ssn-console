@@ -15,6 +15,10 @@ use ic_cdk::{
     },
 };
 
+/// This number should not exceed the length of the canister output queue, which
+/// is currently 500.
+const CALLS_PER_BATCH: usize = 490;
+
 pub async fn list_my_canisters(
     calling_principal: Principal,
 ) -> Result<ListMyCanistersResponse, String> {
@@ -31,18 +35,23 @@ pub async fn list_my_canisters(
         .ok_or("User's default team does not have a default project.")?;
 
     let project_canisters = canister_repository::list_canisters_by_project(project_id);
-    let canister_futures = project_canisters.iter().map(|(id, canister)| async move {
-        match management_canister::canister_status(&CanisterStatusArgs {
-            canister_id: canister.principal,
-        })
-        .await
-        {
-            Ok(res) => map_canister_response(id, canister, Some(res)),
-            Err(_) => map_canister_response(id, canister, None),
-        }
-    });
+    let mut canisters = vec![];
 
-    let canisters = join_all(canister_futures).await;
+    for chunk in project_canisters.chunks(CALLS_PER_BATCH) {
+        let canister_futures = chunk.iter().map(|(id, canister)| async move {
+            match management_canister::canister_status(&CanisterStatusArgs {
+                canister_id: canister.principal,
+            })
+            .await
+            {
+                Ok(res) => map_canister_response(id, canister, Some(res)),
+                Err(_) => map_canister_response(id, canister, None),
+            }
+        });
+
+        canisters.extend(join_all(canister_futures).await);
+    }
+
     Ok(canisters)
 }
 

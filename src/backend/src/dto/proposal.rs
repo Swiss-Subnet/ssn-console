@@ -4,7 +4,7 @@ use serde::Deserialize;
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct CreateProposalRequest {
     pub project_id: String,
-    pub operation: ProposalOperation,
+    pub operation: Option<ProposalOperation>,
 }
 
 pub type CreateProposalResponse = Proposal;
@@ -13,22 +13,22 @@ pub type CreateProposalResponse = Proposal;
 pub struct Proposal {
     pub id: String,
     pub project_id: String,
-    pub status: ProposalStatus,
-    pub operation: ProposalOperation,
+    pub status: Option<ProposalStatus>,
+    pub operation: Option<ProposalOperation>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub enum ProposalStatus {
-    Open,
-    Rejected,
-    Executing,
-    Executed,
-    Failed(String),
+    Open {},
+    Rejected {},
+    Executing {},
+    Executed {},
+    Failed { message: String },
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub enum ProposalOperation {
-    CreateCanister,
+    CreateCanister {},
     AddCanisterController {
         canister_id: Principal,
         controller_id: Principal,

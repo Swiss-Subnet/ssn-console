@@ -256,13 +256,13 @@ describe('User Profile', () => {
         await driver.actor.list_project_approval_policies({
           project_id: projects[0].id,
         });
-      expect(approvalPolicies).toHaveLength(2);
-      expect(approvalPolicies).toContainEqual({
+      expect(approvalPolicies.approval_policies).toHaveLength(2);
+      expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
         operation_type: 'CreateCanister',
         policy_type: 'AutoApprove',
       });
-      expect(approvalPolicies).toContainEqual({
+      expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
         operation_type: 'AddCanisterController',
         policy_type: 'AutoApprove',
@@ -308,13 +308,13 @@ describe('User Profile', () => {
         await driver.actor.list_project_approval_policies({
           project_id: projects[0].id,
         });
-      expect(approvalPolicies).toHaveLength(2);
-      expect(approvalPolicies).toContainEqual({
+      expect(approvalPolicies.approval_policies).toHaveLength(2);
+      expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
         operation_type: 'CreateCanister',
         policy_type: 'AutoApprove',
       });
-      expect(approvalPolicies).toContainEqual({
+      expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
         operation_type: 'AddCanisterController',
         policy_type: 'AutoApprove',

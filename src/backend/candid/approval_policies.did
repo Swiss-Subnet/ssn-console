@@ -1,4 +1,6 @@
-type ListProjectApprovalPoliciesResponse = vec ApprovalPolicy;
+type ListProjectApprovalPoliciesResponse = record {
+  approval_policies : vec ApprovalPolicy;
+};
 
 type ListProjectApprovalPoliciesRequest = record {
   project_id : text;

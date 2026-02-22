@@ -1,6 +1,6 @@
 type CreateProposalRequest = record {
   project_id : text;
-  operation : ProposalOperation;
+  operation : opt ProposalOperation;
 };
 
 type CreateProposalResponse = Proposal;
@@ -8,20 +8,22 @@ type CreateProposalResponse = Proposal;
 type Proposal = record {
   id : text;
   project_id : text;
-  status : ProposalStatus;
-  operation : ProposalOperation;
+  status : opt ProposalStatus;
+  operation : opt ProposalOperation;
 };
 
 type ProposalStatus = variant {
-  Open;
-  Rejected;
-  Executing;
-  Executed;
-  Failed : text;
+  Open : record {};
+  Rejected : record {};
+  Executing : record {};
+  Executed : record {};
+  Failed : record {
+    message : text;
+  };
 };
 
 type ProposalOperation = variant {
-  CreateCanister;
+  CreateCanister : record {};
   AddCanisterController : record {
     canister_id : principal;
     controller_id : principal;

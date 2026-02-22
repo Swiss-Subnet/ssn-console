@@ -20,9 +20,11 @@ export class CanisterApi {
 
     await this.actor.create_proposal({
       project_id: project.id,
-      operation: {
-        CreateCanister: null,
-      },
+      operation: [
+        {
+          CreateCanister: {},
+        },
+      ],
     });
   }
 
@@ -34,12 +36,14 @@ export class CanisterApi {
 
     await this.actor.create_proposal({
       project_id: project.id,
-      operation: {
-        AddCanisterController: {
-          canister_id: Principal.from(canisterId),
-          controller_id: Principal.from(controllerId),
+      operation: [
+        {
+          AddCanisterController: {
+            canister_id: Principal.from(canisterId),
+            controller_id: Principal.from(controllerId),
+          },
         },
-      },
+      ],
     });
   }
 }

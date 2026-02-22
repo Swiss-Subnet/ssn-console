@@ -20,7 +20,7 @@ export class ProposalDriver {
     identity: Identity,
     projectId: string,
   ): Promise<Proposal> {
-    return this.createProposal(identity, projectId, { CreateCanister: null });
+    return this.createProposal(identity, projectId, { CreateCanister: {} });
   }
 
   public async addCanisterController(
@@ -45,7 +45,7 @@ export class ProposalDriver {
     this.actor.setIdentity(identity);
     const proposal = await this.actor.create_proposal({
       project_id: projectId,
-      operation,
+      operation: [operation],
     });
 
     this.actor.setIdentity(this.defaultIdentity);

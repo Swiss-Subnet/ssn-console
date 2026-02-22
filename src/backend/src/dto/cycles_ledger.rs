@@ -26,7 +26,7 @@ pub struct CreateCanisterSuccess {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CreateCanisterError {
     InsufficientFunds {
-        balance: u64,
+        balance: Nat,
     },
     TooOld,
     CreatedInFuture {
@@ -34,7 +34,7 @@ pub enum CreateCanisterError {
     },
     TemporarilyUnavailable,
     Duplicate {
-        duplicate_of: u64,
+        duplicate_of: Nat,
         canister_id: Option<Principal>,
     },
     FailedToCreate {
@@ -44,7 +44,7 @@ pub enum CreateCanisterError {
     },
     GenericError {
         message: String,
-        error_code: u64,
+        error_code: Nat,
     },
 }
 
