@@ -10,7 +10,6 @@ mod dto;
 mod env;
 mod mapping;
 mod service;
-mod utils;
 
 #[macro_use]
 extern crate dotenv_codegen;

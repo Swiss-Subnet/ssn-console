@@ -1,7 +1,4 @@
-use crate::{
-    data::Uuid,
-    utils::{deserialize_cbor, serialize_cbor},
-};
+use canister_utils::{deserialize_cbor, serialize_cbor, Uuid};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;

@@ -4,8 +4,9 @@ use super::{
         init_team_project_index, OrganizationProjectIndexMemory, ProjectMemory,
         ProjectTeamIndexMemory, TeamProjectIndexMemory,
     },
-    Project, Uuid,
+    Project,
 };
+use canister_utils::Uuid;
 use std::{cell::RefCell, collections::HashSet};
 
 pub fn add_default_project(team_id: Uuid, org_id: Uuid) -> Uuid {

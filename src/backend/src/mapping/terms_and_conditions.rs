@@ -1,10 +1,11 @@
 use crate::{
-    data::{self, Uuid},
+    data::{self},
     dto::{
         CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse, TermsAndConditions,
         TermsAndConditionsDecisionType, UpsertTermsAndConditionsDecisionRequest,
     },
 };
+use canister_utils::Uuid;
 
 pub fn map_get_latest_terms_and_conditions_response(
     res: Option<(Uuid, data::TermsAndConditions, bool)>,
@@ -20,7 +21,7 @@ pub fn map_get_latest_terms_and_conditions_response(
 
 pub fn map_create_terms_and_conditions_decision_request(
     req: UpsertTermsAndConditionsDecisionRequest,
-    user_id: data::Uuid,
+    user_id: Uuid,
     created_at: u64,
 ) -> Result<data::TermsAndConditionsDecision, String> {
     Ok(data::TermsAndConditionsDecision {
@@ -36,7 +37,7 @@ pub fn map_create_terms_and_conditions_decision_request(
 
 pub fn map_create_terms_and_conditions_request(
     req: CreateTermsAndConditionsRequest,
-    user_id: data::Uuid,
+    user_id: Uuid,
     created_at: u64,
 ) -> Result<data::TermsAndConditions, String> {
     Ok(data::TermsAndConditions {

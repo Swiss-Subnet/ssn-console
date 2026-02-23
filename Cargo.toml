@@ -1,5 +1,16 @@
 [workspace]
 members = [
-    "src/backend"
+    "src/backend",
+    "src/canister-utils"
 ]
 resolver = "2"
+
+[workspace.dependencies]
+candid = "0.10"
+ic-cdk = "0.19"
+ic-cdk-timers = "1"
+ic-stable-structures = "0.7"
+
+serde = { version = "1", features = ["derive"] }
+
+canister-utils = { path = "./src/canister-utils" }

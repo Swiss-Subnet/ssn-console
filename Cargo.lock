@@ -59,9 +59,8 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_parser",
- "ciborium",
+ "canister-utils",
  "dotenv_codegen",
- "fastrand",
  "futures",
  "ic-asset-certification",
  "ic-cdk",
@@ -70,7 +69,6 @@ dependencies = [
  "ic-stable-structures",
  "include_dir",
  "serde",
- "uuid",
 ]
 
 [[package]]
@@ -221,6 +219,18 @@ dependencies = [
  "serde",
  "thiserror 1.0.69",
  "toml",
+]
+
+[[package]]
+name = "canister-utils"
+version = "0.1.0"
+dependencies = [
+ "ciborium",
+ "fastrand",
+ "ic-cdk",
+ "ic-stable-structures",
+ "serde",
+ "uuid",
 ]
 
 [[package]]

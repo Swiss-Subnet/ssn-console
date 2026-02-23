@@ -1,10 +1,11 @@
-use super::{Proposal, Uuid};
+use super::Proposal;
 use crate::data::{
     memory::{
         init_project_proposal_index, init_proposals, ProjectProposalIndexMemory, ProposalMemory,
     },
     ProposalStatus,
 };
+use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn create_proposal(project_id: Uuid, proposal: Proposal) -> Uuid {

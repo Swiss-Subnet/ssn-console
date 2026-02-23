@@ -10,7 +10,6 @@ mod terms_and_conditions_decision;
 mod trusted_partner;
 mod user_profile;
 mod user_stats;
-mod uuid;
 
 pub use approval_policy::*;
 pub use canister::*;
@@ -24,4 +23,3 @@ pub use terms_and_conditions_decision::*;
 pub use trusted_partner::*;
 pub use user_profile::*;
 pub use user_stats::*;
-pub use uuid::*;

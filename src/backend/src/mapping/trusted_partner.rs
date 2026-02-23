@@ -3,9 +3,10 @@ use crate::{
     dto::{CreateTrustedPartnerRequest, ListTrustedPartnersResponse, TrustedPartner},
 };
 use candid::Principal;
+use canister_utils::Uuid;
 
 pub fn map_list_trusted_partners_response(
-    trusted_partners: Vec<(data::Uuid, data::TrustedPartner)>,
+    trusted_partners: Vec<(Uuid, data::TrustedPartner)>,
 ) -> ListTrustedPartnersResponse {
     trusted_partners
         .into_iter()
@@ -14,7 +15,7 @@ pub fn map_list_trusted_partners_response(
 }
 
 pub fn map_trusted_partner_response(
-    id: data::Uuid,
+    id: Uuid,
     trusted_partner: data::TrustedPartner,
 ) -> TrustedPartner {
     TrustedPartner {

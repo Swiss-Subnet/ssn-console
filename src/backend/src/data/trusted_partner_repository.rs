@@ -3,8 +3,9 @@ use crate::data::{
         init_trusted_partner_principal_index, init_trusted_partners, TrustedPartnerMemory,
         TrustedPartnerPrincipalIndexMemory,
     },
-    TrustedPartner, Uuid,
+    TrustedPartner,
 };
+use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn list_trusted_partners() -> Vec<(Uuid, TrustedPartner)> {

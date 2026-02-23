@@ -5,10 +5,11 @@ use crate::{
         LogVisibility, MemoryMetrics, QueryStats,
     },
 };
+use canister_utils::Uuid;
 use ic_cdk::management_canister::{self, CanisterStatusResult, CanisterStatusType};
 
 pub fn map_canister_response(
-    id: &data::Uuid,
+    id: &Uuid,
     canister: &data::Canister,
     info: Option<CanisterStatusResult>,
 ) -> Canister {

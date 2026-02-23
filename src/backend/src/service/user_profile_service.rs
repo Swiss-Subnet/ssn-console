@@ -2,7 +2,7 @@ use crate::{
     data::{
         approval_policy_repository, organization_repository, project_repository, team_repository,
         user_profile_repository, ApprovalPolicy, OperationType, PolicyType, UserProfile,
-        UserStatus, Uuid,
+        UserStatus,
     },
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
@@ -14,6 +14,7 @@ use crate::{
     },
 };
 use candid::Principal;
+use canister_utils::Uuid;
 
 pub fn list_user_profiles() -> ListUserProfilesResponse {
     map_list_user_profiles_response(user_profile_repository::list_user_profiles())

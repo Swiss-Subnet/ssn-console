@@ -2,8 +2,9 @@ use crate::data::{
     memory::{
         init_canisters, init_project_canister_index, CanisterMemory, ProjectCanisterIndexMemory,
     },
-    Canister, Uuid,
+    Canister,
 };
+use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn list_canisters_by_project(project_id: Uuid) -> Vec<(Uuid, Canister)> {

@@ -1,8 +1,9 @@
 use super::{ORGANIZATION_USER_INDEX_MEMORY_ID, USER_ORGANIZATION_INDEX_MEMORY_ID};
 use crate::data::{
     memory::{get_memory, Memory, ORGANIZATION_MEMORY_ID},
-    Organization, Uuid,
+    Organization,
 };
+use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
 pub type OrganizationMemory = BTreeMap<Uuid, Organization, Memory>;

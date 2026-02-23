@@ -3,13 +3,14 @@ use super::{
         init_user_profile_principal_index, init_user_profiles, init_user_stats, UserProfileMemory,
         UserProfilePrincipalIndexMemory, UserStatsMemory,
     },
-    UserProfile, UserStatsData, Uuid,
+    UserProfile, UserStatsData,
 };
 use crate::data::{
     memory::{init_user_profile_id_principal_index, UserProfileIdPrincipalIndexMemory},
     MAX_PRINCIPAL, MIN_PRINCIPAL,
 };
 use candid::Principal;
+use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn list_user_profiles() -> Vec<(Uuid, UserProfile, Vec<Principal>)> {

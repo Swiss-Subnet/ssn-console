@@ -3,22 +3,18 @@ name = "backend"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.10"
-ic-cdk = "0.19"
-ic-cdk-timers = "1"
-ic-stable-structures = "0.7"
+candid.workspace = true
+ic-cdk.workspace = true
+ic-cdk-timers.workspace = true
+ic-stable-structures.workspace = true
 
-serde = { version = "1", features = ["derive"] }
-ciborium = "0.2"
+serde.workspace = true
+canister-utils.workspace = true
 
-uuid = { version = "1", features = ["serde"] }
-fastrand = "2"
 candid_parser = "0.3"
 
 ic-http-certification = "3"

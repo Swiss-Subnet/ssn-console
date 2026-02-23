@@ -1,7 +1,8 @@
 use crate::data::{
     memory::{get_memory, Memory, CANISTERS_MEMORY_ID, PROJECT_CANISTER_INDEX_MEMORY_ID},
-    Canister, Uuid,
+    Canister,
 };
+use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
 pub type CanisterMemory = BTreeMap<Uuid, Canister, Memory>;

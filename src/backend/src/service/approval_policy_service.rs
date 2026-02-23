@@ -1,12 +1,12 @@
 use crate::{
     data::{
         approval_policy_repository, project_repository, team_repository, user_profile_repository,
-        Uuid,
     },
     dto::{ListProjectApprovalPoliciesRequest, ListProjectApprovalPoliciesResponse},
     mapping::map_list_project_approval_policies_response,
 };
 use candid::Principal;
+use canister_utils::Uuid;
 
 pub fn list_project_approval_policies(
     calling_principal: &Principal,
