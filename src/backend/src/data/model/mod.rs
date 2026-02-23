@@ -1,7 +1,6 @@
 mod approval_policy;
 mod canister;
 mod organization;
-mod principal;
 mod project;
 mod proposal;
 mod team;
@@ -14,7 +13,6 @@ mod user_stats;
 pub use approval_policy::*;
 pub use canister::*;
 pub use organization::*;
-pub use principal::*;
 pub use project::*;
 pub use proposal::*;
 pub use team::*;

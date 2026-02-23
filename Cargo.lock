@@ -225,6 +225,7 @@ dependencies = [
 name = "canister-utils"
 version = "0.1.0"
 dependencies = [
+ "candid",
  "ciborium",
  "fastrand",
  "ic-cdk",
