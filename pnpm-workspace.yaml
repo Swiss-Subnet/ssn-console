@@ -1,6 +1,8 @@
 packages:
   - src/backend-api
   - src/backend-tests
+  - src/canister-history-api
+  - src/canister-history-tests
   - src/frontend
   - src/management-canister
 

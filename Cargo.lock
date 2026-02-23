@@ -222,6 +222,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "canister-history"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_parser",
+ "canister-utils",
+ "either",
+ "futures",
+ "ic-cdk",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "serde",
+]
+
+[[package]]
 name = "canister-utils"
 version = "0.1.0"
 dependencies = [

@@ -36,6 +36,23 @@
       "shrink": true,
       "optimize": "cycles"
     },
+    "canister-history": {
+      "type": "custom",
+      "candid": "src/canister-history/canister_history.did",
+      "wasm": "target/wasm32-unknown-unknown/release/canister_history.wasm",
+      "build": [
+        "pnpm -F @ssn/canister-history-api build",
+        "pnpm -F @ssn/management-canister build",
+        "cargo build --target wasm32-unknown-unknown --release -p canister-history --locked"
+      ],
+      "declarations": {
+        "bindings": ["js", "ts"],
+        "output": "./dist"
+      },
+      "gzip": true,
+      "shrink": true,
+      "optimize": "cycles"
+    },
     "internet_identity": {
       "type": "custom",
       "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2026-01-13/internet_identity.did",

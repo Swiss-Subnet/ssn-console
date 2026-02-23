@@ -1,0 +1,121 @@
+type ApiError = record {
+  code : ApiErrorCode;
+  message : text;
+};
+
+type ApiErrorCode = variant {
+  Unauthenticated : record {};
+  Unauthorized : record {};
+  DependencyError : record {};
+};
+
+type PaginationMetaResponse = record {
+  limit : nat64;
+  page : nat64;
+  total_items : nat64;
+  total_pages : nat64;
+};
+
+type UpdateSubnetCanisterRangesRequest = record {
+  canister_ranges : vec record { principal; principal };
+};
+
+type UpdateSubnetCanisterRangesResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type ListSubnetCanisterRangesRequest = record {};
+
+type ListSubnetCanisterRangesResponse = variant {
+  Ok : record {
+    canister_ranges : vec record { principal; principal };
+  };
+  Err : ApiError;
+};
+
+type ListSubnetCanisterIdsRequest = record {
+  limit : opt nat64;
+  page : opt nat64;
+};
+
+type ListSubnetCanisterIdsResponse = variant {
+  Ok : record {
+    canister_ids : vec principal;
+    meta : PaginationMetaResponse;
+  };
+  Err : ApiError;
+};
+
+type ListCanisterChangesRequest = record {
+  canister_id : principal;
+  reverse : opt bool;
+  limit : opt nat64;
+  page : opt nat64;
+};
+
+type ListCanisterChangesResponse = variant {
+  Ok : record {
+    changes : vec CanisterChange;
+    meta : PaginationMetaResponse;
+  };
+  Err : ApiError;
+};
+type CanisterChangeOrigin = variant {
+  FromUser : record {
+    user_id : principal;
+  };
+  FromCanister : record {
+    canister_id : principal;
+    canister_version : opt nat64;
+  };
+};
+
+type CanisterChangeDetails = variant {
+  Creation : record {
+    controllers : vec principal;
+    environment_variables_hash : opt blob;
+  };
+  CodeUninstall : record {};
+  CodeDeployment : record {
+    mode : opt CodeDeploymentMode;
+    module_hash : blob;
+  };
+  LoadSnapshot : record {
+    from_canister_id : opt principal;
+    snapshot_id : blob;
+    canister_version : nat64;
+    taken_at_timestamp : nat64;
+    source : opt SnapshotSource;
+  };
+  ControllersChange : record {
+    controllers : vec principal;
+  };
+};
+
+type CodeDeploymentMode = variant {
+  Install : record {};
+  Reinstall : record {};
+  Upgrade : record {};
+};
+
+type SnapshotSource = variant {
+  TakenFromCanister : record {};
+  MetadataUpload : record {};
+};
+
+type CanisterChange = record {
+  id : text;
+  canister_id : principal;
+  timestamp_nanos : nat64;
+  canister_version : nat64;
+  origin : opt CanisterChangeOrigin;
+  details : opt CanisterChangeDetails;
+};
+
+service : {
+  update_subnet_canister_ranges : (UpdateSubnetCanisterRangesRequest) -> (UpdateSubnetCanisterRangesResponse);
+  list_subnet_canister_ranges : (ListSubnetCanisterRangesRequest) -> (ListSubnetCanisterRangesResponse) query;
+  list_subnet_canister_ids : (ListSubnetCanisterIdsRequest) -> (ListSubnetCanisterIdsResponse) query;
+  list_canister_changes : (ListCanisterChangesRequest) -> (ListCanisterChangesResponse) query;
+};

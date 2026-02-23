@@ -1,0 +1,11 @@
+{
+  "name": "canister-history-tests",
+  "private": true,
+  "scripts": {
+    "test": "tsc && vitest run"
+  },
+  "dependencies": {
+    "@ssn/canister-history-api": "workspace:*",
+    "@ssn/management-canister": "workspace:*"
+  }
+}

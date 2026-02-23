@@ -8,8 +8,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build
+  build_and_test_all:
+    name: Build and Test All
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,5 +30,40 @@ jobs:
       - name: Cargo test
         run: cargo test
 
+  build_and_test_backend:
+    name: Build and Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup NodeJS
+        uses: ./.github/actions/setup-node
+
+      - name: Setup DFX
+        uses: ./.github/actions/setup-dfx
+
+      - name: DFX build
+        run: dfx build backend --check
+
       - name: pic-js tests
         run: pnpm -F backend-tests test
+
+  build_and_test_canister_history:
+    name: Build and Test Canister History
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup NodeJS
+        uses: ./.github/actions/setup-node
+
+      - name: Setup DFX
+        uses: ./.github/actions/setup-dfx
+
+      - name: DFX build
+        run: dfx build canister-history --check
+
+      - name: pic-js tests
+        run: pnpm -F canister-history-tests test
