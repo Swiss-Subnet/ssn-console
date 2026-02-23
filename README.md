@@ -97,7 +97,7 @@ Encode the call args for the management canister:
 ```shell
 ./didc encode --defs ./src/management-canister/ic.did --types '(canister_info_args)' '(
   record {
-    canister_id = principal "${CYCLES_WALLET_PRINCIPAL}";
+    canister_id = principal "${TARGET_CANISTER_PRINCIPAL}";
     num_requested_changes = opt 100;
   }
 )'
