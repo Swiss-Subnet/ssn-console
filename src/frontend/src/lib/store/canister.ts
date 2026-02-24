@@ -1,3 +1,4 @@
+import { BACKEND_CANISTER_ID } from '@/env';
 import type { AppStateCreator, CanistersSlice } from '@/lib/store/model';
 
 export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
@@ -5,12 +6,11 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   get,
 ) => ({
   isCanistersInitialized: false,
+  isCanistersLoading: false,
   canisters: null,
 
   async initializeCanisters() {
-    const { getCanisterApi, getManagementCanisterApi, isAuthenticated } = get();
-    const canisterApi = getCanisterApi();
-    const managementCanisterApi = getManagementCanisterApi();
+    const { isAuthenticated, refreshCanisters } = get();
 
     if (!isAuthenticated) {
       set({ isCanistersInitialized: true });
@@ -18,49 +18,22 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
     }
 
     try {
-      const canisters = await canisterApi.listMyCanisters();
-
-      set({
-        canisters: canisters.map(c => ({
-          ...c,
-          isLoading: true,
-          status: null,
-        })),
-      });
-
-      await Promise.all(
-        canisters.map(async canister => {
-          try {
-            const status = await managementCanisterApi.getCanisterStatus({
-              canisterId: canister.principal,
-            });
-
-            set(state => {
-              const canisters = state.canisters ?? [];
-
-              return {
-                canisters: canisters.map(c =>
-                  c.principal === canister.principal ? { ...c, status } : c,
-                ),
-              };
-            });
-          } finally {
-            set(state => {
-              const canisters = state.canisters ?? [];
-
-              return {
-                canisters: canisters.map(c =>
-                  c.principal === canister.principal
-                    ? { ...c, isLoading: false }
-                    : c,
-                ),
-              };
-            });
-          }
-        }),
-      );
+      await refreshCanisters();
     } finally {
       set({ isCanistersInitialized: true });
+    }
+  },
+
+  async refreshCanisters() {
+    const { getCanisterApi } = get();
+    const canisterApi = getCanisterApi();
+
+    set({ isCanistersLoading: true });
+    try {
+      const canisters = await canisterApi.listMyCanisters();
+      set({ canisters });
+    } finally {
+      set({ isCanistersLoading: false });
     }
   },
 
@@ -69,103 +42,37 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   },
 
   async createCanister() {
-    const { getCanisterApi, getManagementCanisterApi } = get();
+    const { getCanisterApi, refreshCanisters } = get();
     const canisterApi = getCanisterApi();
-    const managementCanisterApi = getManagementCanisterApi();
 
-    const canister = await canisterApi.createCanister();
-
-    set(state => {
-      const canisters = state.canisters ?? [];
-
-      return {
-        canisters: [
-          ...canisters,
-          {
-            ...canister,
-            isLoading: true,
-            status: null,
-          },
-        ],
-      };
-    });
-
-    try {
-      const status = await managementCanisterApi.getCanisterStatus({
-        canisterId: canister.principal,
-      });
-
-      set(state => {
-        const canisters = state.canisters ?? [];
-
-        return {
-          canisters: canisters.map(c =>
-            c.principal === canister.principal ? { ...c, status } : c,
-          ),
-        };
-      });
-    } finally {
-      set(state => {
-        const canisters = state.canisters ?? [];
-
-        return {
-          canisters: canisters.map(c =>
-            c.principal === canister.principal ? { ...c, isLoading: false } : c,
-          ),
-        };
-      });
-    }
+    await canisterApi.createCanister();
+    await refreshCanisters();
   },
 
-  async addController(canisterPrincipal, controller) {
-    const { getManagementCanisterApi, canisters, isCanistersInitialized } =
-      get();
+  async addMissingController(canisterId) {
+    const { getManagementCanisterApi, refreshCanisters } = get();
     const managementCanisterApi = getManagementCanisterApi();
 
-    if (!isCanistersInitialized) {
-      throw new Error('Canisters are not initialized');
-    }
-
-    const canister = canisters?.find(c => c.principal === canisterPrincipal);
-    if (!canister) {
-      throw new Error(`Canister with principal ${canisterPrincipal} not found`);
-    }
-
-    const existingControllers = canister.status?.settings.controllers ?? [];
-    if (existingControllers.includes(controller)) {
-      throw new Error(
-        `Controller ${controller} is already a controller of canister ${canisterPrincipal}`,
-      );
-    }
-
+    const canisterSettings = await managementCanisterApi.getCanisterStatus({
+      canisterId,
+    });
     await managementCanisterApi.updateSettings({
-      canisterId: canisterPrincipal,
+      canisterId,
       settings: {
-        controllers: [...existingControllers, controller],
+        controllers: [
+          ...canisterSettings.settings.controllers,
+          BACKEND_CANISTER_ID,
+        ],
       },
     });
+    await refreshCanisters();
+  },
 
-    set(state => {
-      const canisters = state.canisters ?? [];
+  async addController(canisterId, controllerId) {
+    const { getCanisterApi, refreshCanisters } = get();
+    const canisterApi = getCanisterApi();
 
-      return {
-        canisters: canisters.map(c => {
-          if (c.principal !== canisterPrincipal || !c.status) {
-            return c;
-          }
-
-          return {
-            ...c,
-            status: {
-              ...c.status,
-              settings: {
-                ...c.status.settings,
-                controllers: [...c.status.settings.controllers, controller],
-              },
-            },
-          };
-        }),
-      };
-    });
+    await canisterApi.addCanisterController(canisterId, controllerId);
+    await refreshCanisters();
   },
 });

@@ -110,7 +110,7 @@ describe('User Profile', () => {
       );
     });
 
-    it('should update the user status', async () => {
+    it('should update the user status and user stats', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
@@ -118,10 +118,20 @@ describe('User Profile', () => {
       expect(aliceProfile.status).toEqual({ Inactive: null });
 
       driver.actor.setIdentity(controllerIdentity);
+      let userStats = await driver.actor.get_user_stats();
+      expect(userStats.total).toBe(1n);
+      expect(userStats.active).toBe(0n);
+
+      driver.actor.setIdentity(controllerIdentity);
       await driver.actor.update_user_profile({
         user_id: aliceProfile.id,
         status: [{ Active: null }],
       });
+
+      driver.actor.setIdentity(controllerIdentity);
+      userStats = await driver.actor.get_user_stats();
+      expect(userStats.total).toBe(1n);
+      expect(userStats.active).toBe(1n);
 
       driver.actor.setIdentity(aliceIdentity);
       const [updatedAliceProfile] = await driver.actor.get_my_user_profile();
@@ -132,6 +142,11 @@ describe('User Profile', () => {
         user_id: aliceProfile.id,
         status: [{ Inactive: null }],
       });
+
+      driver.actor.setIdentity(controllerIdentity);
+      userStats = await driver.actor.get_user_stats();
+      expect(userStats.total).toBe(1n);
+      expect(userStats.active).toBe(0n);
 
       driver.actor.setIdentity(aliceIdentity);
       const [finalUpdatedAliceProfile] =
@@ -236,6 +251,22 @@ describe('User Profile', () => {
         id: expect.any(String),
         name: 'Default Team',
       });
+
+      const approvalPolicies =
+        await driver.actor.list_project_approval_policies({
+          project_id: projects[0].id,
+        });
+      expect(approvalPolicies.approval_policies).toHaveLength(2);
+      expect(approvalPolicies.approval_policies).toContainEqual({
+        id: expect.any(String),
+        operation_type: 'CreateCanister',
+        policy_type: 'AutoApprove',
+      });
+      expect(approvalPolicies.approval_policies).toContainEqual({
+        id: expect.any(String),
+        operation_type: 'AddCanisterController',
+        policy_type: 'AutoApprove',
+      });
     });
 
     it('should create an admin user profile', async () => {
@@ -271,6 +302,22 @@ describe('User Profile', () => {
       expect(teams[0]).toEqual({
         id: expect.any(String),
         name: 'Default Team',
+      });
+
+      const approvalPolicies =
+        await driver.actor.list_project_approval_policies({
+          project_id: projects[0].id,
+        });
+      expect(approvalPolicies.approval_policies).toHaveLength(2);
+      expect(approvalPolicies.approval_policies).toContainEqual({
+        id: expect.any(String),
+        operation_type: 'CreateCanister',
+        policy_type: 'AutoApprove',
+      });
+      expect(approvalPolicies.approval_policies).toContainEqual({
+        id: expect.any(String),
+        operation_type: 'AddCanisterController',
+        policy_type: 'AutoApprove',
       });
     });
 

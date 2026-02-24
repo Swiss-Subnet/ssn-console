@@ -1,8 +1,10 @@
+mod approval_policy;
 mod canister;
 mod cycles_ledger;
 pub mod http;
 mod organization;
 mod project;
+mod proposal;
 mod team;
 mod terms_and_conditions;
 mod trusted_partner;

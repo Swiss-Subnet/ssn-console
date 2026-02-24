@@ -1,7 +1,9 @@
+mod approval_policy;
 mod canister;
 mod organization;
 mod principal;
 mod project;
+mod proposal;
 mod team;
 mod terms_and_conditions;
 mod terms_and_conditions_decision;
@@ -10,10 +12,12 @@ mod user_profile;
 mod user_stats;
 mod uuid;
 
+pub use approval_policy::*;
 pub use canister::*;
 pub use organization::*;
 pub use principal::*;
 pub use project::*;
+pub use proposal::*;
 pub use team::*;
 pub use terms_and_conditions::*;
 pub use terms_and_conditions_decision::*;

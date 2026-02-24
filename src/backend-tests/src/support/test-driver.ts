@@ -1,9 +1,14 @@
 import { PocketIc, type Actor, type CanisterFixture } from '@dfinity/pic';
 import { inject } from 'vitest';
-import { type _SERVICE as BackendService, idlFactory } from '@ssn/backend-api';
+import {
+  type _SERVICE as BackendService,
+  idlFactory,
+  type Project,
+} from '@ssn/backend-api';
 import { resolve } from 'node:path';
-import type { Principal } from '@icp-sdk/core/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { controllerIdentity } from './identity';
+import { ProposalDriver } from './proposal-driver';
 
 export const BACKEND_WASM_PATH = resolve(
   __dirname,
@@ -19,6 +24,8 @@ export const BACKEND_WASM_PATH = resolve(
 );
 
 export class TestDriver {
+  public readonly proposals: ProposalDriver;
+
   public get actor(): Actor<BackendService> {
     return this.fixture.actor;
   }
@@ -30,7 +37,9 @@ export class TestDriver {
   private constructor(
     public readonly pic: PocketIc,
     private readonly fixture: CanisterFixture<BackendService>,
-  ) {}
+  ) {
+    this.proposals = new ProposalDriver(pic, fixture.canisterId);
+  }
 
   public static async create(initialDate = new Date()): Promise<TestDriver> {
     const pic = await PocketIc.create(inject('PIC_URL'));
@@ -50,15 +59,13 @@ export class TestDriver {
     });
   }
 
-  public async resetBackendCanister(): Promise<void> {
-    await this.pic.reinstallCode({
-      canisterId: this.canisterId,
-      wasm: BACKEND_WASM_PATH,
-      sender: controllerIdentity.getPrincipal(),
-    });
-  }
-
   public async tearDown(): Promise<void> {
     await this.pic.tearDown();
+  }
+
+  public async getDefaultProject(): Promise<Project> {
+    const [project] = await this.actor.list_my_projects();
+
+    return project;
   }
 }

@@ -41,13 +41,7 @@ pub fn assert_accepted_latest_terms_and_conditions(
         return Ok(());
     }
 
-    let user_id =
-        user_profile_repository::get_user_id_by_principal(calling_principal).ok_or_else(|| {
-            format!(
-                "User profile for principal {} does not exist",
-                calling_principal
-            )
-        })?;
+    let user_id = user_profile_repository::assert_user_id_by_principal(calling_principal)?;
 
     if !terms_and_conditions_repository::has_accepted_latest_terms_and_conditions(user_id) {
         return Err(

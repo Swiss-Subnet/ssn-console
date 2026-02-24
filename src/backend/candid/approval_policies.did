@@ -1,0 +1,17 @@
+type ListProjectApprovalPoliciesResponse = record {
+  approval_policies : vec ApprovalPolicy;
+};
+
+type ListProjectApprovalPoliciesRequest = record {
+  project_id : text;
+};
+
+type ApprovalPolicy = record {
+  id : text;
+  operation_type : text;
+  policy_type : text;
+};
+
+service : {
+  list_project_approval_policies : (ListProjectApprovalPoliciesRequest) -> (ListProjectApprovalPoliciesResponse) query;
+};

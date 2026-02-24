@@ -8,13 +8,13 @@ pub fn map_list_my_organizations_response(
 ) -> ListMyOrganizationsResponse {
     organizations
         .into_iter()
-        .map(|(org_id, org)| map_organization_response(org_id, org))
+        .map(map_organization_response)
         .collect()
 }
 
-pub fn map_organization_response(org_id: data::Uuid, org: data::Organization) -> Organization {
+pub fn map_organization_response((id, org): (data::Uuid, data::Organization)) -> Organization {
     Organization {
-        id: org_id.to_string(),
+        id: id.to_string(),
         name: org.name,
     }
 }
