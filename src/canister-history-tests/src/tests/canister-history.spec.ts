@@ -3,6 +3,8 @@ import {
   BACKEND_WASM_PATH,
   controllerIdentity,
   extractOkResponse,
+  millisecondsToNanoseconds,
+  minutesToMilliseconds,
   TestDriver,
 } from '../support';
 import { Principal } from '@icp-sdk/core/principal';
@@ -12,18 +14,7 @@ import {
 } from '@ssn/management-canister';
 import { generateRandomIdentity } from '@dfinity/pic';
 
-const SECONDS_PER_MINUTE = 60;
-const MILLISECONDS_PER_SECOND = 1_000;
-function minutesToMilliseconds(minutes: number): number {
-  return minutes * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
-}
-
-const NANOSECONDS_PER_MILLISECOND = 1_000_000;
-function millisecondsToNanoseconds(milliseconds: number): bigint {
-  return BigInt(milliseconds) * BigInt(NANOSECONDS_PER_MILLISECOND);
-}
-
-describe('User Profile', () => {
+describe('Canister History', () => {
   let driver: TestDriver;
 
   beforeEach(async () => {
@@ -63,6 +54,24 @@ describe('User Profile', () => {
       expect(subnetCanisterIds.canister_ids).toHaveLength(1);
     });
 
+    it('should set and get an empty canister range', async () => {
+      driver.actor.setIdentity(controllerIdentity);
+
+      // Test synchronization with no canister ranges set
+      await driver.pic.advanceTime(minutesToMilliseconds(5));
+      await driver.pic.tick(3);
+
+      // Should not crash or throw errors
+      const canisterIds = await driver.actor.list_subnet_canister_ids({
+        limit: [],
+        page: [],
+      });
+      const result = extractOkResponse(canisterIds);
+      expect(result.canister_ids).toHaveLength(0);
+    });
+  });
+
+  describe('canister changes', async () => {
     it('should handle all types of changes', async () => {
       const otherController = generateRandomIdentity();
       const managementCanister =

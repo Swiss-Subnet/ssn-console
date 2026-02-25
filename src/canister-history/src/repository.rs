@@ -66,17 +66,21 @@ pub fn list_canister_changes(
     page: usize,
 ) -> (u64, Vec<(Uuid, CanisterChange)>) {
     with_state(|s| {
-        let iter = s
+        let range_iter = s
             .canister_id_timestamp_change_index
             .range((canister_id, u64::MIN, Uuid::MIN)..=(canister_id, u64::MAX, Uuid::MAX));
 
         let iter = if reverse {
-            Either::Left(iter.rev())
+            Either::Left(range_iter.rev())
         } else {
-            Either::Right(iter)
+            Either::Right(range_iter)
         };
 
-        let total_items = s.canister_changes.len();
+        let total_items = s
+            .canister_infos
+            .get(&canister_id)
+            .map(|info| info.stored_num_changes)
+            .unwrap_or(0);
         let changes = iter
             .map(|val| val.into_pair())
             .filter_map(|((_, _, id), _)| s.canister_changes.get(&id).map(|changes| (id, changes)))

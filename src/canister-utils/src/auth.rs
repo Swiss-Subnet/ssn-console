@@ -5,7 +5,7 @@ use ic_cdk::api::is_controller;
 pub fn assert_authenticated(principal: Principal) -> ApiResult {
     if principal == Principal::anonymous() {
         return Err(ApiError::unauthenticated(
-            "Anonymous principals are not allowed to perform this action".to_string(),
+            "Anonymous principals are not allowed to perform this action.".to_string(),
         ));
     }
 

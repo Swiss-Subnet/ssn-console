@@ -1,4 +1,5 @@
 import {
+  generateRandomIdentity,
   PocketIc,
   type Actor,
   type CanisterFixture,
@@ -78,5 +79,29 @@ export class TestDriver {
     }
 
     return firstSubnet;
+  }
+
+  public async createCanisters(numCanisters = 1): Promise<void> {
+    for (let i = 0; i < numCanisters; i++) {
+      await this.pic.createCanister({
+        sender: controllerIdentity.getPrincipal(),
+      });
+    }
+  }
+
+  public async createControllerChanges(
+    canisterId: Principal,
+    numChanges = 1,
+    controllers = [controllerIdentity.getPrincipal()],
+  ): Promise<void> {
+    for (let i = 0; i < numChanges; i++) {
+      const additionalController = generateRandomIdentity();
+
+      await this.pic.updateCanisterSettings({
+        canisterId,
+        sender: controllerIdentity.getPrincipal(),
+        controllers: [...controllers, additionalController.getPrincipal()],
+      });
+    }
   }
 }

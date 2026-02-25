@@ -28,6 +28,7 @@ impl Storable for SubnetCanisterRangeInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CanisterChangeInfo {
     pub total_num_changes: u64,
+    pub stored_num_changes: u64,
     pub missed_ranges: Vec<(u64, u64)>,
     pub is_deleted: bool,
 }

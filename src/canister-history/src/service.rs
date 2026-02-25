@@ -120,6 +120,7 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
     let mut stored_canister_info = repository::get_canister_change_info(canister_id)
         .unwrap_or_else(|| CanisterChangeInfo {
             total_num_changes: 0,
+            stored_num_changes: 0,
             missed_ranges: vec![],
             is_deleted: false,
         });
@@ -152,6 +153,7 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
             let canister_change =
                 map_management_canister_change_response(canister_id, change_record);
             repository::insert_change(canister_change);
+            stored_canister_info.stored_num_changes += 1;
         }
     }
 
