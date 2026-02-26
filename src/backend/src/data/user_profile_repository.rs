@@ -5,12 +5,11 @@ use super::{
     },
     UserProfile, UserStatsData,
 };
-use crate::data::{
-    memory::{init_user_profile_id_principal_index, UserProfileIdPrincipalIndexMemory},
-    MAX_PRINCIPAL, MIN_PRINCIPAL,
+use crate::data::memory::{
+    init_user_profile_id_principal_index, UserProfileIdPrincipalIndexMemory,
 };
 use candid::Principal;
-use canister_utils::Uuid;
+use canister_utils::{Uuid, MAX_PRINCIPAL, MIN_PRINCIPAL};
 use std::cell::RefCell;
 
 pub fn list_user_profiles() -> Vec<(Uuid, UserProfile, Vec<Principal>)> {
