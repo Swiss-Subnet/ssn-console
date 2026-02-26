@@ -5,8 +5,9 @@ use crate::data::{
         TermsAndConditionsCreatedAtIndexMemory, TermsAndConditionsDecisionMemory,
         TermsAndConditionsDecisionUserIndexMemory, TermsAndConditionsMemory,
     },
-    TermsAndConditions, TermsAndConditionsDecision, TermsAndConditionsDecisionType, Uuid,
+    TermsAndConditions, TermsAndConditionsDecision, TermsAndConditionsDecisionType,
 };
+use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn get_latest_terms_and_conditions(user_id: Uuid) -> Option<(Uuid, TermsAndConditions, bool)> {

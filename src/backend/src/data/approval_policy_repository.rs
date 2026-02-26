@@ -3,8 +3,9 @@ use super::{
         init_approval_policies, init_project_operation_type_approval_policy_index,
         ApprovalPolicyMemory, ProjectOperationTypeApprovalPolicyIndexMemory,
     },
-    ApprovalPolicy, OperationType, Uuid,
+    ApprovalPolicy, OperationType,
 };
+use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn list_project_approval_policies(

@@ -4,10 +4,11 @@ use crate::{
     dto::{GetUserStatsResponse, ListUserProfilesResponse, UserProfile, UserStatus},
 };
 use candid::Principal;
+use canister_utils::Uuid;
 use ic_cdk::api::is_controller;
 
 pub fn map_list_user_profiles_response(
-    profiles: Vec<(data::Uuid, data::UserProfile, Vec<Principal>)>,
+    profiles: Vec<(Uuid, data::UserProfile, Vec<Principal>)>,
 ) -> ListUserProfilesResponse {
     profiles
         .into_iter()
@@ -21,7 +22,7 @@ pub fn map_list_user_profiles_response(
 }
 
 pub fn map_get_my_user_profile_response(
-    id: data::Uuid,
+    id: Uuid,
     principal: &Principal,
     profile: data::UserProfile,
 ) -> UserProfile {
@@ -35,7 +36,7 @@ pub fn map_get_my_user_profile_response(
 }
 
 pub fn map_create_my_user_profile_response(
-    id: data::Uuid,
+    id: Uuid,
     principal: &Principal,
     profile: data::UserProfile,
 ) -> UserProfile {

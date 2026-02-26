@@ -3,8 +3,9 @@ use super::{
         init_organization_team_index, init_team_user_index, init_teams, init_user_team_index,
         OrganizationTeamIndexMemory, TeamMemory, TeamUserIndexMemory, UserTeamIndexMemory,
     },
-    Team, Uuid,
+    Team,
 };
+use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn add_default_team(user_id: Uuid, org_id: Uuid) -> Uuid {

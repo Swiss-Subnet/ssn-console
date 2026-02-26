@@ -1,8 +1,9 @@
 use super::{TEAM_USER_INDEX_MEMORY_ID, USER_TEAM_INDEX_MEMORY_ID};
 use crate::data::{
     memory::{get_memory, Memory, ORGANIZATION_TEAM_INDEX_MEMORY_ID, TEAM_MEMORY_ID},
-    Team, Uuid,
+    Team,
 };
+use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
 pub type TeamMemory = BTreeMap<Uuid, Team, Memory>;

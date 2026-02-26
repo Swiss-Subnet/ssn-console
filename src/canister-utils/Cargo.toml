@@ -1,0 +1,13 @@
+[package]
+name = "canister-utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde.workspace = true
+ic-stable-structures.workspace = true
+ic-cdk.workspace = true
+
+ciborium = "0.2"
+fastrand = "2"
+uuid = { version = "1", features = ["serde"] }

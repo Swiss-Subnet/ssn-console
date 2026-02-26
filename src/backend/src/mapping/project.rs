@@ -2,9 +2,10 @@ use crate::{
     data::{self},
     dto::{ListMyProjectsResponse, Project},
 };
+use canister_utils::Uuid;
 
 pub fn map_list_my_projects_response(
-    projects: Vec<(data::Uuid, data::Project)>,
+    projects: Vec<(Uuid, data::Project)>,
 ) -> ListMyProjectsResponse {
     projects
         .into_iter()
@@ -12,7 +13,7 @@ pub fn map_list_my_projects_response(
         .collect()
 }
 
-pub fn map_project_response(project_id: data::Uuid, project: data::Project) -> Project {
+pub fn map_project_response(project_id: Uuid, project: data::Project) -> Project {
     Project {
         id: project_id.to_string(),
         name: project.name,

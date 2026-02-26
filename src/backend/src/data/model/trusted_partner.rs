@@ -1,5 +1,5 @@
-use crate::utils::{deserialize_cbor, serialize_cbor};
 use candid::Principal;
+use canister_utils::{deserialize_cbor, serialize_cbor};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;

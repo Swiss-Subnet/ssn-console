@@ -3,8 +3,9 @@ use super::{
         init_organization_user_index, init_organizations, init_user_organization_index,
         OrganizationMemory, OrganizationUserIndexMemory, UserOrganizationIndexMemory,
     },
-    Organization, Uuid,
+    Organization,
 };
+use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn add_default_org(user_id: Uuid) -> Uuid {

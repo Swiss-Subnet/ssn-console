@@ -1,13 +1,14 @@
 use crate::{
     data::{
         approval_policy_repository, project_repository, proposal_repository, team_repository,
-        user_profile_repository, OperationType, PolicyType, Proposal, ProposalOperation, Uuid,
+        user_profile_repository, OperationType, PolicyType, Proposal, ProposalOperation,
     },
     dto::{CreateProposalRequest, CreateProposalResponse},
     mapping::{map_create_proposal_request, map_create_proposal_response},
     service::canister_service,
 };
 use candid::Principal;
+use canister_utils::Uuid;
 
 pub async fn create_proposal(
     calling_principal: &Principal,

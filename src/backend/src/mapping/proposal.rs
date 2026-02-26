@@ -2,11 +2,12 @@ use crate::{
     data,
     dto::{CreateProposalRequest, CreateProposalResponse, ProposalOperation, ProposalStatus},
 };
+use canister_utils::Uuid;
 
 pub fn map_create_proposal_request(
     req: CreateProposalRequest,
-) -> Result<(data::Uuid, data::Proposal), String> {
-    let project_uuid = data::Uuid::try_from(req.project_id.as_str())?;
+) -> Result<(Uuid, data::Proposal), String> {
+    let project_uuid = Uuid::try_from(req.project_id.as_str())?;
 
     Ok((
         project_uuid,
@@ -31,7 +32,7 @@ pub fn map_create_proposal_request(
 }
 
 pub fn map_create_proposal_response(
-    proposal_id: data::Uuid,
+    proposal_id: Uuid,
     proposal: data::Proposal,
 ) -> CreateProposalResponse {
     CreateProposalResponse {

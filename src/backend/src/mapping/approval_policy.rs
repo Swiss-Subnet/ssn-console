@@ -2,9 +2,10 @@ use crate::{
     data,
     dto::{ApprovalPolicy, ListProjectApprovalPoliciesResponse},
 };
+use canister_utils::Uuid;
 
 pub fn map_list_project_approval_policies_response(
-    policies: Vec<(data::Uuid, data::OperationType, data::ApprovalPolicy)>,
+    policies: Vec<(Uuid, data::OperationType, data::ApprovalPolicy)>,
 ) -> ListProjectApprovalPoliciesResponse {
     ListProjectApprovalPoliciesResponse {
         approval_policies: policies
@@ -15,7 +16,7 @@ pub fn map_list_project_approval_policies_response(
 }
 
 pub fn map_approval_policy_response(
-    (id, operation_type, policy): (data::Uuid, data::OperationType, data::ApprovalPolicy),
+    (id, operation_type, policy): (Uuid, data::OperationType, data::ApprovalPolicy),
 ) -> ApprovalPolicy {
     ApprovalPolicy {
         id: id.to_string(),

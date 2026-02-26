@@ -3,8 +3,9 @@ use crate::data::{
         get_memory, Memory, TERMS_AND_CONDITIONS_CREATED_AT_INDEX_MEMORY_ID,
         TERMS_AND_CONDITIONS_MEMORY_ID,
     },
-    TermsAndConditions, Uuid,
+    TermsAndConditions,
 };
+use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
 pub type TermsAndConditionsMemory = BTreeMap<Uuid, TermsAndConditions, Memory>;

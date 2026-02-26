@@ -3,8 +3,9 @@ use crate::data::{
         get_memory, Memory, TERMS_AND_CONDITIONS_DECISION_MEMORY_ID,
         TERMS_AND_CONDITIONS_DECISION_USER_INDEX_MEMORY_ID,
     },
-    TermsAndConditionsDecision, Uuid,
+    TermsAndConditionsDecision,
 };
+use canister_utils::Uuid;
 use ic_stable_structures::BTreeMap;
 
 pub type TermsAndConditionsDecisionMemory = BTreeMap<Uuid, TermsAndConditionsDecision, Memory>;

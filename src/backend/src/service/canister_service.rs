@@ -1,12 +1,12 @@
 use crate::{
     data::{
-        canister_repository, project_repository, team_repository, user_profile_repository,
-        Canister, Uuid,
+        canister_repository, project_repository, team_repository, user_profile_repository, Canister,
     },
     dto::ListMyCanistersResponse,
     mapping::map_canister_response,
 };
 use candid::Principal;
+use canister_utils::Uuid;
 use futures::future::join_all;
 use ic_cdk::{
     api::canister_self,

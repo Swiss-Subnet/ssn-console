@@ -3,9 +3,10 @@ use super::{
 };
 use crate::data::{
     memory::{get_memory, USER_PROFILE_ID_PRINCIPAL_INDEX_MEMORY_ID},
-    UserProfile, UserStatsData, Uuid,
+    UserProfile, UserStatsData,
 };
 use candid::Principal;
+use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet, StableCell};
 
 pub type UserProfileMemory = BTreeMap<Uuid, UserProfile, Memory>;

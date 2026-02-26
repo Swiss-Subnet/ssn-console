@@ -1,4 +1,4 @@
-use crate::utils::with_random_bytes;
+use crate::with_random_bytes;
 use core::fmt::{Display, Formatter};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
