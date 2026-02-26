@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   BACKEND_WASM_PATH,
   controllerIdentity,
+  extractErrResponse,
   extractOkResponse,
   millisecondsToNanoseconds,
   minutesToMilliseconds,
@@ -57,17 +58,72 @@ describe('Canister History', () => {
     it('should set and get an empty canister range', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      // Test synchronization with no canister ranges set
       await driver.pic.advanceTime(minutesToMilliseconds(5));
       await driver.pic.tick(3);
 
-      // Should not crash or throw errors
       const canisterIds = await driver.actor.list_subnet_canister_ids({
         limit: [],
         page: [],
       });
       const result = extractOkResponse(canisterIds);
       expect(result.canister_ids).toHaveLength(0);
+    });
+
+    it('should throw an error when subnet range with too short principal is sent', async () => {
+      driver.actor.setIdentity(controllerIdentity);
+
+      const res = await driver.actor.update_subnet_canister_ranges({
+        canister_ranges: [
+          [
+            Principal.fromUint8Array(
+              new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+            ),
+            Principal.fromUint8Array(
+              new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]),
+            ),
+          ],
+          [
+            Principal.fromUint8Array(
+              new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1, 2]), // one byte too few
+            ),
+            Principal.fromUint8Array(
+              new Uint8Array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2]),
+            ),
+          ],
+        ],
+      });
+      const errRes = extractErrResponse(res);
+      expect(errRes.message).toEqual(
+        'The start principal of the 1th provided subnet range is invalid: Principal must have length 10 to be a valid canister id, but it has length: 9',
+      );
+    });
+
+    it('should throw an error when subnet range with too long principal is sent', async () => {
+      driver.actor.setIdentity(controllerIdentity);
+      const res = await driver.actor.update_subnet_canister_ranges({
+        canister_ranges: [
+          [
+            Principal.fromUint8Array(
+              new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+            ),
+            Principal.fromUint8Array(
+              new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]), // one byte too many
+            ),
+          ],
+          [
+            Principal.fromUint8Array(
+              new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1, 1, 2]),
+            ),
+            Principal.fromUint8Array(
+              new Uint8Array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2]),
+            ),
+          ],
+        ],
+      });
+      const errRes = extractErrResponse(res);
+      expect(errRes.message).toEqual(
+        'The end principal of the 0th provided subnet range is invalid: Principal must have length 10 to be a valid canister id, but it has length: 11',
+      );
     });
   });
 

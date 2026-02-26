@@ -45,17 +45,26 @@ pub fn insert_change(change: CanisterChange) -> Uuid {
     id
 }
 
-pub fn list_subnet_canister_ids(limit: usize, page: usize) -> (u64, Vec<Principal>) {
-    with_state(|s| {
-        let total_items = s.canister_infos.len();
-        let canister_ids = s
-            .canister_infos
-            .keys()
-            .skip(limit * page)
-            .take(limit)
-            .collect::<Vec<_>>();
+pub fn get_subnet_canister_ids_count() -> u64 {
+    with_state(|s| s.canister_infos.len())
+}
 
-        (total_items, canister_ids)
+pub fn list_subnet_canister_ids(limit: usize, page: usize) -> Vec<Principal> {
+    with_state(|s| {
+        s.canister_infos
+            .keys()
+            .skip(limit * (page - 1))
+            .take(limit)
+            .collect::<Vec<_>>()
+    })
+}
+
+pub fn get_canister_changes_count(canister_id: Principal) -> u64 {
+    with_state(|s| {
+        s.canister_infos
+            .get(&canister_id)
+            .map(|info| info.stored_num_changes)
+            .unwrap_or(0)
     })
 }
 
@@ -64,7 +73,7 @@ pub fn list_canister_changes(
     reverse: bool,
     limit: usize,
     page: usize,
-) -> (u64, Vec<(Uuid, CanisterChange)>) {
+) -> Vec<(Uuid, CanisterChange)> {
     with_state(|s| {
         let range_iter = s
             .canister_id_timestamp_change_index
@@ -76,19 +85,11 @@ pub fn list_canister_changes(
             Either::Right(range_iter)
         };
 
-        let total_items = s
-            .canister_infos
-            .get(&canister_id)
-            .map(|info| info.stored_num_changes)
-            .unwrap_or(0);
-        let changes = iter
-            .map(|val| val.into_pair())
+        iter.map(|val| val.into_pair())
             .filter_map(|((_, _, id), _)| s.canister_changes.get(&id).map(|changes| (id, changes)))
-            .skip(limit * page)
+            .skip(limit * (page - 1))
             .take(limit)
-            .collect();
-
-        (total_items, changes)
+            .collect()
     })
 }
 

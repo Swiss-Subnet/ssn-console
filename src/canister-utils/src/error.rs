@@ -26,6 +26,15 @@ impl ApiError {
     pub fn dependency_error(message: String) -> ApiError {
         Self::error(ApiErrorCode::DependencyError {}, message)
     }
+
+    pub fn internal_error(message: String) -> ApiError {
+        Self::error(ApiErrorCode::InternalError {}, message)
+    }
+
+    pub fn client_error(message: String) -> ApiError {
+        Self::error(ApiErrorCode::ClientError {}, message)
+    }
+
     fn error(code: ApiErrorCode, message: String) -> ApiError {
         ApiError { code, message }
     }
@@ -36,6 +45,8 @@ pub enum ApiErrorCode {
     Unauthenticated {},
     Unauthorized {},
     DependencyError {},
+    InternalError {},
+    ClientError {},
 }
 
 impl<T> From<Result<T, ApiError>> for ApiResultDto<T> {

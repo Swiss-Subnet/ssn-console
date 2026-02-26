@@ -32,12 +32,12 @@ describe('Pagination', () => {
     it('should return one item per page', async () => {
       const res = await driver.actor.list_subnet_canister_ids({
         limit: [1n],
-        page: [0n],
+        page: [1n],
       });
       const okRes = extractOkResponse(res);
       expect(okRes.canister_ids).toHaveLength(1);
       expect(okRes.meta.limit).toBe(1n);
-      expect(okRes.meta.page).toBe(0n);
+      expect(okRes.meta.page).toBe(1n);
       expect(okRes.meta.total_items).toBe(6n);
       expect(okRes.meta.total_pages).toBe(6n);
     });
@@ -45,12 +45,12 @@ describe('Pagination', () => {
     it('should return multiple items per page', async () => {
       const res = await driver.actor.list_subnet_canister_ids({
         limit: [3n],
-        page: [1n],
+        page: [2n],
       });
       const okRes = extractOkResponse(res);
       expect(okRes.canister_ids).toHaveLength(3);
       expect(okRes.meta.limit).toBe(3n);
-      expect(okRes.meta.page).toBe(1n);
+      expect(okRes.meta.page).toBe(2n);
       expect(okRes.meta.total_items).toBe(6n);
       expect(okRes.meta.total_pages).toBe(2n);
     });
@@ -58,14 +58,23 @@ describe('Pagination', () => {
     it('return all items on a single page', async () => {
       const res = await driver.actor.list_subnet_canister_ids({
         limit: [10n],
-        page: [0n],
+        page: [1n],
       });
       const okRes = extractOkResponse(res);
       expect(okRes.canister_ids).toHaveLength(6);
       expect(okRes.meta.limit).toBe(10n);
-      expect(okRes.meta.page).toBe(0n);
+      expect(okRes.meta.page).toBe(1n);
       expect(okRes.meta.total_items).toBe(6n);
       expect(okRes.meta.total_pages).toBe(1n);
+    });
+
+    it('should set a minimum page', async () => {
+      const res = await driver.actor.list_subnet_canister_ids({
+        limit: [1n],
+        page: [0n],
+      });
+      const okRes = extractOkResponse(res);
+      expect(okRes.meta.page).toBe(1n);
     });
 
     it('should set a maximum page', async () => {
@@ -77,10 +86,19 @@ describe('Pagination', () => {
       expect(okRes.meta.page).toBe(6n);
     });
 
+    it('should set a minimum limit', async () => {
+      const res = await driver.actor.list_subnet_canister_ids({
+        limit: [0n],
+        page: [1n],
+      });
+      const okRes = extractOkResponse(res);
+      expect(okRes.meta.limit).toBe(1n);
+    });
+
     it('should set a maximum limit', async () => {
       const res = await driver.actor.list_subnet_canister_ids({
         limit: [10_000n],
-        page: [0n],
+        page: [1n],
       });
       const okRes = extractOkResponse(res);
       expect(okRes.meta.limit).toBe(50n);
@@ -114,7 +132,7 @@ describe('Pagination', () => {
       const okRes = extractOkResponse(res);
       expect(okRes.changes).toHaveLength(1);
       expect(okRes.meta.limit).toBe(1n);
-      expect(okRes.meta.page).toBe(0n);
+      expect(okRes.meta.page).toBe(1n);
       expect(okRes.meta.total_items).toBe(6n);
       expect(okRes.meta.total_pages).toBe(6n);
     });
@@ -144,9 +162,20 @@ describe('Pagination', () => {
       const okRes = extractOkResponse(res);
       expect(okRes.changes).toHaveLength(6);
       expect(okRes.meta.limit).toBe(10n);
-      expect(okRes.meta.page).toBe(0n);
+      expect(okRes.meta.page).toBe(1n);
       expect(okRes.meta.total_items).toBe(6n);
       expect(okRes.meta.total_pages).toBe(1n);
+    });
+
+    it('should set a minimum page', async () => {
+      const res = await driver.actor.list_canister_changes({
+        canister_id: canisterId,
+        limit: [1n],
+        page: [0n],
+        reverse: [],
+      });
+      const okRes = extractOkResponse(res);
+      expect(okRes.meta.page).toBe(1n);
     });
 
     it('should set a maximum page', async () => {
@@ -160,11 +189,22 @@ describe('Pagination', () => {
       expect(okRes.meta.page).toBe(6n);
     });
 
+    it('should set a minimum limit', async () => {
+      const res = await driver.actor.list_canister_changes({
+        canister_id: canisterId,
+        limit: [0n],
+        page: [1n],
+        reverse: [],
+      });
+      const resOk = extractOkResponse(res);
+      expect(resOk.meta.limit).toBe(1n);
+    });
+
     it('should set a maximum limit', async () => {
       const res = await driver.actor.list_canister_changes({
         canister_id: canisterId,
         limit: [10_000n],
-        page: [0n],
+        page: [1n],
         reverse: [],
       });
       const resOk = extractOkResponse(res);

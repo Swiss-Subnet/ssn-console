@@ -1,6 +1,7 @@
 use candid::export_service;
 use ic_cdk::*;
 
+mod canister_id;
 mod constants;
 mod controller;
 mod dto;
@@ -8,7 +9,6 @@ mod mapping;
 mod memory;
 mod memory_manager;
 mod model;
-mod principal_range;
 mod repository;
 mod service;
 

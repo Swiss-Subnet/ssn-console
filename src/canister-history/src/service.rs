@@ -1,4 +1,7 @@
-use crate::constants::{CALLS_PER_BATCH, DEFAULT_LIMIT, DEFAULT_PAGE, MAX_LIMIT};
+use crate::canister_id::CanisterId;
+use crate::constants::{
+    CALLS_PER_BATCH, DEFAULT_LIMIT, DEFAULT_PAGE, MAX_LIMIT, MIN_LIMIT, MIN_PAGE,
+};
 use crate::dto::{
     ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterIdsRequest,
     ListSubnetCanisterIdsResponse, ListSubnetCanisterRangesResponse, PaginationMetaResponse,
@@ -7,7 +10,7 @@ use crate::dto::{
 use crate::mapping::map_canister_change_response;
 use crate::model::CanisterChangeInfo;
 use crate::repository;
-use crate::{mapping::map_management_canister_change_response, principal_range::PrincipalRange};
+use crate::{canister_id::CanisterIdRange, mapping::map_management_canister_change_response};
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult};
 use futures::future::join_all;
@@ -29,14 +32,17 @@ pub fn list_subnet_canister_ranges() -> ListSubnetCanisterRangesResponse {
 pub fn list_subnet_canister_ids(
     req: ListSubnetCanisterIdsRequest,
 ) -> ListSubnetCanisterIdsResponse {
-    let limit = req.limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
+    let limit = req
+        .limit
+        .unwrap_or(DEFAULT_LIMIT)
+        .clamp(MIN_LIMIT, MAX_LIMIT);
     let page = req.page.unwrap_or(DEFAULT_PAGE);
 
-    let (total_items, canister_ids) =
-        repository::list_subnet_canister_ids(limit as usize, page as usize);
+    let total_items = repository::get_subnet_canister_ids_count();
+    let total_pages = total_items.div_ceil(limit).max(MIN_PAGE);
+    let page = page.clamp(MIN_PAGE, total_pages);
 
-    let total_pages = total_items.div_ceil(limit);
-    let page = total_pages.min(page);
+    let canister_ids = repository::list_subnet_canister_ids(limit as usize, page as usize);
 
     ListSubnetCanisterIdsResponse {
         canister_ids,
@@ -51,14 +57,18 @@ pub fn list_subnet_canister_ids(
 
 pub fn list_canister_changes(req: ListCanisterChangesRequest) -> ListCanisterChangesResponse {
     let reverse = req.reverse.unwrap_or(false);
-    let limit = req.limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
+    let limit = req
+        .limit
+        .unwrap_or(DEFAULT_LIMIT)
+        .clamp(MIN_LIMIT, MAX_LIMIT);
     let page = req.page.unwrap_or(DEFAULT_PAGE);
 
-    let (total_items, changes) =
-        repository::list_canister_changes(req.canister_id, reverse, limit as usize, page as usize);
+    let total_items = repository::get_canister_changes_count(req.canister_id);
+    let total_pages = total_items.div_ceil(limit).max(MIN_PAGE);
+    let page = page.clamp(MIN_PAGE, total_pages);
 
-    let total_pages = total_items.div_ceil(limit);
-    let page = total_pages.min(page);
+    let changes =
+        repository::list_canister_changes(req.canister_id, reverse, limit as usize, page as usize);
 
     let changes = changes
         .into_iter()
@@ -76,21 +86,32 @@ pub fn list_canister_changes(req: ListCanisterChangesRequest) -> ListCanisterCha
     }
 }
 
-pub async fn sync_canister_histories() {
+pub async fn sync_canister_histories() -> ApiResult {
     let canister_ranges = repository::list_subnet_canister_ranges();
 
     for range in canister_ranges {
-        let mut principal_range = PrincipalRange::new(range);
+        let mut canister_id_range = CanisterIdRange::new((
+            CanisterId::try_from(range.0).map_err(|err| {
+                ApiError::internal_error(format!(
+                    "Failed to convert stored subnet canister id range: {err}"
+                ))
+            })?,
+            CanisterId::try_from(range.1).map_err(|err| {
+                ApiError::internal_error(format!(
+                    "Failed to convert stored subnet canister id range: {err}"
+                ))
+            })?,
+        ));
 
         loop {
-            let batch: Vec<Principal> = principal_range.by_ref().take(CALLS_PER_BATCH).collect();
+            let batch: Vec<CanisterId> = canister_id_range.by_ref().take(CALLS_PER_BATCH).collect();
             if batch.is_empty() {
                 break;
             }
 
-            let futures = batch
-                .into_iter()
-                .map(|canister_id| async move { process_canister_changes(canister_id).await });
+            let futures = batch.into_iter().map(|canister_id| async move {
+                process_canister_changes(canister_id.into()).await
+            });
 
             let mut num_consecutive_failed = 0;
             for result in join_all(futures).await {
@@ -108,6 +129,8 @@ pub async fn sync_canister_histories() {
             }
         }
     }
+
+    Ok(())
 }
 
 /// This function retrieves the latest changes for a canister, compares them with

@@ -2,5 +2,9 @@
   "backend": {
     "test": "r5rta-kyaaa-aaaax-qaaca-cai",
     "production": "rpxez-giaaa-aaaax-qaaba-cai"
+  },
+  "canister-history": {
+    "test": "thn34-uiaaa-aaaax-qaana-cai",
+    "production": "tooqa-caaaa-aaaax-qaamq-cai"
   }
 }
