@@ -1,0 +1,10 @@
+{
+  "name": "@ssn/canister-history-api",
+  "private": true,
+  "scripts": {
+    "build": "icp-bindgen --did-file ../canister-history/canister_history.did --out-dir ./dist --force --actor-disabled"
+  },
+  "module": "dist/declarations/canister_history.did.js",
+  "types": "dist/declarations/canister_history.did.d.ts",
+  "main": "dist/declarations/canister_history.did.js"
+}
