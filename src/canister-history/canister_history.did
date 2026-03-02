@@ -1,5 +1,5 @@
 type ApiError = record {
-  code : ApiErrorCode;
+  code : opt ApiErrorCode;
   message : text;
 };
 

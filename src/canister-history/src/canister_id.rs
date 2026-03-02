@@ -6,6 +6,8 @@ const U64_LENGTH: usize = std::mem::size_of::<u64>();
 // plus one additional reserved byte and another byte for the id class.
 const CANISTER_ID_LENGTH: usize = U64_LENGTH + 2;
 
+const OPAQUE_ID_CLASS: u8 = 0x01;
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct CanisterId(Principal);
 
@@ -15,13 +17,25 @@ impl TryFrom<Principal> for CanisterId {
     type Error = String;
 
     fn try_from(value: Principal) -> Result<Self, Self::Error> {
-        let byte_len = value.as_slice().len();
+        let bytes = value.as_slice();
+        let byte_len = bytes.len();
 
         if byte_len != CANISTER_ID_LENGTH {
             return Err(format!("Principal must have length {CANISTER_ID_LENGTH} to be a valid canister id, but it has length: {byte_len}"));
         }
 
-        Ok(Self(value))
+        if bytes
+            .last()
+            .map(|last| last == &OPAQUE_ID_CLASS)
+            .unwrap_or(false)
+        {
+            return Ok(Self(value));
+        }
+
+        Err(
+            "Principal must end in the in the opaque ID class to be a valid canister id"
+                .to_string(),
+        )
     }
 }
 
@@ -167,7 +181,7 @@ mod tests {
         principal[U64_LENGTH + 2] = 0x01;
 
         let result = CanisterId::try_from(Principal::from_slice(&principal)).unwrap_err();
-        assert_eq!(result, format!("Principal must have length {CANISTER_ID_LENGTH} to be a valid canister id, but it has length: {}", CANISTER_ID_LENGTH + 1))
+        assert_eq!(result, format!("Principal must have length {CANISTER_ID_LENGTH} to be a valid canister id, but it has length: {}", CANISTER_ID_LENGTH + 1));
     }
 
     #[test]
@@ -182,6 +196,29 @@ mod tests {
         principal[U32_LENGTH + 1] = 0x01;
 
         let result = CanisterId::try_from(Principal::from_slice(&principal)).unwrap_err();
-        assert_eq!(result, format!("Principal must have length {CANISTER_ID_LENGTH} to be a valid canister id, but it has length: {}", U32_LENGTH + 2))
+        assert_eq!(result, format!("Principal must have length {CANISTER_ID_LENGTH} to be a valid canister id, but it has length: {}", U32_LENGTH + 2));
+    }
+
+    #[test]
+    fn test_canister_id_from_non_opaque_principal() {
+        let mut principal = [0_u8; CANISTER_ID_LENGTH];
+
+        principal[principal.len() - 1] = 0x00;
+        let result = CanisterId::try_from(Principal::from_slice(&principal)).unwrap_err();
+        assert_eq!(
+            result,
+            format!("Principal must end in the in the opaque ID class to be a valid canister id")
+        );
+
+        principal[principal.len() - 1] = 0x02;
+        let result = CanisterId::try_from(Principal::from_slice(&principal)).unwrap_err();
+        assert_eq!(
+            result,
+            format!("Principal must end in the in the opaque ID class to be a valid canister id")
+        );
+
+        principal[principal.len() - 1] = 0x01;
+        let result = CanisterId::try_from(Principal::from_slice(&principal));
+        assert!(result.is_ok());
     }
 }

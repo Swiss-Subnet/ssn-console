@@ -76,7 +76,7 @@ describe('Canister History', () => {
         canister_ranges: [
           [
             Principal.fromUint8Array(
-              new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+              new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
             ),
             Principal.fromUint8Array(
               new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]),
@@ -84,10 +84,10 @@ describe('Canister History', () => {
           ],
           [
             Principal.fromUint8Array(
-              new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1, 2]), // one byte too few
+              new Uint8Array([1, 1, 1, 1, 1, 1, 1, 2, 1]), // one byte too few
             ),
             Principal.fromUint8Array(
-              new Uint8Array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2]),
+              new Uint8Array([2, 2, 2, 2, 2, 2, 2, 2, 2, 1]),
             ),
           ],
         ],
@@ -104,7 +104,7 @@ describe('Canister History', () => {
         canister_ranges: [
           [
             Principal.fromUint8Array(
-              new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+              new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
             ),
             Principal.fromUint8Array(
               new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]), // one byte too many
@@ -112,10 +112,10 @@ describe('Canister History', () => {
           ],
           [
             Principal.fromUint8Array(
-              new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1, 1, 2]),
+              new Uint8Array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]),
             ),
             Principal.fromUint8Array(
-              new Uint8Array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2]),
+              new Uint8Array([2, 2, 2, 2, 2, 2, 2, 2, 2, 1]),
             ),
           ],
         ],

@@ -1,5 +1,6 @@
 use crate::{
     canister_id::CanisterId,
+    constants::{MAX_TIME_BETWEEN_SYNCS_NANOS, MIN_TIME_BETWEEN_SYNCS_NANOS},
     dto::{
         ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterIdsRequest,
         ListSubnetCanisterIdsResponse, ListSubnetCanisterRangesRequest,
@@ -10,7 +11,7 @@ use crate::{
 };
 use canister_utils::{assert_controller, ApiError, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
-use ic_cdk_timers::{set_timer, set_timer_interval};
+use ic_cdk_timers::set_timer;
 use std::time::Duration;
 
 #[init]
@@ -25,15 +26,24 @@ fn post_upgrade() {
 
 fn setup_timers() {
     set_timer(Duration::from_nanos(0), async {
-        if let Err(err) = service::sync_canister_histories().await {
-            ic_cdk::println!("Failed to perform initial canister history sync: {err:?}");
-        }
+        sync_canister_histories().await;
     });
+}
 
-    set_timer_interval(Duration::from_mins(5), || async {
-        if let Err(err) = service::sync_canister_histories().await {
-            ic_cdk::println!("Failed to perform regular cansiter history sync : {err:?}");
-        }
+async fn sync_canister_histories() {
+    let current_time_nanos = ic_cdk::api::time();
+    if let Err(err) = service::sync_canister_histories().await {
+        ic_cdk::println!("Failed to perform canister history sync: {err:?}");
+    }
+    let end_time_nanos = ic_cdk::api::time();
+    let time_diff_nanos = end_time_nanos.saturating_sub(current_time_nanos);
+
+    let next_run_nanos = MAX_TIME_BETWEEN_SYNCS_NANOS
+        .saturating_sub(time_diff_nanos)
+        .max(MIN_TIME_BETWEEN_SYNCS_NANOS);
+
+    set_timer(Duration::from_nanos(next_run_nanos), async {
+        sync_canister_histories().await;
     });
 }
 
@@ -68,11 +78,6 @@ fn update_subnet_canister_ranges(
 fn list_subnet_canister_ranges(
     _req: ListSubnetCanisterRangesRequest,
 ) -> ApiResultDto<ListSubnetCanisterRangesResponse> {
-    let caller = msg_caller();
-    if let Err(err) = assert_controller(caller) {
-        return ApiResultDto::Err(err);
-    }
-
     let res = service::list_subnet_canister_ranges();
     ApiResultDto::Ok(res)
 }
@@ -81,11 +86,6 @@ fn list_subnet_canister_ranges(
 fn list_subnet_canister_ids(
     req: ListSubnetCanisterIdsRequest,
 ) -> ApiResultDto<ListSubnetCanisterIdsResponse> {
-    let caller = msg_caller();
-    if let Err(err) = assert_controller(caller) {
-        return ApiResultDto::Err(err);
-    }
-
     let res = service::list_subnet_canister_ids(req);
     ApiResultDto::Ok(res)
 }
@@ -94,11 +94,6 @@ fn list_subnet_canister_ids(
 fn list_canister_changes(
     req: ListCanisterChangesRequest,
 ) -> ApiResultDto<ListCanisterChangesResponse> {
-    let caller = msg_caller();
-    if let Err(err) = assert_controller(caller) {
-        return ApiResultDto::Err(err);
-    }
-
     let res = service::list_canister_changes(req);
     ApiResultDto::Ok(res)
 }

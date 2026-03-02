@@ -1,6 +1,7 @@
 use crate::canister_id::CanisterId;
 use crate::constants::{
-    CALLS_PER_BATCH, DEFAULT_LIMIT, DEFAULT_PAGE, MAX_LIMIT, MIN_LIMIT, MIN_PAGE,
+    CHANGES_TO_REQUEST, DEFAULT_PAGINATION_LIMIT, DEFAULT_PAGINATION_PAGE, MAX_CALLS_PER_BATCH,
+    MAX_PAGINATION_LIMIT, MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
 };
 use crate::dto::{
     ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterIdsRequest,
@@ -34,13 +35,13 @@ pub fn list_subnet_canister_ids(
 ) -> ListSubnetCanisterIdsResponse {
     let limit = req
         .limit
-        .unwrap_or(DEFAULT_LIMIT)
-        .clamp(MIN_LIMIT, MAX_LIMIT);
-    let page = req.page.unwrap_or(DEFAULT_PAGE);
+        .unwrap_or(DEFAULT_PAGINATION_LIMIT)
+        .clamp(MIN_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT);
+    let page = req.page.unwrap_or(DEFAULT_PAGINATION_PAGE);
 
     let total_items = repository::get_subnet_canister_ids_count();
-    let total_pages = total_items.div_ceil(limit).max(MIN_PAGE);
-    let page = page.clamp(MIN_PAGE, total_pages);
+    let total_pages = total_items.div_ceil(limit).max(MIN_PAGINATION_PAGE);
+    let page = page.clamp(MIN_PAGINATION_PAGE, total_pages);
 
     let canister_ids = repository::list_subnet_canister_ids(limit as usize, page as usize);
 
@@ -59,13 +60,13 @@ pub fn list_canister_changes(req: ListCanisterChangesRequest) -> ListCanisterCha
     let reverse = req.reverse.unwrap_or(false);
     let limit = req
         .limit
-        .unwrap_or(DEFAULT_LIMIT)
-        .clamp(MIN_LIMIT, MAX_LIMIT);
-    let page = req.page.unwrap_or(DEFAULT_PAGE);
+        .unwrap_or(DEFAULT_PAGINATION_LIMIT)
+        .clamp(MIN_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT);
+    let page = req.page.unwrap_or(DEFAULT_PAGINATION_PAGE);
 
     let total_items = repository::get_canister_changes_count(req.canister_id);
-    let total_pages = total_items.div_ceil(limit).max(MIN_PAGE);
-    let page = page.clamp(MIN_PAGE, total_pages);
+    let total_pages = total_items.div_ceil(limit).max(MIN_PAGINATION_PAGE);
+    let page = page.clamp(MIN_PAGINATION_PAGE, total_pages);
 
     let changes =
         repository::list_canister_changes(req.canister_id, reverse, limit as usize, page as usize);
@@ -104,7 +105,10 @@ pub async fn sync_canister_histories() -> ApiResult {
         ));
 
         loop {
-            let batch: Vec<CanisterId> = canister_id_range.by_ref().take(CALLS_PER_BATCH).collect();
+            let batch: Vec<CanisterId> = canister_id_range
+                .by_ref()
+                .take(MAX_CALLS_PER_BATCH)
+                .collect();
             if batch.is_empty() {
                 break;
             }
@@ -152,8 +156,8 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
         return Ok(());
     }
 
-    // The starting index is the total number of changes ever, less the number of
-    // changes returned in this call
+    // The starting index is the total number of changes ever, less than the
+    // number of changes returned in this call
     let start_index = canister_info
         .total_num_changes
         .saturating_sub(canister_info.recent_changes.len() as u64);
@@ -185,9 +189,6 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
 
     Ok(())
 }
-
-/// Number of changes to request from the management canister in each call
-const CHANGES_TO_REQUEST: Option<u64> = Some(200);
 
 async fn get_canister_info(canister_id: Principal) -> ApiResult<CanisterInfoResult> {
     Call::bounded_wait(Principal::management_canister(), "canister_info")

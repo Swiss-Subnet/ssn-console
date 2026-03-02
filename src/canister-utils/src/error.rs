@@ -10,7 +10,7 @@ pub type ApiResult<T = ()> = Result<T, ApiError>;
 
 #[derive(Debug, Clone, CandidType, Deserialize, PartialEq, Eq)]
 pub struct ApiError {
-    code: ApiErrorCode,
+    code: Option<ApiErrorCode>,
     message: String,
 }
 
@@ -36,7 +36,10 @@ impl ApiError {
     }
 
     fn error(code: ApiErrorCode, message: String) -> ApiError {
-        ApiError { code, message }
+        ApiError {
+            code: Some(code),
+            message,
+        }
     }
 }
 

@@ -34,7 +34,7 @@
       "frontend": {},
       "gzip": true,
       "shrink": true,
-      "optimize": "cycles"
+      "optimize": "size"
     },
     "canister-history": {
       "type": "custom",
@@ -51,7 +51,7 @@
       },
       "gzip": true,
       "shrink": true,
-      "optimize": "cycles"
+      "optimize": "size"
     },
     "internet_identity": {
       "type": "custom",
