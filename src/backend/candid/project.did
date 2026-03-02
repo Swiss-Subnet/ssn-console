@@ -1,4 +1,9 @@
-type ListMyProjectsResponse = vec Project;
+import "../../canister-utils/error.did";
+
+type ListMyProjectsResponse = variant {
+  Ok : vec Project;
+  Err : ApiError;
+};
 
 type Project = record {
   id : text;

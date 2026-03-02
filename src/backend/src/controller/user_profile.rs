@@ -3,73 +3,67 @@ use crate::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
         ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
     },
-    service::{access_control_service, user_profile_service},
+    service::user_profile_service,
 };
+use canister_utils::{assert_authenticated, assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[query]
-fn list_user_profiles() -> ListUserProfilesResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_controller(&calling_principal) {
-        trap(&err);
+fn list_user_profiles() -> ApiResultDto<ListUserProfilesResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    user_profile_service::list_user_profiles()
+    ApiResultDto::Ok(user_profile_service::list_user_profiles())
 }
 
 #[update]
-fn update_user_profile(req: UpdateUserProfileRequest) {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_controller(&calling_principal) {
-        trap(&err);
+fn update_user_profile(req: UpdateUserProfileRequest) -> ApiResultDto {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    if let Err(err) = user_profile_service::update_user_profile(req) {
-        trap(&err);
-    }
+    user_profile_service::update_user_profile(req).into()
 }
 
 #[query]
-fn get_my_user_profile() -> GetMyUserProfileResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
-        trap(&err);
+fn get_my_user_profile() -> ApiResultDto<GetMyUserProfileResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    user_profile_service::get_my_user_profile(calling_principal)
+    ApiResultDto::Ok(user_profile_service::get_my_user_profile(caller))
 }
 
 #[update]
-fn create_my_user_profile() -> CreateMyUserProfileResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
-        trap(&err);
+fn create_my_user_profile() -> ApiResultDto<CreateMyUserProfileResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    match user_profile_service::create_my_user_profile(calling_principal) {
-        Ok(profile) => profile,
-        Err(err) => trap(&err),
-    }
+    user_profile_service::create_my_user_profile(caller).into()
 }
 
 #[update]
-fn update_my_user_profile(req: UpdateMyUserProfileRequest) {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
-        trap(&err);
+fn update_my_user_profile(req: UpdateMyUserProfileRequest) -> ApiResultDto {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    if let Err(err) = user_profile_service::update_my_user_profile(calling_principal, req) {
-        trap(&err);
-    }
+    user_profile_service::update_my_user_profile(caller, req).into()
 }
 
 #[query]
-fn get_user_stats() -> GetUserStatsResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_controller(&calling_principal) {
-        trap(&err);
+fn get_user_stats() -> ApiResultDto<GetUserStatsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    user_profile_service::get_user_stats()
+    ApiResultDto::Ok(user_profile_service::get_user_stats())
 }

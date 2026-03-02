@@ -1,4 +1,9 @@
-type ListMyTeamsResponse = vec Team;
+import "../../canister-utils/error.did";
+
+type ListMyTeamsResponse = variant {
+  Ok : vec Team;
+  Err : ApiError;
+};
 
 type Team = record {
   id : text;

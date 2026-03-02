@@ -1,28 +1,28 @@
 use crate::{
     dto::{CreateTrustedPartnerRequest, CreateTrustedPartnerResponse, ListTrustedPartnersResponse},
-    service::{access_control_service, trusted_partner_service},
+    service::trusted_partner_service,
 };
+use canister_utils::{assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[query]
-fn list_trusted_partners() -> ListTrustedPartnersResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_controller(&calling_principal) {
-        trap(&err);
+fn list_trusted_partners() -> ApiResultDto<ListTrustedPartnersResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    trusted_partner_service::list_trusted_partners()
+    ApiResultDto::Ok(trusted_partner_service::list_trusted_partners())
 }
 
 #[update]
-fn create_trusted_partner(req: CreateTrustedPartnerRequest) -> CreateTrustedPartnerResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_controller(&calling_principal) {
-        trap(&err);
+fn create_trusted_partner(
+    req: CreateTrustedPartnerRequest,
+) -> ApiResultDto<CreateTrustedPartnerResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    match trusted_partner_service::create_trusted_partner(req) {
-        Ok(response) => response,
-        Err(err) => trap(&err),
-    }
+    trusted_partner_service::create_trusted_partner(req).into()
 }

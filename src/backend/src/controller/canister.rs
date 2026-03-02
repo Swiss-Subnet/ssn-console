@@ -1,18 +1,13 @@
-use crate::{
-    dto::ListMyCanistersResponse,
-    service::{access_control_service, canister_service},
-};
+use crate::{dto::ListMyCanistersResponse, service::canister_service};
+use canister_utils::{assert_authenticated, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[update]
-async fn list_my_canisters() -> ListMyCanistersResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
-        trap(&err);
+async fn list_my_canisters() -> ApiResultDto<ListMyCanistersResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    match canister_service::list_my_canisters(calling_principal).await {
-        Ok(response) => response,
-        Err(err) => trap(&err),
-    }
+    canister_service::list_my_canisters(caller).await.into()
 }

@@ -1,3 +1,5 @@
+use canister_utils::{ApiError, ApiResult};
+
 use crate::{
     data::trusted_partner_repository,
     dto::{CreateTrustedPartnerRequest, CreateTrustedPartnerResponse, ListTrustedPartnersResponse},
@@ -11,16 +13,16 @@ pub fn list_trusted_partners() -> ListTrustedPartnersResponse {
 
 pub fn create_trusted_partner(
     req: CreateTrustedPartnerRequest,
-) -> Result<CreateTrustedPartnerResponse, String> {
+) -> ApiResult<CreateTrustedPartnerResponse> {
     let req = map_create_trusted_partner_request(req)?;
 
     if let Some(id) =
         trusted_partner_repository::get_trusted_partner_id_by_principal(&req.principal)
     {
-        return Err(format!(
+        return Err(ApiError::client_error(format!(
             "Trusted partner for principal {} already exists with id {}",
             req.principal, id
-        ));
+        )));
     }
 
     let id = trusted_partner_repository::create_trusted_partner(req.clone());

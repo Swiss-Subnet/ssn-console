@@ -1,5 +1,6 @@
 import {
   mapListMyCanistersResponse,
+  mapOkResponse,
   type ListMyCanistersResponse,
 } from '@/lib/api-models';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
@@ -16,9 +17,10 @@ export class CanisterApi {
   }
 
   public async createCanister(): Promise<void> {
-    const [project] = await this.actor.list_my_projects();
+    const listRes = await this.actor.list_my_projects();
+    const [project] = mapOkResponse(listRes);
 
-    await this.actor.create_proposal({
+    const createRes = await this.actor.create_proposal({
       project_id: project.id,
       operation: [
         {
@@ -26,15 +28,17 @@ export class CanisterApi {
         },
       ],
     });
+    mapOkResponse(createRes);
   }
 
   public async addCanisterController(
     canisterId: string,
     controllerId: string,
   ): Promise<void> {
-    const [project] = await this.actor.list_my_projects();
+    const listRes = await this.actor.list_my_projects();
+    const [project] = mapOkResponse(listRes);
 
-    await this.actor.create_proposal({
+    const createRes = await this.actor.create_proposal({
       project_id: project.id,
       operation: [
         {
@@ -45,5 +49,6 @@ export class CanisterApi {
         },
       ],
     });
+    mapOkResponse(createRes);
   }
 }

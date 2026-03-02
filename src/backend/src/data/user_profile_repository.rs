@@ -9,7 +9,7 @@ use crate::data::memory::{
     init_user_profile_id_principal_index, UserProfileIdPrincipalIndexMemory,
 };
 use candid::Principal;
-use canister_utils::{Uuid, MAX_PRINCIPAL, MIN_PRINCIPAL};
+use canister_utils::{ApiError, ApiResult, Uuid, MAX_PRINCIPAL, MIN_PRINCIPAL};
 use std::cell::RefCell;
 
 pub fn list_user_profiles() -> Vec<(Uuid, UserProfile, Vec<Principal>)> {
@@ -40,9 +40,12 @@ pub fn get_user_profile_by_user_id(user_id: &Uuid) -> Option<UserProfile> {
     with_state(|s| s.profiles.get(user_id))
 }
 
-pub fn assert_user_id_by_principal(principal: &Principal) -> Result<Uuid, String> {
-    get_user_id_by_principal(principal)
-        .ok_or_else(|| format!("User profile for principal {} does not exist", principal))
+pub fn assert_user_id_by_principal(principal: &Principal) -> ApiResult<Uuid> {
+    get_user_id_by_principal(principal).ok_or_else(|| {
+        ApiError::client_error(format!(
+            "User profile for principal {principal} does not exist."
+        ))
+    })
 }
 
 pub fn get_user_id_by_principal(principal: &Principal) -> Option<Uuid> {
@@ -58,22 +61,25 @@ pub fn get_principals_by_user_id(user_id: Uuid) -> Vec<Principal> {
     })
 }
 
-pub fn create_user_profile(calling_principal: Principal, user_profile: UserProfile) -> Uuid {
+pub fn create_user_profile(caller: Principal, user_profile: UserProfile) -> Uuid {
     let id = Uuid::new();
 
     mutate_state(|s| {
         s.profiles.insert(id, user_profile);
-        s.principal_index.insert(calling_principal, id);
-        s.id_principal_index.insert((id, calling_principal));
+        s.principal_index.insert(caller, id);
+        s.id_principal_index.insert((id, caller));
     });
 
     id
 }
 
-pub fn update_user_profile(user_id: Uuid, user_profile: UserProfile) -> Result<(), String> {
+pub fn update_user_profile(user_id: Uuid, user_profile: UserProfile) -> ApiResult {
     mutate_state(|s| {
         if !s.profiles.contains_key(&user_id) {
-            return Err(format!("User profile with ID {} does not exist.", user_id));
+            return Err(ApiError::client_error(format!(
+                "User profile with ID {} does not exist.",
+                user_id
+            )));
         }
 
         s.profiles.insert(user_id, user_profile);

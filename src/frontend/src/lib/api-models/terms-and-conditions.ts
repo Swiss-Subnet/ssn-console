@@ -1,3 +1,4 @@
+import { mapOkResponse } from '@/lib/api-models/error';
 import type {
   TermsAndConditions as ApiTermsAndConditions,
   GetLatestTermsAndConditionsResponse as ApiGetLatestTermsAndConditionsResponse,
@@ -11,11 +12,13 @@ export type GetLatestTermsAndConditionsResponse = TermsAndConditions | null;
 export function mapGetLatestTermsAndConditionForUserResponse(
   res: ApiGetLatestTermsAndConditionsResponse,
 ): GetLatestTermsAndConditionsResponse {
-  if (res.length === 0) {
+  const okRes = mapOkResponse(res);
+
+  if (okRes.length === 0) {
     return null;
   }
 
-  return mapTermsAndConditionsResponse(res[0]);
+  return mapTermsAndConditionsResponse(okRes[0]);
 }
 
 export type TermsAndConditions = {

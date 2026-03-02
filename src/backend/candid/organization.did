@@ -1,4 +1,9 @@
-type ListMyOrganizationsResponse = vec Organization;
+import "../../canister-utils/error.did";
+
+type ListMyOrganizationsResponse = variant {
+  Ok : vec Organization;
+  Err : ApiError;
+};
 
 type Organization = record {
   id : text;

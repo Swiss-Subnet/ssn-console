@@ -3,47 +3,39 @@ use crate::{
         CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse,
         UpsertTermsAndConditionsDecisionRequest,
     },
-    service::{access_control_service, terms_and_conditions_service},
+    service::terms_and_conditions_service,
 };
+use canister_utils::{assert_authenticated, assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[query]
-fn get_latest_terms_and_conditions() -> GetLatestTermsAndConditionsResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
-        trap(&err);
+fn get_latest_terms_and_conditions() -> ApiResultDto<GetLatestTermsAndConditionsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    match terms_and_conditions_service::get_latest_terms_and_conditions(calling_principal) {
-        Ok(response) => response,
-        Err(err) => trap(&err),
-    }
+    terms_and_conditions_service::get_latest_terms_and_conditions(caller).into()
 }
 
 #[update]
-fn upsert_terms_and_conditions_decision(req: UpsertTermsAndConditionsDecisionRequest) {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
-        trap(&err);
+fn upsert_terms_and_conditions_decision(
+    req: UpsertTermsAndConditionsDecisionRequest,
+) -> ApiResultDto {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    if let Err(err) =
-        terms_and_conditions_service::upsert_terms_and_conditions_decision(calling_principal, req)
-    {
-        trap(&err);
-    }
+    terms_and_conditions_service::upsert_terms_and_conditions_decision(caller, req).into()
 }
 
 #[update]
-fn create_terms_and_conditions(req: CreateTermsAndConditionsRequest) {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_controller(&calling_principal) {
-        trap(&err);
+fn create_terms_and_conditions(req: CreateTermsAndConditionsRequest) -> ApiResultDto {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    if let Err(err) =
-        terms_and_conditions_service::create_terms_and_conditions(calling_principal, req)
-    {
-        trap(&err);
-    }
+    terms_and_conditions_service::create_terms_and_conditions(caller, req).into()
 }

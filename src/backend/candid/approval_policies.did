@@ -1,5 +1,10 @@
-type ListProjectApprovalPoliciesResponse = record {
-  approval_policies : vec ApprovalPolicy;
+import "../../canister-utils/error.did";
+
+type ListProjectApprovalPoliciesResponse = variant {
+  Ok : record {
+    approval_policies : vec ApprovalPolicy;
+  };
+  Err : ApiError;
 };
 
 type ListProjectApprovalPoliciesRequest = record {

@@ -5,6 +5,7 @@ use crate::data::{
     },
     TrustedPartner,
 };
+use candid::Principal;
 use canister_utils::Uuid;
 use std::cell::RefCell;
 
@@ -24,11 +25,11 @@ pub fn create_trusted_partner(trusted_partner: TrustedPartner) -> Uuid {
     id
 }
 
-pub fn get_trusted_partner_id_by_principal(principal: &candid::Principal) -> Option<Uuid> {
+pub fn get_trusted_partner_id_by_principal(principal: &Principal) -> Option<Uuid> {
     with_state(|s| s.trusted_partner_principal_index.get(principal))
 }
 
-pub fn is_trusted_partner(principal: &candid::Principal) -> bool {
+pub fn is_trusted_partner(principal: &Principal) -> bool {
     get_trusted_partner_id_by_principal(principal).is_some()
 }
 

@@ -4,22 +4,17 @@ use crate::dto::{
 use candid::{Nat, Principal};
 use ic_cdk::management_canister;
 
-pub async fn create_canister(
-    calling_principal: Principal,
-    args: CreateCanisterArgs,
-) -> CreateCanisterResult {
+pub async fn create_canister(caller: Principal, args: CreateCanisterArgs) -> CreateCanisterResult {
     let create_canister_settings = args
         .creation_args
         .and_then(|creation_args| creation_args.settings)
         .map_or_else(
             || management_canister::CanisterSettings {
-                controllers: Some(vec![calling_principal]),
+                controllers: Some(vec![caller]),
                 ..Default::default()
             },
             |mut settings| {
-                settings.controllers = settings
-                    .controllers
-                    .or_else(|| Some(vec![calling_principal]));
+                settings.controllers = settings.controllers.or_else(|| Some(vec![caller]));
 
                 settings
             },

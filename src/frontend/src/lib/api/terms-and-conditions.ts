@@ -1,6 +1,7 @@
 import {
   mapCreateTermsAndConditionsRequest,
   mapGetLatestTermsAndConditionForUserResponse,
+  mapOkResponse,
   mapUpsertTermsAndConditionsDecisionRequest,
   type CreateTermsAndConditionsRequest,
   type GetLatestTermsAndConditionsResponse,
@@ -23,7 +24,8 @@ export class TermsAndConditionsApi {
   ): Promise<void> {
     const apiReq = mapUpsertTermsAndConditionsDecisionRequest(req);
 
-    await this.actor.upsert_terms_and_conditions_decision(apiReq);
+    const res = await this.actor.upsert_terms_and_conditions_decision(apiReq);
+    mapOkResponse(res);
   }
 
   public async createTermsAndConditions(
@@ -31,6 +33,7 @@ export class TermsAndConditionsApi {
   ): Promise<void> {
     const apiReq = mapCreateTermsAndConditionsRequest(req);
 
-    await this.actor.create_terms_and_conditions(apiReq);
+    const res = await this.actor.create_terms_and_conditions(apiReq);
+    mapOkResponse(res);
   }
 }

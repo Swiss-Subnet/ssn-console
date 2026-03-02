@@ -5,7 +5,7 @@ use crate::{
         TermsAndConditionsDecisionType, UpsertTermsAndConditionsDecisionRequest,
     },
 };
-use canister_utils::Uuid;
+use canister_utils::{ApiResult, Uuid};
 
 pub fn map_get_latest_terms_and_conditions_response(
     res: Option<(Uuid, data::TermsAndConditions, bool)>,
@@ -23,7 +23,7 @@ pub fn map_create_terms_and_conditions_decision_request(
     req: UpsertTermsAndConditionsDecisionRequest,
     user_id: Uuid,
     created_at: u64,
-) -> Result<data::TermsAndConditionsDecision, String> {
+) -> ApiResult<data::TermsAndConditionsDecision> {
     Ok(data::TermsAndConditionsDecision {
         terms_and_conditions_id: Uuid::try_from(req.terms_and_conditions_id.as_str())?,
         user_id,
@@ -39,7 +39,7 @@ pub fn map_create_terms_and_conditions_request(
     req: CreateTermsAndConditionsRequest,
     user_id: Uuid,
     created_at: u64,
-) -> Result<data::TermsAndConditions, String> {
+) -> ApiResult<data::TermsAndConditions> {
     Ok(data::TermsAndConditions {
         comment: req.comment,
         created_by: user_id,

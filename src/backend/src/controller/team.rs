@@ -1,18 +1,13 @@
-use crate::{
-    dto::ListMyTeamsResponse,
-    service::{access_control_service, team_service},
-};
+use crate::{dto::ListMyTeamsResponse, service::team_service};
+use canister_utils::{assert_authenticated, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[query]
-fn list_my_teams() -> ListMyTeamsResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
-        trap(&err);
+fn list_my_teams() -> ApiResultDto<ListMyTeamsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    match team_service::list_my_teams(calling_principal) {
-        Ok(response) => response,
-        Err(err) => trap(&err),
-    }
+    team_service::list_my_teams(caller).into()
 }

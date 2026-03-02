@@ -1,6 +1,10 @@
+import { mapOkResponse } from '@/lib/api-models/error';
 import { isNotNil } from '@/lib/nil';
 import { fromCandidOpt } from '@/lib/utils';
-import type { Canister as ApiCanister } from '@ssn/backend-api';
+import type {
+  Canister as ApiCanister,
+  ListMyCanistersResponse as ApiListMyCanistersResponse,
+} from '@ssn/backend-api';
 
 export type ListMyCanistersResponse = Canister[];
 
@@ -55,9 +59,9 @@ export enum CanisterStatus {
 }
 
 export function mapListMyCanistersResponse(
-  res: ApiCanister[],
+  res: ApiListMyCanistersResponse,
 ): ListMyCanistersResponse {
-  return res.map(mapCanisterResponse);
+  return mapOkResponse(res).map(mapCanisterResponse);
 }
 
 export function mapCanisterResponse(res: ApiCanister): Canister {
