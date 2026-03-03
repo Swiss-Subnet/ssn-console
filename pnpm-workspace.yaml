@@ -5,6 +5,7 @@ packages:
   - src/canister-history-tests
   - src/frontend
   - src/management-canister
+  - src/sync-subnet-canister-ranges
 
 onlyBuiltDependencies:
   - '@dfinity/pic'
