@@ -8,7 +8,7 @@ use ic_cdk::{api::msg_caller, *};
 async fn create_canister(args: CreateCanisterArgs) -> CreateCanisterResult {
     let caller = msg_caller();
     if let Err(err) = access_control_service::assert_trusted_partner(&caller) {
-        trap(err.message);
+        trap(err.message());
     }
 
     cycles_ledger_service::create_canister(caller, args).await

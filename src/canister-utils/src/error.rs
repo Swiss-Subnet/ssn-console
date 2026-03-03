@@ -10,11 +10,19 @@ pub type ApiResult<T = ()> = Result<T, ApiError>;
 
 #[derive(Debug, Clone, CandidType, Deserialize, PartialEq, Eq)]
 pub struct ApiError {
-    pub code: Option<ApiErrorCode>,
-    pub message: String,
+    code: Option<ApiErrorCode>,
+    message: String,
 }
 
 impl ApiError {
+    pub fn code(&self) -> Option<&ApiErrorCode> {
+        self.code.as_ref()
+    }
+
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+
     pub fn unauthenticated(message: String) -> ApiError {
         Self::error(ApiErrorCode::Unauthenticated {}, message)
     }
