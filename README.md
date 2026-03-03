@@ -90,7 +90,55 @@ To top up cycles for a canister, use the following command:
 dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
 ```
 
-### Canister history
+### Canister history canister
+
+List the current subnet canister ranges in the canister:
+
+```shell
+dfx canister call --network test canister-history list_subnet_canister_ranges '(record {})'
+```
+
+Get the current subnet canister ranges from the subnet:
+
+```shell
+pnpm -F sync-subnet-canister-ranges start
+```
+
+Set the subnet canister ranges in the canister:
+
+```shell
+dfx canister call --network test canister-history update_subnet_canister_ranges '(
+  record {
+    canister_ranges = vec {
+      record {
+        principal "${RANGE_START_PRINCIPAL}";
+        principal "${RANGE_END_PRINCIPAL}";
+      };
+    };
+  },
+)'
+```
+
+List the tracked canisters:
+
+```shell
+dfx canister call --network test canister-history list_subnet_canister_ids '(record { page = null; limit = null })'
+```
+
+List changes for a specific canister:
+
+```shell
+dfx canister call --network test canister-history list_canister_changes '(
+  record {
+    reverse = null;
+    page = null;
+    canister_id = principal "${TARGET_CANISTER_PRINCIPAL}";
+    limit = opt (50 : nat64);
+  },
+)'
+```
+
+### Canister info
 
 Encode the call args for the management canister:
 
