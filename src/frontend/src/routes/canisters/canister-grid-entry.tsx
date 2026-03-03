@@ -15,9 +15,8 @@ import {
   ItemSeparator,
 } from '@/components/ui/item';
 import { AddControllerForm } from '@/routes/canisters/add-controller-form';
-import { BACKEND_CANISTER_ID } from '@/env';
 import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-canister-controller-cta';
-import { isNotNil } from '@/lib/nil';
+import { isNil, isNotNil } from '@/lib/nil';
 import type { Canister } from '@/lib/api-models';
 
 export type CanisterGridEntryProps = {
@@ -25,12 +24,7 @@ export type CanisterGridEntryProps = {
 };
 
 export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
-  const isMissingController = useMemo(
-    () =>
-      isNotNil(canister.info) &&
-      canister.info.settings.controllers.includes(BACKEND_CANISTER_ID) !== true,
-    [canister],
-  );
+  const isMissingController = useMemo(() => isNil(canister.info), [canister]);
 
   const hasControllers = useMemo(
     () =>
