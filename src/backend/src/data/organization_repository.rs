@@ -23,15 +23,6 @@ pub fn add_default_org(user_id: Uuid) -> Uuid {
     org_id
 }
 
-pub fn list_user_org_ids(user_id: Uuid) -> Vec<Uuid> {
-    with_state(|s| {
-        s.user_organization_index
-            .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))
-            .map(|(_, org_id)| org_id)
-            .collect()
-    })
-}
-
 pub fn list_user_orgs(user_id: Uuid) -> Vec<(Uuid, Organization)> {
     with_state(|s| {
         s.user_organization_index

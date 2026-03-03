@@ -26,10 +26,6 @@ pub fn list_user_profiles() -> Vec<(Uuid, UserProfile, Vec<Principal>)> {
     })
 }
 
-pub fn list_user_ids() -> Vec<Uuid> {
-    with_state(|s| s.profiles.iter().map(|e| e.into_pair().0).collect())
-}
-
 pub fn get_user_profile_by_principal(principal: &Principal) -> Option<(Uuid, UserProfile)> {
     get_user_id_by_principal(principal).and_then(|user_id| {
         get_user_profile_by_user_id(&user_id).map(|user_profile| (user_id, user_profile))

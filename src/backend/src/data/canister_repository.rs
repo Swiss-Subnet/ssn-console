@@ -20,22 +20,6 @@ pub fn list_canisters_by_project(project_id: Uuid) -> Vec<(Uuid, Canister)> {
     })
 }
 
-pub fn list_canister_ids_by_project(project_id: Uuid) -> Vec<Uuid> {
-    with_state(|s| {
-        s.project_canister_index
-            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
-            .map(|(_, canister_id)| canister_id)
-            .collect()
-    })
-}
-
-pub fn move_canister_from_user_to_project(user_id: Uuid, project_id: Uuid, canister_id: Uuid) {
-    mutate_state(|s| {
-        s.project_canister_index.remove(&(user_id, canister_id));
-        s.project_canister_index.insert((project_id, canister_id));
-    });
-}
-
 pub fn create_canister(project_id: Uuid, canister: Canister) -> Uuid {
     let canister_id = Uuid::new();
 
