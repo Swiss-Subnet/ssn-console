@@ -11,12 +11,16 @@ import {
 } from '@icp-sdk/core/agent';
 import { Principal } from '@icp-sdk/core/principal';
 
+const MAINNET_GATEWAY = 'https://icp-api.io';
+const SWISS_SUBNET_ID =
+  '3zsyy-cnoqf-tvlun-ymf55-tkpca-ox7uw-kfxoh-7khwq-2gz43-wafem-lqe';
+
 async function getSubnetCanisterRanges(
   subnetIdStr: string,
 ): Promise<[Principal, Principal][]> {
   const subnetId = Principal.from(subnetIdStr);
   const agent = HttpAgent.createSync({
-    host: 'https://icp-api.io',
+    host: MAINNET_GATEWAY,
     shouldFetchRootKey: true,
   });
 
@@ -40,19 +44,19 @@ async function getSubnetCanisterRanges(
     throw new Error('Canister ranges not found.');
   }
 
-  const canisterRangePaths = getCanisterRangeShardPaths(lookupResult.value);
-  if (canisterRangePaths.length === 0) {
+  const shardPaths = getCanisterRangeShardPaths(lookupResult.value);
+  if (shardPaths.length === 0) {
     throw new Error('No shards returned');
   }
 
-  return canisterRangePaths.map(path => {
+  return shardPaths.reduce<[Principal, Principal][]>((accum, path) => {
     const shardLookupResult = lookup_path([path], lookupResult.value);
     if (shardLookupResult.status !== LookupPathStatus.Found) {
       throw new Error('Canister range shard not found.');
     }
 
-    return decodeCanisterRanges(shardLookupResult.value)[0];
-  });
+    return accum.concat(decodeCanisterRanges(shardLookupResult.value));
+  }, []);
 }
 
 function getCanisterRangeShardPaths(
@@ -96,9 +100,6 @@ function list_paths(
     }
   }
 }
-
-const SWISS_SUBNET_ID =
-  '3zsyy-cnoqf-tvlun-ymf55-tkpca-ox7uw-kfxoh-7khwq-2gz43-wafem-lqe';
 
 getSubnetCanisterRanges(SWISS_SUBNET_ID)
   .then(ranges => {
