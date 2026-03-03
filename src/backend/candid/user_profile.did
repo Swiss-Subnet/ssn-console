@@ -1,16 +1,37 @@
-type ListUserProfilesResponse = vec UserProfile;
+import "../../canister-utils/error.did";
 
-type GetMyUserProfileResponse = opt UserProfile;
+type ListUserProfilesResponse = variant {
+  Ok : vec UserProfile;
+  Err : ApiError;
+};
 
-type CreateMyUserProfileResponse = UserProfile;
+type GetMyUserProfileResponse = variant {
+  Ok : opt UserProfile;
+  Err : ApiError;
+};
+
+type CreateMyUserProfileResponse = variant {
+  Ok : UserProfile;
+  Err : ApiError;
+};
 
 type UpdateMyUserProfileRequest = record {
   email : opt text;
 };
 
+type UpdateMyUserProfileResponse = variant {
+  Ok : reserved;
+  Err : ApiError;
+};
+
 type UpdateUserProfileRequest = record {
   user_id : text;
   status : opt UserStatus;
+};
+
+type UpdateUserProfileResponse = variant {
+  Ok : reserved;
+  Err : ApiError;
 };
 
 type UserProfile = record {
@@ -25,18 +46,21 @@ type UserStatus = variant {
   Inactive;
 };
 
-type GetUserStatsResponse = record {
-  total : nat64;
-  active : nat64;
-  inactive : nat64;
+type GetUserStatsResponse = variant {
+  Ok : record {
+    total : nat64;
+    active : nat64;
+    inactive : nat64;
+  };
+  Err : ApiError;
 };
 
 service : {
   list_user_profiles : () -> (ListUserProfilesResponse) query;
-  update_user_profile : (UpdateUserProfileRequest) -> ();
+  update_user_profile : (UpdateUserProfileRequest) -> (UpdateUserProfileResponse);
   get_user_stats : () -> (GetUserStatsResponse) query;
 
   get_my_user_profile : () -> (GetMyUserProfileResponse) query;
   create_my_user_profile : () -> (CreateMyUserProfileResponse);
-  update_my_user_profile : (UpdateMyUserProfileRequest) -> ();
+  update_my_user_profile : (UpdateMyUserProfileRequest) -> (UpdateMyUserProfileResponse);
 };

@@ -6,7 +6,7 @@ use crate::{
     mapping::map_canister_response,
 };
 use candid::Principal;
-use canister_utils::Uuid;
+use canister_utils::{ApiError, ApiResult, Uuid};
 use futures::future::join_all;
 use ic_cdk::{
     api::canister_self,
@@ -19,20 +19,24 @@ use ic_cdk::{
 /// is currently 500.
 const CALLS_PER_BATCH: usize = 490;
 
-pub async fn list_my_canisters(
-    calling_principal: Principal,
-) -> Result<ListMyCanistersResponse, String> {
-    let user_id = user_profile_repository::assert_user_id_by_principal(&calling_principal)?;
+pub async fn list_my_canisters(caller: Principal) -> ApiResult<ListMyCanistersResponse> {
+    let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
 
     let team_id = team_repository::list_user_team_ids(user_id)
         .first()
         .cloned()
-        .ok_or("User does not have a default team.")?;
+        .ok_or_else(|| {
+            ApiError::internal_error("User does not have a default team.".to_string())
+        })?;
 
     let project_id = project_repository::list_team_project_ids(team_id)
         .first()
         .cloned()
-        .ok_or("User's default team does not have a default project.")?;
+        .ok_or_else(|| {
+            ApiError::internal_error(
+                "User's default team does not have a default project.".to_string(),
+            )
+        })?;
 
     let project_canisters = canister_repository::list_canisters_by_project(project_id);
     let mut canisters = vec![];

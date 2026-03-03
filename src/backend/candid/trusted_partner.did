@@ -1,11 +1,19 @@
-type ListTrustedPartnersResponse = vec TrustedPartner;
+import "../../canister-utils/error.did";
+
+type ListTrustedPartnersResponse = variant {
+  Ok : vec TrustedPartner;
+  Err : ApiError;
+};
 
 type CreateTrustedPartnerRequest = record {
   principal_id : text;
   name : text;
 };
 
-type CreateTrustedPartnerResponse = TrustedPartner;
+type CreateTrustedPartnerResponse = variant {
+  Ok : TrustedPartner;
+  Err : ApiError;
+};
 
 type TrustedPartner = record {
   id : text;

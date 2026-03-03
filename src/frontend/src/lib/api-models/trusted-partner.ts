@@ -1,3 +1,4 @@
+import { mapOkResponse } from '@/lib/api-models/error';
 import type {
   ListTrustedPartnersResponse as ApiListTrustedPartnersResponse,
   CreateTrustedPartnerRequest as ApiCreateTrustedPartnerRequest,
@@ -23,7 +24,7 @@ export type TrustedPartner = {
 export function mapListTrustedPartnersResponse(
   res: ApiListTrustedPartnersResponse,
 ): ListTrustedPartnersResponse {
-  return res.map(mapTrustedPartnerResponse);
+  return mapOkResponse(res).map(mapTrustedPartnerResponse);
 }
 
 export function mapCreateTrustedPartnerRequest(
@@ -38,7 +39,7 @@ export function mapCreateTrustedPartnerRequest(
 export function mapCreateTrustedPartnerResponse(
   res: ApiCreateTrustedPartnerResponse,
 ): CreateTrustedPartnerResponse {
-  return mapTrustedPartnerResponse(res);
+  return mapTrustedPartnerResponse(mapOkResponse(res));
 }
 
 export function mapTrustedPartnerResponse(

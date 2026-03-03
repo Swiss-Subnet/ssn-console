@@ -1,4 +1,9 @@
-type GetLatestTermsAndConditionsResponse = opt TermsAndConditions;
+import "../../canister-utils/error.did";
+
+type GetLatestTermsAndConditionsResponse = variant {
+  Ok : opt TermsAndConditions;
+  Err : ApiError;
+};
 
 type TermsAndConditions = record {
   id : text;
@@ -13,9 +18,19 @@ type CreateTermsAndConditionsRequest = record {
   comment : text;
 };
 
+type CreateTermsAndConditionsResponse = variant {
+  Ok : reserved;
+  Err : ApiError;
+};
+
 type UpsertTermsAndConditionsDecisionRequest = record {
   terms_and_conditions_id : text;
   decision_type : TermsAndConditionsDecisionType;
+};
+
+type UpsertTermsAndConditionsDecisionResponse = variant {
+  Ok : reserved;
+  Err : ApiError;
 };
 
 type TermsAndConditionsDecisionType = variant {
@@ -25,6 +40,6 @@ type TermsAndConditionsDecisionType = variant {
 
 service : {
   get_latest_terms_and_conditions : () -> (GetLatestTermsAndConditionsResponse) query;
-  upsert_terms_and_conditions_decision : (UpsertTermsAndConditionsDecisionRequest) -> ();
-  create_terms_and_conditions : (CreateTermsAndConditionsRequest) -> ();
+  upsert_terms_and_conditions_decision : (UpsertTermsAndConditionsDecisionRequest) -> (UpsertTermsAndConditionsDecisionResponse);
+  create_terms_and_conditions : (CreateTermsAndConditionsRequest) -> (CreateTermsAndConditionsResponse);
 };

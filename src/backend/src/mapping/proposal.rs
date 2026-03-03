@@ -2,11 +2,11 @@ use crate::{
     data,
     dto::{CreateProposalRequest, CreateProposalResponse, ProposalOperation, ProposalStatus},
 };
-use canister_utils::Uuid;
+use canister_utils::{ApiError, ApiResult, Uuid};
 
 pub fn map_create_proposal_request(
     req: CreateProposalRequest,
-) -> Result<(Uuid, data::Proposal), String> {
+) -> ApiResult<(Uuid, data::Proposal)> {
     let project_uuid = Uuid::try_from(req.project_id.as_str())?;
 
     Ok((
@@ -25,7 +25,11 @@ pub fn map_create_proposal_request(
                     canister_id,
                     controller_id,
                 },
-                None => return Err("Failed to decode proposal request operation".to_string()),
+                None => {
+                    return Err(ApiError::client_error(
+                        "Failed to decode proposal request operation".to_string(),
+                    ))
+                }
             },
         },
     ))

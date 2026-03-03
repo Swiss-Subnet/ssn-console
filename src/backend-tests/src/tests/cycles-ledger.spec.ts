@@ -25,7 +25,7 @@ describe('Cycles Ledger', () => {
           creation_args: [],
         }),
       ).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
+        /Anonymous principals are not allowed to perform this action\./,
       );
     });
 
@@ -40,7 +40,7 @@ describe('Cycles Ledger', () => {
           from_subaccount: [],
           creation_args: [],
         }),
-      ).rejects.toThrowError(/Only trusted partners can perform this action/);
+      ).rejects.toThrowError(/Only trusted partners can perform this action\./);
     });
 
     it('should return an error for a controller', async () => {
@@ -53,7 +53,7 @@ describe('Cycles Ledger', () => {
           from_subaccount: [],
           creation_args: [],
         }),
-      ).rejects.toThrowError(/Only trusted partners can perform this action/);
+      ).rejects.toThrowError(/Only trusted partners can perform this action\./);
     });
 
     it('should create a canister for a trusted partner', async () => {

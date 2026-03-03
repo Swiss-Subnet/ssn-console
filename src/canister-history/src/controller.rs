@@ -52,7 +52,7 @@ fn update_subnet_canister_ranges(
     request: UpdateSubnetCanisterRangesRequest,
 ) -> ApiResultDto<UpdateSubnetCanisterRangesResponse> {
     let caller = msg_caller();
-    if let Err(err) = assert_controller(caller) {
+    if let Err(err) = assert_controller(&caller) {
         return ApiResultDto::Err(err);
     }
 
@@ -78,22 +78,19 @@ fn update_subnet_canister_ranges(
 fn list_subnet_canister_ranges(
     _req: ListSubnetCanisterRangesRequest,
 ) -> ApiResultDto<ListSubnetCanisterRangesResponse> {
-    let res = service::list_subnet_canister_ranges();
-    ApiResultDto::Ok(res)
+    ApiResultDto::Ok(service::list_subnet_canister_ranges())
 }
 
 #[query]
 fn list_subnet_canister_ids(
     req: ListSubnetCanisterIdsRequest,
 ) -> ApiResultDto<ListSubnetCanisterIdsResponse> {
-    let res = service::list_subnet_canister_ids(req);
-    ApiResultDto::Ok(res)
+    ApiResultDto::Ok(service::list_subnet_canister_ids(req))
 }
 
 #[query]
 fn list_canister_changes(
     req: ListCanisterChangesRequest,
 ) -> ApiResultDto<ListCanisterChangesResponse> {
-    let res = service::list_canister_changes(req);
-    ApiResultDto::Ok(res)
+    ApiResultDto::Ok(service::list_canister_changes(req))
 }

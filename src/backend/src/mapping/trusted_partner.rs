@@ -3,7 +3,7 @@ use crate::{
     dto::{CreateTrustedPartnerRequest, ListTrustedPartnersResponse, TrustedPartner},
 };
 use candid::Principal;
-use canister_utils::Uuid;
+use canister_utils::{ApiError, ApiResult, Uuid};
 
 pub fn map_list_trusted_partners_response(
     trusted_partners: Vec<(Uuid, data::TrustedPartner)>,
@@ -27,10 +27,14 @@ pub fn map_trusted_partner_response(
 
 pub fn map_create_trusted_partner_request(
     req: CreateTrustedPartnerRequest,
-) -> Result<data::TrustedPartner, String> {
+) -> ApiResult<data::TrustedPartner> {
     Ok(data::TrustedPartner {
         name: req.name,
-        principal: Principal::from_text(&req.principal_id)
-            .map_err(|err| format!("Failed to convert principal {}: {}", req.principal_id, err))?,
+        principal: Principal::from_text(&req.principal_id).map_err(|err| {
+            ApiError::client_error(format!(
+                "Failed to convert principal {}: {}",
+                req.principal_id, err
+            ))
+        })?,
     })
 }

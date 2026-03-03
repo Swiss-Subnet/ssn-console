@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { anonymousIdentity, controllerIdentity, TestDriver } from '../support';
+import {
+  anonymousIdentity,
+  controllerIdentity,
+  extractOkResponse,
+  noProfileError,
+  noTermsAndConditionsError,
+  TestDriver,
+  unauthenticatedError,
+  unauthorizedError,
+} from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 
 describe('Terms and Conditions', () => {
@@ -21,24 +30,16 @@ describe('Terms and Conditions', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      await expect(
-        driver.actor.get_latest_terms_and_conditions(),
-      ).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+      const res = await driver.actor.get_latest_terms_and_conditions();
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should return an error when user does not have a profile', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      await expect(
-        driver.actor.get_latest_terms_and_conditions(),
-      ).rejects.toThrowError(
-        new RegExp(
-          `User profile for principal ${aliceIdentity.getPrincipal()} does not exist`,
-        ),
-      );
+      const res = await driver.actor.get_latest_terms_and_conditions();
+      expect(res).toEqual(noProfileError(aliceIdentity.getPrincipal()));
     });
 
     it('should not return anything when there are no terms and conditions', async () => {
@@ -46,7 +47,8 @@ describe('Terms and Conditions', () => {
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.create_my_user_profile();
 
-      const [result] = await driver.actor.get_latest_terms_and_conditions();
+      const resultRes = await driver.actor.get_latest_terms_and_conditions();
+      const [result] = extractOkResponse(resultRes);
 
       expect(result).toBeNullable();
     });
@@ -67,7 +69,8 @@ describe('Terms and Conditions', () => {
       });
 
       driver.actor.setIdentity(aliceIdentity);
-      const [result] = await driver.actor.get_latest_terms_and_conditions();
+      const resultRes = await driver.actor.get_latest_terms_and_conditions();
+      const [result] = extractOkResponse(resultRes);
       if (!result) {
         throw new Error('Expected to get latest terms and conditions');
       }
@@ -96,8 +99,9 @@ describe('Terms and Conditions', () => {
       });
 
       driver.actor.setIdentity(aliceIdentity);
-      const [updatedResult] =
+      const updatedResultRes =
         await driver.actor.get_latest_terms_and_conditions();
+      const [updatedResult] = extractOkResponse(updatedResultRes);
       if (!updatedResult) {
         throw new Error('Expected to get latest terms and conditions');
       }
@@ -119,61 +123,52 @@ describe('Terms and Conditions', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      await expect(
-        driver.actor.upsert_terms_and_conditions_decision({
-          terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
-          decision_type: { Accept: null },
-        }),
-      ).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+      const res = await driver.actor.upsert_terms_and_conditions_decision({
+        terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
+        decision_type: { Accept: null },
+      });
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should return an error when the user does not have a profile', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      await expect(
-        driver.actor.upsert_terms_and_conditions_decision({
-          terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
-          decision_type: { Accept: null },
-        }),
-      ).rejects.toThrowError(
-        new RegExp(
-          `User profile for principal ${aliceIdentity.getPrincipal()} does not exist`,
-        ),
-      );
+      const res = await driver.actor.upsert_terms_and_conditions_decision({
+        terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
+        decision_type: { Accept: null },
+      });
+      expect(res).toEqual(noProfileError(aliceIdentity.getPrincipal()));
     });
 
     it('should return an error if the terms and conditions do not exist', async () => {
+      const id = '73157c8d-20ae-400f-815a-64a03246ab67';
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.create_my_user_profile();
 
-      await expect(
-        driver.actor.upsert_terms_and_conditions_decision({
-          terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
-          decision_type: { Accept: null },
-        }),
-      ).rejects.toThrowError(
-        new RegExp(
-          `Terms and conditions with id 73157c8d-20ae-400f-815a-64a03246ab67 does not exist`,
-        ),
-      );
+      const res = await driver.actor.upsert_terms_and_conditions_decision({
+        terms_and_conditions_id: id,
+        decision_type: { Accept: null },
+      });
+      expect(res).toEqual(noTermsAndConditionsError(id));
     });
 
     it('should return an error if the caller is a controller', async () => {
+      const id = '73157c8d-20ae-400f-815a-64a03246ab67';
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
 
-      await expect(
-        driver.actor.upsert_terms_and_conditions_decision({
-          terms_and_conditions_id: '73157c8d-20ae-400f-815a-64a03246ab67',
-          decision_type: { Accept: null },
-        }),
-      ).rejects.toThrowError(
-        new RegExp(`Controllers do not need to accept terms and conditions`),
-      );
+      const res = await driver.actor.upsert_terms_and_conditions_decision({
+        terms_and_conditions_id: id,
+        decision_type: { Accept: null },
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ Unauthorized: {} }],
+          message: `Controllers do not need to accept terms and conditions.`,
+        },
+      });
     });
 
     it('should allow accepting terms and conditions', async () => {
@@ -189,8 +184,9 @@ describe('Terms and Conditions', () => {
       });
 
       driver.actor.setIdentity(aliceIdentity);
-      const [termsAndConditions] =
+      const termsAndConditionsRes =
         await driver.actor.get_latest_terms_and_conditions();
+      const [termsAndConditions] = extractOkResponse(termsAndConditionsRes);
       if (!termsAndConditions) {
         throw new Error('Terms and conditions not found');
       }
@@ -200,8 +196,11 @@ describe('Terms and Conditions', () => {
         decision_type: { Accept: null },
       });
 
-      const [termsAndConditionsAfterAccepting] =
+      const termsAndConditionsAfterAcceptingRes =
         await driver.actor.get_latest_terms_and_conditions();
+      const [termsAndConditionsAfterAccepting] = extractOkResponse(
+        termsAndConditionsAfterAcceptingRes,
+      );
       expect(termsAndConditionsAfterAccepting).toEqual({
         id: expect.any(String),
         content: termsAndConditionsContent,
@@ -224,8 +223,9 @@ describe('Terms and Conditions', () => {
       });
 
       driver.actor.setIdentity(aliceIdentity);
-      const [termsAndConditions] =
+      const termsAndConditionsRes =
         await driver.actor.get_latest_terms_and_conditions();
+      const [termsAndConditions] = extractOkResponse(termsAndConditionsRes);
       if (!termsAndConditions) {
         throw new Error('Terms and conditions not found');
       }
@@ -235,8 +235,11 @@ describe('Terms and Conditions', () => {
         decision_type: { Reject: null },
       });
 
-      const [termsAndConditionsAfterRejecting] =
+      const termsAndConditionsAfterRejectingRes =
         await driver.actor.get_latest_terms_and_conditions();
+      const [termsAndConditionsAfterRejecting] = extractOkResponse(
+        termsAndConditionsAfterRejectingRes,
+      );
       expect(termsAndConditionsAfterRejecting).toEqual({
         id: expect.any(String),
         content: termsAndConditionsContent,
@@ -251,26 +254,22 @@ describe('Terms and Conditions', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      await expect(
-        driver.actor.create_terms_and_conditions({
-          content: termsAndConditionsContent,
-          comment: termsAndConditionsComment,
-        }),
-      ).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+      const res = await driver.actor.create_terms_and_conditions({
+        content: termsAndConditionsContent,
+        comment: termsAndConditionsComment,
+      });
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should return an error for a non-controller user', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      await expect(
-        driver.actor.create_terms_and_conditions({
-          content: termsAndConditionsContent,
-          comment: termsAndConditionsComment,
-        }),
-      ).rejects.toThrowError(/Only controllers can perform this action/);
+      const res = await driver.actor.create_terms_and_conditions({
+        content: termsAndConditionsContent,
+        comment: termsAndConditionsComment,
+      });
+      expect(res).toEqual(unauthorizedError);
     });
 
     it('should create terms and conditions', async () => {
@@ -289,7 +288,8 @@ describe('Terms and Conditions', () => {
       });
 
       driver.actor.setIdentity(aliceIdentity);
-      const [result] = await driver.actor.get_latest_terms_and_conditions();
+      const resultRes = await driver.actor.get_latest_terms_and_conditions();
+      const [result] = extractOkResponse(resultRes);
       if (!result) {
         throw new Error('Expected to get latest terms and conditions');
       }

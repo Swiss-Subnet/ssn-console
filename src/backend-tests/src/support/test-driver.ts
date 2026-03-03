@@ -1,4 +1,4 @@
-import { PocketIc, type Actor, type CanisterFixture } from '@dfinity/pic';
+import { type Actor, type CanisterFixture, PocketIc } from '@dfinity/pic';
 import { inject } from 'vitest';
 import {
   type _SERVICE as BackendService,
@@ -9,6 +9,7 @@ import { resolve } from 'node:path';
 import { Principal } from '@icp-sdk/core/principal';
 import { controllerIdentity } from './identity';
 import { ProposalDriver } from './proposal-driver';
+import { extractOkResponse } from './error';
 
 export const BACKEND_WASM_PATH = resolve(
   __dirname,
@@ -64,7 +65,8 @@ export class TestDriver {
   }
 
   public async getDefaultProject(): Promise<Project> {
-    const [project] = await this.actor.list_my_projects();
+    const projectRes = await this.actor.list_my_projects();
+    const [project] = extractOkResponse(projectRes);
 
     return project;
   }

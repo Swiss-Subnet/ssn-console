@@ -5,7 +5,7 @@ use crate::data::{
     },
     ProposalStatus,
 };
-use canister_utils::Uuid;
+use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
 pub fn create_proposal(project_id: Uuid, proposal: Proposal) -> Uuid {
@@ -23,22 +23,24 @@ pub fn get_proposal(proposal_id: &Uuid) -> Option<Proposal> {
     with_state(|s| s.proposals.get(proposal_id))
 }
 
-pub fn set_proposal_executing(proposal_id: Uuid) -> Result<(), String> {
+pub fn set_proposal_executing(proposal_id: Uuid) -> ApiResult {
     set_proposal_status(proposal_id, ProposalStatus::Executing)
 }
 
-pub fn set_proposal_executed(proposal_id: Uuid) -> Result<(), String> {
+pub fn set_proposal_executed(proposal_id: Uuid) -> ApiResult {
     set_proposal_status(proposal_id, ProposalStatus::Executed)
 }
 
-pub fn set_proposal_failed(proposal_id: Uuid, message: String) -> Result<(), String> {
+pub fn set_proposal_failed(proposal_id: Uuid, message: String) -> ApiResult {
     set_proposal_status(proposal_id, ProposalStatus::Failed(message))
 }
 
-fn set_proposal_status(proposal_id: Uuid, status: ProposalStatus) -> Result<(), String> {
+fn set_proposal_status(proposal_id: Uuid, status: ProposalStatus) -> ApiResult {
     mutate_state(|s| {
         let mut proposal = s.proposals.get(&proposal_id).ok_or_else(|| {
-            format!("Failed to set status for proposal {proposal_id}, proposal does not exist.")
+            ApiError::client_error(format!(
+                "Failed to set status for proposal {proposal_id}, proposal does not exist."
+            ))
         })?;
 
         proposal.status = status;

@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { anonymousIdentity, controllerIdentity, TestDriver } from '../support';
+import {
+  anonymousIdentity,
+  controllerIdentity,
+  extractOkResponse,
+  noProfileError,
+  TestDriver,
+  unauthenticatedError,
+  unauthorizedError,
+} from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 
 describe('User Profile', () => {
@@ -17,24 +25,23 @@ describe('User Profile', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      await expect(driver.actor.list_user_profiles()).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+      const res = await driver.actor.list_user_profiles();
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should return an error for a non-controller user', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      await expect(driver.actor.list_user_profiles()).rejects.toThrowError(
-        /Only controllers can perform this action/,
-      );
+      const res = await driver.actor.list_user_profiles();
+      expect(res).toEqual(unauthorizedError);
     });
 
     it('should return an empty array when there are no users', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const profiles = await driver.actor.list_user_profiles();
+      const profilesRes = await driver.actor.list_user_profiles();
+      const profiles = extractOkResponse(profilesRes);
       expect(profiles).toEqual([]);
     });
 
@@ -43,20 +50,24 @@ describe('User Profile', () => {
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.create_my_user_profile();
       await driver.actor.update_my_user_profile({ email: ['alice@subnet.ch'] });
-      const [aliceProfile] = await driver.actor.get_my_user_profile();
+      const aliceProfileRes = await driver.actor.get_my_user_profile();
+      const [aliceProfile] = extractOkResponse(aliceProfileRes);
 
       const bobIdentity = generateRandomIdentity();
       driver.actor.setIdentity(bobIdentity);
       await driver.actor.create_my_user_profile();
       await driver.actor.update_my_user_profile({ email: ['bob@subnet.ch'] });
-      const [bobProfile] = await driver.actor.get_my_user_profile();
+      const bobProfileRes = await driver.actor.get_my_user_profile();
+      const [bobProfile] = extractOkResponse(bobProfileRes);
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
       await driver.actor.update_my_user_profile({ email: ['admin@subnet.ch'] });
-      const [controllerProfile] = await driver.actor.get_my_user_profile();
+      const controllerProfileRes = await driver.actor.get_my_user_profile();
+      const [controllerProfile] = extractOkResponse(controllerProfileRes);
 
-      const profiles = await driver.actor.list_user_profiles();
+      const profilesRes = await driver.actor.list_user_profiles();
+      const profiles = extractOkResponse(profilesRes);
 
       expect(profiles.length).toBe(3);
       expect(profiles).toContainEqual(aliceProfile);
@@ -69,56 +80,58 @@ describe('User Profile', () => {
     it('should return an error for an anonymous user', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
-      const aliceProfile = await driver.actor.create_my_user_profile();
+      const aliceProfileRes = await driver.actor.create_my_user_profile();
+      const aliceProfile = extractOkResponse(aliceProfileRes);
 
       driver.actor.setIdentity(anonymousIdentity);
-      await expect(
-        driver.actor.update_user_profile({
-          user_id: aliceProfile.id,
-          status: [{ Active: null }],
-        }),
-      ).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+      const res = await driver.actor.update_user_profile({
+        user_id: aliceProfile.id,
+        status: [{ Active: null }],
+      });
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should return an error for a non-controller user', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
-      const aliceProfile = await driver.actor.create_my_user_profile();
+      const aliceProfileRes = await driver.actor.create_my_user_profile();
+      const aliceProfile = extractOkResponse(aliceProfileRes);
 
       driver.actor.setIdentity(aliceIdentity);
-      await expect(
-        driver.actor.update_user_profile({
-          user_id: aliceProfile.id,
-          status: [{ Active: null }],
-        }),
-      ).rejects.toThrowError(/Only controllers can perform this action/);
+      const res = await driver.actor.update_user_profile({
+        user_id: aliceProfile.id,
+        status: [{ Active: null }],
+      });
+      expect(res).toEqual(unauthorizedError);
     });
 
     it('should return an error if the user does not exist', async () => {
       const userId = '2d3ee223-c6d2-49d8-928f-d42597bfed65';
       driver.actor.setIdentity(controllerIdentity);
 
-      await expect(
-        driver.actor.update_user_profile({
-          user_id: userId,
-          status: [{ Active: null }],
-        }),
-      ).rejects.toThrowError(
-        new RegExp(`User profile for user with id ${userId} does not exist`),
-      );
+      const res = await driver.actor.update_user_profile({
+        user_id: userId,
+        status: [{ Active: null }],
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `User profile for user with id ${userId} does not exist.`,
+        },
+      });
     });
 
     it('should update the user status and user stats', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      const aliceProfile = await driver.actor.create_my_user_profile();
+      const aliceProfileRes = await driver.actor.create_my_user_profile();
+      const aliceProfile = extractOkResponse(aliceProfileRes);
       expect(aliceProfile.status).toEqual({ Inactive: null });
 
       driver.actor.setIdentity(controllerIdentity);
-      let userStats = await driver.actor.get_user_stats();
+      let userStatsRes = await driver.actor.get_user_stats();
+      let userStats = extractOkResponse(userStatsRes);
       expect(userStats.total).toBe(1n);
       expect(userStats.active).toBe(0n);
 
@@ -129,12 +142,14 @@ describe('User Profile', () => {
       });
 
       driver.actor.setIdentity(controllerIdentity);
-      userStats = await driver.actor.get_user_stats();
+      userStatsRes = await driver.actor.get_user_stats();
+      userStats = extractOkResponse(userStatsRes);
       expect(userStats.total).toBe(1n);
       expect(userStats.active).toBe(1n);
 
       driver.actor.setIdentity(aliceIdentity);
-      const [updatedAliceProfile] = await driver.actor.get_my_user_profile();
+      const updatedAliceProfileRes = await driver.actor.get_my_user_profile();
+      const [updatedAliceProfile] = extractOkResponse(updatedAliceProfileRes);
       expect(updatedAliceProfile!.status).toEqual({ Active: null });
 
       driver.actor.setIdentity(controllerIdentity);
@@ -144,13 +159,17 @@ describe('User Profile', () => {
       });
 
       driver.actor.setIdentity(controllerIdentity);
-      userStats = await driver.actor.get_user_stats();
+      userStatsRes = await driver.actor.get_user_stats();
+      userStats = extractOkResponse(userStatsRes);
       expect(userStats.total).toBe(1n);
       expect(userStats.active).toBe(0n);
 
       driver.actor.setIdentity(aliceIdentity);
-      const [finalUpdatedAliceProfile] =
+      const finalUpdatedAliceProfileRes =
         await driver.actor.get_my_user_profile();
+      const [finalUpdatedAliceProfile] = extractOkResponse(
+        finalUpdatedAliceProfileRes,
+      );
       expect(finalUpdatedAliceProfile!.status).toEqual({ Inactive: null });
     });
   });
@@ -159,16 +178,16 @@ describe('User Profile', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      await expect(driver.actor.get_my_user_profile()).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+      const res = await driver.actor.get_my_user_profile();
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should not return a user profile if none exists', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      const [aliceProfile] = await driver.actor.get_my_user_profile();
+      const aliceProfileRes = await driver.actor.get_my_user_profile();
+      const [aliceProfile] = extractOkResponse(aliceProfileRes);
       expect(aliceProfile).toBeUndefined();
     });
 
@@ -180,7 +199,8 @@ describe('User Profile', () => {
       await driver.actor.create_my_user_profile();
       await driver.actor.update_my_user_profile({ email: [aliceEmail] });
 
-      const [aliceProfile] = await driver.actor.get_my_user_profile();
+      const aliceProfileRes = await driver.actor.get_my_user_profile();
+      const [aliceProfile] = extractOkResponse(aliceProfileRes);
       expect(aliceProfile).toEqual({
         id: expect.any(String),
         status: { Inactive: null },
@@ -196,7 +216,8 @@ describe('User Profile', () => {
       await driver.actor.create_my_user_profile();
       await driver.actor.update_my_user_profile({ email: [adminEmail] });
 
-      const [adminProfile] = await driver.actor.get_my_user_profile();
+      const adminProfileRes = await driver.actor.get_my_user_profile();
+      const [adminProfile] = extractOkResponse(adminProfileRes);
       expect(adminProfile).toEqual({
         id: expect.any(String),
         status: { Inactive: null },
@@ -210,16 +231,16 @@ describe('User Profile', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      await expect(driver.actor.get_my_user_profile()).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+      const res = await driver.actor.create_my_user_profile();
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should create a user profile', async () => {
       const aliceIdentity = generateRandomIdentity();
 
       driver.actor.setIdentity(aliceIdentity);
-      const aliceProfile = await driver.actor.create_my_user_profile();
+      const aliceProfileRes = await driver.actor.create_my_user_profile();
+      const aliceProfile = extractOkResponse(aliceProfileRes);
 
       expect(aliceProfile).toEqual({
         id: expect.any(String),
@@ -228,34 +249,39 @@ describe('User Profile', () => {
         is_admin: false,
       });
 
-      const [fetchedProfile] = await driver.actor.get_my_user_profile();
+      const fetchedProfileRes = await driver.actor.get_my_user_profile();
+      const [fetchedProfile] = extractOkResponse(fetchedProfileRes);
       expect(fetchedProfile).toEqual(aliceProfile);
 
-      const organizations = await driver.actor.list_my_organizations();
+      const organizationsRes = await driver.actor.list_my_organizations();
+      const organizations = extractOkResponse(organizationsRes);
       expect(organizations).toHaveLength(1);
       expect(organizations[0]).toEqual({
         id: expect.any(String),
         name: 'Default Organization',
       });
 
-      const projects = await driver.actor.list_my_projects();
+      const projectsRes = await driver.actor.list_my_projects();
+      const projects = extractOkResponse(projectsRes);
       expect(projects).toHaveLength(1);
       expect(projects[0]).toEqual({
         id: expect.any(String),
         name: 'Default Project',
       });
 
-      const teams = await driver.actor.list_my_teams();
+      const teamsRes = await driver.actor.list_my_teams();
+      const teams = extractOkResponse(teamsRes);
       expect(teams).toHaveLength(1);
       expect(teams[0]).toEqual({
         id: expect.any(String),
         name: 'Default Team',
       });
 
-      const approvalPolicies =
+      const approvalPoliciesRes =
         await driver.actor.list_project_approval_policies({
           project_id: projects[0].id,
         });
+      const approvalPolicies = extractOkResponse(approvalPoliciesRes);
       expect(approvalPolicies.approval_policies).toHaveLength(2);
       expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
@@ -271,7 +297,8 @@ describe('User Profile', () => {
 
     it('should create an admin user profile', async () => {
       driver.actor.setIdentity(controllerIdentity);
-      const adminProfile = await driver.actor.create_my_user_profile();
+      const adminProfileRes = await driver.actor.create_my_user_profile();
+      const adminProfile = extractOkResponse(adminProfileRes);
 
       expect(adminProfile).toEqual({
         id: expect.any(String),
@@ -280,34 +307,39 @@ describe('User Profile', () => {
         is_admin: true,
       });
 
-      const [fetchedProfile] = await driver.actor.get_my_user_profile();
+      const fetchedProfileRes = await driver.actor.get_my_user_profile();
+      const [fetchedProfile] = extractOkResponse(fetchedProfileRes);
       expect(fetchedProfile).toEqual(adminProfile);
 
-      const organizations = await driver.actor.list_my_organizations();
+      const organizationsRes = await driver.actor.list_my_organizations();
+      const organizations = extractOkResponse(organizationsRes);
       expect(organizations).toHaveLength(1);
       expect(organizations[0]).toEqual({
         id: expect.any(String),
         name: 'Default Organization',
       });
 
-      const projects = await driver.actor.list_my_projects();
+      const projectsRes = await driver.actor.list_my_projects();
+      const projects = extractOkResponse(projectsRes);
       expect(projects).toHaveLength(1);
       expect(projects[0]).toEqual({
         id: expect.any(String),
         name: 'Default Project',
       });
 
-      const teams = await driver.actor.list_my_teams();
+      const teamsRes = await driver.actor.list_my_teams();
+      const teams = extractOkResponse(teamsRes);
       expect(teams).toHaveLength(1);
       expect(teams[0]).toEqual({
         id: expect.any(String),
         name: 'Default Team',
       });
 
-      const approvalPolicies =
+      const approvalPoliciesRes =
         await driver.actor.list_project_approval_policies({
           project_id: projects[0].id,
         });
+      const approvalPolicies = extractOkResponse(approvalPoliciesRes);
       expect(approvalPolicies.approval_policies).toHaveLength(2);
       expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
@@ -327,11 +359,13 @@ describe('User Profile', () => {
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.create_my_user_profile();
 
-      await expect(driver.actor.create_my_user_profile()).rejects.toThrowError(
-        new RegExp(
-          `User profile for principal ${aliceIdentity.getPrincipal()} already exists`,
-        ),
-      );
+      const res = await driver.actor.create_my_user_profile();
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `User profile for principal ${aliceIdentity.getPrincipal()} already exists.`,
+        },
+      });
     });
   });
 
@@ -339,22 +373,20 @@ describe('User Profile', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      await expect(driver.actor.get_my_user_profile()).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+      const res = await driver.actor.update_my_user_profile({
+        email: ['alice@subnet.ch'],
+      });
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should return an error if the user profile does not exist', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      await expect(
-        driver.actor.update_my_user_profile({ email: ['alice@subnet.ch'] }),
-      ).rejects.toThrowError(
-        new RegExp(
-          `User profile for principal ${aliceIdentity.getPrincipal()} does not exist`,
-        ),
-      );
+      const res = await driver.actor.update_my_user_profile({
+        email: ['alice@subnet.ch'],
+      });
+      expect(res).toEqual(noProfileError(aliceIdentity.getPrincipal()));
     });
 
     it('should update the user email', async () => {
@@ -363,17 +395,20 @@ describe('User Profile', () => {
       const aliceFinalEmail = 'alice@subnet.ch';
 
       driver.actor.setIdentity(aliceIdentity);
-      const aliceProfile = await driver.actor.create_my_user_profile();
+      const aliceProfileRes = await driver.actor.create_my_user_profile();
+      const aliceProfile = extractOkResponse(aliceProfileRes);
 
       await driver.actor.update_my_user_profile({
         email: [aliceInitialEmail],
       });
-      const [updatedProfile] = await driver.actor.get_my_user_profile();
+      const updatedProfileRes = await driver.actor.get_my_user_profile();
+      const [updatedProfile] = extractOkResponse(updatedProfileRes);
 
       await driver.actor.update_my_user_profile({
         email: [aliceFinalEmail],
       });
-      const [finalUpdatedProfile] = await driver.actor.get_my_user_profile();
+      const finalUpdatedProfileRes = await driver.actor.get_my_user_profile();
+      const [finalUpdatedProfile] = extractOkResponse(finalUpdatedProfileRes);
 
       expect(aliceProfile.email).toEqual([]);
       expect(updatedProfile!.email).toEqual([aliceInitialEmail]);

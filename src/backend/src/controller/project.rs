@@ -1,18 +1,13 @@
-use crate::{
-    dto::ListMyProjectsResponse,
-    service::{access_control_service, project_service},
-};
+use crate::{dto::ListMyProjectsResponse, service::project_service};
+use canister_utils::{assert_authenticated, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[query]
-fn list_my_projects() -> ListMyProjectsResponse {
-    let calling_principal = msg_caller();
-    if let Err(err) = access_control_service::assert_authenticated(&calling_principal) {
-        trap(&err);
+fn list_my_projects() -> ApiResultDto<ListMyProjectsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
     }
 
-    match project_service::list_my_projects(calling_principal) {
-        Ok(response) => response,
-        Err(err) => trap(&err),
-    }
+    project_service::list_my_projects(caller).into()
 }

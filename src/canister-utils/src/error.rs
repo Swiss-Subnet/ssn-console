@@ -15,6 +15,14 @@ pub struct ApiError {
 }
 
 impl ApiError {
+    pub fn code(&self) -> Option<&ApiErrorCode> {
+        self.code.as_ref()
+    }
+
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+
     pub fn unauthenticated(message: String) -> ApiError {
         Self::error(ApiErrorCode::Unauthenticated {}, message)
     }

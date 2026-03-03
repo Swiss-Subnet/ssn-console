@@ -1,0 +1,12 @@
+type ApiError = record {
+  code : opt ApiErrorCode;
+  message : text;
+};
+
+type ApiErrorCode = variant {
+  Unauthenticated : record {};
+  Unauthorized : record {};
+  DependencyError : record {};
+  InternalError : record {};
+  ClientError : record {};
+};

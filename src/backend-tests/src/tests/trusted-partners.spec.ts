@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { anonymousIdentity, controllerIdentity, TestDriver } from '../support';
+import {
+  anonymousIdentity,
+  controllerIdentity,
+  extractOkResponse,
+  TestDriver,
+  unauthenticatedError,
+  unauthorizedError,
+} from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 
 describe('Trusted Partners', () => {
@@ -17,24 +24,23 @@ describe('Trusted Partners', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      await expect(driver.actor.list_trusted_partners()).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+      const res = await driver.actor.list_trusted_partners();
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should return an error for a non-controller user', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      await expect(driver.actor.list_trusted_partners()).rejects.toThrowError(
-        /Only controllers can perform this action/,
-      );
+      const res = await driver.actor.list_trusted_partners();
+      expect(res).toEqual(unauthorizedError);
     });
 
     it('should return an empty array when there are no trusted partners', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const partners = await driver.actor.list_trusted_partners();
+      const partnersRes = await driver.actor.list_trusted_partners();
+      const partners = extractOkResponse(partnersRes);
       expect(partners).toEqual([]);
     });
 
@@ -44,16 +50,20 @@ describe('Trusted Partners', () => {
 
       driver.actor.setIdentity(controllerIdentity);
 
-      const alicePartner = await driver.actor.create_trusted_partner({
+      const alicePartnerRes = await driver.actor.create_trusted_partner({
         name: 'Alice',
         principal_id: alicePartnerIdentity.getPrincipal().toText(),
       });
-      const bobPartner = await driver.actor.create_trusted_partner({
+      const alicePartner = extractOkResponse(alicePartnerRes);
+
+      const bobPartnerRes = await driver.actor.create_trusted_partner({
         name: 'Bob',
         principal_id: bobPartnerIdentity.getPrincipal().toText(),
       });
+      const bobPartner = extractOkResponse(bobPartnerRes);
 
-      const partners = await driver.actor.list_trusted_partners();
+      const partnersRes = await driver.actor.list_trusted_partners();
+      const partners = extractOkResponse(partnersRes);
 
       expect(partners.length).toBe(2);
       expect(partners).toContainEqual(alicePartner);
@@ -64,16 +74,13 @@ describe('Trusted Partners', () => {
   describe('create_trusted_partner', () => {
     it('should return an error for an anonymous user', async () => {
       const alicePartnerIdentity = generateRandomIdentity();
-
       driver.actor.setIdentity(anonymousIdentity);
-      await expect(
-        driver.actor.create_trusted_partner({
-          name: 'Alice',
-          principal_id: alicePartnerIdentity.getPrincipal().toText(),
-        }),
-      ).rejects.toThrowError(
-        /Anonymous users are not allowed to perform this action/,
-      );
+
+      const res = await driver.actor.create_trusted_partner({
+        name: 'Alice',
+        principal_id: alicePartnerIdentity.getPrincipal().toText(),
+      });
+      expect(res).toEqual(unauthenticatedError);
     });
 
     it('should return an error for a non-controller user', async () => {
@@ -81,22 +88,23 @@ describe('Trusted Partners', () => {
       const bobPartnerIdentity = generateRandomIdentity();
 
       driver.actor.setIdentity(aliceIdentity);
-      await expect(
-        driver.actor.create_trusted_partner({
-          name: 'Bob',
-          principal_id: bobPartnerIdentity.getPrincipal().toText(),
-        }),
-      ).rejects.toThrowError(/Only controllers can perform this action/);
+
+      const res = await driver.actor.create_trusted_partner({
+        name: 'Bob',
+        principal_id: bobPartnerIdentity.getPrincipal().toText(),
+      });
+      expect(res).toEqual(unauthorizedError);
     });
 
     it('should create a trusted partner', async () => {
       const bobPartnerIdentity = generateRandomIdentity();
 
       driver.actor.setIdentity(controllerIdentity);
-      const bobPartner = await driver.actor.create_trusted_partner({
+      const bobPartnerRes = await driver.actor.create_trusted_partner({
         name: 'Bob',
         principal_id: bobPartnerIdentity.getPrincipal().toText(),
       });
+      const bobPartner = extractOkResponse(bobPartnerRes);
 
       expect(bobPartner).toEqual({
         id: expect.any(String),
@@ -109,21 +117,22 @@ describe('Trusted Partners', () => {
       const bobPartnerIdentity = generateRandomIdentity();
 
       driver.actor.setIdentity(controllerIdentity);
-      const existingPartner = await driver.actor.create_trusted_partner({
+      const existingPartnerRes = await driver.actor.create_trusted_partner({
         name: 'Bob',
         principal_id: bobPartnerIdentity.getPrincipal().toText(),
       });
+      const existingPartner = extractOkResponse(existingPartnerRes);
 
-      await expect(
-        driver.actor.create_trusted_partner({
-          name: 'Robert',
-          principal_id: bobPartnerIdentity.getPrincipal().toText(),
-        }),
-      ).rejects.toThrowError(
-        new RegExp(
-          `Trusted partner for principal ${bobPartnerIdentity.getPrincipal().toText()} already exists with id ${existingPartner.id}`,
-        ),
-      );
+      const res = await driver.actor.create_trusted_partner({
+        name: 'Robert',
+        principal_id: bobPartnerIdentity.getPrincipal().toText(),
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Trusted partner for principal ${bobPartnerIdentity.getPrincipal().toText()} already exists with id ${existingPartner.id}`,
+        },
+      });
     });
   });
 });

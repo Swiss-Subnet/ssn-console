@@ -10,12 +10,13 @@ use crate::{
     },
 };
 use candid::Principal;
+use canister_utils::{ApiError, ApiResult};
 use ic_cdk::api::{is_controller, time};
 
 pub fn get_latest_terms_and_conditions(
-    calling_principal: Principal,
-) -> Result<GetLatestTermsAndConditionsResponse, String> {
-    let user_id = user_profile_repository::assert_user_id_by_principal(&calling_principal)?;
+    caller: Principal,
+) -> ApiResult<GetLatestTermsAndConditionsResponse> {
+    let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
 
     let terms_and_conditions =
         terms_and_conditions_repository::get_latest_terms_and_conditions(user_id);
@@ -25,14 +26,16 @@ pub fn get_latest_terms_and_conditions(
 }
 
 pub fn upsert_terms_and_conditions_decision(
-    calling_principal: Principal,
+    caller: Principal,
     req: UpsertTermsAndConditionsDecisionRequest,
-) -> Result<(), String> {
-    if is_controller(&calling_principal) {
-        return Err("Controllers do not need to accept terms and conditions".to_string());
+) -> ApiResult {
+    if is_controller(&caller) {
+        return Err(ApiError::unauthorized(
+            "Controllers do not need to accept terms and conditions.".to_string(),
+        ));
     }
 
-    let user_id = user_profile_repository::assert_user_id_by_principal(&calling_principal)?;
+    let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
 
     let current_time = time();
     let req = map_create_terms_and_conditions_decision_request(req, user_id, current_time)?;
@@ -43,10 +46,10 @@ pub fn upsert_terms_and_conditions_decision(
 }
 
 pub fn create_terms_and_conditions(
-    calling_principal: Principal,
+    caller: Principal,
     req: CreateTermsAndConditionsRequest,
-) -> Result<(), String> {
-    let user_id = user_profile_repository::assert_user_id_by_principal(&calling_principal)?;
+) -> ApiResult {
+    let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
 
     let current_time = time();
     let req = map_create_terms_and_conditions_request(req, user_id, current_time)?;

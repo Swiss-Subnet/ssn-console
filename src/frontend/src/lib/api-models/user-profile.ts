@@ -1,3 +1,4 @@
+import { mapOkResponse } from '@/lib/api-models/error';
 import { isNotNil } from '@/lib/nil';
 import { fromCandidOpt, toCandidOpt } from '@/lib/utils';
 import type {
@@ -41,13 +42,13 @@ export enum UserStatus {
 export function mapListUserProfilesResponse(
   res: ApiListUserProfilesResponse,
 ): ListUserProfilesResponse {
-  return res.map(mapUserProfileResponse);
+  return mapOkResponse(res).map(mapUserProfileResponse);
 }
 
 export function mapGetMyUserProfileResponse(
   res: ApiGetMyUserProfileResponse,
 ): GetMyUserProfileResponse {
-  const userProfile = fromCandidOpt(res);
+  const userProfile = fromCandidOpt(mapOkResponse(res));
 
   if (isNotNil(userProfile)) {
     return mapUserProfileResponse(userProfile);
@@ -59,7 +60,7 @@ export function mapGetMyUserProfileResponse(
 export function mapCreateMyUserProfileResponse(
   res: ApiCreateMyUserProfileResponse,
 ): CreateMyUserProfileResponse {
-  return mapUserProfileResponse(res);
+  return mapUserProfileResponse(mapOkResponse(res));
 }
 
 export function mapUserProfileResponse(res: ApiUserProfile): UserProfile {
@@ -120,9 +121,10 @@ export type GetUserStatsResponse = {
 export function mapUserStatsResponse(
   res: ApiGetUserStatsResponse,
 ): GetUserStatsResponse {
+  const okRes = mapOkResponse(res);
   return {
-    total: Number(res.total),
-    active: Number(res.active),
-    inactive: Number(res.inactive),
+    total: Number(okRes.total),
+    active: Number(okRes.active),
+    inactive: Number(okRes.inactive),
   };
 }

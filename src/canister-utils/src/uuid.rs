@@ -1,4 +1,4 @@
-use crate::with_random_bytes;
+use crate::{with_random_bytes, ApiError, ApiResult};
 use core::fmt::{Display, Formatter};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
@@ -26,11 +26,12 @@ impl Uuid {
 }
 
 impl TryFrom<&str> for Uuid {
-    type Error = String;
+    type Error = ApiError;
 
-    fn try_from(uuid: &str) -> Result<Uuid, Self::Error> {
-        let uuid = UuidImpl::parse_str(uuid)
-            .map_err(|_| format!("Failed to parse UUID from string: {}", uuid))?;
+    fn try_from(uuid: &str) -> ApiResult<Uuid> {
+        let uuid = UuidImpl::parse_str(uuid).map_err(|_| {
+            ApiError::client_error(format!("Failed to parse UUID from string: {uuid}"))
+        })?;
 
         Ok(Self(uuid))
     }

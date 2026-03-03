@@ -1,4 +1,5 @@
 use candid::export_service;
+use canister_utils::ApiResultDto;
 use dto::*;
 use ic_cdk::*;
 use ic_http_certification::{HttpRequest, HttpResponse};

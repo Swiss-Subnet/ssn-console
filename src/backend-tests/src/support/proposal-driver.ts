@@ -7,6 +7,7 @@ import {
   type Proposal,
   type ProposalOperation,
 } from '@ssn/backend-api';
+import { extractOkResponse } from './error';
 
 export class ProposalDriver {
   private readonly actor: Actor<_SERVICE>;
@@ -43,10 +44,11 @@ export class ProposalDriver {
     operation: ProposalOperation,
   ): Promise<Proposal> {
     this.actor.setIdentity(identity);
-    const proposal = await this.actor.create_proposal({
+    const proposalRes = await this.actor.create_proposal({
       project_id: projectId,
       operation: [operation],
     });
+    const proposal = extractOkResponse(proposalRes);
 
     this.actor.setIdentity(this.defaultIdentity);
     return proposal;

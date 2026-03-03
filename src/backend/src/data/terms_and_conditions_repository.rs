@@ -7,7 +7,7 @@ use crate::data::{
     },
     TermsAndConditions, TermsAndConditionsDecision, TermsAndConditionsDecisionType,
 };
-use canister_utils::Uuid;
+use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
 pub fn get_latest_terms_and_conditions(user_id: Uuid) -> Option<(Uuid, TermsAndConditions, bool)> {
@@ -50,16 +50,16 @@ fn has_accepted_terms_and_conditions(user_id: Uuid, terms_and_conditions_id: Uui
 
 pub fn upsert_terms_and_conditions_decision(
     terms_and_conditions_decision: TermsAndConditionsDecision,
-) -> Result<Uuid, String> {
+) -> ApiResult<Uuid> {
     mutate_state(|s| {
         if !s
             .terms_and_conditions
             .contains_key(&terms_and_conditions_decision.terms_and_conditions_id)
         {
-            return Err(format!(
-                "Terms and conditions with id {} does not exist",
+            return Err(ApiError::client_error(format!(
+                "Terms and conditions with id {} does not exist.",
                 terms_and_conditions_decision.terms_and_conditions_id
-            ));
+            )));
         }
 
         let id = s

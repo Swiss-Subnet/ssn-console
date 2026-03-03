@@ -1,9 +1,14 @@
+import "../../canister-utils/error.did";
+
 type CreateProposalRequest = record {
   project_id : text;
   operation : opt ProposalOperation;
 };
 
-type CreateProposalResponse = Proposal;
+type CreateProposalResponse = variant {
+  Ok : Proposal;
+  Err : ApiError;
+};
 
 type Proposal = record {
   id : text;
