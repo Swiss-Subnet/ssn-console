@@ -1,15 +1,38 @@
 import "../../canister-utils/error.did";
 
+type ListMyProjectsRequest = record {};
+
 type ListMyProjectsResponse = variant {
-  Ok : vec Project;
+  Ok : record {
+    orgs_with_projects : vec OrgWithProjects;
+  };
   Err : ApiError;
 };
 
+type CreateProjectRequest = record {
+  org_id : text;
+  name : text;
+};
+
+type CreateProjectResponse = variant {
+  Ok : record {
+    project : Project;
+  };
+  Err : ApiError;
+};
+
+type OrgWithProjects = record {
+  org_id : text;
+  projects : vec Project;
+};
+
 type Project = record {
+  org_id : text;
   id : text;
   name : text;
 };
 
 service : {
-  list_my_projects : () -> (ListMyProjectsResponse) query;
+  list_my_projects : (ListMyProjectsRequest) -> (ListMyProjectsResponse) query;
+  create_project : (CreateProjectRequest) -> (CreateProjectResponse);
 };

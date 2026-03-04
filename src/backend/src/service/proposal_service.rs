@@ -18,11 +18,7 @@ pub async fn create_proposal(
 
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let team_ids = team_repository::list_user_team_ids(user_id);
-    if !project_repository::any_teams_have_project(&team_ids, project_id) {
-        return Err(ApiError::unauthorized(format!(
-            "User with id {user_id} does not have access to project with id {project_id}"
-        )));
-    }
+    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
 
     let proposal_id = proposal_repository::create_proposal(project_id, proposal.clone());
 
