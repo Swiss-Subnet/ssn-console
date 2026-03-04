@@ -84,3 +84,13 @@ export function noTermsAndConditionsError(id: string): ApiErrorResponse {
     },
   };
 }
+
+export function noOrgError(userId: string, orgId: string ): ApiErrorResponse {
+
+  return {
+    Err: {
+      code: [{ Unauthorized: {} }],
+      message: `User with id ${userId} does not belong to org with id ${orgId}`,
+    },
+  };
+}

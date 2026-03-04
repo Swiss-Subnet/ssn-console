@@ -65,9 +65,9 @@ export class TestDriver {
   }
 
   public async getDefaultProject(): Promise<Project> {
-    const projectRes = await this.actor.list_my_projects();
-    const [project] = extractOkResponse(projectRes);
+    const res = await this.actor.list_my_projects({});
+    const okRes = extractOkResponse(res);
 
-    return project;
+    return okRes.orgs_with_projects[0].projects[0];
   }
 }
