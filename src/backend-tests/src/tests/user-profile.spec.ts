@@ -261,12 +261,18 @@ describe('User Profile', () => {
         name: 'Default Organization',
       });
 
-      const projectsRes = await driver.actor.list_my_projects();
-      const projects = extractOkResponse(projectsRes);
-      expect(projects).toHaveLength(1);
-      expect(projects[0]).toEqual({
-        id: expect.any(String),
-        name: 'Default Project',
+      const projectsRes = await driver.actor.list_my_projects({});
+      const projectsOkRes = extractOkResponse(projectsRes);
+      expect(projectsOkRes.orgs_with_projects).toHaveLength(1);
+      expect(projectsOkRes.orgs_with_projects[0]).toEqual({
+        org_id: expect.any(String),
+        projects: [
+          {
+            id: expect.any(String),
+            org_id: organizations[0].id,
+            name: 'Default Project',
+          },
+        ],
       });
 
       const teamsRes = await driver.actor.list_my_teams();
@@ -279,7 +285,7 @@ describe('User Profile', () => {
 
       const approvalPoliciesRes =
         await driver.actor.list_project_approval_policies({
-          project_id: projects[0].id,
+          project_id: projectsOkRes.orgs_with_projects[0].projects[0].id,
         });
       const approvalPolicies = extractOkResponse(approvalPoliciesRes);
       expect(approvalPolicies.approval_policies).toHaveLength(2);
@@ -319,12 +325,18 @@ describe('User Profile', () => {
         name: 'Default Organization',
       });
 
-      const projectsRes = await driver.actor.list_my_projects();
-      const projects = extractOkResponse(projectsRes);
-      expect(projects).toHaveLength(1);
-      expect(projects[0]).toEqual({
-        id: expect.any(String),
-        name: 'Default Project',
+      const projectsRes = await driver.actor.list_my_projects({});
+      const projectsOkRes = extractOkResponse(projectsRes);
+      expect(projectsOkRes.orgs_with_projects).toHaveLength(1);
+      expect(projectsOkRes.orgs_with_projects[0]).toEqual({
+        org_id: expect.any(String),
+        projects: [
+          {
+            id: expect.any(String),
+            org_id: organizations[0].id,
+            name: 'Default Project',
+          },
+        ],
       });
 
       const teamsRes = await driver.actor.list_my_teams();
@@ -337,7 +349,7 @@ describe('User Profile', () => {
 
       const approvalPoliciesRes =
         await driver.actor.list_project_approval_policies({
-          project_id: projects[0].id,
+          project_id: projectsOkRes.orgs_with_projects[0].projects[0].id,
         });
       const approvalPolicies = extractOkResponse(approvalPoliciesRes);
       expect(approvalPolicies.approval_policies).toHaveLength(2);
