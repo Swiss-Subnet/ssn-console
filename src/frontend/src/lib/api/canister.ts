@@ -17,11 +17,11 @@ export class CanisterApi {
   }
 
   public async createCanister(): Promise<void> {
-    const listRes = await this.actor.list_my_projects();
-    const [project] = mapOkResponse(listRes);
+    const res = await this.actor.list_my_projects({});
+    const okRes = mapOkResponse(res);
 
     const createRes = await this.actor.create_proposal({
-      project_id: project.id,
+      project_id: okRes.projects[0].id,
       operation: [
         {
           CreateCanister: {},
@@ -35,11 +35,11 @@ export class CanisterApi {
     canisterId: string,
     controllerId: string,
   ): Promise<void> {
-    const listRes = await this.actor.list_my_projects();
-    const [project] = mapOkResponse(listRes);
+    const res = await this.actor.list_my_projects({});
+    const okRes = mapOkResponse(res);
 
     const createRes = await this.actor.create_proposal({
-      project_id: project.id,
+      project_id: okRes.projects[0].id,
       operation: [
         {
           AddCanisterController: {
