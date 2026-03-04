@@ -4,13 +4,14 @@ import type { FC } from 'react';
 import { selectIsActive, useAppStore } from '@/lib/store';
 import { SignUpPrompt } from '@/routes/home/sign-up-prompt';
 import { ActivityPrompt } from '@/routes/home/activity-prompt';
+import { Container } from '@/components/layout/container';
 
 const Home: FC = () => {
   const { isAuthenticated } = useAppStore();
   const isActive = useAppStore(selectIsActive);
 
   return (
-    <>
+    <Container>
       <div className="text-center">
         {isActive ? <H1>Console</H1> : <H1>Console Access Request</H1>}
 
@@ -24,7 +25,7 @@ const Home: FC = () => {
       {isAuthenticated && !isActive && <EmailPrompt className="mt-8" />}
 
       {isAuthenticated && isActive && <ActivityPrompt className="mt-8" />}
-    </>
+    </Container>
   );
 };
 

@@ -1,5 +1,11 @@
 import { BACKEND_CANISTER_ID } from '@/env';
-import type { AppStateCreator, CanistersSlice } from '@/lib/store/model';
+import type { Canister } from '@/lib/api-models';
+import type {
+  AppSlice,
+  AppStateCreator,
+  CanistersSlice,
+} from '@/lib/store/model';
+import { createSelector } from 'reselect';
 
 export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   set,
@@ -9,7 +15,7 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   isCanistersLoading: false,
   canisters: null,
 
-  async initializeCanisters() {
+  async initializeCanisters(projectId) {
     const { isAuthenticated, refreshCanisters } = get();
 
     if (!isAuthenticated) {
@@ -18,20 +24,27 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
     }
 
     try {
-      await refreshCanisters();
+      await refreshCanisters(projectId);
     } finally {
       set({ isCanistersInitialized: true });
     }
   },
 
-  async refreshCanisters() {
+  async refreshCanisters(projectId) {
     const { getCanisterApi } = get();
     const canisterApi = getCanisterApi();
 
     set({ isCanistersLoading: true });
     try {
       const canisters = await canisterApi.listMyCanisters();
-      set({ canisters });
+      set(state => {
+        const newCanisters = state.canisters
+          ? new Map(state.canisters)
+          : new Map();
+        newCanisters.set(projectId, canisters);
+
+        return { canisters: newCanisters };
+      });
     } finally {
       set({ isCanistersLoading: false });
     }
@@ -41,15 +54,15 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
     set({ canisters: null });
   },
 
-  async createCanister() {
+  async createCanister(projectId) {
     const { getCanisterApi, refreshCanisters } = get();
     const canisterApi = getCanisterApi();
 
     await canisterApi.createCanister();
-    await refreshCanisters();
+    await refreshCanisters(projectId);
   },
 
-  async addMissingController(canisterId) {
+  async addMissingController(canisterId, projectId) {
     const { getManagementCanisterApi, refreshCanisters } = get();
     const managementCanisterApi = getManagementCanisterApi();
 
@@ -65,14 +78,23 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
         ],
       },
     });
-    await refreshCanisters();
+    await refreshCanisters(projectId);
   },
 
-  async addController(canisterId, controllerId) {
+  async addController(canisterId, controllerId, projectId) {
     const { getCanisterApi, refreshCanisters } = get();
     const canisterApi = getCanisterApi();
 
     await canisterApi.addCanisterController(canisterId, controllerId);
-    await refreshCanisters();
+    await refreshCanisters(projectId);
   },
 });
+
+function selectCanisterMap(state: AppSlice): Map<string, Canister[]> | null {
+  return state.canisters;
+}
+
+export const selectCanisters = createSelector(
+  selectCanisterMap,
+  canisterMap => canisterMap?.values().toArray() ?? null,
+);

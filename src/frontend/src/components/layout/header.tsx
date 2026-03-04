@@ -16,7 +16,7 @@ export const Header: FC = () => {
   const { isAuthenticated } = useAppStore();
 
   return (
-    <header className="flex w-full flex-row items-center p-3">
+    <header className="bg-background flex w-full flex-row items-center border-b p-3">
       <NavLink to="/">
         <Logo className="h-13" />
       </NavLink>

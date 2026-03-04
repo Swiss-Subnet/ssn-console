@@ -5,6 +5,8 @@ import {
   UserProfileApi,
   ManagementCanisterApi,
   TermsAndConditionsApi,
+  ProjectApi,
+  OrganizationApi,
 } from '@/lib/api';
 import { isNil } from '@/lib/nil';
 import type { ApiSlice, AppStateCreator } from '@/lib/store/model';
@@ -27,6 +29,8 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
   managementCanisterApi: null,
   trustedPartnerApi: null,
   termsAndConditionsApi: null,
+  projectApi: null,
+  organizationApi: null,
 
   initializeApi() {
     const agent = HttpAgent.createSync({
@@ -55,6 +59,8 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
     );
     const trustedPartnerApi = new TrustedPartnerApi(backendApiActor);
     const termsAndConditionsApi = new TermsAndConditionsApi(backendApiActor);
+    const projectApi = new ProjectApi(backendApiActor);
+    const organizationApi = new OrganizationApi(backendApiActor);
 
     set({
       agent,
@@ -64,6 +70,8 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
       managementCanisterApi,
       trustedPartnerApi,
       termsAndConditionsApi,
+      projectApi,
+      organizationApi,
     });
   },
 
@@ -118,5 +126,23 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
     }
 
     return termsAndConditionsApi;
+  },
+
+  getProjectApi() {
+    const { projectApi } = get();
+    if (isNil(projectApi)) {
+      throw new Error('ProjectApi is not initialized');
+    }
+
+    return projectApi;
+  },
+
+  getOrganizationApi() {
+    const { organizationApi } = get();
+    if (isNil(organizationApi)) {
+      throw new Error('OrganizationApi is not initialized');
+    }
+
+    return organizationApi;
   },
 });

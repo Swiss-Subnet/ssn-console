@@ -1,4 +1,3 @@
-import { Container } from '@/components/layout/container';
 import { Header } from '@/components/layout/header';
 import { useAppStore } from '@/lib/store';
 import { type FC } from 'react';
@@ -22,13 +21,13 @@ export const DefaultLayout: FC = () => {
           <p className="text-muted-foreground text-sm">Initializing...</p>
         </div>
       ) : (
-        <main className="flex w-full flex-col">
+        <div className="flex h-dvh w-full flex-col">
           <Header />
 
-          <Container>
+          <div className="flex flex-1 overflow-y-hidden">
             <Outlet />
-          </Container>
-        </main>
+          </div>
+        </div>
       )}
     </>
   );

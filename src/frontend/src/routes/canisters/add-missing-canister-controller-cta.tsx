@@ -5,6 +5,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/components/ui/alert';
+import { useRequireProjectId } from '@/lib/params';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
 import { AlertCircleIcon } from 'lucide-react';
@@ -19,12 +20,13 @@ export const AddMissingCanisterControllerCta: FC<
 > = ({ canisterId }) => {
   const [isAddingController, setIsAddingController] = useState(false);
   const { addMissingController } = useAppStore();
+  const projectId = useRequireProjectId();
 
   async function onFixClicked(): Promise<void> {
     setIsAddingController(true);
 
     try {
-      await addMissingController(canisterId);
+      await addMissingController(canisterId, projectId);
     } catch (err) {
       showErrorToast('Failed to add missing controller', err);
     } finally {

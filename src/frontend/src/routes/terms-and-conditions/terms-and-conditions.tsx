@@ -7,6 +7,7 @@ import { showErrorToast } from '@/lib/toast';
 import { useMemo, useState, type FC } from 'react';
 import { useNavigate } from 'react-router';
 import DOMPurify from 'dompurify';
+import { Container } from '@/components/layout/container';
 
 const TermsAndConditions: FC = () => {
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ const TermsAndConditions: FC = () => {
   }
 
   return (
-    <>
+    <Container>
       <H1>Terms and Conditions</H1>
 
       <div className="mt-10">
@@ -108,7 +109,7 @@ const TermsAndConditions: FC = () => {
           Accept
         </LoadingButton>
       </div>
-    </>
+    </Container>
   );
 };
 

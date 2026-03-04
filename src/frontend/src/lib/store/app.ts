@@ -2,6 +2,8 @@ import { createApiSlice } from '@/lib/store/api';
 import { createAuthSlice } from '@/lib/store/auth';
 import { createCanistersSlice } from '@/lib/store/canister';
 import type { AppSlice } from '@/lib/store/model';
+import { createOrganizationsSlice } from '@/lib/store/organization';
+import { createProjectsSlice } from '@/lib/store/project';
 import { createTermsAndConditionsSlice } from '@/lib/store/terms-and-conditions';
 import { createTrustedPartnerSlice } from '@/lib/store/trusted-partner';
 import { createUserProfileSlice } from '@/lib/store/user-profile';
@@ -16,4 +18,6 @@ export const useAppStore = create<AppSlice>()((...a) => ({
   ...createCanistersSlice(...a),
   ...createTrustedPartnerSlice(...a),
   ...createTermsAndConditionsSlice(...a),
+  ...createProjectsSlice(...a),
+  ...createOrganizationsSlice(...a),
 }));

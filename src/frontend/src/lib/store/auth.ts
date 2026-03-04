@@ -21,17 +21,19 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
     const {
       initializeUserProfile,
       initializeUsers,
-      initializeCanisters,
       initializeTrustedPartners,
       initializeTermsAndConditions,
+      initializeProjects,
+      initializeOrganizations,
     } = get();
 
     await initializeUserProfile();
     await Promise.all([
       initializeUsers(),
-      initializeCanisters(),
       initializeTrustedPartners(),
       initializeTermsAndConditions(),
+      initializeProjects(),
+      initializeOrganizations(),
     ]);
   },
 
@@ -106,6 +108,8 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       clearCanisters,
       clearTrustedPartners,
       clearTermsAndConditions,
+      clearProjects,
+      clearOrganizations,
       setAgentIdentity,
     } = get();
     if (isNil(authClient)) {
@@ -127,6 +131,8 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       clearCanisters();
       clearTrustedPartners();
       clearTermsAndConditions();
+      clearProjects();
+      clearOrganizations();
     }
   },
 });

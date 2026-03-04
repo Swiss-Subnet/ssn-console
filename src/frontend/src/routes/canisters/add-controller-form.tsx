@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from '@/components/form';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
+import { useRequireProjectId } from '@/lib/params';
 
 export type AddControllerFormProps = {
   canisterId: string;
@@ -33,6 +34,7 @@ export const AddControllerForm: FC<AddControllerFormProps> = ({
   className,
 }) => {
   const { addController } = useAppStore();
+  const projectId = useRequireProjectId();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -41,7 +43,7 @@ export const AddControllerForm: FC<AddControllerFormProps> = ({
 
   async function onSubmit(formData: FormData): Promise<void> {
     try {
-      await addController(canisterId, formData.principal);
+      await addController(canisterId, formData.principal, projectId);
       form.reset();
       showSuccessToast('Controller added successfully!');
     } catch (err) {

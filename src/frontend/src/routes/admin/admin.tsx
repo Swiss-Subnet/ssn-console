@@ -13,6 +13,7 @@ import {
 import { useAppStore } from '@/lib/store';
 import { type FC } from 'react';
 import { TermsAndConditionsForm } from '@/routes/admin/terms-and-conditions-form';
+import { Container } from '@/components/layout/container';
 
 const Admin: FC = () => {
   useRequireAdminAuth();
@@ -20,7 +21,7 @@ const Admin: FC = () => {
   const { userStats } = useAppStore();
 
   return (
-    <>
+    <Container>
       <H1>Admin</H1>
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <Card>
@@ -56,7 +57,7 @@ const Admin: FC = () => {
 
       <H2 className="mt-10">Terms and Conditions</H2>
       <TermsAndConditionsForm className="mt-3" />
-    </>
+    </Container>
   );
 };
 

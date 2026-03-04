@@ -8,6 +8,8 @@ import type {
   TermsAndConditions,
   UpsertTermsAndConditionsDecisionRequest,
   CreateTermsAndConditionsRequest,
+  Organization,
+  Project,
 } from '@/lib/api-models';
 import type {
   CanisterApi,
@@ -15,6 +17,8 @@ import type {
   UserProfileApi,
   ManagementCanisterApi,
   TermsAndConditionsApi,
+  ProjectApi,
+  OrganizationApi,
 } from '@/lib/api';
 import type { ActorSubclass, HttpAgent, Identity } from '@icp-sdk/core/agent';
 import type { AuthClient } from '@icp-sdk/auth/client';
@@ -42,6 +46,8 @@ export type ApiSlice = {
   managementCanisterApi: ManagementCanisterApi | null;
   trustedPartnerApi: TrustedPartnerApi | null;
   termsAndConditionsApi: TermsAndConditionsApi | null;
+  projectApi: ProjectApi | null;
+  organizationApi: OrganizationApi | null;
 
   initializeApi: () => void;
   setAgentIdentity: (identity: Identity) => void;
@@ -50,6 +56,8 @@ export type ApiSlice = {
   getManagementCanisterApi: () => ManagementCanisterApi;
   getTrustedPartnerApi: () => TrustedPartnerApi;
   getTermsAndConditionsApi: () => TermsAndConditionsApi;
+  getProjectApi: () => ProjectApi;
+  getOrganizationApi: () => OrganizationApi;
 };
 
 export type UserProfileSlice = {
@@ -78,14 +86,21 @@ export type UsersSlice = {
 export type CanistersSlice = {
   isCanistersInitialized: boolean;
   isCanistersLoading: boolean;
-  canisters: Canister[] | null;
+  canisters: Map<string, Canister[]> | null;
 
-  initializeCanisters: () => Promise<void>;
-  refreshCanisters: () => Promise<void>;
+  initializeCanisters: (projectId: string) => Promise<void>;
+  refreshCanisters: (projectId: string) => Promise<void>;
   clearCanisters: () => void;
-  createCanister: () => Promise<void>;
-  addMissingController: (canisterId: string) => Promise<void>;
-  addController: (canisterId: string, controllerId: string) => Promise<void>;
+  createCanister: (projectId: string) => Promise<void>;
+  addMissingController: (
+    canisterId: string,
+    projectId: string,
+  ) => Promise<void>;
+  addController: (
+    canisterId: string,
+    controllerId: string,
+    projectId: string,
+  ) => Promise<void>;
 };
 
 export type TrustedPartnersSlice = {
@@ -111,12 +126,30 @@ export type TermsAndConditionsSlice = {
   ) => Promise<void>;
 };
 
+export type ProjectsSlice = {
+  isProjectsInitialized: boolean;
+  projects: Project[];
+
+  initializeProjects: () => Promise<void>;
+  clearProjects: () => void;
+};
+
+export type OrganizationsSlice = {
+  isOrganizationsInitialized: boolean;
+  organizations: Organization[];
+
+  initializeOrganizations: () => Promise<void>;
+  clearOrganizations: () => void;
+};
+
 export type AppSlice = AuthSlice &
   ApiSlice &
   UserProfileSlice &
   UsersSlice &
   CanistersSlice &
   TrustedPartnersSlice &
-  TermsAndConditionsSlice;
+  TermsAndConditionsSlice &
+  ProjectsSlice &
+  OrganizationsSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;
