@@ -1,6 +1,13 @@
 import { HeaderMenu } from '@/components/layout/header-menu';
 import { Logo } from '@/components/logo';
 import { ModeToggle } from '@/components/mode-toggle';
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu';
 import { useAppStore } from '@/lib/store';
 import { type FC } from 'react';
 import { NavLink } from 'react-router';
@@ -16,11 +23,33 @@ export const Header: FC = () => {
 
       <div className="flex-1" />
 
-      <div className="ml-2 flex items-center gap-2">
-        <ModeToggle />
+      <NavigationMenu>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              className={navigationMenuTriggerStyle()}
+              render={
+                <a
+                  target="_blank"
+                  href="https://docs.google.com/document/d/1CRA_jWHF2rwCXqWUaarbZJE7UF5YHOFbzkuAgRciIXU/edit?usp=sharing"
+                />
+              }
+            >
+              Developer Guide
+            </NavigationMenuLink>
+          </NavigationMenuItem>
 
-        {isAuthenticated && <HeaderMenu />}
-      </div>
+          <NavigationMenuItem>
+            <ModeToggle />
+          </NavigationMenuItem>
+
+          {isAuthenticated && (
+            <NavigationMenuItem>
+              <HeaderMenu />
+            </NavigationMenuItem>
+          )}
+        </NavigationMenuList>
+      </NavigationMenu>
     </header>
   );
 };
