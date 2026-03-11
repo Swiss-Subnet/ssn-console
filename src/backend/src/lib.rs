@@ -3,7 +3,6 @@ use canister_utils::ApiResultDto;
 use dto::*;
 use ic_cdk::*;
 use ic_http_certification::{HttpRequest, HttpResponse};
-use service::organization_service;
 
 mod controller;
 mod data;
@@ -24,7 +23,6 @@ fn export_candid() -> String {
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
     controller::http::init();
-    organization_service::init();
 }
 
 #[cfg(test)]
