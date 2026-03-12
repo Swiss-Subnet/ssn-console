@@ -261,11 +261,12 @@ describe('User Profile', () => {
         name: 'Default Organization',
       });
 
-      const projectsRes = await driver.actor.list_my_projects();
-      const projects = extractOkResponse(projectsRes);
-      expect(projects).toHaveLength(1);
-      expect(projects[0]).toEqual({
+      const projectsRes = await driver.actor.list_my_projects({});
+      const projectsOkRes = extractOkResponse(projectsRes);
+      expect(projectsOkRes.projects).toHaveLength(1);
+      expect(projectsOkRes.projects[0]).toEqual({
         id: expect.any(String),
+        org_id: organizations[0].id,
         name: 'Default Project',
       });
 
@@ -279,7 +280,7 @@ describe('User Profile', () => {
 
       const approvalPoliciesRes =
         await driver.actor.list_project_approval_policies({
-          project_id: projects[0].id,
+          project_id: projectsOkRes.projects[0].id,
         });
       const approvalPolicies = extractOkResponse(approvalPoliciesRes);
       expect(approvalPolicies.approval_policies).toHaveLength(2);
@@ -319,11 +320,12 @@ describe('User Profile', () => {
         name: 'Default Organization',
       });
 
-      const projectsRes = await driver.actor.list_my_projects();
-      const projects = extractOkResponse(projectsRes);
-      expect(projects).toHaveLength(1);
-      expect(projects[0]).toEqual({
+      const projectsRes = await driver.actor.list_my_projects({});
+      const projectsOkRes = extractOkResponse(projectsRes);
+      expect(projectsOkRes.projects).toHaveLength(1);
+      expect(projectsOkRes.projects[0]).toEqual({
         id: expect.any(String),
+        org_id: organizations[0].id,
         name: 'Default Project',
       });
 
@@ -337,7 +339,7 @@ describe('User Profile', () => {
 
       const approvalPoliciesRes =
         await driver.actor.list_project_approval_policies({
-          project_id: projects[0].id,
+          project_id: projectsOkRes.projects[0].id,
         });
       const approvalPolicies = extractOkResponse(approvalPoliciesRes);
       expect(approvalPolicies.approval_policies).toHaveLength(2);

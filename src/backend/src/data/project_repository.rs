@@ -6,23 +6,37 @@ use super::{
     },
     Project,
 };
-use canister_utils::Uuid;
+use canister_utils::{ApiError, ApiResult, Uuid};
 use std::{cell::RefCell, collections::HashSet};
 
 pub fn add_default_project(team_id: Uuid, org_id: Uuid) -> Uuid {
-    let project_id = Uuid::new();
     let project = Project {
+        org_id,
         name: "Default Project".to_string(),
     };
+
+    let project_id = create_project(org_id, project);
+    add_team_to_project(team_id, project_id);
+
+    project_id
+}
+
+pub fn create_project(org_id: Uuid, project: Project) -> Uuid {
+    let project_id = Uuid::new();
 
     mutate_state(|s| {
         s.projects.insert(project_id, project);
         s.organization_project_index.insert((org_id, project_id));
-        s.project_team_index.insert((project_id, team_id));
-        s.team_project_index.insert((team_id, project_id));
     });
 
     project_id
+}
+
+pub fn add_team_to_project(team_id: Uuid, project_id: Uuid) {
+    mutate_state(|s| {
+        s.project_team_index.insert((project_id, team_id));
+        s.team_project_index.insert((team_id, project_id));
+    });
 }
 
 pub fn get_project(project_id: &Uuid) -> Option<Project> {
@@ -31,21 +45,16 @@ pub fn get_project(project_id: &Uuid) -> Option<Project> {
 
 pub fn list_team_projects(team_ids: &[Uuid]) -> Vec<(Uuid, Project)> {
     list_all_team_project_ids(team_ids)
-        .iter()
-        .filter_map(|project_id| get_project(project_id).map(|project| (*project_id, project)))
+        .into_iter()
+        .filter_map(|project_id| get_project(&project_id).map(|project| (project_id, project)))
         .collect::<Vec<_>>()
 }
 
 fn list_all_team_project_ids(team_ids: &[Uuid]) -> HashSet<Uuid> {
-    let mut project_ids = HashSet::new();
-
-    for team_id in team_ids {
-        for project_id in list_team_project_ids(*team_id) {
-            project_ids.insert(project_id);
-        }
-    }
-
-    project_ids
+    team_ids
+        .iter()
+        .flat_map(|team_id| list_team_project_ids(*team_id))
+        .collect()
 }
 
 pub fn list_team_project_ids(team_id: Uuid) -> Vec<Uuid> {
@@ -57,8 +66,37 @@ pub fn list_team_project_ids(team_id: Uuid) -> Vec<Uuid> {
     })
 }
 
-pub fn any_teams_have_project(team_ids: &[Uuid], project_to_check: Uuid) -> bool {
-    list_all_team_project_ids(team_ids).contains(&project_to_check)
+pub fn assert_any_team_has_project(
+    user_id: &Uuid,
+    team_ids: &[Uuid],
+    project_to_check: Uuid,
+) -> ApiResult {
+    if !list_all_team_project_ids(team_ids).contains(&project_to_check) {
+        return Err(ApiError::unauthorized(format!(
+            "User with id {user_id} does not have access to project with id {project_to_check}"
+        )));
+    }
+
+    Ok(())
+}
+
+pub fn index_project_orgs(org_id: Uuid) {
+    mutate_state(|s| {
+        let projects = s
+            .organization_project_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .filter_map(|(_, project_id)| {
+                s.projects
+                    .get(&project_id)
+                    .map(|project| (project_id, project))
+            })
+            .collect::<Vec<_>>();
+
+        for (project_id, mut project) in projects {
+            project.org_id = org_id;
+            s.projects.insert(project_id, project);
+        }
+    })
 }
 
 struct ProjectState {

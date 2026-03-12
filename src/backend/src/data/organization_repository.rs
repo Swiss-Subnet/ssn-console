@@ -5,7 +5,7 @@ use super::{
     },
     Organization,
 };
-use canister_utils::Uuid;
+use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
 pub fn add_default_org(user_id: Uuid) -> Uuid {
@@ -23,12 +23,28 @@ pub fn add_default_org(user_id: Uuid) -> Uuid {
     org_id
 }
 
+pub fn list_all_org_ids() -> Vec<Uuid> {
+    with_state(|s| s.organizations.keys().collect())
+}
+
 pub fn list_user_orgs(user_id: Uuid) -> Vec<(Uuid, Organization)> {
     with_state(|s| {
         s.user_organization_index
             .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))
             .filter_map(|(_, org_id)| s.organizations.get(&org_id).map(|org| (org_id, org)))
             .collect()
+    })
+}
+
+pub fn assert_user_in_org(user_id: Uuid, org_id: Uuid) -> ApiResult {
+    with_state(|s| {
+        if !s.organization_user_index.contains(&(org_id, user_id)) {
+            return Err(ApiError::unauthorized(format!(
+                "User with id {user_id} does not belong to org with id {org_id}"
+            )));
+        }
+
+        Ok(())
     })
 }
 
