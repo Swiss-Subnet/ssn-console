@@ -3,14 +3,14 @@
 **/.DS_Store
 
 # dfx temporary files
-.dfx/
+.dfx
 
 # rust
-target/
+target
 
 # frontend code
-node_modules/
-dist/
+node_modules
+dist
 
 # environment variables
 .env

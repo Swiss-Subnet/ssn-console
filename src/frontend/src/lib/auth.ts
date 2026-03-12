@@ -1,22 +1,7 @@
 import { isNotNil } from '@/lib/nil';
 import { selectIsActive, selectIsAdmin, useAppStore } from '@/lib/store';
-import { useCallback, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router';
-
-const useReturnTo = (): ((to: string) => void) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  return useCallback(
-    (to: string) => {
-      if (location.pathname !== to) {
-        navigate(to);
-        return;
-      }
-    },
-    [location.pathname, navigate],
-  );
-};
+import { useReturnTo } from '@/lib/utils';
+import { useEffect } from 'react';
 
 export const useRequireAuth = (): void => {
   const {

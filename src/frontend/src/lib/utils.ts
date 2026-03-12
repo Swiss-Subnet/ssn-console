@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
-import type { FC } from 'react';
+import { useCallback, type FC } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]): string {
@@ -17,4 +18,19 @@ export function fromCandidOpt<T>(opt: [] | [T]): T | null {
 
 export function toCandidOpt<T>(value: T | null | undefined): [] | [T] {
   return value == null ? [] : [value];
+}
+
+export function useReturnTo(): (to: string) => void {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  return useCallback(
+    (to: string) => {
+      if (location.pathname !== to) {
+        navigate(to);
+        return;
+      }
+    },
+    [location.pathname, navigate],
+  );
 }
