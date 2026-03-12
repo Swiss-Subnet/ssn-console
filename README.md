@@ -101,7 +101,7 @@ dfx canister call --network test canister-history list_subnet_canister_ranges '(
 Get the current subnet canister ranges from the subnet:
 
 ```shell
-pnpm -F sync-subnet-canister-ranges start
+pnpm -F scripts fetch-subnet-canister-ranges
 ```
 
 Set the subnet canister ranges in the canister:

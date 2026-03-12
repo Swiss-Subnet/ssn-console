@@ -9,12 +9,6 @@ use crate::{
 use candid::Principal;
 use canister_utils::{ApiResult, Uuid};
 
-pub fn init() {
-    for org_id in organization_repository::list_all_org_ids() {
-        project_repository::index_project_orgs(org_id);
-    }
-}
-
 pub fn list_my_projects(caller: &Principal) -> ApiResult<ListMyProjectsResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let team_ids = team_repository::list_user_team_ids(user_id);

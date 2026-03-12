@@ -5,8 +5,6 @@ use std::borrow::Cow;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
-    // [TODO]: Remove default value after migration is complete
-    #[serde(default)]
     pub org_id: Uuid,
     pub name: String,
 }

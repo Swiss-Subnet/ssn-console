@@ -5,6 +5,33 @@ type ListMyCanistersResponse = variant {
   Err : ApiError;
 };
 
+type ListAllCanistersRequest = record {
+  limit : opt nat64;
+  page : opt nat64;
+};
+
+type ListAllCanistersResponse = variant {
+  Ok : record {
+    canisters : vec CanisterWithOwner;
+    meta : PaginationMetaResponse;
+  };
+  Err : ApiError;
+};
+
+type CanisterWithOwner = record {
+  id : text;
+  principal_id : text;
+  user_id : text;
+  email : opt text;
+};
+
+type PaginationMetaResponse = record {
+  limit : nat64;
+  page : nat64;
+  total_items : nat64;
+  total_pages : nat64;
+};
+
 type Canister = record {
   id : text;
   principal_id : text;
@@ -74,4 +101,5 @@ type CanisterEnvironmentVariable = record {
 
 service : {
   list_my_canisters : () -> (ListMyCanistersResponse);
+  list_all_canisters : (ListAllCanistersRequest) -> (ListAllCanistersResponse) query;
 };

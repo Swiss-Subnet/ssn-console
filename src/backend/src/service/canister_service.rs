@@ -1,8 +1,13 @@
 use crate::{
-    data::{
-        canister_repository, project_repository, team_repository, user_profile_repository, Canister,
+    constants::{
+        DEFAULT_PAGINATION_LIMIT, DEFAULT_PAGINATION_PAGE, MAX_CALLS_PER_BATCH,
+        MAX_PAGINATION_LIMIT, MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
     },
-    dto::ListMyCanistersResponse,
+    data::{
+        canister_repository, organization_repository, project_repository, team_repository,
+        user_profile_repository, Canister,
+    },
+    dto::{self, ListMyCanistersResponse},
     mapping::map_canister_response,
 };
 use candid::Principal;
@@ -15,9 +20,13 @@ use ic_cdk::{
     },
 };
 
-/// This number should not exceed the length of the canister output queue, which
-/// is currently 500.
-const CALLS_PER_BATCH: usize = 490;
+pub fn init() {
+    let projects = project_repository::list_all_projects();
+
+    for (project_id, _) in projects {
+        canister_repository::index_canister_project(project_id);
+    }
+}
 
 pub async fn list_my_canisters(caller: Principal) -> ApiResult<ListMyCanistersResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
@@ -41,7 +50,7 @@ pub async fn list_my_canisters(caller: Principal) -> ApiResult<ListMyCanistersRe
     let project_canisters = canister_repository::list_canisters_by_project(project_id);
     let mut canisters = vec![];
 
-    for chunk in project_canisters.chunks(CALLS_PER_BATCH) {
+    for chunk in project_canisters.chunks(MAX_CALLS_PER_BATCH) {
         let canister_futures = chunk.iter().map(|(id, canister)| async move {
             match management_canister::canister_status(&CanisterStatusArgs {
                 canister_id: canister.principal,
@@ -57,6 +66,49 @@ pub async fn list_my_canisters(caller: Principal) -> ApiResult<ListMyCanistersRe
     }
 
     Ok(canisters)
+}
+
+pub fn list_all_canisters(
+    limit: Option<u64>,
+    page: Option<u64>,
+) -> ApiResult<dto::ListAllCanistersResponse> {
+    let limit = limit
+        .unwrap_or(DEFAULT_PAGINATION_LIMIT)
+        .clamp(MIN_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT);
+    let page = page.unwrap_or(DEFAULT_PAGINATION_PAGE);
+
+    let total_items = canister_repository::get_canister_count();
+    let total_pages = total_items.div_ceil(limit).max(MIN_PAGINATION_PAGE);
+    let page = page.clamp(MIN_PAGINATION_PAGE, total_pages);
+
+    let canisters = canister_repository::list_canisters_with_project(limit as usize, page as usize)
+        .iter()
+        .flat_map(|(canister_id, canister, project_id)| {
+            project_repository::get_project(project_id)
+                .map(|project| organization_repository::list_org_users(project.org_id))
+                .and_then(|org_users| org_users.first().cloned())
+                .and_then(|org_owner_id| {
+                    user_profile_repository::get_user_profile_by_user_id(&org_owner_id)
+                        .map(|org_owner| (org_owner_id, org_owner))
+                })
+                .map(|(org_owner_id, org_owner)| dto::CanisterWithOwner {
+                    id: canister_id.to_string(),
+                    principal_id: canister.principal.to_text(),
+                    user_id: org_owner_id.to_string(),
+                    email: org_owner.email,
+                })
+        })
+        .collect::<Vec<_>>();
+
+    Ok(dto::ListAllCanistersResponse {
+        canisters,
+        meta: dto::PaginationMetaResponse {
+            limit,
+            page,
+            total_items,
+            total_pages,
+        },
+    })
 }
 
 pub async fn create_my_canister(project_id: Uuid) -> Result<(), String> {
