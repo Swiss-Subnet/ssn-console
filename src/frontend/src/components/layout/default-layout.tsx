@@ -21,10 +21,10 @@ export const DefaultLayout: FC = () => {
           <p className="text-muted-foreground text-sm">Initializing...</p>
         </div>
       ) : (
-        <div className="flex h-dvh w-full flex-col">
+        <div className="flex flex-col">
           <Header />
 
-          <div className="flex flex-1 overflow-y-hidden">
+          <div className="flex flex-1">
             <Outlet />
           </div>
         </div>
