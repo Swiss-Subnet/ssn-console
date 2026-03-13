@@ -4,8 +4,9 @@ use dto::*;
 use ic_cdk::*;
 use ic_http_certification::{HttpRequest, HttpResponse};
 
-use crate::service::project_service;
+use crate::service::canister_service;
 
+mod constants;
 mod controller;
 mod data;
 mod dto;
@@ -25,7 +26,7 @@ fn export_candid() -> String {
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
     controller::http::init();
-    project_service::init();
+    canister_service::init();
 }
 
 #[cfg(test)]

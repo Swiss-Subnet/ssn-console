@@ -4,6 +4,34 @@ use serde::Deserialize;
 pub type ListMyCanistersResponse = Vec<Canister>;
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListAllCanistersRequest {
+    pub limit: Option<u64>,
+    pub page: Option<u64>,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListAllCanistersResponse {
+    pub canisters: Vec<CanisterWithOwner>,
+    pub meta: PaginationMetaResponse,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct CanisterWithOwner {
+    pub id: String,
+    pub principal_id: String,
+    pub user_id: String,
+    pub email: Option<String>,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct PaginationMetaResponse {
+    pub limit: u64,
+    pub page: u64,
+    pub total_items: u64,
+    pub total_pages: u64,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct Canister {
     pub id: String,
     pub principal_id: String,

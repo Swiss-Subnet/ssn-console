@@ -51,3 +51,5 @@ pub(super) const PROJECT_OPERATION_TYPE_APPROVAL_POLICY_INDEX_MEMORY_ID: MemoryI
 
 pub(super) const PROPOSAL_MEMORY_ID: MemoryId = MemoryId::new(25);
 pub(super) const PROJECT_PROPOSAL_INDEX_MEMORY_ID: MemoryId = MemoryId::new(26);
+
+pub(super) const CANISTER_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(27);

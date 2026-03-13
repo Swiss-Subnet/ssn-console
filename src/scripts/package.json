@@ -1,0 +1,17 @@
+{
+  "name": "scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fetch-subnet-canister-ranges": "tsx ./src/fetch-subnet-canister-ranges.ts",
+    "fetch-canisters-csv": "tsx ./src/fetch-canisters-csv.ts"
+  },
+  "dependencies": {
+    "@ssn/canister-history-api": "workspace:*",
+    "@ssn/backend-api": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.21.0"
+  }
+}

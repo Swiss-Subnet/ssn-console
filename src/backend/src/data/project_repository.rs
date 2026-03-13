@@ -80,23 +80,8 @@ pub fn assert_any_team_has_project(
     Ok(())
 }
 
-pub fn index_project_orgs(org_id: Uuid) {
-    mutate_state(|s| {
-        let projects = s
-            .organization_project_index
-            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .filter_map(|(_, project_id)| {
-                s.projects
-                    .get(&project_id)
-                    .map(|project| (project_id, project))
-            })
-            .collect::<Vec<_>>();
-
-        for (project_id, mut project) in projects {
-            project.org_id = org_id;
-            s.projects.insert(project_id, project);
-        }
-    })
+pub fn list_all_projects() -> Vec<(Uuid, Project)> {
+    with_state(|s| s.projects.iter().map(|val| val.into_pair()).collect())
 }
 
 struct ProjectState {
