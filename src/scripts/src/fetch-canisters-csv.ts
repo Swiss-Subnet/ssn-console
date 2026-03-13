@@ -1,11 +1,21 @@
-import { execSync } from 'child_process';
-import { writeFileSync } from 'fs';
+import { execSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 import type {
   CanisterWithOwner,
   PaginationMetaResponse,
 } from '@ssn/backend-api';
+import { parseArgs } from 'node:util';
 
-const NETWORK = 'local';
+const options = {
+  network: {
+    type: 'string',
+    short: 'n',
+  },
+} as const;
+
+const { values } = parseArgs({ options });
+
+const NETWORK = values.network ?? 'ic';
 const LIMIT_PER_PAGE = 100;
 const OUTPUT_FILE = 'canisters_export.csv';
 

@@ -90,6 +90,20 @@ To top up cycles for a canister, use the following command:
 dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
 ```
 
+### Canisters CSV Export
+
+To export a CSV of all canisters tracked by the Console:
+
+```shell
+pnpm -F scripts fetch-canisters-csv
+```
+
+The above script defaults to mainnet, to use a different network:
+
+```shell
+pnpm -F scripts fetch-canisters-csv --network="local"
+```
+
 ### Canister history canister
 
 List the current subnet canister ranges in the canister:
