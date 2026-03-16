@@ -22,9 +22,9 @@
       "candid": "src/backend/backend.did",
       "wasm": "target/wasm32-unknown-unknown/release/backend.wasm",
       "build": [
-        "pnpm -F @ssn/backend-api build",
-        "pnpm -F @ssn/management-canister build",
-        "pnpm -F frontend run build",
+        "bun run -F @ssn/backend-api build",
+        "bun run -F @ssn/management-canister build",
+        "bun run -F frontend build",
         "cargo build --target wasm32-unknown-unknown --release -p backend --locked"
       ],
       "declarations": {
@@ -41,8 +41,8 @@
       "candid": "src/canister-history/canister_history.did",
       "wasm": "target/wasm32-unknown-unknown/release/canister_history.wasm",
       "build": [
-        "pnpm -F @ssn/canister-history-api build",
-        "pnpm -F @ssn/management-canister build",
+        "bun run -F @ssn/canister-history-api build",
+        "bun run -F @ssn/management-canister build",
         "cargo build --target wasm32-unknown-unknown --release -p canister-history --locked"
       ],
       "declarations": {

@@ -15,8 +15,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup NodeJS
-        uses: ./.github/actions/setup-node
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
 
       - name: Setup DFX
         uses: ./.github/actions/setup-dfx
@@ -37,8 +37,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup NodeJS
-        uses: ./.github/actions/setup-node
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
 
       - name: Setup DFX
         uses: ./.github/actions/setup-dfx
@@ -47,7 +47,7 @@ jobs:
         run: dfx build backend --check
 
       - name: pic-js tests
-        run: pnpm -F backend-tests test
+        run: bun run -F backend-tests test
 
   build_and_test_canister_history:
     name: Build and Test Canister History
@@ -56,8 +56,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup NodeJS
-        uses: ./.github/actions/setup-node
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
 
       - name: Setup DFX
         uses: ./.github/actions/setup-dfx
@@ -66,4 +66,4 @@ jobs:
         run: dfx build canister-history --check
 
       - name: pic-js tests
-        run: pnpm -F canister-history-tests test
+        run: bun run -F canister-history-tests test

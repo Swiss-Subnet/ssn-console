@@ -17,8 +17,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup Node
-        uses: ./.github/actions/setup-node
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
 
       - name: Setup DFX
         uses: ./.github/actions/setup-dfx

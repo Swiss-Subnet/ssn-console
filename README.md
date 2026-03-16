@@ -2,24 +2,25 @@
 
 ## Initial Setup
 
-- Install [`fnm`](https://github.com/Schniz/fnm).
-- Install the required Node.js version:
+- Install [`bun`](https://bun.sh/).
   ```shell
-  fnm use
-  ```
-- Install `pnpm` using `corepack`:
-  ```shell
-  corepack enable
+  curl -fsSL https://bun.sh/install | bash
   ```
 - Install [Rust](https://rust-lang.org/).
+  ```shell
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ```
 - Install [`dfx`](https://docs.internetcomputer.org/building-apps/getting-started/install#installing-dfx-via-dfxvm).
+  ```shell
+  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+  ```
 
 ## Commands
 
 Install dependencies:
 
 ```shell
-pnpm i
+bun i
 ```
 
 Start the local replica:
@@ -39,25 +40,25 @@ dfx deploy
 Build the backend API library:
 
 ```shell
-pnpm -F @ssn/backend-api build
+bun run -F @ssn/backend-api build
 ```
 
 Build the management canister library:
 
 ```shell
-pnpm -F @ssn/management-canister build
+bun run -F @ssn/management-canister build
 ```
 
 Run the frontend development server:
 
 ```shell
-pnpm -F frontend start
+bun run -F frontend start
 ```
 
 ### Format code:
 
 ```shell
-pnpm format
+bun format
 ```
 
 ### Controller Management
@@ -74,14 +75,6 @@ To remove a controller (remove admin rights from a user):
 dfx canister update-settings --remove-controller ${CONTROLLER_PRINCIPAL} backend
 ```
 
-### Update `pnpm`
-
-Update to the latest version of `pnpm`:
-
-```shell
-corepack prepare pnpm@latest --activate
-```
-
 ### Canister Cycle Management
 
 To top up cycles for a canister, use the following command:
@@ -95,13 +88,13 @@ dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
 To export a CSV of all canisters tracked by the Console:
 
 ```shell
-pnpm -F scripts fetch-canisters-csv
+bun run -F scripts fetch-canisters-csv
 ```
 
 The above script defaults to mainnet, to use a different network:
 
 ```shell
-pnpm -F scripts fetch-canisters-csv --network="local"
+bun run -F scripts fetch-canisters-csv --network="local"
 ```
 
 ### Canister history canister
@@ -115,7 +108,7 @@ dfx canister call --network test canister-history list_subnet_canister_ranges '(
 Get the current subnet canister ranges from the subnet:
 
 ```shell
-pnpm -F scripts fetch-subnet-canister-ranges
+bun run -F scripts fetch-subnet-canister-ranges
 ```
 
 Set the subnet canister ranges in the canister:

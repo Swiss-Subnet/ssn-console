@@ -8,7 +8,7 @@
 - Authentication uses IC SDK auth components
 - Backend tests require specific setup with PocketIcServer for IC simulation
 - Integration tests are structured in the src/backend-tests/src/tests/ directory
-- The project is a monorepo with packages managed by pnpm workspaces
+- The project is a monorepo with packages managed by bun workspaces
 - The architecture separates concerns with clear boundaries between backend and frontend
 - The backend canister is designed to work with DFINITY's Internet Computer platform
 - The backend canister requires dfx to be running in background (`dfx start --background`) for local development

@@ -15,7 +15,7 @@ const options = {
 
 const { values } = parseArgs({ options });
 
-const NETWORK = values.network ?? 'ic';
+const NETWORK = values.network ?? 'production';
 const LIMIT_PER_PAGE = 100;
 const OUTPUT_FILE = 'canisters_export.csv';
 
