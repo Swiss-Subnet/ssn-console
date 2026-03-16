@@ -67,3 +67,16 @@ jobs:
 
       - name: pic-js tests
         run: bun run -F canister-history-tests test
+
+  build_and_test_offchain_service:
+    name: Build and Test Offchain Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Unit tests
+        run: bun run -F offchain-service test
