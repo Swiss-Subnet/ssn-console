@@ -25,8 +25,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup NodeJS
-        uses: ./.github/actions/setup-node
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
 
       - name: Check TypeScript formatting
-        run: pnpm format:check
+        run: bun format:check

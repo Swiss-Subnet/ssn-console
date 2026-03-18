@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
+    "lib": ["ESNext"],
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "Preserve",
+    "moduleDetection": "force",
+
     "moduleResolution": "bundler",
     "types": [],
 
@@ -10,6 +13,7 @@
     "esModuleInterop": false,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
+    "noEmit": true,
 
     "strict": true,
     "noUnusedLocals": true,

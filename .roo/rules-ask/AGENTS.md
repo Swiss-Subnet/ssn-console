@@ -5,7 +5,7 @@
 - API bindings generated from Candid interface
 - Management canister for IC operations
 - Tests are structured in the src/backend-tests/src/tests/ directory
-- Build commands are specific to pnpm workspaces (e.g., `pnpm -F @ssn/backend-api build`)
+- Build commands are specific to bun workspaces (e.g., `bun run -F @ssn/backend-api build`)
 - The project uses a monorepo structure with packages in src/ directory
 - Documentation refers to specific package names like @ssn/backend-api, @ssn/management-canister
 - The project requires dfx (DFINITY's tooling) for local development and deployment

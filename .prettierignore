@@ -6,4 +6,4 @@ declarations
 node_modules
 .DS_Store
 
-pnpm-lock.yaml
+bun.lock

@@ -4,12 +4,12 @@ This file provides guidance to agents when working with code in this repository.
 
 ## Build/Lint/Test Commands
 
-- Build backend API library: `pnpm -F @ssn/backend-api build`
-- Build management canister library: `pnpm -F @ssn/management-canister build`
-- Run frontend development server: `pnpm -F frontend start`
-- Run backend tests: `pnpm -F backend-tests test`
-- Format code: `pnpm format`
-- Run a single test: `pnpm -F backend-tests test --reporter=verbose <test-file-path>`
+- Build backend API library: `bun run -F @ssn/backend-api build`
+- Build management canister library: `bun run -F @ssn/management-canister build`
+- Run frontend development server: `bun run -F frontend start`
+- Run backend tests: `bun run -F backend-tests test`
+- Format code: `bun run format`
+- Run a single test: `bun run -F backend-tests test --reporter=verbose <test-file-path>`
 
 ## Code Style Guidelines
 
@@ -29,7 +29,7 @@ This file provides guidance to agents when working with code in this repository.
 - Backend tests require specific setup with PocketIcServer for IC simulation
 - Integration tests are structured in the src/backend-tests/src/tests/ directory
 - The backend canister requires dfx to be running in background (`dfx start --background`) for local development
-- The project uses a monorepo structure with packages managed by pnpm workspaces
+- The project uses a monorepo structure with packages managed by bun workspaces
 - The backend canister is designed to work with DFINITY's Internet Computer platform
 - All backend canister operations are exposed via Candid interface
 - API calls are made through generated Candid bindings from backend DID files
