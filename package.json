@@ -28,6 +28,7 @@
     "src/canister-history-tests",
     "src/frontend",
     "src/management-canister",
+    "src/offchain-service",
     "src/scripts"
   ],
   "trustedDependencies": [
