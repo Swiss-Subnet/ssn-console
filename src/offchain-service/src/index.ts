@@ -1,12 +1,20 @@
 import { Elysia } from 'elysia';
-import { authController } from './controller';
-
+import logixlysia from 'logixlysia';
+import { authController, statusController } from './controller';
 import { env } from './env';
 
-export const app = new Elysia().use(authController).listen(env.PORT);
+export const app = new Elysia()
+  .use(logixlysia({ config: { disableFileLogging: true } }))
+  .use(statusController)
+  .use(authController);
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
-);
+if (import.meta.main) {
+  app.listen({
+    port: env.PORT,
+    hostname: '0.0.0.0',
+  });
 
-export type App = typeof app;
+  console.log(
+    `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
+  );
+}

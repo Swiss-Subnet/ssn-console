@@ -1,0 +1,5 @@
+[Network]
+Driver=bridge
+
+[Install]
+WantedBy=default.target

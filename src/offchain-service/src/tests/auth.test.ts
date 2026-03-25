@@ -10,7 +10,7 @@ describe('POST /auth/email-verification', () => {
   it('should return 204 for valid email and send email with verification token', async () => {
     const testEmail = 'test@example.com';
     const response = await app.handle(
-      new Request(`http://localhost/auth/email-verification`, {
+      new Request(`http://localhost/v1.0/auth/email-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: testEmail }),
@@ -49,7 +49,7 @@ describe('POST /auth/email-verification', () => {
 
   it('should return 422 for invalid email', async () => {
     const response = await app.handle(
-      new Request(`http://localhost/auth/email-verification`, {
+      new Request(`http://localhost/v1.0/auth/email-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: 'invalid-email' }),
@@ -61,7 +61,7 @@ describe('POST /auth/email-verification', () => {
 
   it('should return 422 for missing email', async () => {
     const response = await app.handle(
-      new Request(`http://localhost/auth/email-verification`, {
+      new Request(`http://localhost/v1.0/auth/email-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),

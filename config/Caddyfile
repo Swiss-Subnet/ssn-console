@@ -1,0 +1,29 @@
+{
+	# Uncomment for staging while testing/debugging
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+
+	admin :2019 {
+		origins 0.0.0.0
+	}
+
+	servers {
+		metrics
+	}
+
+	log default {
+		output stdout
+		format json
+	}
+}
+
+${OFFCHAIN_SERVICE_DOMAIN}:443 {
+	reverse_proxy ${OFFCHAIN_SERVICE_IMAGE_NAME}:${PORT} {
+		header_up X-Real-IP {remote_host}
+	}
+
+	tls {
+		dns cloudflare ${CLOUDFLARE_API_TOKEN}
+	}
+
+	log
+}
