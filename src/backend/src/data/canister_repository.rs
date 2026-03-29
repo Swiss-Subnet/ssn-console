@@ -8,20 +8,6 @@ use crate::data::{
 use canister_utils::Uuid;
 use std::cell::RefCell;
 
-pub fn index_canister_project(project_id: Uuid) {
-    mutate_state(|s| {
-        let canisters = s
-            .project_canister_index
-            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
-            .map(|(_, canister_id)| canister_id)
-            .collect::<Vec<_>>();
-
-        for canister_id in canisters {
-            s.canister_project_index.insert(canister_id, project_id);
-        }
-    })
-}
-
 pub fn list_canisters_by_project(project_id: Uuid) -> Vec<(Uuid, Canister)> {
     with_state(|s| {
         s.project_canister_index

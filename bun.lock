@@ -7,6 +7,7 @@
       "dependencies": {
         "@icp-sdk/auth": "^5.0.0",
         "@icp-sdk/core": "^5.0.0",
+        "jose": "^6.2.1",
       },
       "devDependencies": {
         "@dfinity/pic": "^0.20.0",
@@ -94,6 +95,7 @@
     "src/offchain-service": {
       "name": "offchain-service",
       "dependencies": {
+        "@elysiajs/cors": "^1.4.1",
         "elysia": "^1.4.27",
         "jose": "^6.2.1",
         "logixlysia": "^6.3.0",
@@ -166,6 +168,8 @@
     "@dfinity/pic": ["@dfinity/pic@0.20.0", "", { "dependencies": { "@icp-sdk/core": "^5.0.0", "bip39": "^3.1.0", "json-with-bigint": "3.5.7" } }, "sha512-2zzvGLeQ2lAOuWWqg5qdhvHO6XWD4812Xh50OuYwrWcAevl+CqywgfYyd8NwsPw+pd8EzteQGWQG2bQo4iKAyg=="],
 
     "@dfinity/zod-schemas": ["@dfinity/zod-schemas@3.0.2", "", { "peerDependencies": { "@icp-sdk/core": "5.0.0", "zod": "4.3.5" } }, "sha512-cbOsAcPgOVjbJbP91VP4hMckwiGSVZ8Q41XWXZ0doG8Vaw3e1wt0blJLiomPYnZy++ycW6iGSfoxh4DiJmumgw=="],
+
+    "@elysiajs/cors": ["@elysiajs/cors@1.4.1", "", { "peerDependencies": { "elysia": ">= 1.4.0" } }, "sha512-lQfad+F3r4mNwsxRKbXyJB8Jg43oAOXjRwn7sKUL6bcOW3KjUqUimTS+woNpO97efpzjtDE0tEjGk9DTw8lqTQ=="],
 
     "@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.27.2", "", { "os": "aix", "cpu": "ppc64" }, "sha512-GZMB+a0mOMZs4MpDbj8RJp4cw+w1WV5NYD6xzgvzUJ5Ek2jerwfO2eADyI6ExDSUED+1X8aMbegahsJi+8mgpw=="],
 

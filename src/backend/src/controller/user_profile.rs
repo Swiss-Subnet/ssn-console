@@ -2,6 +2,7 @@ use crate::{
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
         ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
+        VerifyEmailRequest,
     },
     service::user_profile_service,
 };
@@ -66,4 +67,14 @@ fn get_user_stats() -> ApiResultDto<GetUserStatsResponse> {
     }
 
     ApiResultDto::Ok(user_profile_service::get_user_stats())
+}
+
+#[update]
+fn verify_my_email(req: VerifyEmailRequest) -> ApiResultDto {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    user_profile_service::verify_email(caller, req).into()
 }

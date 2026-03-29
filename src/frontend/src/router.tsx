@@ -13,6 +13,7 @@ const RedirectToProjectCanisters = lazy(
     import('@/routes/redirect-to-project-canisters/redirect-to-project-canisters'),
 );
 const Admin = lazy(() => import('@/routes/admin/admin'));
+const Verify = lazy(() => import('@/routes/verify/verify'));
 
 export const Router: FC = () => (
   <BrowserRouter>
@@ -22,6 +23,7 @@ export const Router: FC = () => (
         <Route path="terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="canisters" element={<RedirectToProjectCanisters />} />
         <Route path="admin" element={<Admin />} />
+        <Route path="verify" element={<Verify />} />
 
         <Route path="projects/:projectId" element={<ProjectLayout />}>
           <Route path="canisters" element={<Canisters />} />

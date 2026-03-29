@@ -15,6 +15,7 @@ pub fn map_list_user_profiles_response(
         .map(|(id, profile, principals)| UserProfile {
             id: id.to_string(),
             email: profile.email,
+            email_verified: profile.email_verified,
             status: map_user_status_response(profile.status),
             is_admin: principals.iter().any(is_controller),
         })
@@ -30,6 +31,7 @@ pub fn map_get_my_user_profile_response(
     UserProfile {
         id: id.to_string(),
         email: profile.email,
+        email_verified: profile.email_verified,
         status: map_user_status_response(profile.status),
         is_admin,
     }

@@ -4,13 +4,14 @@ use dto::*;
 use ic_cdk::*;
 use ic_http_certification::{HttpRequest, HttpResponse};
 
-use crate::service::canister_service;
+use crate::service::user_profile_service;
 
 mod constants;
 mod controller;
 mod data;
 mod dto;
 mod env;
+mod jwt;
 mod mapping;
 mod service;
 
@@ -26,7 +27,7 @@ fn export_candid() -> String {
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
     controller::http::init();
-    canister_service::init();
+    user_profile_service::migrate_email_verified();
 }
 
 #[cfg(test)]

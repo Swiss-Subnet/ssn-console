@@ -10,6 +10,7 @@ import { Principal } from '@icp-sdk/core/principal';
 import { controllerIdentity } from './identity';
 import { ProposalDriver } from './proposal-driver';
 import { extractOkResponse } from './error';
+import * as crypto from 'node:crypto';
 
 export const BACKEND_WASM_PATH = resolve(
   __dirname,
@@ -23,6 +24,13 @@ export const BACKEND_WASM_PATH = resolve(
   'backend',
   'backend.wasm.gz',
 );
+
+const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+export const PUBLIC_KEY = publicKey
+  .export({ type: 'spki', format: 'pem' })
+  .toString()
+  .trim();
+export const PRIVATE_KEY = privateKey;
 
 export class TestDriver {
   public readonly proposals: ProposalDriver;
@@ -57,11 +65,23 @@ export class TestDriver {
       idlFactory,
       wasm: BACKEND_WASM_PATH,
       sender: controllerIdentity.getPrincipal(),
+      environmentVariables: [{ name: 'PUBLIC_KEY', value: PUBLIC_KEY }],
     });
   }
 
   public async tearDown(): Promise<void> {
     await this.pic.tearDown();
+  }
+
+  public async setEnvironmentVariable(
+    name: string,
+    value: string,
+  ): Promise<void> {
+    await this.pic.updateCanisterSettings({
+      canisterId: this.canisterId,
+      environmentVariables: [{ name, value }],
+      sender: controllerIdentity.getPrincipal(),
+    });
   }
 
   public async getDefaultProject(): Promise<Project> {

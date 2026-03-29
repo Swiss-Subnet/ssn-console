@@ -30,6 +30,7 @@ export type UpdateUserProfileRequest = {
 export type UserProfile = {
   id: string;
   email: string | null;
+  emailVerified: boolean;
   status: UserStatus;
   isAdmin: boolean;
 };
@@ -67,6 +68,7 @@ export function mapUserProfileResponse(res: ApiUserProfile): UserProfile {
   return {
     id: res.id,
     email: fromCandidOpt(res.email),
+    emailVerified: res.email_verified,
     status: mapUserStatusResponse(res.status),
     isAdmin: res.is_admin,
   };

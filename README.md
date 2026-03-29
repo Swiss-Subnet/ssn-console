@@ -15,6 +15,35 @@
   sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
   ```
 
+## Env Vars
+
+Create the `.env.local` file:
+
+```shell
+PRIVATE_KEY="${PRIVATE_KEY}"
+PUBLIC_KEY="${PUBLIC_KEY}"
+
+FRONTEND_URL="${FRONTEND_URL}"
+SMTP_HOST="${SMTP_HOST}"
+SMTP_PORT="${SMTP_PORT}"
+SMTP_USER="${SMTP_USER}"
+SMTP_PASS="${SMTP_PASS}"
+SMTP_FROM="${SMTP_FROM}"
+PORT="${PORT}"
+```
+
+To generate the private key:
+
+```shell
+openssl genpkey -algorithm ed25519 -out ~/.ssh/id_ssn_local_sign.pem
+```
+
+To generate the corresponding public key:
+
+```shell
+openssl pkey -in ~/.ssh/id_ssn_local_sign.pem -pubout -out ~/.ssh/id_ssn_local_sign.pub
+```
+
 ## Commands
 
 Install dependencies:
@@ -23,16 +52,10 @@ Install dependencies:
 bun i
 ```
 
-Start the local replica:
+Start the local replica and deploy canisters:
 
 ```shell
-dfx start --background
-```
-
-Deploy the canisters:
-
-```shell
-dfx deploy
+./scripts/init-local.sh
 ```
 
 ### Build the frontend:

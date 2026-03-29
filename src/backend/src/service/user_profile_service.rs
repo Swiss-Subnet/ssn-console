@@ -7,7 +7,10 @@ use crate::{
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
         ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
+        VerifyEmailRequest,
     },
+    env::load_runtime_env,
+    jwt::{extract_ed25519_public_key_from_pem, verify_jwt},
     mapping::{
         map_create_my_user_profile_response, map_get_my_user_profile_response,
         map_get_user_stats_response, map_list_user_profiles_response, map_user_status_request,
@@ -15,6 +18,14 @@ use crate::{
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    email: String,
+    exp: usize,
+    iat: usize,
+}
 
 pub fn list_user_profiles() -> ListUserProfilesResponse {
     map_list_user_profiles_response(user_profile_repository::list_user_profiles())
@@ -104,4 +115,42 @@ pub fn update_my_user_profile(caller: Principal, req: UpdateMyUserProfileRequest
 
 pub fn get_user_stats() -> GetUserStatsResponse {
     map_get_user_stats_response(user_profile_repository::get_user_stats())
+}
+
+pub fn migrate_email_verified() {
+    user_profile_repository::migrate_email_verified();
+}
+
+pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> ApiResult {
+    let pub_key_str = load_runtime_env("PUBLIC_KEY")?;
+
+    let pub_key_bytes = extract_ed25519_public_key_from_pem(&pub_key_str)
+        .map_err(|e| ApiError::internal_error(format!("Failed to parse public key: {}", e)))?;
+
+    let token_data: Claims = verify_jwt(&req.token, &pub_key_bytes)?;
+
+    let (user_id, mut profile) = user_profile_repository::get_user_profile_by_principal(&caller)
+        .ok_or_else(|| {
+            ApiError::client_error(format!(
+                "User profile for principal {} does not exist.",
+                caller.to_text()
+            ))
+        })?;
+
+    let Some(email) = &profile.email else {
+        return Err(ApiError::client_error(
+            "User profile does not have an email to verify".to_string(),
+        ));
+    };
+
+    if email != &token_data.email {
+        return Err(ApiError::client_error(
+            "Token email does not match user profile email".to_string(),
+        ));
+    }
+
+    profile.email_verified = true;
+    user_profile_repository::update_user_profile(user_id, profile)?;
+
+    Ok(())
 }

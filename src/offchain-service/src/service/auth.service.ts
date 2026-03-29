@@ -17,13 +17,11 @@ const transporter = nodemailer.createTransport({
 export async function generateEmailVerificationToken(
   email: string,
 ): Promise<string> {
-  const jwt = await new SignJWT({ email })
+  return await new SignJWT({ email })
     .setProtectedHeader({ alg: 'EdDSA' })
     .setIssuedAt()
     .setExpirationTime('15m')
     .sign(privateKey);
-
-  return jwt;
 }
 
 export async function sendVerificationEmail(

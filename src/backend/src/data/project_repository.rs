@@ -80,10 +80,6 @@ pub fn assert_any_team_has_project(
     Ok(())
 }
 
-pub fn list_all_projects() -> Vec<(Uuid, Project)> {
-    with_state(|s| s.projects.iter().map(|val| val.into_pair()).collect())
-}
-
 struct ProjectState {
     projects: ProjectMemory,
     project_team_index: ProjectTeamIndexMemory,

@@ -69,4 +69,9 @@ export class UserProfileApi {
     const res = await this.actor.get_user_stats();
     return mapUserStatsResponse(res);
   }
+
+  public async verifyMyEmail(token: string): Promise<void> {
+    const res = await this.actor.verify_my_email({ token });
+    mapOkResponse(res);
+  }
 }

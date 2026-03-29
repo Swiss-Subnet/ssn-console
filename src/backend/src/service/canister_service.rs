@@ -20,14 +20,6 @@ use ic_cdk::{
     },
 };
 
-pub fn init() {
-    let projects = project_repository::list_all_projects();
-
-    for (project_id, _) in projects {
-        canister_repository::index_canister_project(project_id);
-    }
-}
-
 pub async fn list_my_canisters(caller: Principal) -> ApiResult<ListMyCanistersResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
 

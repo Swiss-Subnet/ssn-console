@@ -37,6 +37,7 @@ type UpdateUserProfileResponse = variant {
 type UserProfile = record {
   id : text;
   email : opt text;
+  email_verified : bool;
   status : UserStatus;
   is_admin : bool;
 };
@@ -55,6 +56,15 @@ type GetUserStatsResponse = variant {
   Err : ApiError;
 };
 
+type VerifyEmailRequest = record {
+  token : text;
+};
+
+type VerifyEmailResponse = variant {
+  Ok : reserved;
+  Err : ApiError;
+};
+
 service : {
   list_user_profiles : () -> (ListUserProfilesResponse) query;
   update_user_profile : (UpdateUserProfileRequest) -> (UpdateUserProfileResponse);
@@ -63,4 +73,5 @@ service : {
   get_my_user_profile : () -> (GetMyUserProfileResponse) query;
   create_my_user_profile : () -> (CreateMyUserProfileResponse);
   update_my_user_profile : (UpdateMyUserProfileRequest) -> (UpdateMyUserProfileResponse);
+  verify_my_email : (VerifyEmailRequest) -> (VerifyEmailResponse);
 };
