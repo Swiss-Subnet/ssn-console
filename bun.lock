@@ -39,6 +39,15 @@
         "@ssn/management-canister": "workspace:*",
       },
     },
+    "src/cycles-monitor-api": {
+      "name": "@ssn/cycles-monitor-api",
+    },
+    "src/cycles-monitor-tests": {
+      "name": "cycles-monitor-tests",
+      "dependencies": {
+        "@ssn/cycles-monitor-api": "workspace:*",
+      },
+    },
     "src/frontend": {
       "name": "frontend",
       "dependencies": {
@@ -333,6 +342,8 @@
 
     "@ssn/canister-history-api": ["@ssn/canister-history-api@workspace:src/canister-history-api"],
 
+    "@ssn/cycles-monitor-api": ["@ssn/cycles-monitor-api@workspace:src/cycles-monitor-api"],
+
     "@ssn/management-canister": ["@ssn/management-canister@workspace:src/management-canister"],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
@@ -474,6 +485,8 @@
     "cssesc": ["cssesc@3.0.0", "", { "bin": { "cssesc": "bin/cssesc" } }, "sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg=="],
 
     "csstype": ["csstype@3.2.3", "", {}, "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ=="],
+
+    "cycles-monitor-tests": ["cycles-monitor-tests@workspace:src/cycles-monitor-tests"],
 
     "dateformat": ["dateformat@4.6.3", "", {}, "sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA=="],
 

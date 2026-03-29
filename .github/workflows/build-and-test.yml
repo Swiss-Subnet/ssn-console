@@ -68,6 +68,25 @@ jobs:
       - name: pic-js tests
         run: bun run -F canister-history-tests test
 
+  build_and_test_cycles_monitor:
+    name: Build and Test Cycles Monitor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Setup DFX
+        uses: ./.github/actions/setup-dfx
+
+      - name: DFX build
+        run: dfx build cycles-monitor --check
+
+      - name: pic-js tests
+        run: bun run -F cycles-monitor-tests test
+
   build_offchain_service:
     name: Build Offchain Service
     runs-on: ubuntu-latest

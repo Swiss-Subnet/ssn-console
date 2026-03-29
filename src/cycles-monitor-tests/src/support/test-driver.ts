@@ -1,0 +1,56 @@
+import { PocketIc, type Actor, type CanisterFixture } from '@dfinity/pic';
+import { inject } from 'vitest';
+import { idlFactory, type _SERVICE } from '@ssn/cycles-monitor-api';
+import { resolve } from 'node:path';
+import { Principal } from '@icp-sdk/core/principal';
+import { controllerIdentity } from './identity';
+
+export const BACKEND_WASM_PATH = resolve(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  '..',
+  '.dfx',
+  'local',
+  'canisters',
+  'cycles-monitor',
+  'cycles-monitor.wasm.gz',
+);
+
+export class TestDriver {
+  public get actor(): Actor<_SERVICE> {
+    return this.fixture.actor;
+  }
+
+  public get canisterId(): Principal {
+    return this.fixture.canisterId;
+  }
+
+  private constructor(
+    public readonly pic: PocketIc,
+    private readonly fixture: CanisterFixture<_SERVICE>,
+  ) {}
+
+  public static async create(initialDate = new Date()): Promise<TestDriver> {
+    const pic = await PocketIc.create(inject('PIC_URL'));
+    await pic.setTime(initialDate);
+    const fixture = await this.setupCanister(pic);
+
+    return new TestDriver(pic, fixture);
+  }
+
+  private static async setupCanister(
+    pic: PocketIc,
+  ): Promise<CanisterFixture<_SERVICE>> {
+    return await pic.setupCanister<_SERVICE>({
+      idlFactory,
+      wasm: BACKEND_WASM_PATH,
+      sender: controllerIdentity.getPrincipal(),
+    });
+  }
+
+  public async tearDown(): Promise<void> {
+    await this.pic.tearDown();
+  }
+}

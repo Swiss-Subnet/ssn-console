@@ -1,5 +1,5 @@
 {
-  "dfx": "0.30.2",
+  "dfx": "0.31.0",
   "output_env_file": ".env",
   "version": 1,
   "networks": {
@@ -44,6 +44,22 @@
         "bun run -F @ssn/canister-history-api build",
         "bun run -F @ssn/management-canister build",
         "cargo build --target wasm32-unknown-unknown --release -p canister-history --locked"
+      ],
+      "declarations": {
+        "bindings": ["js", "ts"],
+        "output": "./dist"
+      },
+      "gzip": true,
+      "shrink": true,
+      "optimize": "size"
+    },
+    "cycles-monitor": {
+      "type": "custom",
+      "candid": "src/cycles-monitor/cycles_monitor.did",
+      "wasm": "target/wasm32-unknown-unknown/release/cycles_monitor.wasm",
+      "build": [
+        "bun run -F @ssn/cycles-monitor-api build",
+        "cargo build --target wasm32-unknown-unknown --release -p cycles-monitor --locked"
       ],
       "declarations": {
         "bindings": ["js", "ts"],

@@ -2,7 +2,8 @@
 members = [
     "src/backend",
     "src/canister-history",
-    "src/canister-utils"
+    "src/canister-utils",
+    "src/cycles-monitor"
 ]
 resolver = "2"
 

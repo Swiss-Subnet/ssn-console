@@ -346,6 +346,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "cycles-monitor"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_parser",
+ "canister-utils",
+ "futures",
+ "ic-cdk",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "serde",
+]
+
+[[package]]
 name = "darling"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
