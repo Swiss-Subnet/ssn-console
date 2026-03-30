@@ -8,8 +8,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_and_test_all:
-    name: Build and Test All
+  build_and_test_all_canisters:
+    name: Build and Test All Canisters
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -68,8 +68,18 @@ jobs:
       - name: pic-js tests
         run: bun run -F canister-history-tests test
 
-  build_and_test_offchain_service:
-    name: Build and Test Offchain Service
+  build_offchain_service:
+    name: Build Offchain Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build Container image
+        run: docker build -f ./config/offchain-service.containerfile -t offchain-service .
+
+  test_offchain_service:
+    name: Test Offchain Service
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

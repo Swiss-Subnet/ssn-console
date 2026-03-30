@@ -1,0 +1,8 @@
+(block offchain-service
+  (blockinherit container)
+  (blockinherit restricted_net_container)
+  (allow process process ( capability ( chown dac_override fowner fsetid kill net_bind_service setfcap setgid setpcap setuid sys_chroot )))
+
+  (allow process ntop_port_t ( tcp_socket ( name_bind )))
+  (allow process smtp_port_t ( tcp_socket ( name_connect )))
+)

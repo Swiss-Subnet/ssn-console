@@ -13,4 +13,7 @@ node_modules
 dist
 
 # environment variables
-.env
+.env*
+
+# deployment temporary files
+tmp
