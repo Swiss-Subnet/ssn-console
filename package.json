@@ -28,6 +28,8 @@
     "src/canister-history-api",
     "src/canister-history-tests",
     "src/frontend",
+    "src/cycles-monitor-api",
+    "src/cycles-monitor-tests",
     "src/management-canister",
     "src/offchain-service",
     "src/scripts"

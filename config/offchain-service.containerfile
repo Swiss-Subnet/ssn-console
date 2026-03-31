@@ -10,6 +10,8 @@ COPY /src/backend-api/package.json ./src/backend-api/package.json
 COPY /src/backend-tests/package.json ./src/backend-tests/package.json
 COPY /src/canister-history-api/package.json ./src/canister-history-api/package.json
 COPY /src/canister-history-tests/package.json ./src/canister-history-tests/package.json
+COPY /src/cycles-monitor-api/package.json ./src/cycles-monitor-api/package.json
+COPY /src/cycles-monitor-tests/package.json ./src/cycles-monitor-tests/package.json
 COPY /src/frontend/package.json ./src/frontend/package.json
 COPY /src/management-canister/package.json ./src/management-canister/package.json
 COPY /src/offchain-service/package.json ./src/offchain-service/package.json

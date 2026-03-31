@@ -4,10 +4,11 @@
   "type": "module",
   "scripts": {
     "fetch-subnet-canister-ranges": "bun run ./src/fetch-subnet-canister-ranges.ts",
+    "fetch-local-subnet-canister-ranges": "bun run ./src/fetch-local-subnet-canister-ranges.ts",
     "fetch-canisters-csv": "bun run ./src/fetch-canisters-csv.ts"
   },
   "dependencies": {
-    "@ssn/canister-history-api": "workspace:*",
-    "@ssn/backend-api": "workspace:*"
+    "@ssn/backend-api": "workspace:*",
+    "@ssn/canister-history-api": "workspace:*"
   }
 }
