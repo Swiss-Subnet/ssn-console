@@ -14,23 +14,26 @@ This is a monorepo containing an Internet Computer Protocol (ICP) application.
 | `offchain-service`       | `src/offchain-service`       | TypeScript / Bun      | HTTP service — ElysiaJS, JWT auth, email via nodemailer                                       |
 | `backend-tests`          | `src/backend-tests`          | TypeScript            | PocketIC integration tests for the `backend` canister                                         |
 | `canister-history-tests` | `src/canister-history-tests` | TypeScript            | PocketIC integration tests for the `canister-history` canister                                |
+| `cycles-monitor-tests`   | `src/cycles-monitor-tests`   | TypeScript            | PocketIC integration tests for the `cycles-monitor` canister                                  |
 | `scripts`                | `src/scripts`                | TypeScript            | Utility scripts (CSV fetch, subnet data)                                                      |
 | `backend-api`            | `src/backend-api`            | TypeScript            | **Generated** — do not hand-edit; JS/TS bindings produced by `icp-bindgen` from `backend.did` |
 | `canister-history-api`   | `src/canister-history-api`   | TypeScript            | **Generated** — do not hand-edit; JS/TS bindings produced by `icp-bindgen`                    |
+| `cycles-monitor-api`     | `src/cycles-monitor-api`     | TypeScript            | **Generated** — do not hand-edit; JS/TS bindings produced by `icp-bindgen`                    |
 | `management-canister`    | `src/management-canister`    | TypeScript            | **Generated** — do not hand-edit; JS/TS bindings for the IC management canister               |
 
 ### Rust Canisters & Libraries
 
-| Crate              | Path                   | Description                                                                                      |
-| ------------------ | ---------------------- | ------------------------------------------------------------------------------------------------ |
-| `backend`          | `src/backend`          | Main ICP canister; serves the frontend SPA as certified HTTP assets                              |
-| `canister-history` | `src/canister-history` | Canister history tracker                                                                         |
-| `canister-utils`   | `src/canister-utils`   | Shared Rust library — auth, CBOR, UUID, error types; used as a path dependency by both canisters |
+| Crate              | Path                   | Description                                                                                     |
+| ------------------ | ---------------------- | ----------------------------------------------------------------------------------------------- |
+| `backend`          | `src/backend`          | Main ICP canister; serves the frontend SPA as certified HTTP assets                             |
+| `canister-history` | `src/canister-history` | Canister history tracker                                                                        |
+| `cycles-monitor`   | `src/cycles-monitor`   | Monitor and record cycle usage                                                                  |
+| `canister-utils`   | `src/canister-utils`   | Shared Rust library — auth, CBOR, UUID, error types; used as a path dependency by the canisters |
 
 ### DFX Configuration (`dfx.json`)
 
 - DFX version: `0.30.2`
-- Defined canisters: `backend`, `canister-history`, `internet_identity` (remote on non-local networks)
+- Defined canisters: `backend`, `canister-history`, `cycles-monitor`, `internet_identity` (remote on non-local networks)
 - Networks: `local` (127.0.0.1:8000 ephemeral), `test` (icp0.io persistent), `production` (icp0.io persistent)
 - Canister IDs are written to `.env` by DFX on deploy and read by Vite via `vite-plugin-environment`
 
@@ -61,7 +64,7 @@ This is a monorepo containing an Internet Computer Protocol (ICP) application.
 
 ### Rust / ICP
 
-These commands apply to all canister projects (`backend`, `canister-history`).
+These commands apply to all canister projects (`backend`, `canister-history`, `cycles-monitor`).
 
 - **Build Rust Canisters**: `dfx build <canister-name> --check` (preferred over `cargo build`; validates ICP configuration)
 - **Lint Rust**: `cargo clippy --workspace --all-targets -- -D warnings`
@@ -79,6 +82,8 @@ The core business logic is tested using PocketIC and Vitest. Each test package's
   bun run -F backend-tests test
   # or
   bun run -F canister-history-tests test
+  # or
+  bun run -F cycles-monitor-tests test
   ```
 - **Run a Single Test File** (preferred for iterating quickly):
   ```bash
@@ -89,7 +94,7 @@ The core business logic is tested using PocketIC and Vitest. Each test package's
   bun run -F backend-tests test <test-file-name>.spec.ts -t "test name"
   ```
 
-Test files are located in `src/backend-tests/src/tests/` and `src/canister-history-tests/src/tests/`.
+Test files are located in `src/backend-tests/src/tests/`, `src/canister-history-tests/src/tests/`, and `src/cycles-monitor-tests/src/tests/`.
 
 ---
 
