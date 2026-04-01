@@ -21,3 +21,6 @@ ic-asset-certification = "3"
 include_dir = { version = "0.7", features = ["glob"] }
 dotenv_codegen = "0.15.0"
 futures.workspace = true
+ed25519-dalek = "2"
+base64 = "0.22"
+serde_json = "1"

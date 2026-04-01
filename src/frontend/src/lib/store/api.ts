@@ -7,7 +7,9 @@ import {
   TermsAndConditionsApi,
   ProjectApi,
   OrganizationApi,
+  AuthApi,
 } from '@/lib/api';
+import { OFFCHAIN_SERVICE_URL } from '@/env';
 import { isNil } from '@/lib/nil';
 import type { ApiSlice, AppStateCreator } from '@/lib/store/model';
 import { Actor, HttpAgent } from '@icp-sdk/core/agent';
@@ -27,6 +29,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
   userProfileApi: null,
   canisterApi: null,
   managementCanisterApi: null,
+  authApi: null,
   trustedPartnerApi: null,
   termsAndConditionsApi: null,
   projectApi: null,
@@ -61,6 +64,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
     const termsAndConditionsApi = new TermsAndConditionsApi(backendApiActor);
     const projectApi = new ProjectApi(backendApiActor);
     const organizationApi = new OrganizationApi(backendApiActor);
+    const authApi = new AuthApi(OFFCHAIN_SERVICE_URL);
 
     set({
       agent,
@@ -72,6 +76,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
       termsAndConditionsApi,
       projectApi,
       organizationApi,
+      authApi,
     });
   },
 
@@ -144,5 +149,14 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (set, get) => ({
     }
 
     return organizationApi;
+  },
+
+  getAuthApi() {
+    const { authApi } = get();
+    if (isNil(authApi)) {
+      throw new Error('AuthApi is not initialized');
+    }
+
+    return authApi;
   },
 });

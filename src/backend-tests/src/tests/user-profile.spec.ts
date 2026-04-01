@@ -206,6 +206,7 @@ describe('User Profile', () => {
         status: { Inactive: null },
         email: [aliceEmail],
         is_admin: false,
+        email_verified: false,
       });
     });
 
@@ -223,6 +224,7 @@ describe('User Profile', () => {
         status: { Inactive: null },
         email: [adminEmail],
         is_admin: true,
+        email_verified: false,
       });
     });
   });
@@ -247,6 +249,7 @@ describe('User Profile', () => {
         status: { Inactive: null },
         email: [],
         is_admin: false,
+        email_verified: false,
       });
 
       const fetchedProfileRes = await driver.actor.get_my_user_profile();
@@ -306,6 +309,7 @@ describe('User Profile', () => {
         status: { Inactive: null },
         email: [],
         is_admin: true,
+        email_verified: false,
       });
 
       const fetchedProfileRes = await driver.actor.get_my_user_profile();

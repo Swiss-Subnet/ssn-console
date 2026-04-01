@@ -5,9 +5,10 @@ import { selectIsActive, useAppStore } from '@/lib/store';
 import { SignUpPrompt } from '@/routes/home/sign-up-prompt';
 import { ActivityPrompt } from '@/routes/home/activity-prompt';
 import { Container } from '@/components/layout/container';
+import EmailVerificationPrompt from './email-verification-prompt';
 
 const Home: FC = () => {
-  const { isAuthenticated } = useAppStore();
+  const { isAuthenticated, profile } = useAppStore();
   const isActive = useAppStore(selectIsActive);
 
   return (
@@ -21,6 +22,10 @@ const Home: FC = () => {
       </div>
 
       {!isAuthenticated && <SignUpPrompt className="mt-8" />}
+
+      {isAuthenticated && profile?.email && !profile.emailVerified && (
+        <EmailVerificationPrompt className="mt-8" />
+      )}
 
       {isAuthenticated && !isActive && <EmailPrompt className="mt-8" />}
 

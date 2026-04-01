@@ -118,6 +118,16 @@ pub fn update_user_status_count(was_active: bool, is_active: bool) {
     });
 }
 
+pub fn migrate_email_verified() {
+    mutate_state(|s| {
+        let profiles: Vec<_> = s.profiles.iter().map(|e| e.into_pair()).collect();
+        for (id, mut profile) in profiles {
+            profile.email_verified = false;
+            s.profiles.insert(id, profile);
+        }
+    });
+}
+
 struct UserProfileState {
     profiles: UserProfileMemory,
     principal_index: UserProfilePrincipalIndexMemory,

@@ -19,6 +19,7 @@ import type {
   TermsAndConditionsApi,
   ProjectApi,
   OrganizationApi,
+  AuthApi,
 } from '@/lib/api';
 import type { ActorSubclass, HttpAgent, Identity } from '@icp-sdk/core/agent';
 import type { AuthClient } from '@icp-sdk/auth/client';
@@ -43,6 +44,7 @@ export type ApiSlice = {
   actor: ActorSubclass<_SERVICE> | null;
   userProfileApi: UserProfileApi | null;
   canisterApi: CanisterApi | null;
+  authApi: AuthApi | null;
   managementCanisterApi: ManagementCanisterApi | null;
   trustedPartnerApi: TrustedPartnerApi | null;
   termsAndConditionsApi: TermsAndConditionsApi | null;
@@ -58,6 +60,7 @@ export type ApiSlice = {
   getTermsAndConditionsApi: () => TermsAndConditionsApi;
   getProjectApi: () => ProjectApi;
   getOrganizationApi: () => OrganizationApi;
+  getAuthApi: () => AuthApi;
 };
 
 export type UserProfileSlice = {
@@ -69,6 +72,8 @@ export type UserProfileSlice = {
   clearUserProfile: () => void;
 
   setEmail: (email: string) => Promise<void>;
+  setEmailVerified: () => void;
+  sendVerificationEmail: (email: string) => Promise<void>;
 };
 
 export type UsersSlice = {

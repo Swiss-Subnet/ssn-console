@@ -33,6 +33,26 @@ jobs:
           rm -f ./test.pem
           dfx identity use test
 
+      - name: Update Canister Environment Variables
+        env:
+          PUBLIC_KEY: ${{ secrets.PUBLIC_KEY }}
+        run: |
+          BACKEND_ID=$(dfx canister id backend --network test)
+          FORMATTED_KEY=$(echo "$PUBLIC_KEY" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
+          dfx canister call aaaaa-aa update_settings "(
+            record {
+              canister_id = principal \"$BACKEND_ID\";
+              settings = record {
+                environment_variables = opt vec {
+                  record {
+                    name = \"PUBLIC_KEY\";
+                    value = \"$FORMATTED_KEY\";
+                  };
+                };
+              };
+            }
+          )" --network test
+
       - name: Deploy to test
         run: |
           export DFX_WARNING=-mainnet_plaintext_identity

@@ -1,4 +1,5 @@
-import { type ApiError } from '@ssn/backend-api';
+import { isNil } from '@/lib/nil';
+import { type ApiError, type ApiErrorCode } from '@ssn/backend-api';
 
 export interface ApiSuccessResponse<T> {
   Ok: T;
@@ -17,7 +18,36 @@ export function mapOkResponse<T>(response: ApiResponse<T>): T {
     return response.Ok;
   }
 
-  const [code] = response.Err.code;
+  const [codeObj] = response.Err.code;
+  const code = codeObjToString(codeObj);
 
   throw new Error(`[${code ?? ''}]: ${response.Err.message}`);
+}
+
+function codeObjToString(codeObj: ApiErrorCode | undefined): string {
+  if (isNil(codeObj)) {
+    return 'Unknown';
+  }
+
+  if ('ClientError' in codeObj) {
+    return 'ClientError';
+  }
+
+  if ('Unauthorized' in codeObj) {
+    return 'Unauthorized';
+  }
+
+  if ('DependencyError' in codeObj) {
+    return 'DependencyError';
+  }
+
+  if ('InternalError' in codeObj) {
+    return 'InternalError';
+  }
+
+  if ('Unauthenticated' in codeObj) {
+    return 'Unauthenticated';
+  }
+
+  return 'Unknown';
 }

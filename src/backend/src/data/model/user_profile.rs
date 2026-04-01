@@ -6,6 +6,8 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserProfile {
     pub email: Option<String>,
+    #[serde(default)]
+    pub email_verified: bool,
     pub status: UserStatus,
 }
 
@@ -19,6 +21,7 @@ impl Default for UserProfile {
     fn default() -> Self {
         Self {
             email: None,
+            email_verified: false,
             status: UserStatus::Inactive,
         }
     }

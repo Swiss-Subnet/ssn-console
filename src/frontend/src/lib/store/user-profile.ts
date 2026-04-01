@@ -1,4 +1,5 @@
 import { UserStatus } from '@/lib/api-models';
+import { isNil } from '@/lib/nil';
 import type {
   AppSlice,
   AppStateCreator,
@@ -51,7 +52,7 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
     await userProfileApi.updateMyUserProfile({ email });
 
     set(state => {
-      if (!state.profile) {
+      if (isNil(state.profile)) {
         return state;
       }
 
@@ -59,6 +60,33 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
         profile: { ...state.profile, email },
       };
     });
+  },
+
+  setEmailVerified() {
+    set(state => {
+      if (isNil(state.profile)) {
+        return state;
+      }
+
+      return {
+        profile: { ...state.profile, emailVerified: true },
+      };
+    });
+  },
+
+  async sendVerificationEmail(email: string) {
+    const { getAuthApi, isAuthenticated, isProfileInitialized } = get();
+
+    if (!isProfileInitialized) {
+      throw new Error('User profile is not initialized');
+    }
+
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const authApi = getAuthApi();
+    await authApi.sendEmailVerification(email);
   },
 });
 

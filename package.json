@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@icp-sdk/auth": "^5.0.0",
-    "@icp-sdk/core": "^5.0.0"
+    "@icp-sdk/core": "^5.0.0",
+    "jose": "^6.2.1"
   },
   "devDependencies": {
     "@dfinity/pic": "^0.20.0",

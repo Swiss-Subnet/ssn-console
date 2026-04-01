@@ -2,10 +2,12 @@
   "name": "offchain-service",
   "private": true,
   "scripts": {
-    "start": "bun run --watch src/index.ts",
+    "start": "bun run --env-file=../../.env.local --watch src/index.ts",
+    "start:test": "bun run --env-file=../../.env.test --watch src/index.ts",
     "test": "bun test"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
     "elysia": "^1.4.27",
     "jose": "^6.2.1",
     "logixlysia": "^6.3.0",

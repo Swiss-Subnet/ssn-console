@@ -22,6 +22,7 @@ pub struct UpdateUserProfileRequest {
 pub struct UserProfile {
     pub id: String,
     pub email: Option<String>,
+    pub email_verified: bool,
     pub status: UserStatus,
     pub is_admin: bool,
 }
@@ -37,4 +38,9 @@ pub struct GetUserStatsResponse {
     pub total: u64,
     pub active: u64,
     pub inactive: u64,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct VerifyEmailRequest {
+    pub token: String,
 }
