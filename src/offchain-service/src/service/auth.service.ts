@@ -24,7 +24,7 @@ export async function generateEmailVerificationToken(
     .sign(privateKey);
 }
 
-export async function sendVerificationEmail(
+async function sendVerificationEmail(
   email: string,
   token: string,
 ): Promise<void> {
