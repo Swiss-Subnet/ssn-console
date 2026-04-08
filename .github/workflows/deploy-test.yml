@@ -16,6 +16,8 @@ jobs:
     environment:
       name: test
       url: https://r5rta-kyaaa-aaaax-qaaca-cai.icp0.io
+    env:
+      DFX_WARNING: -mainnet_plaintext_identity
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -39,6 +41,7 @@ jobs:
         run: |
           BACKEND_ID=$(dfx canister id backend --network test)
           FORMATTED_KEY=$(echo "$PUBLIC_KEY" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
+
           dfx canister call aaaaa-aa update_settings "(
             record {
               canister_id = principal \"$BACKEND_ID\";
@@ -54,6 +57,4 @@ jobs:
           )" --network test
 
       - name: Deploy to test
-        run: |
-          export DFX_WARNING=-mainnet_plaintext_identity
-          dfx deploy --network test
+        run: dfx deploy --network test

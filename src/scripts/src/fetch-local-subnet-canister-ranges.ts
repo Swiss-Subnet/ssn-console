@@ -1,48 +1,57 @@
-import { PocketIc } from '@dfinity/pic';
 import { Principal } from '@icp-sdk/core/principal';
-import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-async function getLocalDfxUrl(): Promise<string> {
+// This script parses the replica-effective-config.json file to get the local subnet's canister id range.
+// This is unlikely to change in future DFX versions since DFX is in maintenance mode now,
+// but we'll probably need a different solution if we move to the new ICP CLI.
+
+function getLocalSubnetRange(): [Principal, Principal] {
+  const configPath = join(
+    process.cwd(),
+    '.dfx/network/local/replica-effective-config.json',
+  );
+
+  let configData: string;
   try {
-    const port = execSync('dfx info pocketic-config-port', {
-      encoding: 'utf8',
-    }).trim();
-    return `http://localhost:${port}`;
+    configData = readFileSync(configPath, 'utf8');
   } catch (error) {
     throw new Error(
-      'Failed to get local DFX URL. Make sure dfx is running and the command is available.',
+      `Failed to read replica config at ${configPath}. Make sure dfx is running.`,
     );
   }
-}
 
-async function getSubnetCanisterRanges(
-  pic: PocketIc,
-): Promise<[Principal, Principal][]> {
-  const subnet = await pic.getApplicationSubnets();
-  const firstSubnet = subnet.at(0);
-  if (!firstSubnet) {
-    throw new Error('An application subnet was not created by pocket ic');
+  const config = JSON.parse(configData);
+  const effectiveId = config.effective_canister_id;
+
+  if (!effectiveId) {
+    throw new Error('Could not find effective_canister_id in replica config.');
   }
 
-  return firstSubnet.canisterRanges.map<[Principal, Principal]>(
-    ({ start, end }) => [start, end],
-  );
+  const startPrincipal = Principal.fromText(effectiveId);
+  const startBytes = startPrincipal.toUint8Array();
+
+  // The local dfx subnet assigns a /20 range (0xFFFFF).
+  // Canister IDs are 10 bytes: 8 bytes payload + 0x01 0x01 suffix.
+  // The 20-bit counter spans bytes 5, 6, and 7.
+  const endBytes = new Uint8Array(startBytes);
+  endBytes[5] = endBytes[5] | 0x0f; // Set lower 4 bits
+  endBytes[6] = 0xff; // Set all 8 bits
+  endBytes[7] = 0xff; // Set all 8 bits
+
+  const endPrincipal = Principal.fromUint8Array(endBytes);
+
+  return [startPrincipal, endPrincipal];
 }
 
 async function main() {
   try {
-    const dfxUrl = await getLocalDfxUrl();
-    console.log(`Using local DFX URL: ${dfxUrl}`);
-
-    const pic = await PocketIc.create(dfxUrl);
-
-    const ranges = await getSubnetCanisterRanges(pic);
-
-    console.log('\n✅ Successfully retrieved canister ranges:');
-    console.table(ranges.map(([start, end]) => [start.toText(), end.toText()]));
+    const [start, end] = getLocalSubnetRange();
+    console.log(`${start.toText()} ${end.toText()}`);
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('\n❌ Error fetching canister ranges:', errMsg);
+    console.error(errMsg);
+    process.exit(1);
   }
 }
 

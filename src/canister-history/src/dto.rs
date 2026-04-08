@@ -10,6 +10,14 @@ pub struct UpdateSubnetCanisterRangesRequest {
 pub struct UpdateSubnetCanisterRangesResponse {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct TriggerSyncCanisterHistoriesRequest {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct TriggerSyncCanisterHistoriesResponse {
+    pub message: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct ListSubnetCanisterRangesRequest {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

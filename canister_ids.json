@@ -6,5 +6,9 @@
   "canister-history": {
     "test": "thn34-uiaaa-aaaax-qaana-cai",
     "production": "tooqa-caaaa-aaaax-qaamq-cai"
+  },
+  "cycles-monitor": {
+    "test": "r5rta-kyaaa-aaaax-qaaca-cai",
+    "production": "xrzdd-5qaaa-aaaax-qaavq-cai"
   }
 }

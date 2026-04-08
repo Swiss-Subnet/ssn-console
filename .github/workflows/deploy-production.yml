@@ -13,6 +13,8 @@ jobs:
     environment:
       name: production
       url: https://console.subnet.ch
+    env:
+      DFX_WARNING: -mainnet_plaintext_identity
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -36,6 +38,7 @@ jobs:
         run: |
           BACKEND_ID=$(dfx canister id backend --network production)
           FORMATTED_KEY=$(echo "$PUBLIC_KEY" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
+
           dfx canister call aaaaa-aa update_settings "(
             record {
               canister_id = principal \"$BACKEND_ID\";
@@ -51,6 +54,4 @@ jobs:
           )" --network production
 
       - name: Deploy to production
-        run: |
-          export DFX_WARNING=-mainnet_plaintext_identity
-          dfx deploy --network production
+        run: dfx deploy --network production

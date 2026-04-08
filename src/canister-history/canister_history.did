@@ -52,6 +52,16 @@ type ListCanisterChangesResponse = variant {
   };
   Err : ApiError;
 };
+
+type TriggerSyncCanisterHistoriesRequest = record {};
+
+type TriggerSyncCanisterHistoriesResponse = variant {
+  Ok : record {
+    message : text;
+  };
+  Err : ApiError;
+};
+
 type CanisterChangeOrigin = variant {
   FromUser : record {
     user_id : principal;
@@ -109,4 +119,5 @@ service : {
   list_subnet_canister_ranges : (ListSubnetCanisterRangesRequest) -> (ListSubnetCanisterRangesResponse) query;
   list_subnet_canister_ids : (ListSubnetCanisterIdsRequest) -> (ListSubnetCanisterIdsResponse) query;
   list_canister_changes : (ListCanisterChangesRequest) -> (ListCanisterChangesResponse) query;
+  trigger_sync_canister_histories : (TriggerSyncCanisterHistoriesRequest) -> (TriggerSyncCanisterHistoriesResponse);
 };
