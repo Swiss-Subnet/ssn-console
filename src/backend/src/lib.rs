@@ -4,6 +4,8 @@ use dto::*;
 use ic_cdk::*;
 use ic_http_certification::{HttpRequest, HttpResponse};
 
+use crate::service::canister_service;
+
 mod constants;
 mod controller;
 mod data;
@@ -26,6 +28,7 @@ fn export_candid() -> String {
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
     controller::http::init();
+    canister_service::migrate_project_canister_count();
 }
 
 #[cfg(test)]

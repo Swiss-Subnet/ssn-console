@@ -7,11 +7,11 @@ use crate::{
         canister_repository, organization_repository, project_repository, team_repository,
         user_profile_repository, Canister,
     },
-    dto::{self, ListMyCanistersResponse},
+    dto::{self},
     mapping::map_canister_response,
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiResult, Uuid};
 use futures::future::join_all;
 use ic_cdk::{
     api::canister_self,
@@ -20,26 +20,32 @@ use ic_cdk::{
     },
 };
 
-pub async fn list_my_canisters(caller: Principal) -> ApiResult<ListMyCanistersResponse> {
-    let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
+pub fn migrate_project_canister_count() {
+    canister_repository::migrate_project_canister_count();
+}
 
-    let team_id = team_repository::list_user_team_ids(user_id)
-        .first()
-        .cloned()
-        .ok_or_else(|| {
-            ApiError::internal_error("User does not have a default team.".to_string())
-        })?;
+pub async fn list_project_canisters(
+    caller: &Principal,
+    project_id: &str,
+    limit: Option<u64>,
+    page: Option<u64>,
+) -> ApiResult<dto::ListProjectCanistersResponse> {
+    let limit = limit
+        .unwrap_or(DEFAULT_PAGINATION_LIMIT)
+        .clamp(MIN_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT);
+    let page = page.unwrap_or(DEFAULT_PAGINATION_PAGE);
 
-    let project_id = project_repository::list_team_project_ids(team_id)
-        .first()
-        .cloned()
-        .ok_or_else(|| {
-            ApiError::internal_error(
-                "User's default team does not have a default project.".to_string(),
-            )
-        })?;
+    let project_id = Uuid::try_from(project_id)?;
+    let total_items = canister_repository::get_project_canister_count(project_id);
+    let total_pages = total_items.div_ceil(limit).max(MIN_PAGINATION_PAGE);
+    let page = page.clamp(MIN_PAGINATION_PAGE, total_pages);
 
-    let project_canisters = canister_repository::list_canisters_by_project(project_id);
+    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
+    let team_ids = team_repository::list_user_team_ids(user_id);
+    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
+
+    let project_canisters =
+        canister_repository::list_canisters_by_project(project_id, limit as usize, page as usize);
     let mut canisters = vec![];
 
     for chunk in project_canisters.chunks(MAX_CALLS_PER_BATCH) {
@@ -57,7 +63,15 @@ pub async fn list_my_canisters(caller: Principal) -> ApiResult<ListMyCanistersRe
         canisters.extend(join_all(canister_futures).await);
     }
 
-    Ok(canisters)
+    Ok(dto::ListProjectCanistersResponse {
+        canisters,
+        meta: dto::PaginationMetaResponse {
+            limit,
+            page,
+            total_items,
+            total_pages,
+        },
+    })
 }
 
 pub fn list_all_canisters(

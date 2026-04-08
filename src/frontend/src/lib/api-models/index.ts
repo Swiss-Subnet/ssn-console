@@ -3,6 +3,7 @@ export * from './canister-history';
 export * from './error';
 export * from './management-canister';
 export * from './organization';
+export * from './pagination';
 export * from './project';
 export * from './team';
 export * from './terms-and-conditions';

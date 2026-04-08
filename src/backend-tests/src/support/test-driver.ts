@@ -9,6 +9,7 @@ import { resolve } from 'node:path';
 import { Principal } from '@icp-sdk/core/principal';
 import { controllerIdentity } from './identity';
 import { ProposalDriver } from './proposal-driver';
+import { CanisterDriver } from './canister-driver';
 import { extractOkResponse } from './error';
 import * as crypto from 'node:crypto';
 import { UserDriver } from './user-driver';
@@ -36,6 +37,7 @@ export const PRIVATE_KEY = privateKey;
 export class TestDriver {
   public readonly proposals: ProposalDriver;
   public readonly users: UserDriver;
+  public readonly canisters: CanisterDriver;
 
   public get actor(): Actor<BackendService> {
     return this.fixture.actor;
@@ -50,6 +52,7 @@ export class TestDriver {
     private readonly fixture: CanisterFixture<BackendService>,
   ) {
     this.proposals = new ProposalDriver(pic, fixture.canisterId);
+    this.canisters = new CanisterDriver(pic, fixture.canisterId);
     this.users = new UserDriver(pic, fixture.canisterId);
   }
 

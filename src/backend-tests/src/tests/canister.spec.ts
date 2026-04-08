@@ -215,8 +215,10 @@ describe('Canisters', () => {
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
 
-      const canisterRes = await driver.actor.list_my_canisters();
-      const [canister] = extractOkResponse(canisterRes);
+      const [canister] = await driver.canisters.getAllProjectCanisters(
+        aliceIdentity,
+        project.id,
+      );
       await expectCanister(canister!);
     });
 
@@ -280,8 +282,10 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(controllerIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
-      const [canister] = extractOkResponse(canisterRes);
+      const [canister] = await driver.canisters.getAllProjectCanisters(
+        controllerIdentity,
+        project.id,
+      );
       await expectCanister(canister!);
     });
 
@@ -310,8 +314,10 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
-      const [canister] = extractOkResponse(canisterRes);
+      const [canister] = await driver.canisters.getAllProjectCanisters(
+        aliceIdentity,
+        project.id,
+      );
       await expectCanister(canister!);
     });
   });
@@ -420,8 +426,10 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
-      const [canister] = extractOkResponse(canisterRes);
+      const [canister] = await driver.canisters.getAllProjectCanisters(
+        aliceIdentity,
+        project.id,
+      );
       const canisterId = Principal.fromText(canister!.principal_id);
 
       await driver.proposals.addCanisterController(
@@ -455,8 +463,10 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
-      const [canister] = extractOkResponse(canisterRes);
+      const [canister] = await driver.canisters.getAllProjectCanisters(
+        aliceIdentity,
+        project.id,
+      );
 
       await driver.proposals.addCanisterController(
         aliceIdentity,
@@ -480,8 +490,10 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
-      const [canister] = extractOkResponse(canisterRes);
+      const [canister] = await driver.canisters.getAllProjectCanisters(
+        aliceIdentity,
+        project.id,
+      );
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
@@ -511,8 +523,10 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
-      const [canister] = extractOkResponse(canisterRes);
+      const [canister] = await driver.canisters.getAllProjectCanisters(
+        aliceIdentity,
+        project.id,
+      );
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
@@ -558,8 +572,10 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(controllerIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
-      const [canister] = extractOkResponse(canisterRes);
+      const [canister] = await driver.canisters.getAllProjectCanisters(
+        controllerIdentity,
+        project.id,
+      );
 
       await driver.proposals.addCanisterController(
         controllerIdentity,
@@ -603,8 +619,10 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
-      const [canister] = extractOkResponse(canisterRes);
+      const [canister] = await driver.canisters.getAllProjectCanisters(
+        aliceIdentity,
+        project.id,
+      );
 
       await driver.proposals.addCanisterController(
         aliceIdentity,

@@ -43,14 +43,17 @@ export class ProposalDriver {
     projectId: string,
     operation: ProposalOperation,
   ): Promise<Proposal> {
-    this.actor.setIdentity(identity);
-    const proposalRes = await this.actor.create_proposal({
-      project_id: projectId,
-      operation: [operation],
-    });
-    const proposal = extractOkResponse(proposalRes);
+    try {
+      this.actor.setIdentity(identity);
+      const proposalRes = await this.actor.create_proposal({
+        project_id: projectId,
+        operation: [operation],
+      });
+      const proposal = extractOkResponse(proposalRes);
 
-    this.actor.setIdentity(this.defaultIdentity);
-    return proposal;
+      return proposal;
+    } finally {
+      this.actor.setIdentity(this.defaultIdentity);
+    }
   }
 }

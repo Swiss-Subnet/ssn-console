@@ -1,7 +1,16 @@
 import "../../canister-utils/error.did";
 
-type ListMyCanistersResponse = variant {
-  Ok : vec Canister;
+type ListProjectCanistersRequest = record {
+  project_id : text;
+  limit : opt nat64;
+  page : opt nat64;
+};
+
+type ListProjectCanistersResponse = variant {
+  Ok : record {
+    canisters : vec Canister;
+    meta : PaginationMetaResponse;
+  };
   Err : ApiError;
 };
 
@@ -100,6 +109,6 @@ type CanisterEnvironmentVariable = record {
 };
 
 service : {
-  list_my_canisters : () -> (ListMyCanistersResponse);
+  list_project_canisters : (ListProjectCanistersRequest) -> (ListProjectCanistersResponse);
   list_all_canisters : (ListAllCanistersRequest) -> (ListAllCanistersResponse) query;
 };

@@ -1,26 +1,33 @@
 use crate::{
-    dto::{ListAllCanistersRequest, ListAllCanistersResponse, ListMyCanistersResponse},
+    dto::{
+        ListAllCanistersRequest, ListAllCanistersResponse, ListProjectCanistersRequest,
+        ListProjectCanistersResponse,
+    },
     service::canister_service,
 };
 use canister_utils::{assert_authenticated, assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[update]
-async fn list_my_canisters() -> ApiResultDto<ListMyCanistersResponse> {
+async fn list_project_canisters(
+    req: ListProjectCanistersRequest,
+) -> ApiResultDto<ListProjectCanistersResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
     }
 
-    canister_service::list_my_canisters(caller).await.into()
+    canister_service::list_project_canisters(&caller, &req.project_id, req.limit, req.page)
+        .await
+        .into()
 }
 
 #[query]
-fn list_all_canisters(request: ListAllCanistersRequest) -> ApiResultDto<ListAllCanistersResponse> {
+fn list_all_canisters(req: ListAllCanistersRequest) -> ApiResultDto<ListAllCanistersResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_controller(&caller) {
         return ApiResultDto::Err(err);
     }
 
-    canister_service::list_all_canisters(request.limit, request.page).into()
+    canister_service::list_all_canisters(req.limit, req.page).into()
 }

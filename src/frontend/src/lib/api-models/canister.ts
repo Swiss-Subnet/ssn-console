@@ -1,12 +1,19 @@
 import { mapOkResponse } from '@/lib/api-models/error';
+import {
+  mapPaginationMetaResponse,
+  type PaginationMetaResponse,
+} from '@/lib/api-models/pagination';
 import { isNotNil } from '@/lib/nil';
 import { fromCandidOpt } from '@/lib/utils';
 import type {
   Canister as ApiCanister,
-  ListMyCanistersResponse as ApiListMyCanistersResponse,
+  ListProjectCanistersResponse as ApiListProjectCanistersResponse,
 } from '@ssn/backend-api';
 
-export type ListMyCanistersResponse = Canister[];
+export type ListProjectCanistersResponse = {
+  canisters: Canister[];
+  meta: PaginationMetaResponse;
+};
 
 export type Canister = {
   id: string;
@@ -58,10 +65,15 @@ export enum CanisterStatus {
   Stopped = 'Stopped',
 }
 
-export function mapListMyCanistersResponse(
-  res: ApiListMyCanistersResponse,
-): ListMyCanistersResponse {
-  return mapOkResponse(res).map(mapCanisterResponse);
+export function mapListProjectCanistersResponse(
+  res: ApiListProjectCanistersResponse,
+): ListProjectCanistersResponse {
+  const okRes = mapOkResponse(res);
+
+  return {
+    canisters: okRes.canisters.map(mapCanisterResponse),
+    meta: mapPaginationMetaResponse(okRes.meta),
+  };
 }
 
 export function mapCanisterResponse(res: ApiCanister): Canister {

@@ -6,7 +6,7 @@ import {
   TestDriver,
   unauthenticatedError,
   unauthorizedError,
-} from '../support';
+} from '../../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 import type { Identity } from '@icp-sdk/core/agent';
 import type { Canister, UserProfile } from '@ssn/backend-api';
@@ -81,25 +81,40 @@ describe('list_all_canisters', () => {
       const numAliceProjects = 5;
       const numBobProjects = 3;
 
-      [aliceIdentity, aliceProfile] = await driver.users.createUser();
+      aliceIdentity = generateRandomIdentity();
+      bobIdentity = generateRandomIdentity();
+
       driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
       await driver.actor.update_my_user_profile({ email: [aliceEmail] });
+
+      const aliceProfileRes = await driver.actor.get_my_user_profile();
+      aliceProfile = extractOkResponse(aliceProfileRes)[0]!;
+
       const aliceProject = await driver.getDefaultProject();
       for (let i = 0; i < numAliceProjects; i++) {
         await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
       }
-      const aliceCanistersRes = await driver.actor.list_my_canisters();
-      aliceCanisters = extractOkResponse(aliceCanistersRes);
+      aliceCanisters = await driver.canisters.getAllProjectCanisters(
+        aliceIdentity,
+        aliceProject.id,
+      );
 
-      [bobIdentity, bobProfile] = await driver.users.createUser();
       driver.actor.setIdentity(bobIdentity);
+      await driver.actor.create_my_user_profile();
       await driver.actor.update_my_user_profile({ email: [bobEmail] });
+
+      const bobProfileRes = await driver.actor.get_my_user_profile();
+      bobProfile = extractOkResponse(bobProfileRes)[0]!;
+
       const bobProject = await driver.getDefaultProject();
       for (let i = 0; i < numBobProjects; i++) {
         await driver.proposals.createCanister(bobIdentity, bobProject.id);
       }
-      const bobCanistersRes = await driver.actor.list_my_canisters();
-      bobCanisters = extractOkResponse(bobCanistersRes);
+      bobCanisters = await driver.canisters.getAllProjectCanisters(
+        bobIdentity,
+        bobProject.id,
+      );
     });
 
     it('should return one item per page', async () => {

@@ -1,7 +1,18 @@
 use candid::{CandidType, Nat, Principal};
 use serde::Deserialize;
 
-pub type ListMyCanistersResponse = Vec<Canister>;
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListProjectCanistersRequest {
+    pub limit: Option<u64>,
+    pub page: Option<u64>,
+    pub project_id: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListProjectCanistersResponse {
+    pub canisters: Vec<Canister>,
+    pub meta: PaginationMetaResponse,
+}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct ListAllCanistersRequest {

@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "types": ["bun", "vitest"]
   },
   "include": ["src/**/*.ts", "global-setup.ts", "types.d.ts"],
