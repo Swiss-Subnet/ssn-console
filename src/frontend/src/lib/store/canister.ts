@@ -31,8 +31,7 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   },
 
   async refreshCanisters(projectId) {
-    const { getCanisterApi } = get();
-    const canisterApi = getCanisterApi();
+    const { canisterApi } = get();
 
     set({ isCanistersLoading: true });
     try {
@@ -55,16 +54,14 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   },
 
   async createCanister(projectId) {
-    const { getCanisterApi, refreshCanisters } = get();
-    const canisterApi = getCanisterApi();
+    const { canisterApi, refreshCanisters } = get();
 
     await canisterApi.createCanister();
     await refreshCanisters(projectId);
   },
 
   async addMissingController(canisterId, projectId) {
-    const { getManagementCanisterApi, refreshCanisters } = get();
-    const managementCanisterApi = getManagementCanisterApi();
+    const { managementCanisterApi, refreshCanisters } = get();
 
     const canisterSettings = await managementCanisterApi.getCanisterStatus({
       canisterId,
@@ -82,8 +79,7 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   },
 
   async addController(canisterId, controllerId, projectId) {
-    const { getCanisterApi, refreshCanisters } = get();
-    const canisterApi = getCanisterApi();
+    const { canisterApi, refreshCanisters } = get();
 
     await canisterApi.addCanisterController(canisterId, controllerId);
     await refreshCanisters(projectId);

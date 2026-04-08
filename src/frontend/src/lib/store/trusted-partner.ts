@@ -7,8 +7,7 @@ export const createTrustedPartnerSlice: AppStateCreator<
   trustedPartners: null,
 
   async initializeTrustedPartners() {
-    const { getTrustedPartnerApi, isAuthenticated, profile } = get();
-    const trustedPartnerApi = getTrustedPartnerApi();
+    const { trustedPartnerApi, isAuthenticated, profile } = get();
 
     if (!isAuthenticated || !profile?.isAdmin) {
       set({ isTrustedPartnersInitialized: true });
@@ -29,7 +28,7 @@ export const createTrustedPartnerSlice: AppStateCreator<
 
   async createTrustedPartner(req) {
     const {
-      getTrustedPartnerApi,
+      trustedPartnerApi,
       isAuthenticated,
       isTrustedPartnersInitialized,
       profile,
@@ -47,7 +46,6 @@ export const createTrustedPartnerSlice: AppStateCreator<
       throw new Error('User must be an admin to create trusted partners');
     }
 
-    const trustedPartnerApi = getTrustedPartnerApi();
     const newTrustedPartner = await trustedPartnerApi.createTrustedPartner(req);
 
     set(state => {

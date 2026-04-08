@@ -15,8 +15,7 @@ export const createProjectsSlice: AppStateCreator<ProjectsSlice> = (
   projects: [],
 
   async initializeProjects() {
-    const { getProjectApi, isAuthenticated } = get();
-    const projectApi = getProjectApi();
+    const { projectApi, isAuthenticated } = get();
 
     if (!isAuthenticated) {
       set({ isProjectsInitialized: true });

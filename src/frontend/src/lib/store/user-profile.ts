@@ -17,8 +17,7 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   async initializeUserProfile() {
     set({ isProfileLoading: true });
 
-    const { getUserProfileApi, isAuthenticated } = get();
-    const userProfileApi = getUserProfileApi();
+    const { userProfileApi, isAuthenticated } = get();
 
     if (!isAuthenticated) {
       set({ isProfileInitialized: true, isProfileLoading: false });
@@ -38,8 +37,7 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   },
 
   setEmail: async (email: string) => {
-    const { getUserProfileApi, isAuthenticated, isProfileInitialized } = get();
-    const userProfileApi = getUserProfileApi();
+    const { userProfileApi, isAuthenticated, isProfileInitialized } = get();
 
     if (!isProfileInitialized) {
       throw new Error('User profile is not initialized');
@@ -75,7 +73,7 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   },
 
   async sendVerificationEmail(email: string) {
-    const { getAuthApi, isAuthenticated, isProfileInitialized } = get();
+    const { authApi, isAuthenticated, isProfileInitialized } = get();
 
     if (!isProfileInitialized) {
       throw new Error('User profile is not initialized');
@@ -85,7 +83,6 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
       return;
     }
 
-    const authApi = getAuthApi();
     await authApi.sendEmailVerification(email);
   },
 });

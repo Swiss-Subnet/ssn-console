@@ -40,27 +40,18 @@ export type AuthSlice = {
 };
 
 export type ApiSlice = {
-  agent: HttpAgent | null;
-  actor: ActorSubclass<_SERVICE> | null;
-  userProfileApi: UserProfileApi | null;
-  canisterApi: CanisterApi | null;
-  authApi: AuthApi | null;
-  managementCanisterApi: ManagementCanisterApi | null;
-  trustedPartnerApi: TrustedPartnerApi | null;
-  termsAndConditionsApi: TermsAndConditionsApi | null;
-  projectApi: ProjectApi | null;
-  organizationApi: OrganizationApi | null;
+  agent: HttpAgent;
+  actor: ActorSubclass<_SERVICE>;
+  userProfileApi: UserProfileApi;
+  canisterApi: CanisterApi;
+  authApi: AuthApi;
+  managementCanisterApi: ManagementCanisterApi;
+  trustedPartnerApi: TrustedPartnerApi;
+  termsAndConditionsApi: TermsAndConditionsApi;
+  projectApi: ProjectApi;
+  organizationApi: OrganizationApi;
 
-  initializeApi: () => void;
   setAgentIdentity: (identity: Identity) => void;
-  getUserProfileApi: () => UserProfileApi;
-  getCanisterApi: () => CanisterApi;
-  getManagementCanisterApi: () => ManagementCanisterApi;
-  getTrustedPartnerApi: () => TrustedPartnerApi;
-  getTermsAndConditionsApi: () => TermsAndConditionsApi;
-  getProjectApi: () => ProjectApi;
-  getOrganizationApi: () => OrganizationApi;
-  getAuthApi: () => AuthApi;
 };
 
 export type UserProfileSlice = {
