@@ -2,6 +2,10 @@ import { Principal } from '@icp-sdk/core/principal';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+// This script parses the replica-effective-config.json file to get the local subnet's canister id range.
+// This is unlikely to change in future DFX versions since DFX is in maintenance mode now,
+// but we'll probably need a different solution if we move to the new ICP CLI.
+
 function getLocalSubnetRange(): [Principal, Principal] {
   const configPath = join(
     process.cwd(),

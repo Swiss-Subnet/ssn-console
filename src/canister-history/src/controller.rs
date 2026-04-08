@@ -20,6 +20,27 @@ thread_local! {
     static IS_SYNC_RUNNING: Cell<bool> = const { Cell::new(false) };
 }
 
+struct SyncRunGuard;
+
+impl SyncRunGuard {
+    fn new() -> Result<Self, ()> {
+        if IS_SYNC_RUNNING.with(|f| f.get()) {
+            Err(())
+        } else {
+            IS_SYNC_RUNNING.with(|f| f.replace(true));
+            Ok(SyncRunGuard)
+        }
+    }
+}
+
+impl Drop for SyncRunGuard {
+    fn drop(&mut self) {
+        IS_SYNC_RUNNING.with(|f| {
+            f.set(false);
+        });
+    }
+}
+
 #[init]
 fn init() {
     setup_timers();
@@ -38,22 +59,47 @@ fn setup_timers() {
 }
 
 async fn sync_canister_histories() {
-    if IS_SYNC_RUNNING.with(|f| f.replace(true)) {
+    let guard_res = SyncRunGuard::new();
+    if guard_res.is_err() {
         ic_cdk::println!("Sync already in progress; skipping this run.");
         return;
     }
 
-    // RAII guard to ensure the running flag is cleared even on panic/early return.
-    struct SyncRunGuard;
-    impl Drop for SyncRunGuard {
-        fn drop(&mut self) {
-            IS_SYNC_RUNNING.with(|f| {
-                f.set(false);
-            });
-        }
-    }
-    let _guard = SyncRunGuard;
+    sync_and_queue_canister_histories().await;
+}
 
+#[update]
+fn trigger_sync_canister_histories(
+    _req: TriggerSyncCanisterHistoriesRequest,
+) -> ApiResultDto<TriggerSyncCanisterHistoriesResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    let guard_res = SyncRunGuard::new();
+    if guard_res.is_err() {
+        return ApiResultDto::Ok(crate::dto::TriggerSyncCanisterHistoriesResponse {
+            message: "Sync is already in progress. No new sync was triggered.".to_string(),
+        });
+    }
+
+    TIMERS.with(|t| {
+        if let Some(id) = t.replace(None) {
+            clear_timer(id);
+        }
+    });
+
+    spawn(async move {
+        sync_and_queue_canister_histories().await;
+    });
+
+    ApiResultDto::Ok(crate::dto::TriggerSyncCanisterHistoriesResponse {
+        message: "Sync triggered successfully.".to_string(),
+    })
+}
+
+async fn sync_and_queue_canister_histories() {
     let current_time_nanos = ic_cdk::api::time();
     if let Err(err) = service::sync_canister_histories().await {
         ic_cdk::println!("Failed to perform canister history sync: {err:?}");
@@ -69,36 +115,6 @@ async fn sync_canister_histories() {
         sync_canister_histories().await;
     });
     TIMERS.with(|t| t.set(Some(timer_id)));
-}
-
-#[update]
-fn trigger_sync_canister_histories(
-    _req: TriggerSyncCanisterHistoriesRequest,
-) -> ApiResultDto<TriggerSyncCanisterHistoriesResponse> {
-    let caller = msg_caller();
-    if let Err(err) = assert_controller(&caller) {
-        return ApiResultDto::Err(err);
-    }
-
-    if IS_SYNC_RUNNING.with(|f| f.get()) {
-        return ApiResultDto::Ok(crate::dto::TriggerSyncCanisterHistoriesResponse {
-            message: "Sync is already in progress. No new sync was triggered.".to_string(),
-        });
-    }
-
-    TIMERS.with(|t| {
-        if let Some(id) = t.replace(None) {
-            clear_timer(id);
-        }
-    });
-
-    spawn(async move {
-        sync_canister_histories().await;
-    });
-
-    ApiResultDto::Ok(crate::dto::TriggerSyncCanisterHistoriesResponse {
-        message: "Sync triggered successfully.".to_string(),
-    })
 }
 
 #[update]
