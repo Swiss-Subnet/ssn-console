@@ -35,7 +35,7 @@ function getLocalSubnetRange(): [Principal, Principal] {
   // Canister IDs are 10 bytes: 8 bytes payload + 0x01 0x01 suffix.
   // The 20-bit counter spans bytes 5, 6, and 7.
   const endBytes = new Uint8Array(startBytes);
-  endBytes[5] = endBytes[5] | 0x0f; // Set lower 4 bits
+  endBytes[5] = endBytes[5]! | 0x0f; // Set lower 4 bits
   endBytes[6] = 0xff; // Set all 8 bits
   endBytes[7] = 0xff; // Set all 8 bits
 

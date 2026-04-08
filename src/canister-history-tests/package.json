@@ -2,7 +2,7 @@
   "name": "canister-history-tests",
   "private": true,
   "scripts": {
-    "test": "tsc && vitest run"
+    "test": "vitest run"
   },
   "dependencies": {
     "@ssn/canister-history-api": "workspace:*",

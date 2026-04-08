@@ -73,9 +73,9 @@ describe('Projects', () => {
       driver.actor.setIdentity(aliceIdentity);
       const res = await driver.actor.create_project({
         name: projectName,
-        org_id: bobOrg.id,
+        org_id: bobOrg!.id,
       });
-      expect(res).toEqual(noOrgError(aliceProfile.id, bobOrg.id));
+      expect(res).toEqual(noOrgError(aliceProfile.id, bobOrg!.id));
     });
 
     it('should create a project', async () => {
@@ -88,14 +88,14 @@ describe('Projects', () => {
 
       const projectRes = await driver.actor.create_project({
         name: projectName,
-        org_id: aliceOrg.id,
+        org_id: aliceOrg!.id,
       });
       const project = extractOkResponse(projectRes);
 
       expect(project).toEqual({
         project: {
           id: expect.any(String),
-          org_id: aliceOrg.id,
+          org_id: aliceOrg!.id,
           name: projectName,
         },
       });

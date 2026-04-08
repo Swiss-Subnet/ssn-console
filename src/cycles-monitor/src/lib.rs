@@ -5,7 +5,6 @@ use ic_cdk::*;
 
 mod controller;
 mod dto;
-mod management_canister_types;
 mod service;
 
 export_service!();

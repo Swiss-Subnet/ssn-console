@@ -88,6 +88,6 @@ export class TestDriver {
     const res = await this.actor.list_my_projects({});
     const okRes = extractOkResponse(res);
 
-    return okRes.projects[0];
+    return okRes.projects[0]!;
   }
 }

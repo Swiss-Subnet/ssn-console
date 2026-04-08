@@ -1,25 +1,15 @@
 {
+  "extends": ["@tsconfig/strictest/tsconfig", "@tsconfig/bun"],
   "compilerOptions": {
-    "lib": ["ESNext"],
-    "target": "ESNext",
-    "module": "Preserve",
-    "moduleDetection": "force",
-
-    "moduleResolution": "bundler",
-    "types": [],
-
-    "experimentalDecorators": true,
-    "useDefineForClassFields": true,
-    "esModuleInterop": false,
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noEmit": true,
-
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "forceConsistentCasingInFileNames": true
-  }
+    "incremental": true
+  },
+  "files": [],
+  "references": [
+    { "path": "./src/backend-tests" },
+    { "path": "./src/canister-history-tests" },
+    { "path": "./src/cycles-monitor-tests" },
+    { "path": "./src/frontend" },
+    { "path": "./src/offchain-service" },
+    { "path": "./src/scripts" }
+  ]
 }

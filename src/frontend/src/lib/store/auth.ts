@@ -1,7 +1,7 @@
 import type { AppStateCreator, AuthSlice } from '@/lib/store/model';
-import { AuthClient } from '@icp-sdk/auth/client';
+import { AuthClient, type AuthClientLoginOptions } from '@icp-sdk/auth/client';
 import { DERIVATION_ORIGIN, IDENTITY_PROVIDER } from '@/env';
-import { isNil } from '@/lib/nil';
+import { isNil, isNotNil } from '@/lib/nil';
 import { AnonymousIdentity } from '@icp-sdk/core/agent';
 
 const NANOS_PER_SEC = 1_000_000_000;
@@ -73,10 +73,9 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       isLoggingIn: true,
     });
 
-    await new Promise<void>(async (resolve, reject) => {
-      await authClient.login({
+    await new Promise<void>((resolve, reject) => {
+      const options: AuthClientLoginOptions = {
         identityProvider: IDENTITY_PROVIDER,
-        derivationOrigin: DERIVATION_ORIGIN,
         maxTimeToLive: BigInt(
           7 * HOURS_PER_DAY * MINS_PER_HOUR * SECS_PER_MIN * NANOS_PER_SEC,
         ), // 7 days
@@ -89,14 +88,19 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
             isLoggingIn: false,
             identity,
           });
-          await initializeData();
-          resolve();
+          initializeData().then(resolve).catch(reject);
         },
         onError: err => {
           reject(err);
           set({ isLoggingIn: false });
         },
-      });
+      };
+
+      if (isNotNil(DERIVATION_ORIGIN)) {
+        options.derivationOrigin = DERIVATION_ORIGIN;
+      }
+
+      authClient.login(options).then(resolve).catch(reject);
     });
   },
 

@@ -2,7 +2,7 @@
   "name": "backend-tests",
   "private": true,
   "scripts": {
-    "test": "tsc && vitest run"
+    "test": "vitest run"
   },
   "dependencies": {
     "@ssn/backend-api": "workspace:*"

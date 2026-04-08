@@ -5,5 +5,7 @@
     "module": "ES2022",
     "types": ["bun"],
     "skipLibCheck": true
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [".turbo", "dist", "node_modules"]
 }

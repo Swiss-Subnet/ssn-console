@@ -269,7 +269,7 @@ describe('User Profile', () => {
       expect(projectsOkRes.projects).toHaveLength(1);
       expect(projectsOkRes.projects[0]).toEqual({
         id: expect.any(String),
-        org_id: organizations[0].id,
+        org_id: organizations[0]!.id,
         name: 'Default Project',
       });
 
@@ -283,7 +283,7 @@ describe('User Profile', () => {
 
       const approvalPoliciesRes =
         await driver.actor.list_project_approval_policies({
-          project_id: projectsOkRes.projects[0].id,
+          project_id: projectsOkRes.projects[0]!.id,
         });
       const approvalPolicies = extractOkResponse(approvalPoliciesRes);
       expect(approvalPolicies.approval_policies).toHaveLength(2);
@@ -329,7 +329,7 @@ describe('User Profile', () => {
       expect(projectsOkRes.projects).toHaveLength(1);
       expect(projectsOkRes.projects[0]).toEqual({
         id: expect.any(String),
-        org_id: organizations[0].id,
+        org_id: organizations[0]!.id,
         name: 'Default Project',
       });
 
@@ -343,7 +343,7 @@ describe('User Profile', () => {
 
       const approvalPoliciesRes =
         await driver.actor.list_project_approval_policies({
-          project_id: projectsOkRes.projects[0].id,
+          project_id: projectsOkRes.projects[0]!.id,
         });
       const approvalPolicies = extractOkResponse(approvalPoliciesRes);
       expect(approvalPolicies.approval_policies).toHaveLength(2);
