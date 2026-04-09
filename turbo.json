@@ -8,9 +8,6 @@
     "start": {
       "dependsOn": ["^build"]
     },
-    "check-types": {
-      "dependsOn": ["^check-types"]
-    },
     "test": {
       "dependsOn": [],
       "outputs": []

@@ -3,8 +3,7 @@
   "compilerOptions": {
     "target": "ES2021",
     "module": "ES2022",
-    "types": ["bun"],
-    "skipLibCheck": true
+    "types": ["bun"]
   },
   "include": ["src/**/*.ts"],
   "exclude": [".turbo", "dist", "node_modules"]
