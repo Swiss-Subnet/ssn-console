@@ -2,6 +2,13 @@ name: Lint
 
 on:
   pull_request:
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - 'Cargo.*'
+      - '*.cjs'
+      - '*.json'
+      - '*.md'
 
 concurrency:
   group: pr-${{ github.workflow }}-${{ github.head_ref }}
@@ -14,8 +21,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # Shallow clones don't have the base branch ref, which
+          # breaks git diff origin/<base>...HEAD
+          fetch-depth: 0
+
+      - name: Check for Rust changes
+        id: rust_changes
+        run: |
+          CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'src/backend/' 'src/canister-history/' 'src/cycles-monitor/' 'src/canister-utils/' 'Cargo.*')
+          if [ -z "$CHANGES" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Cargo fmt
+        if: steps.rust_changes.outputs.skip != 'true'
         run: cargo fmt -- --check
 
   lint_typescript:
@@ -24,9 +45,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # Shallow clones don't have the base branch ref, which
+          # breaks git diff origin/<base>...HEAD
+          fetch-depth: 0
+
+      - name: Check for TypeScript changes
+        id: ts_changes
+        run: |
+          CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'src/frontend/' 'src/offchain-service/' 'src/backend-api/' 'src/scripts/' 'docs/' '*.cjs' '*.json' '*.md')
+          if [ -z "$CHANGES" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Bun
+        if: steps.ts_changes.outputs.skip != 'true'
         uses: ./.github/actions/setup-bun
 
       - name: Check TypeScript formatting
+        if: steps.ts_changes.outputs.skip != 'true'
         run: bun format:check

@@ -1,53 +1,77 @@
+# Each job detects whether its relevant source paths changed and skips
+# if not. Dependencies between packages:
+#
+#   backend          -> canister-utils, backend-api, management-canister, frontend
+#   canister-history -> canister-history-api, management-canister
+#   cycles-monitor   -> cycles-monitor-api
+#   offchain-service -> (standalone)
+#
+# Cargo.* and dfx.json trigger all canister jobs since they affect
+# the build configuration for every canister.
+#
+# There are currently no cross-canister integration tests, each test
+# suite only exercises its own canister. If cross-canister dependencies
+# are introduced, the path filters here must be updated accordingly.
+
 name: Build and Test
 
 on:
   pull_request:
+    paths:
+      - 'src/**'
+      - 'Cargo.*'
+      - 'dfx.json'
+      - 'config/**'
 
 concurrency:
   group: pr-${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
-  build_and_test_all_canisters:
-    name: Build and Test All Canisters
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
-
-      - name: Setup DFX
-        uses: ./.github/actions/setup-dfx
-
-      - name: DFX build
-        run: dfx build --check
-
-      - name: Cargo clippy
-        run: cargo clippy --all-targets --all-features
-
-      - name: Cargo test
-        run: cargo test
-
   build_and_test_backend:
     name: Build and Test Backend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # Shallow clones don't have the base branch ref, which
+          # breaks git diff origin/<base>...HEAD
+          fetch-depth: 0
+
+      - name: Check for changes
+        id: changes
+        run: |
+          CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'src/backend/' 'src/canister-utils/' 'src/backend-api/' 'src/backend-tests/' \
+            'src/frontend/' 'src/management-canister/' 'Cargo.*' 'dfx.json')
+          if [ -z "$CHANGES" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Bun
+        if: steps.changes.outputs.skip != 'true'
         uses: ./.github/actions/setup-bun
 
       - name: Setup DFX
+        if: steps.changes.outputs.skip != 'true'
         uses: ./.github/actions/setup-dfx
 
       - name: DFX build
+        if: steps.changes.outputs.skip != 'true'
         run: dfx build backend --check
 
+      - name: Cargo clippy
+        if: steps.changes.outputs.skip != 'true'
+        run: cargo clippy -p backend -p canister-utils --all-targets --all-features
+
+      - name: Cargo test
+        if: steps.changes.outputs.skip != 'true'
+        run: cargo test -p backend -p canister-utils
+
       - name: pic-js tests
-        run: bun turbo -F backend-tests test
+        if: steps.changes.outputs.skip != 'true'
+        run: bun turbo run -F backend-tests test
 
   build_and_test_canister_history:
     name: Build and Test Canister History
@@ -55,18 +79,36 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # Shallow clones don't have the base branch ref, which
+          # breaks git diff origin/<base>...HEAD
+          fetch-depth: 0
+
+      - name: Check for changes
+        id: changes
+        run: |
+          CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'src/canister-history/' 'src/canister-history-tests/' \
+            'src/canister-history-api/' 'src/management-canister/' 'Cargo.*' 'dfx.json')
+          if [ -z "$CHANGES" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Bun
+        if: steps.changes.outputs.skip != 'true'
         uses: ./.github/actions/setup-bun
 
       - name: Setup DFX
+        if: steps.changes.outputs.skip != 'true'
         uses: ./.github/actions/setup-dfx
 
       - name: DFX build
+        if: steps.changes.outputs.skip != 'true'
         run: dfx build canister-history --check
 
       - name: pic-js tests
-        run: bun turbo -F canister-history-tests test
+        if: steps.changes.outputs.skip != 'true'
+        run: bun turbo run -F canister-history-tests test
 
   build_and_test_cycles_monitor:
     name: Build and Test Cycles Monitor
@@ -74,18 +116,36 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # Shallow clones don't have the base branch ref, which
+          # breaks git diff origin/<base>...HEAD
+          fetch-depth: 0
+
+      - name: Check for changes
+        id: changes
+        run: |
+          CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'src/cycles-monitor/' 'src/cycles-monitor-tests/' \
+            'src/cycles-monitor-api/' 'Cargo.*' 'dfx.json')
+          if [ -z "$CHANGES" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Bun
+        if: steps.changes.outputs.skip != 'true'
         uses: ./.github/actions/setup-bun
 
       - name: Setup DFX
+        if: steps.changes.outputs.skip != 'true'
         uses: ./.github/actions/setup-dfx
 
       - name: DFX build
+        if: steps.changes.outputs.skip != 'true'
         run: dfx build cycles-monitor --check
 
       - name: pic-js tests
-        run: bun turbo -F cycles-monitor-tests test
+        if: steps.changes.outputs.skip != 'true'
+        run: bun turbo run -F cycles-monitor-tests test
 
   type_check_typescript:
     name: Type Check TypeScript
@@ -109,8 +169,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # Shallow clones don't have the base branch ref, which
+          # breaks git diff origin/<base>...HEAD
+          fetch-depth: 0
+
+      - name: Check for changes
+        id: changes
+        run: |
+          CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'src/offchain-service/' 'config/offchain-service.*')
+          if [ -z "$CHANGES" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build Container image
+        if: steps.changes.outputs.skip != 'true'
         run: docker build -f ./config/offchain-service.containerfile -t offchain-service .
 
   test_offchain_service:
@@ -119,9 +193,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # Shallow clones don't have the base branch ref, which
+          # breaks git diff origin/<base>...HEAD
+          fetch-depth: 0
+
+      - name: Check for changes
+        id: changes
+        run: |
+          CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'src/offchain-service/')
+          if [ -z "$CHANGES" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Bun
+        if: steps.changes.outputs.skip != 'true'
         uses: ./.github/actions/setup-bun
 
       - name: Unit tests
-        run: bun turbo -F offchain-service test
+        if: steps.changes.outputs.skip != 'true'
+        run: bun turbo run -F offchain-service test

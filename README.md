@@ -111,6 +111,14 @@ Run the frontend development server:
 bun turbo -F frontend start
 ```
 
+### CI
+
+CI runs lint and build/test jobs per service, skipping jobs when
+their source paths have not changed. See the comments at the top of
+`.github/workflows/build-and-test.yml` for the dependency graph. If
+you add cross-canister dependencies or new packages, update the path
+filters in the workflow files.
+
 ### Format code:
 
 ```shell
