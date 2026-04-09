@@ -36,7 +36,7 @@ export const createOrganizationsSlice: AppStateCreator<OrganizationsSlice> = (
   async createOrganization(name: string) {
     const organizationApi = get().getOrganizationApi();
     const res = await organizationApi.createOrganization({ name });
-    set((state) => ({
+    set(state => ({
       organizations: [...state.organizations, res.organization],
     }));
     await get().initializeProjects();
@@ -46,8 +46,8 @@ export const createOrganizationsSlice: AppStateCreator<OrganizationsSlice> = (
   async updateOrganization(orgId: string, name: string) {
     const organizationApi = get().getOrganizationApi();
     const res = await organizationApi.updateOrganization({ orgId, name });
-    set((state) => ({
-      organizations: state.organizations.map((org) =>
+    set(state => ({
+      organizations: state.organizations.map(org =>
         org.id === orgId ? res.organization : org,
       ),
     }));
@@ -57,8 +57,8 @@ export const createOrganizationsSlice: AppStateCreator<OrganizationsSlice> = (
   async deleteOrganization(orgId: string) {
     const organizationApi = get().getOrganizationApi();
     await organizationApi.deleteOrganization({ orgId });
-    set((state) => ({
-      organizations: state.organizations.filter((org) => org.id !== orgId),
+    set(state => ({
+      organizations: state.organizations.filter(org => org.id !== orgId),
     }));
   },
 });

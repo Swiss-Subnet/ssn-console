@@ -73,8 +73,8 @@ pub fn get_organization(
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     organization_repository::assert_user_in_org(user_id, org_id)?;
 
-    let org = organization_repository::get_org(org_id)
-        .expect("org must exist after assert_user_in_org");
+    let org =
+        organization_repository::get_org(org_id).expect("org must exist after assert_user_in_org");
 
     Ok(map_organization_to_response(org_id, org))
 }
@@ -104,10 +104,7 @@ pub fn update_organization(
 // means "delete project" must be implemented before org deletion is
 // usable. Once delete_project exists, it must also clean up approval
 // policies and proposals for that project to avoid orphaned data.
-pub fn delete_organization(
-    caller: &Principal,
-    req: DeleteOrganizationRequest,
-) -> ApiResult {
+pub fn delete_organization(caller: &Principal, req: DeleteOrganizationRequest) -> ApiResult {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     organization_repository::assert_user_in_org(user_id, org_id)?;

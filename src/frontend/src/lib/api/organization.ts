@@ -53,7 +53,9 @@ export class OrganizationApi {
     return mapUpdateOrganizationResponse(res);
   }
 
-  public async deleteOrganization(req: DeleteOrganizationRequest): Promise<void> {
+  public async deleteOrganization(
+    req: DeleteOrganizationRequest,
+  ): Promise<void> {
     const res = await this.actor.delete_organization(
       mapDeleteOrganizationRequest(req),
     );

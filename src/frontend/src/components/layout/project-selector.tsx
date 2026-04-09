@@ -21,7 +21,13 @@ import {
   selectProjectMap,
   useAppStore,
 } from '@/lib/store';
-import { Building2, ChevronsUpDown, FolderOpen, Plus, Settings } from 'lucide-react';
+import {
+  Building2,
+  ChevronsUpDown,
+  FolderOpen,
+  Plus,
+  Settings,
+} from 'lucide-react';
 import { useMemo, type FC } from 'react';
 import { NavLink } from 'react-router';
 
@@ -51,7 +57,7 @@ export const ProjectSelector: FC = () => {
     }
 
     const orgWithProjects = orgsWithProjects.find(
-      (o) => o.id === activeOrganization.id,
+      o => o.id === activeOrganization.id,
     );
 
     return orgWithProjects?.projects ?? [];
@@ -77,7 +83,7 @@ export const ProjectSelector: FC = () => {
             <DropdownMenuGroup>
               <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
 
-              {orgsWithProjects.map((org) => {
+              {orgsWithProjects.map(org => {
                 const isActive = org.id === activeOrganization?.id;
 
                 return (
@@ -136,9 +142,7 @@ export const ProjectSelector: FC = () => {
               <FolderOpen className="size-4" />
 
               <div className="flex flex-1 flex-col">
-                <span className="truncate text-sm">
-                  {activeProject?.name}
-                </span>
+                <span className="truncate text-sm">{activeProject?.name}</span>
               </div>
 
               <ChevronsUpDown className="ml-auto size-3.5" />
@@ -148,7 +152,7 @@ export const ProjectSelector: FC = () => {
               <DropdownMenuGroup>
                 <DropdownMenuLabel>Projects</DropdownMenuLabel>
 
-                {activeOrgProjects.map((project) => (
+                {activeOrgProjects.map(project => (
                   <DropdownMenuItem
                     key={project.id}
                     className="p-2"
@@ -166,9 +170,7 @@ export const ProjectSelector: FC = () => {
           <SidebarMenuButton>
             <FolderOpen className="size-4" />
 
-            <span className="truncate text-sm">
-              {activeProject?.name}
-            </span>
+            <span className="truncate text-sm">{activeProject?.name}</span>
           </SidebarMenuButton>
         )}
       </SidebarMenuItem>

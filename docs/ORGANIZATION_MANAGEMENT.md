@@ -30,19 +30,19 @@ Access control is **team-based**, not role-based:
 
 All data lives in IC stable memory using `BTreeMap` and `BTreeSet`:
 
-| Store | Type | Purpose |
-|-------|------|---------|
-| `organizations` | `BTreeMap<Uuid, Organization>` | Org records (only `name` field) |
-| `organization_user_index` | `BTreeSet<(org_id, user_id)>` | Org members |
-| `user_organization_index` | `BTreeSet<(user_id, org_id)>` | Inverse (user -> orgs) |
-| `organization_team_index` | `BTreeSet<(org_id, team_id)>` | Org teams |
-| `organization_project_index` | `BTreeSet<(org_id, project_id)>` | Org projects |
-| `team_user_index` | `BTreeSet<(team_id, user_id)>` | Team members |
-| `user_team_index` | `BTreeSet<(user_id, team_id)>` | Inverse (user -> teams) |
-| `team_project_index` | `BTreeSet<(team_id, project_id)>` | Team projects |
-| `project_team_index` | `BTreeSet<(project_id, team_id)>` | Inverse |
-| `project_canister_index` | `BTreeSet<(project_id, canister_id)>` | Project canisters |
-| `canister_project_index` | `BTreeMap<canister_id, project_id>` | Inverse (canister -> project) |
+| Store                        | Type                                  | Purpose                         |
+| ---------------------------- | ------------------------------------- | ------------------------------- |
+| `organizations`              | `BTreeMap<Uuid, Organization>`        | Org records (only `name` field) |
+| `organization_user_index`    | `BTreeSet<(org_id, user_id)>`         | Org members                     |
+| `user_organization_index`    | `BTreeSet<(user_id, org_id)>`         | Inverse (user -> orgs)          |
+| `organization_team_index`    | `BTreeSet<(org_id, team_id)>`         | Org teams                       |
+| `organization_project_index` | `BTreeSet<(org_id, project_id)>`      | Org projects                    |
+| `team_user_index`            | `BTreeSet<(team_id, user_id)>`        | Team members                    |
+| `user_team_index`            | `BTreeSet<(user_id, team_id)>`        | Inverse (user -> teams)         |
+| `team_project_index`         | `BTreeSet<(team_id, project_id)>`     | Team projects                   |
+| `project_team_index`         | `BTreeSet<(project_id, team_id)>`     | Inverse                         |
+| `project_canister_index`     | `BTreeSet<(project_id, canister_id)>` | Project canisters               |
+| `canister_project_index`     | `BTreeMap<canister_id, project_id>`   | Inverse (canister -> project)   |
 
 ### Where Canisters Fit
 
@@ -98,6 +98,7 @@ delete_organization(org_id)
 ```
 
 Guards:
+
 - Prevent deleting a user's last org.
 - **Require the org to be empty** -- org must have no projects (and
   therefore no canisters) before it can be deleted. Users must move
@@ -105,6 +106,7 @@ Guards:
   and sidesteps the question of what to do with on-chain canisters.
 
 Cleanup on delete (when org is empty):
+
 - Remove all org-user links
 - Remove all org-team links, delete team records
 - Delete org record

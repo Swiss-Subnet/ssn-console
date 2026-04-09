@@ -20,10 +20,7 @@ pub fn map_organization_response((id, org): (Uuid, data::Organization)) -> Organ
     }
 }
 
-pub fn map_organization_to_response(
-    id: Uuid,
-    org: data::Organization,
-) -> OrganizationResponse {
+pub fn map_organization_to_response(id: Uuid, org: data::Organization) -> OrganizationResponse {
     OrganizationResponse {
         organization: map_organization_response((id, org)),
     }

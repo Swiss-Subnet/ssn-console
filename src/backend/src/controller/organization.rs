@@ -40,9 +40,7 @@ fn get_organization(req: GetOrganizationRequest) -> ApiResultDto<GetOrganization
 }
 
 #[update]
-fn update_organization(
-    req: UpdateOrganizationRequest,
-) -> ApiResultDto<UpdateOrganizationResponse> {
+fn update_organization(req: UpdateOrganizationRequest) -> ApiResultDto<UpdateOrganizationResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
