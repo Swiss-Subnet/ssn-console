@@ -8,11 +8,8 @@ use super::{
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
-pub fn add_default_org(user_id: Uuid) -> Uuid {
+pub fn create_org(user_id: Uuid, org: Organization) -> Uuid {
     let org_id = Uuid::new();
-    let org = Organization {
-        name: "Default Organization".to_string(),
-    };
 
     mutate_state(|s| {
         s.organizations.insert(org_id, org);
@@ -21,6 +18,63 @@ pub fn add_default_org(user_id: Uuid) -> Uuid {
     });
 
     org_id
+}
+
+pub fn add_default_org(user_id: Uuid) -> Uuid {
+    create_org(
+        user_id,
+        Organization {
+            name: "Default Organization".to_string(),
+        },
+    )
+}
+
+pub fn get_org(org_id: Uuid) -> Option<Organization> {
+    with_state(|s| s.organizations.get(&org_id))
+}
+
+pub fn update_org(org_id: Uuid, org: Organization) -> ApiResult {
+    mutate_state(|s| {
+        if !s.organizations.contains_key(&org_id) {
+            return Err(ApiError::client_error(format!(
+                "Organization with id {org_id} does not exist."
+            )));
+        }
+        s.organizations.insert(org_id, org);
+        Ok(())
+    })
+}
+
+// Deletes the org record and its user links. The caller (service layer)
+// must enforce guards: org has no projects, user has more than one org.
+pub fn delete_org(org_id: Uuid) -> ApiResult {
+    mutate_state(|s| {
+        if s.organizations.remove(&org_id).is_none() {
+            return Err(ApiError::client_error(format!(
+                "Organization with id {org_id} does not exist."
+            )));
+        }
+
+        let user_links: Vec<_> = s
+            .organization_user_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .collect();
+
+        for (oid, uid) in user_links {
+            s.organization_user_index.remove(&(oid, uid));
+            s.user_organization_index.remove(&(uid, oid));
+        }
+
+        Ok(())
+    })
+}
+
+pub fn count_user_orgs(user_id: Uuid) -> usize {
+    with_state(|s| {
+        s.user_organization_index
+            .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))
+            .count()
+    })
 }
 
 pub fn list_user_orgs(user_id: Uuid) -> Vec<(Uuid, Organization)> {
