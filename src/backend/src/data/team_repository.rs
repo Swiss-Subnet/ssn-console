@@ -143,7 +143,6 @@ pub fn list_user_teams(user_id: Uuid) -> Vec<(Uuid, Team)> {
     })
 }
 
-
 struct TeamState {
     teams: TeamMemory,
     team_user_index: TeamUserIndexMemory,

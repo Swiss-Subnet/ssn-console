@@ -152,7 +152,7 @@ describe('Organizations', () => {
       const res = await driver.actor.list_my_organizations();
       const orgs = extractOkResponse(res);
       expect(orgs).toHaveLength(2);
-      expect(orgs.map((o) => o.name)).toContain(orgName);
+      expect(orgs.map(o => o.name)).toContain(orgName);
     });
   });
 
@@ -329,7 +329,7 @@ describe('Organizations', () => {
 
       const orgsRes = await driver.actor.list_my_organizations();
       const orgs = extractOkResponse(orgsRes);
-      expect(orgs.map((o) => o.id)).not.toContain(newOrg.id);
+      expect(orgs.map(o => o.id)).not.toContain(newOrg.id);
     });
   });
 });

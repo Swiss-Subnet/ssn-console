@@ -1,12 +1,11 @@
 use crate::{
     data::{
-        organization_repository, project_repository, team_repository, user_profile_repository,
-        Team,
+        organization_repository, project_repository, team_repository, user_profile_repository, Team,
     },
     dto::{
         AddUserToTeamRequest, CreateTeamRequest, CreateTeamResponse, DeleteTeamRequest,
-        GetTeamRequest, GetTeamResponse, ListOrgTeamsRequest, ListTeamsResponse,
-        UpdateTeamRequest, UpdateTeamResponse,
+        GetTeamRequest, GetTeamResponse, ListOrgTeamsRequest, ListTeamsResponse, UpdateTeamRequest,
+        UpdateTeamResponse,
     },
     mapping::{map_list_teams_response, map_team_to_response},
 };
@@ -50,10 +49,7 @@ pub fn list_org_teams(
     Ok(map_list_teams_response(teams))
 }
 
-pub fn create_team(
-    caller: &Principal,
-    req: CreateTeamRequest,
-) -> ApiResult<CreateTeamResponse> {
+pub fn create_team(caller: &Principal, req: CreateTeamRequest) -> ApiResult<CreateTeamResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     organization_repository::assert_user_in_org(user_id, org_id)?;
@@ -74,23 +70,18 @@ pub fn create_team(
 pub fn get_team(caller: &Principal, req: GetTeamRequest) -> ApiResult<GetTeamResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let team = team_repository::get_team(team_id).ok_or_else(|| {
-        ApiError::client_error(format!("Team with id {team_id} does not exist."))
-    })?;
+    let team = team_repository::get_team(team_id)
+        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
     organization_repository::assert_user_in_org(user_id, team.org_id)?;
 
     Ok(map_team_to_response(team_id, team))
 }
 
-pub fn update_team(
-    caller: &Principal,
-    req: UpdateTeamRequest,
-) -> ApiResult<UpdateTeamResponse> {
+pub fn update_team(caller: &Principal, req: UpdateTeamRequest) -> ApiResult<UpdateTeamResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let existing = team_repository::get_team(team_id).ok_or_else(|| {
-        ApiError::client_error(format!("Team with id {team_id} does not exist."))
-    })?;
+    let existing = team_repository::get_team(team_id)
+        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
     organization_repository::assert_user_in_org(user_id, existing.org_id)?;
     let name = validate_and_trim_team_name(req.name)?;
 
@@ -106,9 +97,8 @@ pub fn update_team(
 pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let team = team_repository::get_team(team_id).ok_or_else(|| {
-        ApiError::client_error(format!("Team with id {team_id} does not exist."))
-    })?;
+    let team = team_repository::get_team(team_id)
+        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
     organization_repository::assert_user_in_org(user_id, team.org_id)?;
 
     if team_repository::count_org_teams(team.org_id) <= 1 {
@@ -119,8 +109,7 @@ pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult {
 
     if project_repository::team_has_projects(team_id) {
         return Err(ApiError::client_error(
-            "Cannot delete a team that still has projects. Remove all projects first."
-                .to_string(),
+            "Cannot delete a team that still has projects. Remove all projects first.".to_string(),
         ));
     }
 
@@ -133,9 +122,8 @@ pub fn add_user_to_team(caller: &Principal, req: AddUserToTeamRequest) -> ApiRes
     let team_id = Uuid::try_from(req.team_id.as_str())?;
     let target_user_id = Uuid::try_from(req.user_id.as_str())?;
     let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let team = team_repository::get_team(team_id).ok_or_else(|| {
-        ApiError::client_error(format!("Team with id {team_id} does not exist."))
-    })?;
+    let team = team_repository::get_team(team_id)
+        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
     organization_repository::assert_user_in_org(caller_user_id, team.org_id)?;
     organization_repository::assert_user_in_org(target_user_id, team.org_id)?;
 

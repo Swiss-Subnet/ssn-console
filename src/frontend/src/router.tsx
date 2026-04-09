@@ -20,6 +20,13 @@ const CreateOrganization = lazy(
 const OrganizationSettings = lazy(
   () => import('@/routes/organizations/organization-settings'),
 );
+const TeamList = lazy(() => import('@/routes/organizations/teams/team-list'));
+const CreateTeam = lazy(
+  () => import('@/routes/organizations/teams/create-team'),
+);
+const TeamSettings = lazy(
+  () => import('@/routes/organizations/teams/team-settings'),
+);
 
 export const Router: FC = () => (
   <BrowserRouter>
@@ -34,6 +41,12 @@ export const Router: FC = () => (
         <Route
           path="organizations/:orgId/settings"
           element={<OrganizationSettings />}
+        />
+        <Route path="organizations/:orgId/teams" element={<TeamList />} />
+        <Route path="organizations/:orgId/teams/new" element={<CreateTeam />} />
+        <Route
+          path="organizations/:orgId/teams/:teamId/settings"
+          element={<TeamSettings />}
         />
 
         <Route path="projects/:projectId" element={<ProjectLayout />}>

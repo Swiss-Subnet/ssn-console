@@ -201,7 +201,7 @@ describe('Teams', () => {
       const teamsRes = await driver.actor.list_my_teams();
       const teams = extractOkResponse(teamsRes);
       expect(teams).toHaveLength(2);
-      expect(teams.map((t) => t.name)).toContain(teamName);
+      expect(teams.map(t => t.name)).toContain(teamName);
     });
   });
 
@@ -426,7 +426,7 @@ describe('Teams', () => {
 
       const teamsRes = await driver.actor.list_org_teams({ org_id: org.id });
       const teams = extractOkResponse(teamsRes);
-      expect(teams.map((t) => t.id)).not.toContain(team.id);
+      expect(teams.map(t => t.id)).not.toContain(team.id);
     });
   });
 
@@ -509,7 +509,7 @@ describe('Teams', () => {
       driver.actor.setIdentity(bob.identity);
       const teamsRes = await driver.actor.list_my_teams();
       const teams = extractOkResponse(teamsRes);
-      expect(teams.map((t) => t.id)).toContain(team.id);
+      expect(teams.map(t => t.id)).toContain(team.id);
     });
 
     it('should be idempotent when adding an existing member', async () => {
