@@ -5,6 +5,49 @@ type ListMyOrganizationsResponse = variant {
   Err : ApiError;
 };
 
+type CreateOrganizationRequest = record {
+  name : text;
+};
+
+type CreateOrganizationResponse = variant {
+  Ok : record {
+    organization : Organization;
+  };
+  Err : ApiError;
+};
+
+type GetOrganizationRequest = record {
+  org_id : text;
+};
+
+type GetOrganizationResponse = variant {
+  Ok : record {
+    organization : Organization;
+  };
+  Err : ApiError;
+};
+
+type UpdateOrganizationRequest = record {
+  org_id : text;
+  name : text;
+};
+
+type UpdateOrganizationResponse = variant {
+  Ok : record {
+    organization : Organization;
+  };
+  Err : ApiError;
+};
+
+type DeleteOrganizationRequest = record {
+  org_id : text;
+};
+
+type DeleteOrganizationResponse = variant {
+  Ok : null;
+  Err : ApiError;
+};
+
 type Organization = record {
   id : text;
   name : text;
@@ -12,4 +55,8 @@ type Organization = record {
 
 service : {
   list_my_organizations : () -> (ListMyOrganizationsResponse) query;
+  create_organization : (CreateOrganizationRequest) -> (CreateOrganizationResponse);
+  get_organization : (GetOrganizationRequest) -> (GetOrganizationResponse) query;
+  update_organization : (UpdateOrganizationRequest) -> (UpdateOrganizationResponse);
+  delete_organization : (DeleteOrganizationRequest) -> (DeleteOrganizationResponse);
 };
