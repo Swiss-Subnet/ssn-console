@@ -16,7 +16,7 @@ maintained via BTree indexes in stable memory:
 | `user_team_index`         | `BTreeSet<(user_id, team_id)>` | Inverse      |
 | `organization_team_index` | `BTreeSet<(org_id, team_id)>`  | Org -> teams |
 
-Memory IDs are already allocated (15-18) in `memory_manager.rs`.
+Memory IDs are allocated in `memory_manager.rs`.
 
 ## What Exists Today
 
@@ -69,9 +69,19 @@ org level).
 
 ## Frontend
 
-Team management UI will live under the org settings area:
+Team management UI lives under the org settings area:
 
 - `/organizations/:orgId/teams` -- list teams in org
 - `/organizations/:orgId/teams/new` -- create team form
-- `/organizations/:orgId/teams/:teamId` -- team settings (rename,
-  delete, manage members)
+- `/organizations/:orgId/teams/:teamId/settings` -- team settings
+  (rename, delete, manage members)
+
+## Related
+
+- [OVERVIEW.md](OVERVIEW.md) -- architecture and entity hierarchy.
+- [ORGANIZATION_MANAGEMENT.md](ORGANIZATION_MANAGEMENT.md) -- org
+  CRUD, membership, access model.
+- [USER_MANAGEMENT.md](USER_MANAGEMENT.md) -- user profiles, auth,
+  email verification.
+- [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) -- projects,
+  canisters, approval policies.
