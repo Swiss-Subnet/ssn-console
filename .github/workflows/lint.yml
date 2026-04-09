@@ -15,9 +15,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint_rust:
-    name: Lint Rust
+  changes:
+    name: Detect Changes
     runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.detect.outputs.rust }}
+      typescript: ${{ steps.detect.outputs.typescript }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -26,43 +29,44 @@ jobs:
           # breaks git diff origin/<base>...HEAD
           fetch-depth: 0
 
-      - name: Check for Rust changes
-        id: rust_changes
+      - name: Detect changed paths
+        id: detect
         run: |
-          CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
-            'src/backend/' 'src/canister-history/' 'src/cycles-monitor/' 'src/canister-utils/' 'Cargo.*')
-          if [ -z "$CHANGES" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          fi
+          has_changes() {
+            git diff --quiet origin/${{ github.base_ref }}...HEAD -- "$@" && echo false || echo true
+          }
+
+          echo "rust=$(has_changes \
+            'src/backend/' 'src/canister-history/' 'src/cycles-monitor/' \
+            'src/canister-utils/' 'Cargo.*')" >> "$GITHUB_OUTPUT"
+
+          echo "typescript=$(has_changes \
+            'src/frontend/' 'src/offchain-service/' 'src/backend-api/' \
+            'src/scripts/' 'docs/' '*.cjs' '*.json' '*.md')" >> "$GITHUB_OUTPUT"
+
+  lint_rust:
+    name: Lint Rust
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
 
       - name: Cargo fmt
-        if: steps.rust_changes.outputs.skip != 'true'
         run: cargo fmt -- --check
 
   lint_typescript:
     name: Lint TypeScript
+    needs: changes
+    if: needs.changes.outputs.typescript == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-        with:
-          # Shallow clones don't have the base branch ref, which
-          # breaks git diff origin/<base>...HEAD
-          fetch-depth: 0
-
-      - name: Check for TypeScript changes
-        id: ts_changes
-        run: |
-          CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
-            'src/frontend/' 'src/offchain-service/' 'src/backend-api/' 'src/scripts/' 'docs/' '*.cjs' '*.json' '*.md')
-          if [ -z "$CHANGES" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Setup Bun
-        if: steps.ts_changes.outputs.skip != 'true'
         uses: ./.github/actions/setup-bun
 
       - name: Check TypeScript formatting
-        if: steps.ts_changes.outputs.skip != 'true'
         run: bun format:check
