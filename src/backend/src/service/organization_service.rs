@@ -14,6 +14,7 @@ use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
 
 const MAX_ORG_NAME_LENGTH: usize = 100;
+const MAX_ORGS_PER_USER: usize = 20;
 
 fn validate_and_trim_org_name(name: String) -> ApiResult<String> {
     let trimmed = name.trim().to_string();
@@ -43,6 +44,12 @@ pub fn create_organization(
 ) -> ApiResult<CreateOrganizationResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let name = validate_and_trim_org_name(req.name)?;
+
+    if organization_repository::count_user_orgs(user_id) >= MAX_ORGS_PER_USER {
+        return Err(ApiError::client_error(format!(
+            "Cannot create more than {MAX_ORGS_PER_USER} organizations."
+        )));
+    }
 
     let org = Organization { name };
     let org_id = organization_repository::create_org(user_id, org.clone());

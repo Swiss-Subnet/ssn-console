@@ -20,71 +20,28 @@ Memory IDs are already allocated (15-18) in `memory_manager.rs`.
 
 ## What Exists Today
 
-- `Team` model with `name` field only.
-- Repository: `add_default_team`, `delete_org_teams`,
-  `list_user_teams`, `list_user_team_ids`.
-- Service/controller: `list_my_teams` query endpoint.
-- On org creation, a "Default Team" is auto-created with a default
-  project inside it.
-- On org deletion, all org teams are cascade-deleted.
+The `Team` struct stores `org_id` and `name`. On org creation, a
+"Default Team" is auto-created with a default project inside it. On
+org deletion, all org teams are cascade-deleted.
 
-## Planned Changes
+### Endpoints
 
-### Update Data Model
+| Endpoint           | Type     | Description                         |
+| ------------------ | -------- | ----------------------------------- |
+| `list_my_teams`    | `query`  | List caller's teams across all orgs |
+| `list_org_teams`   | `query`  | List teams within an org            |
+| `create_team`      | `update` | Create a team in an org             |
+| `get_team`         | `query`  | Get a single team by ID             |
+| `update_team`      | `update` | Rename a team                       |
+| `delete_team`      | `update` | Delete a team                       |
+| `add_user_to_team` | `update` | Add an org member to a team         |
 
-Add `org_id: Uuid` to the `Team` struct so we can look up a team's
-org without scanning the `organization_team_index`.
+### Validation and Guards
 
-### Create Team
-
-Endpoint: `create_team(CreateTeamRequest { org_id, name })`
-
-- Caller must be authenticated and a member of the org.
-- Validate name (non-empty, max 100 chars).
-- Create team record, add caller as member, add org-team link.
-- Returns the new team.
-
-### View Organisation Teams
-
-Endpoint: `list_org_teams(ListOrgTeamsRequest { org_id })`
-
-- Caller must be a member of the org.
-- Returns all teams in the org (via `organization_team_index`).
-
-The existing `list_my_teams` endpoint returns teams across all orgs
-for the caller. This new endpoint scopes to a single org.
-
-### Update Team Details
-
-Endpoint: `update_team(UpdateTeamRequest { team_id, name })`
-
-- Caller must be a member of the team's org.
-- Validate name (same rules as create).
-- Update the team record.
-
-### Delete Team
-
-Endpoint: `delete_team(DeleteTeamRequest { team_id })`
-
-- Caller must be a member of the team's org.
-- Guard: cannot delete the last team in an org.
-- Guard: team must have no projects (same pattern as org deletion
-  requiring no projects).
-- Cleanup: remove team-user links, org-team link, team record.
-
-### Add User to Team
-
-Endpoint: `add_user_to_team(AddUserToTeamRequest { team_id, user_id })`
-
-- Caller must be a member of the team's org.
-- Target user must also be a member of the org.
-- Adds user-team and team-user index entries.
-
-### Create Default Team on Sign-up
-
-This already works -- `add_default_team` is called during org
-creation, which happens on signup. No changes needed unless the
-default team needs different behavior.
+- Team name: non-empty, max 100 characters, trimmed.
+- Max 50 teams per organization.
+- Cannot delete the last team in an org.
+- Cannot delete a team that still has projects.
 
 ## Authorization Model
 
@@ -96,6 +53,14 @@ For read operations (list, get), org membership is sufficient.
 For mutations (create, update, delete, add user), org membership is
 sufficient (no team membership required -- you manage teams at the
 org level).
+
+### Known Gaps
+
+- **`add_user_to_team` is unusable in practice.** Both the caller and
+  the target user must be in the team's org, but there is no org
+  invitation API yet. The only org member is the creator.
+- **No `remove_user_from_team` endpoint.** Once a user is added to a
+  team, there is no way to remove them.
 
 ## Frontend
 

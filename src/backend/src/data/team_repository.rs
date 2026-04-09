@@ -5,14 +5,11 @@ use super::{
     },
     Team,
 };
-use canister_utils::Uuid;
+use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
-pub fn add_default_team(user_id: Uuid, org_id: Uuid) -> Uuid {
+pub fn create_team(user_id: Uuid, org_id: Uuid, team: Team) -> Uuid {
     let team_id = Uuid::new();
-    let team = Team {
-        name: "Default Team".to_string(),
-    };
 
     mutate_state(|s| {
         s.teams.insert(team_id, team);
@@ -22,6 +19,57 @@ pub fn add_default_team(user_id: Uuid, org_id: Uuid) -> Uuid {
     });
 
     team_id
+}
+
+pub fn add_default_team(user_id: Uuid, org_id: Uuid) -> Uuid {
+    let team = Team {
+        org_id,
+        name: "Default Team".to_string(),
+    };
+
+    create_team(user_id, org_id, team)
+}
+
+pub fn get_team(team_id: Uuid) -> Option<Team> {
+    with_state(|s| s.teams.get(&team_id))
+}
+
+pub fn update_team(team_id: Uuid, team: Team) -> ApiResult {
+    mutate_state(|s| {
+        if !s.teams.contains_key(&team_id) {
+            return Err(ApiError::client_error(format!(
+                "Team with id {team_id} does not exist."
+            )));
+        }
+        s.teams.insert(team_id, team);
+        Ok(())
+    })
+}
+
+pub fn delete_team(team_id: Uuid, org_id: Uuid) -> ApiResult {
+    crate::data::project_repository::remove_team_project_links(team_id);
+
+    mutate_state(|s| {
+        if s.teams.remove(&team_id).is_none() {
+            return Err(ApiError::client_error(format!(
+                "Team with id {team_id} does not exist."
+            )));
+        }
+
+        s.organization_team_index.remove(&(org_id, team_id));
+
+        let user_links: Vec<_> = s
+            .team_user_index
+            .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
+            .collect();
+
+        for (tid, uid) in user_links {
+            s.team_user_index.remove(&(tid, uid));
+            s.user_team_index.remove(&(uid, tid));
+        }
+
+        Ok(())
+    })
 }
 
 // Deletes all teams belonging to an org and their user links.
@@ -49,6 +97,34 @@ pub fn delete_org_teams(org_id: Uuid) {
     });
 }
 
+pub fn is_user_in_team(user_id: Uuid, team_id: Uuid) -> bool {
+    with_state(|s| s.team_user_index.contains(&(team_id, user_id)))
+}
+
+pub fn add_user_to_team(user_id: Uuid, team_id: Uuid) {
+    mutate_state(|s| {
+        s.team_user_index.insert((team_id, user_id));
+        s.user_team_index.insert((user_id, team_id));
+    });
+}
+
+pub fn list_org_teams(org_id: Uuid) -> Vec<(Uuid, Team)> {
+    with_state(|s| {
+        s.organization_team_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .filter_map(|(_, team_id)| s.teams.get(&team_id).map(|team| (team_id, team)))
+            .collect()
+    })
+}
+
+pub fn count_org_teams(org_id: Uuid) -> usize {
+    with_state(|s| {
+        s.organization_team_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .count()
+    })
+}
+
 pub fn list_user_team_ids(user_id: Uuid) -> Vec<Uuid> {
     with_state(|s| {
         s.user_team_index
@@ -66,6 +142,7 @@ pub fn list_user_teams(user_id: Uuid) -> Vec<(Uuid, Team)> {
             .collect()
     })
 }
+
 
 struct TeamState {
     teams: TeamMemory,
