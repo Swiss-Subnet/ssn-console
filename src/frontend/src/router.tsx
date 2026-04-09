@@ -14,6 +14,12 @@ const RedirectToProjectCanisters = lazy(
 );
 const Admin = lazy(() => import('@/routes/admin/admin'));
 const Verify = lazy(() => import('@/routes/verify/verify'));
+const CreateOrganization = lazy(
+  () => import('@/routes/organizations/create-organization'),
+);
+const OrganizationSettings = lazy(
+  () => import('@/routes/organizations/organization-settings'),
+);
 
 export const Router: FC = () => (
   <BrowserRouter>
@@ -24,6 +30,11 @@ export const Router: FC = () => (
         <Route path="canisters" element={<RedirectToProjectCanisters />} />
         <Route path="admin" element={<Admin />} />
         <Route path="verify" element={<Verify />} />
+        <Route path="organizations/new" element={<CreateOrganization />} />
+        <Route
+          path="organizations/:orgId/settings"
+          element={<OrganizationSettings />}
+        />
 
         <Route path="projects/:projectId" element={<ProjectLayout />}>
           <Route path="canisters" element={<Canisters />} />

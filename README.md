@@ -15,6 +15,12 @@
   sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
   ```
 
+Alternatively, all tooling is provided by the Nix flake:
+
+```shell
+nix develop
+```
+
 ## Env Vars
 
 Create the `.env.local` file:
@@ -32,16 +38,22 @@ SMTP_FROM="${SMTP_FROM}"
 PORT="${PORT}"
 ```
 
-To generate the private key:
+Generate the signing keys for email verification JWTs:
 
 ```shell
-openssl genpkey -algorithm ed25519 -out ~/.ssh/id_ssn_local_sign.pem
+mkdir -p .local
+openssl genpkey -algorithm ed25519 -out .local/sign.pem
+openssl pkey -in .local/sign.pem -pubout -out .local/sign.pub
 ```
 
-To generate the corresponding public key:
+Note: macOS LibreSSL does not support Ed25519. Use the Nix shell
+or install OpenSSL via Homebrew.
+
+For minimal local dev (no SMTP needed), create `.env.local` with
+just the public key:
 
 ```shell
-openssl pkey -in ~/.ssh/id_ssn_local_sign.pem -pubout -out ~/.ssh/id_ssn_local_sign.pub
+printf 'PUBLIC_KEY="%s"\n' "$(cat .local/sign.pub)" > .env.local
 ```
 
 ## Commands
@@ -58,7 +70,28 @@ Start the local replica and deploy canisters:
 ./scripts/init-local.sh
 ```
 
-### Build the frontend:
+### Local Email Verification
+
+After signing up and entering your email in the UI, generate a
+verification token:
+
+```shell
+bun run scripts/generate-verify-token.ts <your-email>
+```
+
+Visit `http://localhost:5173/verify?token=<output>` in the same
+browser where you are signed in.
+
+### Local User Activation
+
+New users start with `Pending` status. Activate via dfx:
+
+```shell
+dfx canister call backend list_user_profiles '(record {})'
+dfx canister call backend update_user_profile '(record { user_id = "<id>"; status = opt variant { Active } })'
+```
+
+### Build the frontend
 
 Build the backend API library:
 

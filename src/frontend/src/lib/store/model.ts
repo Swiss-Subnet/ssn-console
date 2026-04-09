@@ -136,6 +136,9 @@ export type OrganizationsSlice = {
 
   initializeOrganizations: () => Promise<void>;
   clearOrganizations: () => void;
+  createOrganization: (name: string) => Promise<Organization>;
+  updateOrganization: (orgId: string, name: string) => Promise<Organization>;
+  deleteOrganization: (orgId: string) => Promise<void>;
 };
 
 export type AppSlice = AuthSlice &
