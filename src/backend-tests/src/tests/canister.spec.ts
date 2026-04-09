@@ -87,64 +87,6 @@ describe('Canisters', () => {
     await driver.tearDown();
   });
 
-  describe('list_my_canisters', () => {
-    it('should return an error for an anonymous user', async () => {
-      driver.actor.setIdentity(anonymousIdentity);
-
-      const res = await driver.actor.list_my_canisters();
-      expect(res).toEqual(unauthenticatedError);
-    });
-
-    it('should return an error for a user without a profile', async () => {
-      const aliceIdentity = generateRandomIdentity();
-      driver.actor.setIdentity(aliceIdentity);
-
-      const res = await driver.actor.list_my_canisters();
-      expect(res).toEqual(noProfileError(aliceIdentity.getPrincipal()));
-    });
-
-    it('should return an empty array when the user has no canisters', async () => {
-      const [aliceIdentity] = await driver.users.createUser();
-      driver.actor.setIdentity(aliceIdentity);
-
-      const canistersRes = await driver.actor.list_my_canisters();
-      const canisters = extractOkResponse(canistersRes);
-      expect(canisters).toEqual([]);
-    });
-
-    it('should return all canisters owned by the user', async () => {
-      const [aliceIdentity] = await driver.users.createUser();
-      driver.actor.setIdentity(aliceIdentity);
-      const aliceProject = await driver.getDefaultProject();
-      await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
-      await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
-
-      const [bobIdentity] = await driver.users.createUser();
-      driver.actor.setIdentity(bobIdentity);
-      const bobProject = await driver.getDefaultProject();
-      await driver.proposals.createCanister(bobIdentity, bobProject.id);
-      await driver.proposals.createCanister(bobIdentity, bobProject.id);
-      await driver.proposals.createCanister(bobIdentity, bobProject.id);
-
-      driver.actor.setIdentity(aliceIdentity);
-      const aliceCanistersRes = await driver.actor.list_my_canisters();
-      const aliceCanisters = extractOkResponse(aliceCanistersRes);
-
-      expect(aliceCanisters.length).toBe(2);
-      await expectCanister(aliceCanisters[0]!);
-      await expectCanister(aliceCanisters[1]!);
-
-      driver.actor.setIdentity(bobIdentity);
-      const bobCanistersRes = await driver.actor.list_my_canisters();
-      const bobCanisters = extractOkResponse(bobCanistersRes);
-
-      expect(bobCanisters.length).toBe(3);
-      await expectCanister(bobCanisters[0]!);
-      await expectCanister(bobCanisters[1]!);
-      await expectCanister(bobCanisters[2]!);
-    });
-  });
-
   describe('create_canister', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);

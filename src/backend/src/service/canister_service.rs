@@ -30,19 +30,20 @@ pub async fn list_project_canisters(
     limit: Option<u64>,
     page: Option<u64>,
 ) -> ApiResult<dto::ListProjectCanistersResponse> {
+    let project_id = Uuid::try_from(project_id)?;
+
+    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
+    let team_ids = team_repository::list_user_team_ids(user_id);
+    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
+
     let limit = limit
         .unwrap_or(DEFAULT_PAGINATION_LIMIT)
         .clamp(MIN_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT);
     let page = page.unwrap_or(DEFAULT_PAGINATION_PAGE);
 
-    let project_id = Uuid::try_from(project_id)?;
     let total_items = canister_repository::get_project_canister_count(project_id);
     let total_pages = total_items.div_ceil(limit).max(MIN_PAGINATION_PAGE);
     let page = page.clamp(MIN_PAGINATION_PAGE, total_pages);
-
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let team_ids = team_repository::list_user_team_ids(user_id);
-    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
 
     let project_canisters =
         canister_repository::list_canisters_by_project(project_id, limit as usize, page as usize);
