@@ -56,11 +56,11 @@ export const ProjectSelector: FC = () => {
       return [];
     }
 
-    const orgWithProjects = orgsWithProjects.find(
+    const activeOrgWithProjects = orgsWithProjects.find(
       o => o.id === activeOrganization.id,
     );
 
-    return orgWithProjects?.projects ?? [];
+    return activeOrgWithProjects?.projects ?? [];
   }, [activeOrganization, orgsWithProjects]);
 
   return (
