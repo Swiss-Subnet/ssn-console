@@ -42,6 +42,10 @@ dfx canister call aaaaa-aa update_settings "(
           name = \"PUBLIC_KEY\";
           value = \"$PUBLIC_KEY\";
         };
+        record {
+          name = \"OFFCHAIN_SERVICE_URL\";
+          value = \"localhost:3000\";
+        };
       };
     };
   }
