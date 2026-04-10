@@ -2,52 +2,14 @@ name: Lint
 
 on:
   pull_request:
-    paths:
-      - 'src/**'
-      - 'docs/**'
-      - 'Cargo.*'
-      - '*.cjs'
-      - '*.json'
-      - '*.md'
 
 concurrency:
   group: pr-${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
-  changes:
-    name: Detect Changes
-    runs-on: ubuntu-latest
-    outputs:
-      rust: ${{ steps.detect.outputs.rust }}
-      typescript: ${{ steps.detect.outputs.typescript }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          # Shallow clones don't have the base branch ref, which
-          # breaks git diff origin/<base>...HEAD
-          fetch-depth: 0
-
-      - name: Detect changed paths
-        id: detect
-        run: |
-          has_changes() {
-            git diff --quiet origin/${{ github.base_ref }}...HEAD -- "$@" && echo false || echo true
-          }
-
-          echo "rust=$(has_changes \
-            'src/backend/' 'src/canister-history/' 'src/cycles-monitor/' \
-            'src/canister-utils/' 'Cargo.*')" >> "$GITHUB_OUTPUT"
-
-          echo "typescript=$(has_changes \
-            'src/frontend/' 'src/offchain-service/' 'src/backend-api/' \
-            'src/scripts/' 'docs/' '*.cjs' '*.json' '*.md')" >> "$GITHUB_OUTPUT"
-
   lint_rust:
     name: Lint Rust
-    needs: changes
-    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -58,8 +20,6 @@ jobs:
 
   lint_typescript:
     name: Lint TypeScript
-    needs: changes
-    if: needs.changes.outputs.typescript == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

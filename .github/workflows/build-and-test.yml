@@ -1,75 +1,37 @@
-# Each job detects whether its relevant source paths changed and skips
-# if not. Dependencies between packages:
-#
-#   backend          -> canister-utils, backend-api, management-canister, frontend
-#   canister-history -> canister-history-api, management-canister
-#   cycles-monitor   -> cycles-monitor-api
-#   offchain-service -> (standalone)
-#
-# Cargo.* and dfx.json trigger all canister jobs since they affect
-# the build configuration for every canister.
-#
-# There are currently no cross-canister integration tests, each test
-# suite only exercises its own canister. If cross-canister dependencies
-# are introduced, the path filters here must be updated accordingly.
-
 name: Build and Test
 
 on:
   pull_request:
-    paths:
-      - 'src/**'
-      - 'Cargo.*'
-      - 'dfx.json'
-      - 'config/**'
 
 concurrency:
   group: pr-${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
-  changes:
-    name: Detect Changes
+  build_and_test_all_canisters:
+    name: Build and Test All Canisters
     runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.detect.outputs.backend }}
-      canister_history: ${{ steps.detect.outputs.canister_history }}
-      cycles_monitor: ${{ steps.detect.outputs.cycles_monitor }}
-      offchain: ${{ steps.detect.outputs.offchain }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-        with:
-          # Shallow clones don't have the base branch ref, which
-          # breaks git diff origin/<base>...HEAD
-          fetch-depth: 0
 
-      - name: Detect changed paths
-        id: detect
-        run: |
-          has_changes() {
-            git diff --quiet origin/${{ github.base_ref }}...HEAD -- "$@" && echo false || echo true
-          }
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
 
-          echo "backend=$(has_changes \
-            'src/backend/' 'src/canister-utils/' 'src/backend-api/' 'src/backend-tests/' \
-            'src/frontend/' 'src/management-canister/' 'Cargo.*' 'dfx.json')" >> "$GITHUB_OUTPUT"
+      - name: Setup DFX
+        uses: ./.github/actions/setup-dfx
 
-          echo "canister_history=$(has_changes \
-            'src/canister-history/' 'src/canister-history-tests/' \
-            'src/canister-history-api/' 'src/management-canister/' 'Cargo.*' 'dfx.json')" >> "$GITHUB_OUTPUT"
+      - name: DFX build
+        run: dfx build --check
 
-          echo "cycles_monitor=$(has_changes \
-            'src/cycles-monitor/' 'src/cycles-monitor-tests/' \
-            'src/cycles-monitor-api/' 'Cargo.*' 'dfx.json')" >> "$GITHUB_OUTPUT"
+      - name: Cargo clippy
+        run: cargo clippy --all-targets --all-features
 
-          echo "offchain=$(has_changes \
-            'src/offchain-service/' 'config/offchain-service.*')" >> "$GITHUB_OUTPUT"
+      - name: Cargo test
+        run: cargo test
 
   build_and_test_backend:
     name: Build and Test Backend
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -84,19 +46,11 @@ jobs:
       - name: DFX build
         run: dfx build backend --check
 
-      - name: Cargo clippy
-        run: cargo clippy -p backend -p canister-utils --all-targets --all-features
-
-      - name: Cargo test
-        run: cargo test -p backend -p canister-utils
-
       - name: pic-js tests
         run: bun turbo run -F backend-tests test
 
   build_and_test_canister_history:
     name: Build and Test Canister History
-    needs: changes
-    if: needs.changes.outputs.canister_history == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -116,8 +70,6 @@ jobs:
 
   build_and_test_cycles_monitor:
     name: Build and Test Cycles Monitor
-    needs: changes
-    if: needs.changes.outputs.cycles_monitor == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -151,10 +103,18 @@ jobs:
       - name: Type check
         run: bun type-check
 
-  build_and_test_offchain_service:
-    name: Build and Test Offchain Service
-    needs: changes
-    if: needs.changes.outputs.offchain == 'true'
+  build_offchain_service:
+    name: Build Offchain Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build Container image
+        run: docker build -f ./config/offchain-service.containerfile -t offchain-service .
+
+  test_offchain_service:
+    name: Test Offchain Service
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -165,6 +125,3 @@ jobs:
 
       - name: Unit tests
         run: bun turbo run -F offchain-service test
-
-      - name: Build Container image
-        run: docker build -f ./config/offchain-service.containerfile -t offchain-service .
