@@ -46,7 +46,13 @@ pub struct DeleteTeamRequest {
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct DeleteTeamResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct AddUserToTeamRequest {
     pub team_id: String,
     pub user_id: String,
 }
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct AddUserToTeamResponse {}

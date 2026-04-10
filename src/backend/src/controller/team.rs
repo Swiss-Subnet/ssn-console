@@ -1,8 +1,8 @@
 use crate::{
     dto::{
-        AddUserToTeamRequest, CreateTeamRequest, CreateTeamResponse, DeleteTeamRequest,
-        GetTeamRequest, GetTeamResponse, ListOrgTeamsRequest, ListTeamsResponse, UpdateTeamRequest,
-        UpdateTeamResponse,
+        AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
+        DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse, ListOrgTeamsRequest,
+        ListTeamsResponse, UpdateTeamRequest, UpdateTeamResponse,
     },
     service::team_service,
 };
@@ -60,7 +60,7 @@ fn update_team(req: UpdateTeamRequest) -> ApiResultDto<UpdateTeamResponse> {
 }
 
 #[update]
-fn delete_team(req: DeleteTeamRequest) -> ApiResultDto<()> {
+fn delete_team(req: DeleteTeamRequest) -> ApiResultDto<DeleteTeamResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
@@ -70,7 +70,7 @@ fn delete_team(req: DeleteTeamRequest) -> ApiResultDto<()> {
 }
 
 #[update]
-fn add_user_to_team(req: AddUserToTeamRequest) -> ApiResultDto<()> {
+fn add_user_to_team(req: AddUserToTeamRequest) -> ApiResultDto<AddUserToTeamResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);

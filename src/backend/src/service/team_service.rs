@@ -3,9 +3,9 @@ use crate::{
         organization_repository, project_repository, team_repository, user_profile_repository, Team,
     },
     dto::{
-        AddUserToTeamRequest, CreateTeamRequest, CreateTeamResponse, DeleteTeamRequest,
-        GetTeamRequest, GetTeamResponse, ListOrgTeamsRequest, ListTeamsResponse, UpdateTeamRequest,
-        UpdateTeamResponse,
+        AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
+        DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse, ListOrgTeamsRequest,
+        ListTeamsResponse, UpdateTeamRequest, UpdateTeamResponse,
     },
     mapping::{map_list_teams_response, map_team_to_response},
 };
@@ -94,7 +94,10 @@ pub fn update_team(caller: &Principal, req: UpdateTeamRequest) -> ApiResult<Upda
     Ok(map_team_to_response(team_id, team))
 }
 
-pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult {
+pub fn delete_team(
+    caller: &Principal,
+    req: DeleteTeamRequest,
+) -> ApiResult<DeleteTeamResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let team = team_repository::get_team(team_id)
@@ -116,10 +119,13 @@ pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult {
     project_repository::remove_team_project_links(team_id);
     team_repository::delete_team(team_id, team.org_id)?;
 
-    Ok(())
+    Ok(DeleteTeamResponse {})
 }
 
-pub fn add_user_to_team(caller: &Principal, req: AddUserToTeamRequest) -> ApiResult {
+pub fn add_user_to_team(
+    caller: &Principal,
+    req: AddUserToTeamRequest,
+) -> ApiResult<AddUserToTeamResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
     let target_user_id = Uuid::try_from(req.user_id.as_str())?;
     let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
@@ -129,12 +135,12 @@ pub fn add_user_to_team(caller: &Principal, req: AddUserToTeamRequest) -> ApiRes
     organization_repository::assert_user_in_org(target_user_id, team.org_id)?;
 
     if team_repository::is_user_in_team(target_user_id, team_id) {
-        return Ok(());
+        return Ok(AddUserToTeamResponse {});
     }
 
     team_repository::add_user_to_team(target_user_id, team_id);
 
-    Ok(())
+    Ok(AddUserToTeamResponse {})
 }
 
 pub fn migrate_team_org_ids() {
