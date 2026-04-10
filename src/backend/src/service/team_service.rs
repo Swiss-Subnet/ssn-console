@@ -135,3 +135,7 @@ pub fn add_user_to_team(caller: &Principal, req: AddUserToTeamRequest) -> ApiRes
 
     Ok(())
 }
+
+pub fn migrate_team_org_ids() {
+    team_repository::migrate_team_org_ids();
+}
