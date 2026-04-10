@@ -1,8 +1,8 @@
 use crate::{
     dto::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
-        DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse, ListOrgTeamsRequest,
-        ListTeamsResponse, UpdateTeamRequest, UpdateTeamResponse,
+        DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
+        ListOrgTeamsRequest, ListTeamsResponse, UpdateTeamRequest, UpdateTeamResponse,
     },
     service::team_service,
 };

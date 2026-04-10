@@ -4,8 +4,8 @@ use crate::{
     },
     dto::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
-        DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse, ListOrgTeamsRequest,
-        ListTeamsResponse, UpdateTeamRequest, UpdateTeamResponse,
+        DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
+        ListOrgTeamsRequest, ListTeamsResponse, UpdateTeamRequest, UpdateTeamResponse,
     },
     mapping::{map_list_teams_response, map_team_to_response},
 };
@@ -94,10 +94,7 @@ pub fn update_team(caller: &Principal, req: UpdateTeamRequest) -> ApiResult<Upda
     Ok(map_team_to_response(team_id, team))
 }
 
-pub fn delete_team(
-    caller: &Principal,
-    req: DeleteTeamRequest,
-) -> ApiResult<DeleteTeamResponse> {
+pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult<DeleteTeamResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let team = team_repository::get_team(team_id)
