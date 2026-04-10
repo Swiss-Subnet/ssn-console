@@ -55,7 +55,7 @@ pub fn create_team(caller: &Principal, req: CreateTeamRequest) -> ApiResult<Crea
     organization_repository::assert_user_in_org(user_id, org_id)?;
     let name = validate_and_trim_team_name(req.name)?;
 
-    if team_repository::count_org_teams(org_id) >= MAX_TEAMS_PER_ORG {
+    if team_repository::has_at_least_n_org_teams(org_id, MAX_TEAMS_PER_ORG) {
         return Err(ApiError::client_error(format!(
             "Cannot create more than {MAX_TEAMS_PER_ORG} teams per organization."
         )));
@@ -104,7 +104,7 @@ pub fn delete_team(
         .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
     organization_repository::assert_user_in_org(user_id, team.org_id)?;
 
-    if team_repository::count_org_teams(team.org_id) <= 1 {
+    if !team_repository::has_at_least_n_org_teams(team.org_id, 2) {
         return Err(ApiError::client_error(
             "Cannot delete the last team in an organization.".to_string(),
         ));

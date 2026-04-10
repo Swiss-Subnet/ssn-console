@@ -115,11 +115,13 @@ pub fn list_org_teams(org_id: Uuid) -> Vec<(Uuid, Team)> {
     })
 }
 
-pub fn count_org_teams(org_id: Uuid) -> usize {
+pub fn has_at_least_n_org_teams(org_id: Uuid, n: usize) -> bool {
     with_state(|s| {
         s.organization_team_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .take(n)
             .count()
+            >= n
     })
 }
 

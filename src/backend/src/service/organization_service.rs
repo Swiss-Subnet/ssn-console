@@ -45,7 +45,7 @@ pub fn create_organization(
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let name = validate_and_trim_org_name(req.name)?;
 
-    if organization_repository::count_user_orgs(user_id) >= MAX_ORGS_PER_USER {
+    if organization_repository::has_at_least_n_user_orgs(user_id, MAX_ORGS_PER_USER) {
         return Err(ApiError::client_error(format!(
             "Cannot create more than {MAX_ORGS_PER_USER} organizations."
         )));
