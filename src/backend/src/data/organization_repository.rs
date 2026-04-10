@@ -69,11 +69,13 @@ pub fn delete_org(org_id: Uuid) -> ApiResult {
     })
 }
 
-pub fn count_user_orgs(user_id: Uuid) -> usize {
+pub fn has_at_least_n_user_orgs(user_id: Uuid, n: usize) -> bool {
     with_state(|s| {
         s.user_organization_index
             .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))
+            .take(n)
             .count()
+            >= n
     })
 }
 

@@ -112,7 +112,7 @@ pub fn delete_organization(
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     organization_repository::assert_user_in_org(user_id, org_id)?;
 
-    if organization_repository::count_user_orgs(user_id) <= 1 {
+    if !organization_repository::has_at_least_n_user_orgs(user_id, 2) {
         return Err(ApiError::client_error(
             "Cannot delete your last organization.".to_string(),
         ));
