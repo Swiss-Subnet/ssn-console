@@ -1,8 +1,8 @@
 use crate::{
     dto::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
-        GetOrganizationRequest, GetOrganizationResponse, ListMyOrganizationsResponse,
-        UpdateOrganizationRequest, UpdateOrganizationResponse,
+        DeleteOrganizationResponse, GetOrganizationRequest, GetOrganizationResponse,
+        ListMyOrganizationsResponse, UpdateOrganizationRequest, UpdateOrganizationResponse,
     },
     service::organization_service,
 };
@@ -50,7 +50,9 @@ fn update_organization(req: UpdateOrganizationRequest) -> ApiResultDto<UpdateOrg
 }
 
 #[update]
-fn delete_organization(req: DeleteOrganizationRequest) -> ApiResultDto<()> {
+fn delete_organization(
+    req: DeleteOrganizationRequest,
+) -> ApiResultDto<DeleteOrganizationResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);

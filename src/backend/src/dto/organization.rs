@@ -38,3 +38,6 @@ pub struct UpdateOrganizationRequest {
 pub struct DeleteOrganizationRequest {
     pub org_id: String,
 }
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct DeleteOrganizationResponse {}
