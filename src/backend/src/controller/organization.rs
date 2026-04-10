@@ -50,9 +50,7 @@ fn update_organization(req: UpdateOrganizationRequest) -> ApiResultDto<UpdateOrg
 }
 
 #[update]
-fn delete_organization(
-    req: DeleteOrganizationRequest,
-) -> ApiResultDto<DeleteOrganizationResponse> {
+fn delete_organization(req: DeleteOrganizationRequest) -> ApiResultDto<DeleteOrganizationResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
