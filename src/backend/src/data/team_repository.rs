@@ -47,8 +47,6 @@ pub fn update_team(team_id: Uuid, team: Team) -> ApiResult {
 }
 
 pub fn delete_team(team_id: Uuid, org_id: Uuid) -> ApiResult {
-    crate::data::project_repository::remove_team_project_links(team_id);
-
     mutate_state(|s| {
         if s.teams.remove(&team_id).is_none() {
             return Err(ApiError::client_error(format!(

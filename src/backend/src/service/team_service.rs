@@ -113,6 +113,7 @@ pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult {
         ));
     }
 
+    project_repository::remove_team_project_links(team_id);
     team_repository::delete_team(team_id, team.org_id)?;
 
     Ok(())
