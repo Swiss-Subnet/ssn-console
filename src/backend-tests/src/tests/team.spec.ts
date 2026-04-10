@@ -422,7 +422,7 @@ describe('Teams', () => {
       const { team } = extractOkResponse(createRes);
 
       const deleteRes = await driver.actor.delete_team({ team_id: team.id });
-      expect(deleteRes).toEqual({ Ok: null });
+      expect(deleteRes).toEqual({ Ok: {} });
 
       const teamsRes = await driver.actor.list_org_teams({ org_id: org.id });
       const teams = extractOkResponse(teamsRes);
@@ -503,7 +503,7 @@ describe('Teams', () => {
         team_id: team.id,
         user_id: bob.profile.id,
       });
-      expect(addRes).toEqual({ Ok: null });
+      expect(addRes).toEqual({ Ok: {} });
 
       // Bob should now see the team in list_my_teams.
       driver.actor.setIdentity(bob.identity);
@@ -522,7 +522,7 @@ describe('Teams', () => {
         team_id: defaultTeam.id,
         user_id: profile.id,
       });
-      expect(res).toEqual({ Ok: null });
+      expect(res).toEqual({ Ok: {} });
     });
   });
 });
