@@ -9,27 +9,12 @@ use crate::{
         ListMyOrganizationsResponse, UpdateOrganizationRequest, UpdateOrganizationResponse,
     },
     mapping::{map_list_my_organizations_response, map_organization_to_response},
+    validation::OrgName,
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
 
-const MAX_ORG_NAME_LENGTH: usize = 100;
 const MAX_ORGS_PER_USER: usize = 20;
-
-fn validate_and_trim_org_name(name: String) -> ApiResult<String> {
-    let trimmed = name.trim().to_string();
-    if trimmed.is_empty() {
-        return Err(ApiError::client_error(
-            "Organization name cannot be empty.".to_string(),
-        ));
-    }
-    if trimmed.len() > MAX_ORG_NAME_LENGTH {
-        return Err(ApiError::client_error(format!(
-            "Organization name cannot exceed {MAX_ORG_NAME_LENGTH} characters."
-        )));
-    }
-    Ok(trimmed)
-}
 
 pub fn list_my_organizations(caller: &Principal) -> ApiResult<ListMyOrganizationsResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
@@ -43,7 +28,7 @@ pub fn create_organization(
     req: CreateOrganizationRequest,
 ) -> ApiResult<CreateOrganizationResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let name = validate_and_trim_org_name(req.name)?;
+    let name = OrgName::try_from(req.name)?;
 
     if organization_repository::has_at_least_n_user_orgs(user_id, MAX_ORGS_PER_USER) {
         return Err(ApiError::client_error(format!(
@@ -51,7 +36,9 @@ pub fn create_organization(
         )));
     }
 
-    let org = Organization { name };
+    let org = Organization {
+        name: name.into_inner(),
+    };
     let org_id = organization_repository::create_org(user_id, org.clone());
     let team_id = team_repository::add_default_team(user_id, org_id);
     let project_id = project_repository::add_default_project(team_id, org_id);
@@ -95,9 +82,11 @@ pub fn update_organization(
     let org_id = Uuid::try_from(req.org_id.as_str())?;
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     organization_repository::assert_user_in_org(user_id, org_id)?;
-    let name = validate_and_trim_org_name(req.name)?;
+    let name = OrgName::try_from(req.name)?;
 
-    let org = Organization { name };
+    let org = Organization {
+        name: name.into_inner(),
+    };
     organization_repository::update_org(org_id, org.clone())?;
 
     Ok(map_organization_to_response(org_id, org))
