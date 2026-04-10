@@ -2,7 +2,7 @@
   "name": "@ssn/cycles-monitor-api",
   "private": true,
   "scripts": {
-    "build": "icp-bindgen --did-file ../cycles-monitor/cycles_monitor.did --out-dir ./dist --force --actor-disabled"
+    "build": "icp-bindgen --did-file ./cycles_monitor.did --out-dir ./dist --force --actor-disabled"
   },
   "module": "dist/declarations/cycles_monitor.did.js",
   "types": "dist/declarations/cycles_monitor.did.d.ts",

@@ -40,7 +40,7 @@ mod tests {
     fn check_candid_interface() {
         service_compatible(
             CandidSource::Text(&__export_service()),
-            CandidSource::File(Path::new("./backend.did")),
+            CandidSource::File(Path::new("../backend-api/backend.did")),
         )
         .unwrap();
     }

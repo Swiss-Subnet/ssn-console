@@ -23,7 +23,7 @@ mod tests {
     #[test]
     fn check_candid_interface() {
         service_compatible(
-            CandidSource::File(Path::new("./cycles_monitor.did")),
+            CandidSource::File(Path::new("../cycles-monitor-api/cycles_monitor.did")),
             CandidSource::Text(&__export_service()),
         )
         .unwrap();

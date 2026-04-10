@@ -19,11 +19,9 @@
   "canisters": {
     "backend": {
       "type": "custom",
-      "candid": "src/backend/backend.did",
+      "candid": "src/backend-api/backend.did",
       "wasm": "target/wasm32-unknown-unknown/release/backend.wasm",
       "build": [
-        "bun turbo -F @ssn/backend-api build",
-        "bun turbo -F @ssn/management-canister build",
         "bun turbo -F frontend build",
         "cargo build --target wasm32-unknown-unknown --release -p backend --locked"
       ],
@@ -38,11 +36,9 @@
     },
     "canister-history": {
       "type": "custom",
-      "candid": "src/canister-history/canister_history.did",
+      "candid": "src/canister-history-api/canister_history.did",
       "wasm": "target/wasm32-unknown-unknown/release/canister_history.wasm",
       "build": [
-        "bun turbo -F @ssn/canister-history-api build",
-        "bun turbo -F @ssn/management-canister build",
         "cargo build --target wasm32-unknown-unknown --release -p canister-history --locked"
       ],
       "declarations": {
@@ -55,10 +51,9 @@
     },
     "cycles-monitor": {
       "type": "custom",
-      "candid": "src/cycles-monitor/cycles_monitor.did",
+      "candid": "src/cycles-monitor-api/cycles_monitor.did",
       "wasm": "target/wasm32-unknown-unknown/release/cycles_monitor.wasm",
       "build": [
-        "bun turbo -F @ssn/cycles-monitor-api build",
         "cargo build --target wasm32-unknown-unknown --release -p cycles-monitor --locked"
       ],
       "declarations": {
