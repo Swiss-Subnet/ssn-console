@@ -56,12 +56,11 @@ pub fn delete_team(team_id: Uuid, org_id: Uuid) -> ApiResult {
 
         s.organization_team_index.remove(&(org_id, team_id));
 
-        let user_links: Vec<_> = s
+        while let Some((tid, uid)) = s
             .team_user_index
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
-            .collect();
-
-        for (tid, uid) in user_links {
+            .next()
+        {
             s.team_user_index.remove(&(tid, uid));
             s.user_team_index.remove(&(uid, tid));
         }

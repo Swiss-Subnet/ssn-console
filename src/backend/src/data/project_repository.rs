@@ -41,12 +41,11 @@ pub fn add_team_to_project(team_id: Uuid, project_id: Uuid) {
 
 pub fn remove_team_project_links(team_id: Uuid) {
     mutate_state(|s| {
-        let links: Vec<_> = s
+        while let Some((tid, pid)) = s
             .team_project_index
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
-            .collect();
-
-        for (tid, pid) in links {
+            .next()
+        {
             s.team_project_index.remove(&(tid, pid));
             s.project_team_index.remove(&(pid, tid));
         }
