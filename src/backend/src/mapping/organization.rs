@@ -1,6 +1,6 @@
 use crate::{
     data::{self},
-    dto::{ListMyOrganizationsResponse, Organization},
+    dto::{ListMyOrganizationsResponse, Organization, OrganizationResponse},
 };
 use canister_utils::Uuid;
 
@@ -17,5 +17,11 @@ pub fn map_organization_response((id, org): (Uuid, data::Organization)) -> Organ
     Organization {
         id: id.to_string(),
         name: org.name,
+    }
+}
+
+pub fn map_organization_to_response(id: Uuid, org: data::Organization) -> OrganizationResponse {
+    OrganizationResponse {
+        organization: map_organization_response((id, org)),
     }
 }

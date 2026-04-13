@@ -4,10 +4,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -24,7 +21,13 @@ import {
   selectProjectMap,
   useAppStore,
 } from '@/lib/store';
-import { ChevronsUpDown } from 'lucide-react';
+import {
+  Building2,
+  ChevronsUpDown,
+  FolderOpen,
+  Plus,
+  Settings,
+} from 'lucide-react';
 import { useMemo, type FC } from 'react';
 import { NavLink } from 'react-router';
 
@@ -48,56 +51,128 @@ export const ProjectSelector: FC = () => {
     return orgMap.get(activeProject?.orgId);
   }, [activeProject, orgMap]);
 
+  const activeOrgProjects = useMemo(() => {
+    if (isNil(activeOrganization)) {
+      return [];
+    }
+
+    const activeOrgWithProjects = orgsWithProjects.find(
+      o => o.id === activeOrganization.id,
+    );
+
+    return activeOrgWithProjects?.projects ?? [];
+  }, [activeOrganization, orgsWithProjects]);
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
-            <div className="flex flex-col">
-              <span className="truncate text-sm font-medium">
-                {activeProject?.name}
-              </span>
+            <Building2 className="size-4" />
 
-              <span className="truncate text-xs">
+            <div className="flex flex-1 flex-col">
+              <span className="truncate text-sm font-medium">
                 {activeOrganization?.name}
               </span>
             </div>
 
-            <ChevronsUpDown className="ml-auto" />
+            <ChevronsUpDown className="ml-auto size-3.5" />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent side={isMobile ? 'bottom' : 'right'}>
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Organizations</DropdownMenuLabel>
+              <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
 
-              {orgsWithProjects.map(orgWithProjects => (
-                <DropdownMenuSub key={orgWithProjects.id}>
-                  <DropdownMenuSubTrigger className="p-2">
-                    {orgWithProjects.name}
-                  </DropdownMenuSubTrigger>
+              {orgsWithProjects.map(org => {
+                const isActive = org.id === activeOrganization?.id;
 
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuLabel>Projects</DropdownMenuLabel>
+                return (
+                  <DropdownMenuItem
+                    key={org.id}
+                    className="p-2"
+                    disabled={isActive}
+                    {...(!isActive && {
+                      render: (
+                        <NavLink
+                          to={`/projects/${org.projects[0]?.id}/canisters`}
+                        />
+                      ),
+                    })}
+                  >
+                    <Building2 className="size-3.5" />
+                    {org.name}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuGroup>
 
-                      {orgWithProjects.projects.map(project => (
-                        <DropdownMenuItem
-                          key={project.id}
-                          className="p-2"
-                          render={
-                            <NavLink to={`/projects/${project.id}/canisters`} />
-                          }
-                        >
-                          {project.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-              ))}
+            <DropdownMenuSeparator />
+
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                className="p-2"
+                render={<NavLink to="/organizations/new" />}
+              >
+                <Plus className="size-3.5" />
+                Create Organization
+              </DropdownMenuItem>
+
+              {activeOrganization && (
+                <DropdownMenuItem
+                  className="p-2"
+                  render={
+                    <NavLink
+                      to={`/organizations/${activeOrganization.id}/settings`}
+                    />
+                  }
+                >
+                  <Settings className="size-3.5" />
+                  Settings
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        {activeOrgProjects.length > 1 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<SidebarMenuButton />}>
+              <FolderOpen className="size-4" />
+
+              <div className="flex flex-1 flex-col">
+                <span className="truncate text-sm">{activeProject?.name}</span>
+              </div>
+
+              <ChevronsUpDown className="ml-auto size-3.5" />
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent side={isMobile ? 'bottom' : 'right'}>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Projects</DropdownMenuLabel>
+
+                {activeOrgProjects.map(project => (
+                  <DropdownMenuItem
+                    key={project.id}
+                    className="p-2"
+                    render={
+                      <NavLink to={`/projects/${project.id}/canisters`} />
+                    }
+                  >
+                    {project.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <SidebarMenuButton>
+            <FolderOpen className="size-4" />
+
+            <span className="truncate text-sm">{activeProject?.name}</span>
+          </SidebarMenuButton>
+        )}
       </SidebarMenuItem>
     </SidebarMenu>
   );

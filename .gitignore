@@ -15,5 +15,8 @@ tsconfig.tsbuildinfo
 # environment variables
 .env*
 
+# local dev keys
+.local
+
 # deployment temporary files
 tmp

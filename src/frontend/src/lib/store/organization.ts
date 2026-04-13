@@ -32,6 +32,35 @@ export const createOrganizationsSlice: AppStateCreator<OrganizationsSlice> = (
   clearOrganizations() {
     set({ organizations: [] });
   },
+
+  async createOrganization(name: string) {
+    const organizationApi = get().organizationApi;
+    const res = await organizationApi.createOrganization({ name });
+    set(state => ({
+      organizations: [...state.organizations, res.organization],
+    }));
+    await get().initializeProjects();
+    return res.organization;
+  },
+
+  async updateOrganization(orgId: string, name: string) {
+    const organizationApi = get().organizationApi;
+    const res = await organizationApi.updateOrganization({ orgId, name });
+    set(state => ({
+      organizations: state.organizations.map(org =>
+        org.id === orgId ? res.organization : org,
+      ),
+    }));
+    return res.organization;
+  },
+
+  async deleteOrganization(orgId: string) {
+    const organizationApi = get().organizationApi;
+    await organizationApi.deleteOrganization({ orgId });
+    set(state => ({
+      organizations: state.organizations.filter(org => org.id !== orgId),
+    }));
+  },
 });
 
 function selectOrgs(state: AppSlice): Organization[] {

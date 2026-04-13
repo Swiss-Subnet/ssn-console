@@ -66,6 +66,14 @@ pub fn list_team_project_ids(team_id: Uuid) -> Vec<Uuid> {
     })
 }
 
+pub fn org_has_projects(org_id: Uuid) -> bool {
+    with_state(|s| {
+        s.organization_project_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .any(|_| true)
+    })
+}
+
 pub fn assert_any_team_has_project(
     user_id: &Uuid,
     team_ids: &[Uuid],

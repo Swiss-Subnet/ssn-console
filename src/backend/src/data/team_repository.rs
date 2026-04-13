@@ -24,6 +24,31 @@ pub fn add_default_team(user_id: Uuid, org_id: Uuid) -> Uuid {
     team_id
 }
 
+// Deletes all teams belonging to an org and their user links.
+// Called as part of org deletion after the service layer confirms the
+// org has no projects.
+pub fn delete_org_teams(org_id: Uuid) {
+    mutate_state(|s| {
+        while let Some((oid, team_id)) = s
+            .organization_team_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .next()
+        {
+            s.organization_team_index.remove(&(oid, team_id));
+            s.teams.remove(&team_id);
+
+            while let Some((tid, uid)) = s
+                .team_user_index
+                .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
+                .next()
+            {
+                s.team_user_index.remove(&(tid, uid));
+                s.user_team_index.remove(&(uid, tid));
+            }
+        }
+    });
+}
+
 pub fn list_user_team_ids(user_id: Uuid) -> Vec<Uuid> {
     with_state(|s| {
         s.user_team_index
