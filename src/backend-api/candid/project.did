@@ -9,6 +9,17 @@ type ListMyProjectsResponse = variant {
   Err : ApiError;
 };
 
+type ListOrgProjectsRequest = record {
+  org_id : text;
+};
+
+type ListOrgProjectsResponse = variant {
+  Ok : record {
+    projects : vec Project;
+  };
+  Err : ApiError;
+};
+
 type CreateProjectRequest = record {
   org_id : text;
   name : text;
@@ -29,5 +40,6 @@ type Project = record {
 
 service : {
   list_my_projects : (ListMyProjectsRequest) -> (ListMyProjectsResponse) query;
+  list_org_projects : (ListOrgProjectsRequest) -> (ListOrgProjectsResponse) query;
   create_project : (CreateProjectRequest) -> (CreateProjectResponse);
 };

@@ -12,6 +12,14 @@ pub fn map_list_my_projects_response(
     }
 }
 
+pub fn map_list_org_projects_response(
+    projects: Vec<(Uuid, data::Project)>,
+) -> dto::ListOrgProjectsResponse {
+    dto::ListOrgProjectsResponse {
+        projects: projects.into_iter().map(map_project_response).collect(),
+    }
+}
+
 pub fn map_project_response((project_id, project): (Uuid, data::Project)) -> dto::Project {
     dto::Project {
         id: project_id.to_string(),

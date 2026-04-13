@@ -56,6 +56,19 @@ pub fn get_project(project_id: &Uuid) -> Option<Project> {
     with_state(|s| s.projects.get(project_id))
 }
 
+pub fn list_org_projects(org_id: Uuid) -> Vec<(Uuid, Project)> {
+    with_state(|s| {
+        s.organization_project_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .filter_map(|(_, project_id)| {
+                s.projects
+                    .get(&project_id)
+                    .map(|project| (project_id, project))
+            })
+            .collect()
+    })
+}
+
 pub fn list_team_projects(team_ids: &[Uuid]) -> Vec<(Uuid, Project)> {
     list_all_team_project_ids(team_ids)
         .into_iter()

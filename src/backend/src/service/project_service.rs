@@ -3,8 +3,11 @@ use crate::{
         organization_repository, project_repository, team_repository, user_profile_repository,
         Project,
     },
-    dto::{self, CreateProjectRequest, CreateProjectResponse, ListMyProjectsResponse},
-    mapping::map_list_my_projects_response,
+    dto::{
+        self, CreateProjectRequest, CreateProjectResponse, ListMyProjectsResponse,
+        ListOrgProjectsRequest, ListOrgProjectsResponse,
+    },
+    mapping::{map_list_my_projects_response, map_list_org_projects_response},
 };
 use candid::Principal;
 use canister_utils::{ApiResult, Uuid};
@@ -15,6 +18,18 @@ pub fn list_my_projects(caller: &Principal) -> ApiResult<ListMyProjectsResponse>
     let projects = project_repository::list_team_projects(&team_ids);
 
     Ok(map_list_my_projects_response(projects))
+}
+
+pub fn list_org_projects(
+    caller: &Principal,
+    req: ListOrgProjectsRequest,
+) -> ApiResult<ListOrgProjectsResponse> {
+    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
+    organization_repository::assert_user_in_org(user_id, org_id)?;
+
+    let projects = project_repository::list_org_projects(org_id);
+    Ok(map_list_org_projects_response(projects))
 }
 
 pub fn create_project(

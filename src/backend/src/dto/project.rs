@@ -10,6 +10,16 @@ pub struct ListMyProjectsResponse {
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListOrgProjectsRequest {
+    pub org_id: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListOrgProjectsResponse {
+    pub projects: Vec<Project>,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct Project {
     pub id: String,
     pub org_id: String,
