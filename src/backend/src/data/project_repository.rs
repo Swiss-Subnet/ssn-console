@@ -39,6 +39,79 @@ pub fn add_team_to_project(team_id: Uuid, project_id: Uuid) {
     });
 }
 
+pub fn remove_team_from_project(team_id: Uuid, project_id: Uuid) {
+    mutate_state(|s| {
+        s.project_team_index.remove(&(project_id, team_id));
+        s.team_project_index.remove(&(team_id, project_id));
+    });
+}
+
+pub fn is_team_in_project(team_id: Uuid, project_id: Uuid) -> bool {
+    with_state(|s| s.project_team_index.contains(&(project_id, team_id)))
+}
+
+pub fn list_project_team_ids(project_id: Uuid) -> Vec<Uuid> {
+    with_state(|s| {
+        s.project_team_index
+            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .map(|(_, team_id)| team_id)
+            .collect()
+    })
+}
+
+pub fn project_team_count(project_id: Uuid) -> usize {
+    with_state(|s| {
+        s.project_team_index
+            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .count()
+    })
+}
+
+pub fn update_project(project_id: Uuid, project: Project) -> ApiResult {
+    mutate_state(|s| {
+        if !s.projects.contains_key(&project_id) {
+            return Err(ApiError::client_error(format!(
+                "Project with id {project_id} does not exist."
+            )));
+        }
+        s.projects.insert(project_id, project);
+        Ok(())
+    })
+}
+
+pub fn delete_project(project_id: Uuid, org_id: Uuid) -> ApiResult {
+    mutate_state(|s| {
+        if s.projects.remove(&project_id).is_none() {
+            return Err(ApiError::client_error(format!(
+                "Project with id {project_id} does not exist."
+            )));
+        }
+
+        s.organization_project_index.remove(&(org_id, project_id));
+
+        while let Some((pid, team_id)) = s
+            .project_team_index
+            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .next()
+        {
+            s.project_team_index.remove(&(pid, team_id));
+            s.team_project_index.remove(&(team_id, pid));
+        }
+
+        Ok(())
+    })
+}
+
+pub fn has_at_least_n_org_projects(org_id: Uuid, n: usize) -> bool {
+    with_state(|s| {
+        s.organization_project_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .take(n)
+            .count()
+            >= n
+    })
+}
+
 pub fn remove_team_project_links(team_id: Uuid) {
     mutate_state(|s| {
         while let Some((tid, pid)) = s

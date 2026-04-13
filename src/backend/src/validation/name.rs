@@ -2,6 +2,7 @@ use canister_utils::{ApiError, ApiResult};
 
 const MAX_ORG_NAME_LENGTH: usize = 100;
 const MAX_TEAM_NAME_LENGTH: usize = 100;
+const MAX_PROJECT_NAME_LENGTH: usize = 100;
 
 fn validate_bounded_name(subject: &str, value: String, max: usize) -> ApiResult<String> {
     let trimmed = value.trim().to_string();
@@ -49,6 +50,23 @@ impl TryFrom<String> for TeamName {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         validate_bounded_name("Team name", value, MAX_TEAM_NAME_LENGTH).map(TeamName)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ProjectName(String);
+
+impl ProjectName {
+    pub fn into_inner(self) -> String {
+        self.0
+    }
+}
+
+impl TryFrom<String> for ProjectName {
+    type Error = ApiError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        validate_bounded_name("Project name", value, MAX_PROJECT_NAME_LENGTH).map(ProjectName)
     }
 }
 

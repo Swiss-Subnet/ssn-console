@@ -27,3 +27,9 @@ pub fn map_project_response((project_id, project): (Uuid, data::Project)) -> dto
         name: project.name,
     }
 }
+
+pub fn map_project_to_response(project_id: Uuid, project: data::Project) -> dto::ProjectResponse {
+    dto::ProjectResponse {
+        project: map_project_response((project_id, project)),
+    }
+}
