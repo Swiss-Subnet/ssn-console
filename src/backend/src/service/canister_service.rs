@@ -7,7 +7,7 @@ use crate::{
         canister_repository, organization_repository, project_repository, team_repository,
         user_profile_repository, Canister,
     },
-    dto::{self, ListMyCanistersResponse},
+    dto::{self, ListMyCanistersResponse, ListUserCanistersRequest, ListUserCanistersResponse},
     mapping::map_canister_response,
 };
 use candid::Principal;
@@ -22,7 +22,18 @@ use ic_cdk::{
 
 pub async fn list_my_canisters(caller: Principal) -> ApiResult<ListMyCanistersResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
+    list_user_canisters_internal(user_id).await
+}
 
+pub async fn list_user_canisters(
+    request: ListUserCanistersRequest,
+) -> ApiResult<ListUserCanistersResponse> {
+    let user_id = request.user_id.as_str().try_into()?;
+    let canisters = list_user_canisters_internal(user_id).await?;
+    Ok(ListUserCanistersResponse { canisters })
+}
+
+async fn list_user_canisters_internal(user_id: Uuid) -> ApiResult<Vec<dto::Canister>> {
     let team_id = team_repository::list_user_team_ids(user_id)
         .first()
         .cloned()

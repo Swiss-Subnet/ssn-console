@@ -4,9 +4,16 @@ import { fromCandidOpt } from '@/lib/utils';
 import type {
   Canister as ApiCanister,
   ListMyCanistersResponse as ApiListMyCanistersResponse,
+  ListUserCanistersResponse as ApiListUserCanistersResponse,
+  ListUserCanistersRequest,
 } from '@ssn/backend-api';
 
 export type ListMyCanistersResponse = Canister[];
+export type ListUserCanistersResponse = {
+  canisters: Canister[];
+};
+
+export type { ListUserCanistersRequest };
 
 export type Canister = {
   id: string;
@@ -64,6 +71,14 @@ export function mapListMyCanistersResponse(
   return mapOkResponse(res).map(mapCanisterResponse);
 }
 
+export function mapListUserCanistersResponse(
+  res: ApiListUserCanistersResponse,
+): ListUserCanistersResponse {
+  return {
+    canisters: mapOkResponse(res).canisters.map(mapCanisterResponse),
+  };
+}
+
 export function mapCanisterResponse(res: ApiCanister): Canister {
   const canister: Canister = {
     id: res.id,
@@ -74,9 +89,9 @@ export function mapCanisterResponse(res: ApiCanister): Canister {
   if (isNotNil(canisterInfo)) {
     canister.info = {
       status:
-        'running' in canisterInfo.status
+        'Running' in canisterInfo.status
           ? CanisterStatus.Running
-          : 'stopping' in canisterInfo.status
+          : 'Stopping' in canisterInfo.status
             ? CanisterStatus.Stopping
             : CanisterStatus.Stopped,
       readyForMigration: canisterInfo.ready_for_migration,
