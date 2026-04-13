@@ -153,13 +153,13 @@ dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
 To export a CSV of all canisters tracked by the Console:
 
 ```shell
-bun turbo -F scripts fetch-canisters-csv
+bun -F scripts fetch-canisters-csv
 ```
 
 The above script defaults to mainnet, to use a different network:
 
 ```shell
-bun turbo -F scripts fetch-canisters-csv --network="local"
+bun -F scripts fetch-canisters-csv --network="local"
 ```
 
 ### Canister history canister
@@ -173,7 +173,7 @@ dfx canister call --network test canister-history list_subnet_canister_ranges '(
 Get the current subnet canister ranges from the subnet:
 
 ```shell
-bun turbo -F scripts fetch-subnet-canister-ranges
+bun -F scripts fetch-subnet-canister-ranges
 ```
 
 Set the subnet canister ranges in the canister:
