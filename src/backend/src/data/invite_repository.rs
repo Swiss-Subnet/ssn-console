@@ -76,10 +76,10 @@ pub fn count_pending_invites_for_org(org_id: Uuid, now_ns: u64) -> usize {
 // before creating a new invite to bound stale storage.
 pub fn sweep_expired_org_invites(org_id: Uuid, now_ns: u64) {
     mutate_state(|s| {
-        let expired: Vec<Uuid> = s
+        while let Some(invite_id) = s
             .organization_invite_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .filter_map(|(_, invite_id)| {
+            .find_map(|(_, invite_id)| {
                 s.invites.get(&invite_id).and_then(|inv| {
                     if inv.status == InviteStatus::Pending && inv.expires_at_ns <= now_ns {
                         Some(invite_id)
@@ -88,9 +88,7 @@ pub fn sweep_expired_org_invites(org_id: Uuid, now_ns: u64) {
                     }
                 })
             })
-            .collect();
-
-        for invite_id in expired {
+        {
             s.invites.remove(&invite_id);
             s.organization_invite_index.remove(&(org_id, invite_id));
         }
