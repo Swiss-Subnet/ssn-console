@@ -4,8 +4,6 @@ use dto::*;
 use ic_cdk::*;
 use ic_http_certification::{HttpRequest, HttpResponse};
 
-use crate::service::{team_service, user_profile_service};
-
 mod constants;
 mod controller;
 mod data;
@@ -28,8 +26,6 @@ fn export_candid() -> String {
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
     controller::http::init();
-    user_profile_service::migrate_email_verified();
-    team_service::migrate_team_org_ids();
 }
 
 #[cfg(test)]
