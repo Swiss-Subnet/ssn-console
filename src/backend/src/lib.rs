@@ -14,6 +14,7 @@ mod env;
 mod jwt;
 mod mapping;
 mod service;
+mod validation;
 
 #[macro_use]
 extern crate dotenv_codegen;

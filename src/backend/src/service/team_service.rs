@@ -8,27 +8,12 @@ use crate::{
         ListOrgTeamsRequest, ListTeamsResponse, UpdateTeamRequest, UpdateTeamResponse,
     },
     mapping::{map_list_teams_response, map_team_to_response},
+    validation::TeamName,
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
 
-const MAX_TEAM_NAME_LENGTH: usize = 100;
 const MAX_TEAMS_PER_ORG: usize = 50;
-
-fn validate_and_trim_team_name(name: String) -> ApiResult<String> {
-    let trimmed = name.trim().to_string();
-    if trimmed.is_empty() {
-        return Err(ApiError::client_error(
-            "Team name cannot be empty.".to_string(),
-        ));
-    }
-    if trimmed.len() > MAX_TEAM_NAME_LENGTH {
-        return Err(ApiError::client_error(format!(
-            "Team name cannot exceed {MAX_TEAM_NAME_LENGTH} characters."
-        )));
-    }
-    Ok(trimmed)
-}
 
 pub fn list_my_teams(caller: Principal) -> ApiResult<ListTeamsResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
@@ -53,7 +38,7 @@ pub fn create_team(caller: &Principal, req: CreateTeamRequest) -> ApiResult<Crea
     let org_id = Uuid::try_from(req.org_id.as_str())?;
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     organization_repository::assert_user_in_org(user_id, org_id)?;
-    let name = validate_and_trim_team_name(req.name)?;
+    let name = TeamName::try_from(req.name)?;
 
     if team_repository::has_at_least_n_org_teams(org_id, MAX_TEAMS_PER_ORG) {
         return Err(ApiError::client_error(format!(
@@ -61,7 +46,10 @@ pub fn create_team(caller: &Principal, req: CreateTeamRequest) -> ApiResult<Crea
         )));
     }
 
-    let team = Team { org_id, name };
+    let team = Team {
+        org_id,
+        name: name.into_inner(),
+    };
     let team_id = team_repository::create_team(user_id, org_id, team.clone());
 
     Ok(map_team_to_response(team_id, team))
@@ -83,11 +71,11 @@ pub fn update_team(caller: &Principal, req: UpdateTeamRequest) -> ApiResult<Upda
     let existing = team_repository::get_team(team_id)
         .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
     organization_repository::assert_user_in_org(user_id, existing.org_id)?;
-    let name = validate_and_trim_team_name(req.name)?;
+    let name = TeamName::try_from(req.name)?;
 
     let team = Team {
         org_id: existing.org_id,
-        name,
+        name: name.into_inner(),
     };
     team_repository::update_team(team_id, team.clone())?;
 
