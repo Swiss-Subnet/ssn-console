@@ -48,6 +48,21 @@ type DeleteOrganizationResponse = variant {
   Err : ApiError;
 };
 
+type ListOrgUsersRequest = record {
+  org_id : text;
+};
+
+type OrgUser = record {
+  id : text;
+  email : opt text;
+  email_verified : bool;
+};
+
+type ListOrgUsersResponse = variant {
+  Ok : vec OrgUser;
+  Err : ApiError;
+};
+
 type Organization = record {
   id : text;
   name : text;
@@ -59,4 +74,5 @@ service : {
   get_organization : (GetOrganizationRequest) -> (GetOrganizationResponse) query;
   update_organization : (UpdateOrganizationRequest) -> (UpdateOrganizationResponse);
   delete_organization : (DeleteOrganizationRequest) -> (DeleteOrganizationResponse);
+  list_org_users : (ListOrgUsersRequest) -> (ListOrgUsersResponse) query;
 };

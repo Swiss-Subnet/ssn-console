@@ -62,6 +62,10 @@ export const createTeamsSlice: AppStateCreator<TeamsSlice> = (set, get) => ({
     const teamApi = get().teamApi;
     await teamApi.addUserToTeam({ teamId, userId });
   },
+
+  async loadTeamUsers(teamId: string) {
+    return get().getTeamApi().listTeamUsers({ teamId });
+  },
 });
 
 function selectTeams(state: AppSlice): Team[] {

@@ -6,9 +6,13 @@ use crate::{
     dto::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
         DeleteOrganizationResponse, GetOrganizationRequest, GetOrganizationResponse,
-        ListMyOrganizationsResponse, UpdateOrganizationRequest, UpdateOrganizationResponse,
+        ListMyOrganizationsResponse, ListOrgUsersRequest, ListOrgUsersResponse,
+        UpdateOrganizationRequest, UpdateOrganizationResponse,
     },
-    mapping::{map_list_my_organizations_response, map_organization_to_response},
+    mapping::{
+        map_list_my_organizations_response, map_list_org_users_response,
+        map_organization_to_response,
+    },
     validation::OrgName,
 };
 use candid::Principal;
@@ -21,6 +25,22 @@ pub fn list_my_organizations(caller: &Principal) -> ApiResult<ListMyOrganization
 
     let organizations = organization_repository::list_user_orgs(user_id);
     Ok(map_list_my_organizations_response(organizations))
+}
+
+pub fn list_org_users(
+    caller: &Principal,
+    req: ListOrgUsersRequest,
+) -> ApiResult<ListOrgUsersResponse> {
+    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
+    organization_repository::assert_user_in_org(user_id, org_id)?;
+
+    let users = organization_repository::list_org_users(org_id)
+        .into_iter()
+        .filter_map(|id| user_profile_repository::get_user_profile_by_user_id(&id).map(|p| (id, p)))
+        .collect::<Vec<_>>();
+
+    Ok(map_list_org_users_response(users))
 }
 
 pub fn create_organization(

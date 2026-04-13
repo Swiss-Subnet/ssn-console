@@ -1,0 +1,87 @@
+import "../../canister-utils/error.did";
+
+type InviteTarget = variant {
+  Email : text;
+  UserId : text;
+  Principal : principal;
+};
+
+type InviteStatus = variant {
+  Pending;
+  Accepted;
+  Declined;
+  Revoked;
+};
+
+type OrgInvite = record {
+  id : text;
+  org_id : text;
+  org_name : text;
+  created_by : text;
+  created_at_ns : nat64;
+  expires_at_ns : nat64;
+  target : InviteTarget;
+  status : InviteStatus;
+};
+
+type CreateOrgInviteRequest = record {
+  org_id : text;
+  target : InviteTarget;
+};
+
+type CreateOrgInviteResponse = variant {
+  Ok : record {
+    invite : OrgInvite;
+  };
+  Err : ApiError;
+};
+
+type ListOrgInvitesRequest = record {
+  org_id : text;
+};
+
+type ListOrgInvitesResponse = variant {
+  Ok : vec OrgInvite;
+  Err : ApiError;
+};
+
+type ListMyInvitesResponse = variant {
+  Ok : vec OrgInvite;
+  Err : ApiError;
+};
+
+type RevokeOrgInviteRequest = record {
+  invite_id : text;
+};
+
+type RevokeOrgInviteResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type AcceptOrgInviteRequest = record {
+  invite_id : text;
+};
+
+type AcceptOrgInviteResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type DeclineOrgInviteRequest = record {
+  invite_id : text;
+};
+
+type DeclineOrgInviteResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+service : {
+  create_org_invite : (CreateOrgInviteRequest) -> (CreateOrgInviteResponse);
+  list_org_invites : (ListOrgInvitesRequest) -> (ListOrgInvitesResponse) query;
+  revoke_org_invite : (RevokeOrgInviteRequest) -> (RevokeOrgInviteResponse);
+  list_my_invites : () -> (ListMyInvitesResponse) query;
+  accept_org_invite : (AcceptOrgInviteRequest) -> (AcceptOrgInviteResponse);
+  decline_org_invite : (DeclineOrgInviteRequest) -> (DeclineOrgInviteResponse);
+};

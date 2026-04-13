@@ -96,6 +96,13 @@ pub fn list_org_users(org_id: Uuid) -> Vec<Uuid> {
     })
 }
 
+pub fn add_user_to_org(user_id: Uuid, org_id: Uuid) {
+    mutate_state(|s| {
+        s.organization_user_index.insert((org_id, user_id));
+        s.user_organization_index.insert((user_id, org_id));
+    });
+}
+
 pub fn assert_user_in_org(user_id: Uuid, org_id: Uuid) -> ApiResult {
     with_state(|s| {
         if !s.organization_user_index.contains(&(org_id, user_id)) {

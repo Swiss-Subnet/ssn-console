@@ -11,6 +11,8 @@ import {
   mapDeleteTeamResponse,
   mapAddUserToTeamRequest,
   mapAddUserToTeamResponse,
+  mapListTeamUsersRequest,
+  mapListTeamUsersResponse,
   type ListTeamsResponse,
   type ListOrgTeamsRequest,
   type CreateTeamRequest,
@@ -19,6 +21,8 @@ import {
   type UpdateTeamRequest,
   type DeleteTeamRequest,
   type AddUserToTeamRequest,
+  type ListTeamUsersRequest,
+  type TeamUser,
 } from '@/lib/api-models';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import type { _SERVICE } from '@ssn/backend-api';
@@ -61,5 +65,10 @@ export class TeamApi {
   public async addUserToTeam(req: AddUserToTeamRequest): Promise<void> {
     const res = await this.actor.add_user_to_team(mapAddUserToTeamRequest(req));
     mapAddUserToTeamResponse(res);
+  }
+
+  public async listTeamUsers(req: ListTeamUsersRequest): Promise<TeamUser[]> {
+    const res = await this.actor.list_team_users(mapListTeamUsersRequest(req));
+    return mapListTeamUsersResponse(res);
   }
 }

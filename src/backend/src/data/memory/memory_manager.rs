@@ -53,3 +53,6 @@ pub(super) const PROPOSAL_MEMORY_ID: MemoryId = MemoryId::new(25);
 pub(super) const PROJECT_PROPOSAL_INDEX_MEMORY_ID: MemoryId = MemoryId::new(26);
 
 pub(super) const CANISTER_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(27);
+
+pub(super) const ORG_INVITE_MEMORY_ID: MemoryId = MemoryId::new(28);
+pub(super) const ORGANIZATION_INVITE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(29);

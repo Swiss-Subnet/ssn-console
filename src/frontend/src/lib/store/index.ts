@@ -1,6 +1,7 @@
 export * from './api';
 export * from './app';
 export * from './auth';
+export * from './invite';
 export * from './model';
 export * from './organization';
 export * from './project';

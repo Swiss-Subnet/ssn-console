@@ -2,6 +2,7 @@ mod approval_policy;
 mod canister;
 mod cycles_ledger;
 pub mod http;
+mod invite;
 mod organization;
 mod project;
 mod proposal;

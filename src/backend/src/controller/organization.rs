@@ -2,7 +2,8 @@ use crate::{
     dto::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
         DeleteOrganizationResponse, GetOrganizationRequest, GetOrganizationResponse,
-        ListMyOrganizationsResponse, UpdateOrganizationRequest, UpdateOrganizationResponse,
+        ListMyOrganizationsResponse, ListOrgUsersRequest, ListOrgUsersResponse,
+        UpdateOrganizationRequest, UpdateOrganizationResponse,
     },
     service::organization_service,
 };
@@ -57,4 +58,14 @@ fn delete_organization(req: DeleteOrganizationRequest) -> ApiResultDto<DeleteOrg
     }
 
     organization_service::delete_organization(&caller, req).into()
+}
+
+#[query]
+fn list_org_users(req: ListOrgUsersRequest) -> ApiResultDto<ListOrgUsersResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    organization_service::list_org_users(&caller, req).into()
 }

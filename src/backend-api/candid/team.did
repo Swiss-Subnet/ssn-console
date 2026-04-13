@@ -63,6 +63,21 @@ type AddUserToTeamResponse = variant {
   Err : ApiError;
 };
 
+type ListTeamUsersRequest = record {
+  team_id : text;
+};
+
+type TeamUser = record {
+  id : text;
+  email : opt text;
+  email_verified : bool;
+};
+
+type ListTeamUsersResponse = variant {
+  Ok : vec TeamUser;
+  Err : ApiError;
+};
+
 type Team = record {
   id : text;
   name : text;
@@ -76,4 +91,5 @@ service : {
   update_team : (UpdateTeamRequest) -> (UpdateTeamResponse);
   delete_team : (DeleteTeamRequest) -> (DeleteTeamResponse);
   add_user_to_team : (AddUserToTeamRequest) -> (AddUserToTeamResponse);
+  list_team_users : (ListTeamUsersRequest) -> (ListTeamUsersResponse) query;
 };

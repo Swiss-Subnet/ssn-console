@@ -1,6 +1,7 @@
 export * from './canister';
 export * from './canister-history';
 export * from './error';
+export * from './invite';
 export * from './management-canister';
 export * from './organization';
 export * from './project';

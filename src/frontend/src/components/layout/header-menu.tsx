@@ -16,6 +16,7 @@ import {
   ClipboardIcon,
   CogIcon,
   LogOutIcon,
+  MailIcon,
   ScrollTextIcon,
   ServerIcon,
 } from 'lucide-react';
@@ -23,9 +24,10 @@ import { useMemo, type FC } from 'react';
 import { NavLink } from 'react-router';
 
 export const HeaderMenu: FC = () => {
-  const { identity, logout, termsAndConditions } = useAppStore();
+  const { identity, logout, termsAndConditions, myInvites } = useAppStore();
   const isActive = useAppStore(selectIsActive);
   const isAdmin = useAppStore(selectIsAdmin);
+  const pendingInviteCount = myInvites.length;
 
   const principal = useMemo(
     () => identity?.getPrincipal().toString(),
@@ -86,6 +88,22 @@ export const HeaderMenu: FC = () => {
             >
               Canisters
               <ServerIcon />
+            </DropdownMenuItem>
+          )}
+
+          {isActive && (
+            <DropdownMenuItem
+              className="justify-between"
+              render={<NavLink to="/invitations" />}
+            >
+              Invitations
+              {pendingInviteCount > 0 ? (
+                <span className="bg-primary text-primary-foreground ml-auto rounded-full px-1.5 text-xs">
+                  {pendingInviteCount}
+                </span>
+              ) : (
+                <MailIcon />
+              )}
             </DropdownMenuItem>
           )}
 

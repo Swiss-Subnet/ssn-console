@@ -12,7 +12,10 @@ import type {
   DeleteTeamResponse as ApiDeleteTeamResponse,
   AddUserToTeamRequest as ApiAddUserToTeamRequest,
   AddUserToTeamResponse as ApiAddUserToTeamResponse,
+  ListTeamUsersRequest as ApiListTeamUsersRequest,
+  ListTeamUsersResponse as ApiListTeamUsersResponse,
   Team as ApiTeam,
+  TeamUser as ApiTeamUser,
 } from '@ssn/backend-api';
 
 export type Team = {
@@ -130,4 +133,34 @@ export function mapAddUserToTeamRequest(
 
 export function mapAddUserToTeamResponse(res: ApiAddUserToTeamResponse): void {
   mapOkResponse(res);
+}
+
+export type TeamUser = {
+  id: string;
+  email: string | null;
+  emailVerified: boolean;
+};
+
+export type ListTeamUsersRequest = {
+  teamId: string;
+};
+
+function mapTeamUser(user: ApiTeamUser): TeamUser {
+  return {
+    id: user.id,
+    email: user.email[0] ?? null,
+    emailVerified: user.email_verified,
+  };
+}
+
+export function mapListTeamUsersRequest(
+  req: ListTeamUsersRequest,
+): ApiListTeamUsersRequest {
+  return { team_id: req.teamId };
+}
+
+export function mapListTeamUsersResponse(
+  res: ApiListTeamUsersResponse,
+): TeamUser[] {
+  return mapOkResponse(res).map(mapTeamUser);
 }

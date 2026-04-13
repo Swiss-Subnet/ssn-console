@@ -124,6 +124,15 @@ pub fn has_at_least_n_org_teams(org_id: Uuid, n: usize) -> bool {
     })
 }
 
+pub fn list_team_user_ids(team_id: Uuid) -> Vec<Uuid> {
+    with_state(|s| {
+        s.team_user_index
+            .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
+            .map(|(_, user_id)| user_id)
+            .collect()
+    })
+}
+
 pub fn list_user_team_ids(user_id: Uuid) -> Vec<Uuid> {
     with_state(|s| {
         s.user_team_index

@@ -56,3 +56,17 @@ pub struct AddUserToTeamRequest {
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct AddUserToTeamResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListTeamUsersRequest {
+    pub team_id: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct TeamUser {
+    pub id: String,
+    pub email: Option<String>,
+    pub email_verified: bool,
+}
+
+pub type ListTeamUsersResponse = Vec<TeamUser>;
