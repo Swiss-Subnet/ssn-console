@@ -141,8 +141,7 @@ describe('Org Invites', () => {
       expect(res).toEqual({
         Err: {
           code: [{ ClientError: {} }],
-          message:
-            'Cannot have more than 10 pending invites per organization.',
+          message: 'Cannot have more than 10 pending invites per organization.',
         },
       });
     });
@@ -181,6 +180,34 @@ describe('Org Invites', () => {
       const bob = await setupUser();
       const res = await driver.actor.list_org_invites({ org_id: alice.org.id });
       expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+    });
+
+    it('should not show invites created by other org members', async () => {
+      const alice = await setupUser();
+      const bob = await setupUser();
+
+      // Bob joins alice's org.
+      driver.actor.setIdentity(alice.identity);
+      const joinRes = await driver.actor.create_org_invite({
+        org_id: alice.org.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite: joinInvite } = extractOkResponse(joinRes);
+      driver.actor.setIdentity(bob.identity);
+      extractOkResponse(
+        await driver.actor.accept_org_invite({ invite_id: joinInvite.id }),
+      );
+
+      // Alice invites carol; bob (same org, not the creator) must not see it.
+      driver.actor.setIdentity(alice.identity);
+      await driver.actor.create_org_invite({
+        org_id: alice.org.id,
+        target: { Email: 'carol@example.com' },
+      });
+
+      driver.actor.setIdentity(bob.identity);
+      const res = await driver.actor.list_org_invites({ org_id: alice.org.id });
+      expect(extractOkResponse(res)).toEqual([]);
     });
 
     it('should list pending invites and omit expired ones', async () => {
@@ -255,6 +282,42 @@ describe('Org Invites', () => {
       const invites = extractOkResponse(listRes);
       expect(invites).toHaveLength(1);
       expect(invites[0].status).toEqual({ Revoked: null });
+    });
+
+    it('should reject revocation by an org member who did not create the invite', async () => {
+      const alice = await setupUser();
+      const bob = await setupUser();
+
+      // Bob joins alice's org via an invite he accepts.
+      driver.actor.setIdentity(alice.identity);
+      const joinRes = await driver.actor.create_org_invite({
+        org_id: alice.org.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite: joinInvite } = extractOkResponse(joinRes);
+      driver.actor.setIdentity(bob.identity);
+      extractOkResponse(
+        await driver.actor.accept_org_invite({ invite_id: joinInvite.id }),
+      );
+
+      // Alice creates an invite for carol; bob (same org) must not revoke it.
+      driver.actor.setIdentity(alice.identity);
+      const createRes = await driver.actor.create_org_invite({
+        org_id: alice.org.id,
+        target: { Email: 'carol@example.com' },
+      });
+      const { invite } = extractOkResponse(createRes);
+
+      driver.actor.setIdentity(bob.identity);
+      const res = await driver.actor.revoke_org_invite({
+        invite_id: invite.id,
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ Unauthorized: {} }],
+          message: 'Only the inviter can revoke this invite.',
+        },
+      });
     });
 
     it('should error when revoking a non-pending invite', async () => {

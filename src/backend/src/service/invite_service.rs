@@ -75,9 +75,14 @@ pub fn list_org_invites(
         .map(|o| o.name)
         .unwrap_or_default();
 
+    // Only show invites the caller created, to avoid leaking invitee
+    // emails/principals to other org members. Once an org permission
+    // model exists, this should gate on an "invite manage" permission
+    // so admins can see all org invites.
     let invites = invite_repository::list_org_invites(org_id)
         .into_iter()
         .filter(|(_, inv)| !is_expired_pending(inv, now_ns))
+        .filter(|(_, inv)| inv.created_by == caller_user_id)
         .map(|(id, inv)| map_invite_to_dto(id, inv, org_name.clone()))
         .collect();
 
@@ -95,6 +100,14 @@ pub fn revoke_org_invite(
         ApiError::client_error(format!("Invite with id {invite_id} does not exist."))
     })?;
     organization_repository::assert_user_in_org(caller_user_id, invite.org_id)?;
+
+    // Only the inviter can revoke. Once org admin roles exist, admins
+    // should be allowed too.
+    if invite.created_by != caller_user_id {
+        return Err(ApiError::unauthorized(
+            "Only the inviter can revoke this invite.".to_string(),
+        ));
+    }
 
     if invite.status != InviteStatus::Pending {
         return Err(ApiError::client_error(
