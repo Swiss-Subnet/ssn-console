@@ -85,6 +85,16 @@ export OFFCHAIN_CONTAINER_PATH="${ROOT_DIR}/config/offchain-service.containerfil
 
 export REMOTE_OFFCHAIN_SERVICE_TAR_PATH="${REMOTE_IMAGE_DIR}/${OFFCHAIN_SERVICE_TAR_NAME}"
 
+# --- Grafana Alloy Variables ---
+
+export ALLOY_CONFIG_FILENAME="config.alloy"
+export ALLOY_CONFIG_PATH="${CONFIG_INPUT_DIR}/${ALLOY_CONFIG_FILENAME}"
+export TMP_ALLOY_CONFIG_PATH="${TMP_OUTPUT_DIR}/${ALLOY_CONFIG_FILENAME}"
+
+export REMOTE_ALLOY_DIR="/etc/alloy"
+export REMOTE_TMP_ALLOY_CONFIG_PATH="${REMOTE_HOME_DIR}/${ALLOY_CONFIG_FILENAME}"
+export REMOTE_ALLOY_CONFIG_PATH="${REMOTE_ALLOY_DIR}/${ALLOY_CONFIG_FILENAME}"
+
 # --- Setup Remote Directories ---
 
 echo
@@ -198,6 +208,21 @@ echo
 echo "🔎 --- Verifying remote Caddyfile exists. ---"
 remote_assert_contains "test -s ${REMOTE_CADDYFILE_PATH} && echo ok || true" "ok"
 
+# --- Generate Grafana Alloy Config
+
+echo
+echo "♻️ --- Substituting environment variables in the Grafana Alloy config. ---"
+strict_envsubst "${ALLOY_CONFIG_PATH}" "${TMP_ALLOY_CONFIG_PATH}"
+
+echo
+echo "📦 --- Transferring the substituted Grafana Alloy config to ${REMOTE_HOST}. ---"
+scp_run "${TMP_ALLOY_CONFIG_PATH}" "${REMOTE_TMP_ALLOY_CONFIG_PATH}"
+ssh_run "sudo mv ${REMOTE_TMP_ALLOY_CONFIG_PATH} ${REMOTE_ALLOY_CONFIG_PATH}"
+
+echo
+echo "🔎 --- Verifying remote Grafana Alloy config exists. ---"
+remote_assert_contains "sudo test -s ${REMOTE_ALLOY_CONFIG_PATH} && echo ok || true" "ok"
+
 # --- Transfer Policies ---
 
 echo
@@ -240,9 +265,14 @@ echo "🚀 --- Restarting the ${OFFCHAIN_SERVICE_SERVICE_NAME} service on ${REMO
 ssh_run "systemctl --user restart ${OFFCHAIN_SERVICE_SERVICE_NAME}.service"
 
 echo
+echo "🚀 --- Restarting the Grafana Alloy service on ${REMOTE_HOST}. ---"
+ssh_run "sudo systemctl restart alloy.service"
+
+echo
 echo "🔎 --- Verifying services are active. ---"
 remote_assert_equals "systemctl --user is-active ${CADDY_SERVICE_NAME}.service" "active"
 remote_assert_equals "systemctl --user is-active ${OFFCHAIN_SERVICE_SERVICE_NAME}.service" "active"
+remote_assert_equals "sudo systemctl is-active alloy.service" "active"
 
 echo
 echo "🔎 --- Verifying services are reachable from the remote host. ---"
@@ -250,8 +280,14 @@ echo "🔎 --- Verifying services are reachable from the remote host. ---"
 remote_assert_contains "podman ps --format '{{.Names}}' || true" "${CADDY_SERVICE_NAME}"
 remote_assert_contains "podman ps --format '{{.Names}}' || true" "${OFFCHAIN_SERVICE_SERVICE_NAME}"
 
-remote_assert_contains "curl -sS --connect-timeout 5 -I http://127.0.0.1:2019 || true" "HTTP/"
-remote_assert_contains "curl -sS --connect-timeout 5 -I -H \"Host: ${OFFCHAIN_SERVICE_DOMAIN}\" http://127.0.0.1/ || true" "HTTP/"
+remote_assert_contains "curl -sSL --connect-timeout 5 -I http://127.0.0.1:2019 || true" "HTTP/"
+remote_assert_contains "curl -sSL --connect-timeout 5 -H \"Host: ${OFFCHAIN_SERVICE_DOMAIN}\" http://127.0.0.1/status || true" "ok"
+remote_assert_contains "curl -sSL --connect-timeout 5 -I http://127.0.0.1:12345/ || true" "HTTP/"
+
+echo
+echo "🔎 --- Verifying services are reachable from the local machine. ---"
+
+local_assert_contains "curl -sSL --connect-timeout 5 -H \"Host: ${OFFCHAIN_SERVICE_DOMAIN}\" http://${REMOTE_HOST}/status || true" "ok"
 
 echo
 echo "🧹 --- Cleaning up old images. ---"

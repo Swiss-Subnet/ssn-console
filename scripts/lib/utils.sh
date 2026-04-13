@@ -1,3 +1,20 @@
+# local_assert_contains <cmd...> <expected>
+# Usage: local_assert_contains "command arg1 arg2" "expected-substring"
+local_assert_contains() {
+  local cmd="$1"
+  local expected="$2"
+
+  out=$(eval "$cmd" 2>&1) || { echo "$out"; fail "Local command failed: ${cmd}"; }
+  if ! printf '%s' "$out" | grep -F --quiet -- "$expected"; then
+    echo "---- Local output ----"
+    printf '%s\n' "$out"
+    fail "Expected output to contain: ${expected}"
+  fi
+}
+
+# strict_envsubst <template_file> <output_file>
+# Usage: strict_envsubst "template.txt" "output.txt"
+# Substitutes environment variables in a template file, failing if any required variables are unset.
 strict_envsubst() {
   local template_file="$1"
   local output_file="$2"
