@@ -33,9 +33,7 @@ const TeamSettings = lazy(
   () => import('@/routes/organizations/teams/team-settings'),
 );
 const UserCanisters = lazy(() => import('@/routes/admin/user-canisters'));
-const MyInvitations = lazy(
-  () => import('@/routes/invitations/my-invitations'),
-);
+const MyInvitations = lazy(() => import('@/routes/invitations/my-invitations'));
 
 export const Router: FC = () => (
   <BrowserRouter>

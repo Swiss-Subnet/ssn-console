@@ -1,7 +1,4 @@
-import type {
-  CreateOrgInviteRequest,
-  OrgInvite,
-} from '@/lib/api-models';
+import type { CreateOrgInviteRequest, OrgInvite } from '@/lib/api-models';
 import type { AppStateCreator, InvitesSlice } from '@/lib/store/model';
 
 export const createInvitesSlice: AppStateCreator<InvitesSlice> = (

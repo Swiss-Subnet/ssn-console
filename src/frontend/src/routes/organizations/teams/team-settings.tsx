@@ -44,13 +44,8 @@ type FormData = z.infer<typeof formSchema>;
 const TeamSettings: FC = () => {
   const { orgId, teamId } = useParams();
   const navigate = useNavigate();
-  const {
-    updateTeam,
-    deleteTeam,
-    loadOrgUsers,
-    loadTeamUsers,
-    addUserToTeam,
-  } = useAppStore();
+  const { updateTeam, deleteTeam, loadOrgUsers, loadTeamUsers, addUserToTeam } =
+    useAppStore();
   const teamMap = useAppStore(selectTeamMap);
   const orgMap = useAppStore(selectOrgMap);
 

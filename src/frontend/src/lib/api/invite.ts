@@ -35,7 +35,9 @@ export class InviteApi {
   public async listOrgInvites(
     req: ListOrgInvitesRequest,
   ): Promise<OrgInvite[]> {
-    const res = await this.actor.list_org_invites(mapListOrgInvitesRequest(req));
+    const res = await this.actor.list_org_invites(
+      mapListOrgInvitesRequest(req),
+    );
     return mapListOrgInvitesResponse(res);
   }
 

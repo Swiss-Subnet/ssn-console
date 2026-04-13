@@ -148,7 +148,9 @@ export type OrganizationsSlice = {
   createOrganization: (name: string) => Promise<Organization>;
   updateOrganization: (orgId: string, name: string) => Promise<Organization>;
   deleteOrganization: (orgId: string) => Promise<void>;
-  loadOrgUsers: (orgId: string) => Promise<import('@/lib/api-models').OrgUser[]>;
+  loadOrgUsers: (
+    orgId: string,
+  ) => Promise<import('@/lib/api-models').OrgUser[]>;
 };
 
 export type InvitesSlice = {
