@@ -137,15 +137,15 @@ fn serve_asset(req: &HttpRequest) -> HttpResponse<'static> {
 }
 
 fn get_asset_headers(additional_headers: Vec<HeaderField>) -> Vec<HeaderField> {
-    let offchain_service_url = load_runtime_env("OFFCHAIN_SERVICE_URL")
-        .expect("OPFFCHAIN_SERVICE_URL env var is required");
+    let offchain_service_url =
+        load_runtime_env("OFFCHAIN_SERVICE_URL").expect("OFFCHAIN_SERVICE_URL env var is required");
 
     let mut connect_src = vec!["'self'", &offchain_service_url];
     if env::is_local() {
-        connect_src.push("localhost:8000");
+        connect_src.push("http://localhost:8000");
     } else {
-        connect_src.push("icp0.io");
-        connect_src.push("icp-api.io");
+        connect_src.push("https://icp0.io");
+        connect_src.push("https://icp-api.io");
     }
     let connect_src = connect_src.join(" ");
 

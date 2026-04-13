@@ -44,7 +44,7 @@ dfx canister call aaaaa-aa update_settings "(
         };
         record {
           name = \"OFFCHAIN_SERVICE_URL\";
-          value = \"localhost:3000\";
+          value = \"http://localhost:3000\";
         };
       };
     };

@@ -21,7 +21,7 @@ runs:
       shell: bash
       run: |
         CANISTER_ID=$(dfx canister id backend --network ${{ inputs.network }})
-        FORMATTED_PUBLIC_KEY=$(echo "$PUBLIC_KEY" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
+        FORMATTED_PUBLIC_KEY=$(echo "${{ inputs.public_key }}" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
 
         dfx canister call aaaaa-aa update_settings "(
           record {

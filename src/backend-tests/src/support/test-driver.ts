@@ -67,7 +67,7 @@ export class TestDriver {
       sender: controllerIdentity.getPrincipal(),
       environmentVariables: [
         { name: 'PUBLIC_KEY', value: PUBLIC_KEY },
-        { name: 'OFFCHAIN_SERVICE_URL', value: 'localhost:3000' },
+        { name: 'OFFCHAIN_SERVICE_URL', value: 'http://localhost:3000' },
       ],
     });
   }
