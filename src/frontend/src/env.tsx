@@ -18,6 +18,9 @@ export const IDENTITY_PROVIDER = IS_LOCAL
   : 'https://id.ai';
 
 export const BACKEND_CANISTER_ID: string = getEnvVar('CANISTER_ID_BACKEND');
+export const CANISTER_HISTORY_CANISTER_ID: string = getEnvVar(
+  'CANISTER_ID_CANISTER_HISTORY',
+);
 
 export const SHOULD_FETCH_ROOT_KEY = IS_LOCAL;
 

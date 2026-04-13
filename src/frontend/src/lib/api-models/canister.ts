@@ -53,9 +53,9 @@ export type CanisterInfo = {
 };
 
 export enum CanisterStatus {
-  Running = 'running',
-  Stopping = 'stopping',
-  Stopped = 'stopped',
+  Running = 'Running',
+  Stopping = 'Stopping',
+  Stopped = 'Stopped',
 }
 
 export function mapListMyCanistersResponse(
