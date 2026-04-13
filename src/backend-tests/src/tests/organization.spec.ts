@@ -142,7 +142,7 @@ describe('Organizations', () => {
       });
       const teams = extractOkResponse(teamsRes);
       expect(teams).toHaveLength(1);
-      expect(teams[0].name).toBe('Default Team');
+      expect(teams[0]!.name).toBe('Default Team');
     });
 
     it('should appear in list_my_organizations', async () => {
@@ -173,13 +173,13 @@ describe('Organizations', () => {
       const [bobOrg] = extractOkResponse(bobOrgsRes);
 
       driver.actor.setIdentity(alice.identity);
-      const res = await driver.actor.get_organization({ org_id: bobOrg.id });
-      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg.id));
+      const res = await driver.actor.get_organization({ org_id: bobOrg!.id });
+      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg!.id));
     });
 
     it('should get an organization', async () => {
       const { org } = await setupUser();
-      const res = await driver.actor.get_organization({ org_id: org.id });
+      const res = await driver.actor.get_organization({ org_id: org!.id });
       expect(extractOkResponse(res)).toEqual({
         organization: org,
       });
@@ -207,16 +207,16 @@ describe('Organizations', () => {
 
       driver.actor.setIdentity(alice.identity);
       const res = await driver.actor.update_organization({
-        org_id: bobOrg.id,
+        org_id: bobOrg!.id,
         name: 'Hijacked',
       });
-      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg.id));
+      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg!.id));
     });
 
     it('should return an error for an empty name', async () => {
       const { org } = await setupUser();
       const res = await driver.actor.update_organization({
-        org_id: org.id,
+        org_id: org!.id,
         name: '   ',
       });
       expect(res).toEqual({
@@ -230,7 +230,7 @@ describe('Organizations', () => {
     it('should return an error for a name exceeding max length', async () => {
       const { org } = await setupUser();
       const res = await driver.actor.update_organization({
-        org_id: org.id,
+        org_id: org!.id,
         name: 'a'.repeat(101),
       });
       expect(res).toEqual({
@@ -245,11 +245,11 @@ describe('Organizations', () => {
       const { org } = await setupUser();
       const updatedName = 'Renamed Corp';
       const res = await driver.actor.update_organization({
-        org_id: org.id,
+        org_id: org!.id,
         name: updatedName,
       });
       expect(extractOkResponse(res)).toEqual({
-        organization: { id: org.id, name: updatedName },
+        organization: { id: org!.id, name: updatedName },
       });
     });
   });
@@ -281,7 +281,7 @@ describe('Organizations', () => {
 
     it('should return an error when deleting the last org', async () => {
       const { org } = await setupUser();
-      const res = await driver.actor.delete_organization({ org_id: org.id });
+      const res = await driver.actor.delete_organization({ org_id: org!.id });
       expect(res).toEqual({
         Err: {
           code: [{ ClientError: {} }],

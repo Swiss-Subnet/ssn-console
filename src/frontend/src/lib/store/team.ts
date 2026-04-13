@@ -7,8 +7,7 @@ export const createTeamsSlice: AppStateCreator<TeamsSlice> = (set, get) => ({
   teams: [],
 
   async initializeTeams() {
-    const { getTeamApi, isAuthenticated } = get();
-    const teamApi = getTeamApi();
+    const { teamApi, isAuthenticated } = get();
 
     if (!isAuthenticated) {
       set({ isTeamsInitialized: true });
@@ -28,13 +27,13 @@ export const createTeamsSlice: AppStateCreator<TeamsSlice> = (set, get) => ({
   },
 
   async loadOrgTeams(orgId: string) {
-    const teamApi = get().getTeamApi();
+    const teamApi = get().teamApi;
     const res = await teamApi.listOrgTeams({ orgId });
     return res.teams;
   },
 
   async createTeam(orgId: string, name: string) {
-    const teamApi = get().getTeamApi();
+    const teamApi = get().teamApi;
     const res = await teamApi.createTeam({ orgId, name });
     set(state => ({
       teams: [...state.teams, res.team],
@@ -43,7 +42,7 @@ export const createTeamsSlice: AppStateCreator<TeamsSlice> = (set, get) => ({
   },
 
   async updateTeam(teamId: string, name: string) {
-    const teamApi = get().getTeamApi();
+    const teamApi = get().teamApi;
     const res = await teamApi.updateTeam({ teamId, name });
     set(state => ({
       teams: state.teams.map(t => (t.id === teamId ? res.team : t)),
@@ -52,7 +51,7 @@ export const createTeamsSlice: AppStateCreator<TeamsSlice> = (set, get) => ({
   },
 
   async deleteTeam(teamId: string) {
-    const teamApi = get().getTeamApi();
+    const teamApi = get().teamApi;
     await teamApi.deleteTeam({ teamId });
     set(state => ({
       teams: state.teams.filter(t => t.id !== teamId),
@@ -60,7 +59,7 @@ export const createTeamsSlice: AppStateCreator<TeamsSlice> = (set, get) => ({
   },
 
   async addUserToTeam(teamId: string, userId: string) {
-    const teamApi = get().getTeamApi();
+    const teamApi = get().teamApi;
     await teamApi.addUserToTeam({ teamId, userId });
   },
 });

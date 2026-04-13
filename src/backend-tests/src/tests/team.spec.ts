@@ -69,16 +69,16 @@ describe('Teams', () => {
       const [bobOrg] = extractOkResponse(bobOrgsRes);
 
       driver.actor.setIdentity(alice.identity);
-      const res = await driver.actor.list_org_teams({ org_id: bobOrg.id });
-      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg.id));
+      const res = await driver.actor.list_org_teams({ org_id: bobOrg!.id });
+      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg!.id));
     });
 
     it('should list teams in the org', async () => {
       const { org } = await setupUser();
-      const res = await driver.actor.list_org_teams({ org_id: org.id });
+      const res = await driver.actor.list_org_teams({ org_id: org!.id });
       const teams = extractOkResponse(res);
       expect(teams).toHaveLength(1);
-      expect(teams[0].name).toBe('Default Team');
+      expect(teams[0]!.name).toBe('Default Team');
     });
   });
 
@@ -113,16 +113,16 @@ describe('Teams', () => {
 
       driver.actor.setIdentity(alice.identity);
       const res = await driver.actor.create_team({
-        org_id: bobOrg.id,
+        org_id: bobOrg!.id,
         name: teamName,
       });
-      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg.id));
+      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg!.id));
     });
 
     it('should return an error for an empty name', async () => {
       const { org } = await setupUser();
       const res = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: '   ',
       });
       expect(res).toEqual({
@@ -136,7 +136,7 @@ describe('Teams', () => {
     it('should return an error for a name exceeding max length', async () => {
       const { org } = await setupUser();
       const res = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: 'a'.repeat(101),
       });
       expect(res).toEqual({
@@ -150,7 +150,7 @@ describe('Teams', () => {
     it('should trim whitespace from the name', async () => {
       const { org } = await setupUser();
       const res = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: '  Engineering  ',
       });
       const { team } = extractOkResponse(res);
@@ -161,14 +161,14 @@ describe('Teams', () => {
       const { org } = await setupUser();
       for (let i = 0; i < 49; i++) {
         const r = await driver.actor.create_team({
-          org_id: org.id,
+          org_id: org!.id,
           name: `Team ${i}`,
         });
         extractOkResponse(r);
       }
       // 49 created + 1 default = 50, so the next one should fail
       const res = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: 'One Too Many',
       });
       expect(res).toEqual({
@@ -182,7 +182,7 @@ describe('Teams', () => {
     it('should create a team', async () => {
       const { org } = await setupUser();
       const res = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: teamName,
       });
       const created = extractOkResponse(res);
@@ -196,7 +196,7 @@ describe('Teams', () => {
 
     it('should add the creator as a member', async () => {
       const { org } = await setupUser();
-      await driver.actor.create_team({ org_id: org.id, name: teamName });
+      await driver.actor.create_team({ org_id: org!.id, name: teamName });
 
       const teamsRes = await driver.actor.list_my_teams();
       const teams = extractOkResponse(teamsRes);
@@ -226,21 +226,21 @@ describe('Teams', () => {
     it('should return an error if the user is not in the org', async () => {
       const alice = await setupUser();
       const aliceTeamsRes = await driver.actor.list_org_teams({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
       });
       const [aliceDefaultTeam] = extractOkResponse(aliceTeamsRes);
 
       const bob = await setupUser();
       const getRes = await driver.actor.get_team({
-        team_id: aliceDefaultTeam.id,
+        team_id: aliceDefaultTeam!.id,
       });
-      expect(getRes).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      expect(getRes).toEqual(noOrgError(bob.profile.id, alice.org!.id));
     });
 
     it('should get a team', async () => {
       const { org } = await setupUser();
       const createRes = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: teamName,
       });
       const { team } = extractOkResponse(createRes);
@@ -277,22 +277,22 @@ describe('Teams', () => {
     it('should return an error if the user is not in the org', async () => {
       const alice = await setupUser();
       const aliceTeamsRes = await driver.actor.list_org_teams({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
       });
       const [aliceDefaultTeam] = extractOkResponse(aliceTeamsRes);
 
       const bob = await setupUser();
       const res = await driver.actor.update_team({
-        team_id: aliceDefaultTeam.id,
+        team_id: aliceDefaultTeam!.id,
         name: 'Hijacked',
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
     });
 
     it('should return an error for an empty name', async () => {
       const { org } = await setupUser();
       const createRes = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: teamName,
       });
       const { team } = extractOkResponse(createRes);
@@ -312,7 +312,7 @@ describe('Teams', () => {
     it('should return an error for a name exceeding max length', async () => {
       const { org } = await setupUser();
       const createRes = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: teamName,
       });
       const { team } = extractOkResponse(createRes);
@@ -332,7 +332,7 @@ describe('Teams', () => {
     it('should update the team name', async () => {
       const { org } = await setupUser();
       const createRes = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: teamName,
       });
       const { team } = extractOkResponse(createRes);
@@ -369,22 +369,22 @@ describe('Teams', () => {
     it('should return an error if the user is not in the org', async () => {
       const alice = await setupUser();
       const createRes = await driver.actor.create_team({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
         name: 'Deletable',
       });
       const { team } = extractOkResponse(createRes);
 
       const bob = await setupUser();
       const res = await driver.actor.delete_team({ team_id: team.id });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
     });
 
     it('should return an error when deleting the last team', async () => {
       const { org } = await setupUser();
-      const teamsRes = await driver.actor.list_org_teams({ org_id: org.id });
+      const teamsRes = await driver.actor.list_org_teams({ org_id: org!.id });
       const [defaultTeam] = extractOkResponse(teamsRes);
 
-      const res = await driver.actor.delete_team({ team_id: defaultTeam.id });
+      const res = await driver.actor.delete_team({ team_id: defaultTeam!.id });
       expect(res).toEqual({
         Err: {
           code: [{ ClientError: {} }],
@@ -397,13 +397,13 @@ describe('Teams', () => {
       const { org } = await setupUser();
       // The default team has the default project, so it can't be deleted
       // even after creating a second team.
-      const teamsRes = await driver.actor.list_org_teams({ org_id: org.id });
+      const teamsRes = await driver.actor.list_org_teams({ org_id: org!.id });
       const [defaultTeam] = extractOkResponse(teamsRes);
 
       // Create a second team so the "last team" guard doesn't fire first.
-      await driver.actor.create_team({ org_id: org.id, name: 'Second Team' });
+      await driver.actor.create_team({ org_id: org!.id, name: 'Second Team' });
 
-      const res = await driver.actor.delete_team({ team_id: defaultTeam.id });
+      const res = await driver.actor.delete_team({ team_id: defaultTeam!.id });
       expect(res).toEqual({
         Err: {
           code: [{ ClientError: {} }],
@@ -416,7 +416,7 @@ describe('Teams', () => {
     it('should delete a team without projects', async () => {
       const { org } = await setupUser();
       const createRes = await driver.actor.create_team({
-        org_id: org.id,
+        org_id: org!.id,
         name: teamName,
       });
       const { team } = extractOkResponse(createRes);
@@ -424,7 +424,7 @@ describe('Teams', () => {
       const deleteRes = await driver.actor.delete_team({ team_id: team.id });
       expect(deleteRes).toEqual({ Ok: {} });
 
-      const teamsRes = await driver.actor.list_org_teams({ org_id: org.id });
+      const teamsRes = await driver.actor.list_org_teams({ org_id: org!.id });
       const teams = extractOkResponse(teamsRes);
       expect(teams.map(t => t.id)).not.toContain(team.id);
     });
@@ -457,22 +457,22 @@ describe('Teams', () => {
     it('should return an error if the caller is not in the org', async () => {
       const alice = await setupUser();
       const aliceTeamsRes = await driver.actor.list_org_teams({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
       });
       const [aliceDefaultTeam] = extractOkResponse(aliceTeamsRes);
 
       const bob = await setupUser();
       const res = await driver.actor.add_user_to_team({
-        team_id: aliceDefaultTeam.id,
+        team_id: aliceDefaultTeam!.id,
         user_id: bob.profile.id,
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
     });
 
     it('should return an error if the target user is not in the org', async () => {
       const alice = await setupUser();
       const aliceTeamsRes = await driver.actor.list_org_teams({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
       });
       const [aliceDefaultTeam] = extractOkResponse(aliceTeamsRes);
 
@@ -480,10 +480,10 @@ describe('Teams', () => {
       // Switch back to Alice (who is in the org) to make the call
       driver.actor.setIdentity(alice.identity);
       const res = await driver.actor.add_user_to_team({
-        team_id: aliceDefaultTeam.id,
+        team_id: aliceDefaultTeam!.id,
         user_id: bob.profile.id,
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
     });
 
     // Blocked: no "add user to org" API exists yet, so we cannot
@@ -491,7 +491,7 @@ describe('Teams', () => {
     it.skip('should add a user to the team', async () => {
       const alice = await setupUser();
       const createRes = await driver.actor.create_team({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
         name: 'Shared Team',
       });
       const { team } = extractOkResponse(createRes);
@@ -514,12 +514,12 @@ describe('Teams', () => {
 
     it('should be idempotent when adding an existing member', async () => {
       const { org, profile } = await setupUser();
-      const teamsRes = await driver.actor.list_org_teams({ org_id: org.id });
+      const teamsRes = await driver.actor.list_org_teams({ org_id: org!.id });
       const [defaultTeam] = extractOkResponse(teamsRes);
 
       // User is already a member of the default team
       const res = await driver.actor.add_user_to_team({
-        team_id: defaultTeam.id,
+        team_id: defaultTeam!.id,
         user_id: profile.id,
       });
       expect(res).toEqual({ Ok: {} });
