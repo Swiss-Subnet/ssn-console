@@ -410,7 +410,7 @@ function SidebarGroupLabel({
       },
       props,
     ),
-    render,
+    ...(render !== undefined ? { render } : {}),
     state: {
       slot: 'sidebar-group-label',
       sidebar: 'group-label',
@@ -434,7 +434,7 @@ function SidebarGroupAction({
       },
       props,
     ),
-    render,
+    ...(render !== undefined ? { render } : {}),
     state: {
       slot: 'sidebar-group-action',
       sidebar: 'group-action',
@@ -522,7 +522,15 @@ function SidebarMenuButton({
       },
       props,
     ),
-    render: !tooltip ? render : <TooltipTrigger render={render} />,
+    ...(!tooltip
+      ? render !== undefined
+        ? { render }
+        : {}
+      : {
+          render: (
+            <TooltipTrigger {...(render !== undefined ? { render } : {})} />
+          ),
+        }),
     state: {
       slot: 'sidebar-menu-button',
       sidebar: 'menu-button',
@@ -576,7 +584,7 @@ function SidebarMenuAction({
       },
       props,
     ),
-    render,
+    ...(render !== undefined ? { render } : {}),
     state: {
       slot: 'sidebar-menu-action',
       sidebar: 'menu-action',
@@ -689,7 +697,7 @@ function SidebarMenuSubButton({
       },
       props,
     ),
-    render,
+    ...(render !== undefined ? { render } : {}),
     state: {
       slot: 'sidebar-menu-sub-button',
       sidebar: 'menu-sub-button',

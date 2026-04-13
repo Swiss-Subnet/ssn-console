@@ -133,17 +133,17 @@ describe('Canisters', () => {
       const aliceCanisters = extractOkResponse(aliceCanistersRes);
 
       expect(aliceCanisters.length).toBe(2);
-      await expectCanister(aliceCanisters[0]);
-      await expectCanister(aliceCanisters[1]);
+      await expectCanister(aliceCanisters[0]!);
+      await expectCanister(aliceCanisters[1]!);
 
       driver.actor.setIdentity(bobIdentity);
       const bobCanistersRes = await driver.actor.list_my_canisters();
       const bobCanisters = extractOkResponse(bobCanistersRes);
 
       expect(bobCanisters.length).toBe(3);
-      await expectCanister(bobCanisters[0]);
-      await expectCanister(bobCanisters[1]);
-      await expectCanister(bobCanisters[2]);
+      await expectCanister(bobCanisters[0]!);
+      await expectCanister(bobCanisters[1]!);
+      await expectCanister(bobCanisters[2]!);
     });
   });
 
@@ -211,7 +211,7 @@ describe('Canisters', () => {
 
       const canisterRes = await driver.actor.list_my_canisters();
       const [canister] = extractOkResponse(canisterRes);
-      await expectCanister(canister);
+      await expectCanister(canister!);
     });
 
     it('should return an error for a user who has not accepted the latest terms and conditions', async () => {
@@ -280,7 +280,7 @@ describe('Canisters', () => {
       await driver.proposals.createCanister(controllerIdentity, project.id);
       const canisterRes = await driver.actor.list_my_canisters();
       const [canister] = extractOkResponse(canisterRes);
-      await expectCanister(canister);
+      await expectCanister(canister!);
     });
 
     it('should create a canister for a user who has accepted the latest terms and conditions', async () => {
@@ -312,7 +312,7 @@ describe('Canisters', () => {
       await driver.proposals.createCanister(aliceIdentity, project.id);
       const canisterRes = await driver.actor.list_my_canisters();
       const [canister] = extractOkResponse(canisterRes);
-      await expectCanister(canister);
+      await expectCanister(canister!);
     });
   });
 
@@ -429,7 +429,7 @@ describe('Canisters', () => {
       await driver.proposals.createCanister(aliceIdentity, project.id);
       const canisterRes = await driver.actor.list_my_canisters();
       const [canister] = extractOkResponse(canisterRes);
-      const canisterId = Principal.fromText(canister.principal_id);
+      const canisterId = Principal.fromText(canister!.principal_id);
 
       await driver.proposals.addCanisterController(
         aliceIdentity,
@@ -469,12 +469,12 @@ describe('Canisters', () => {
       await driver.proposals.addCanisterController(
         aliceIdentity,
         project.id,
-        Principal.fromText(canister.principal_id),
+        Principal.fromText(canister!.principal_id),
         controllerId,
       );
 
       const controllers = await driver.pic.getControllers(
-        Principal.fromText(canister.principal_id),
+        Principal.fromText(canister!.principal_id),
       );
       const hasCorrectController = controllers.some(
         c => c.compareTo(controllerId) === 'eq',
@@ -505,7 +505,7 @@ describe('Canisters', () => {
         operation: [
           {
             AddCanisterController: {
-              canister_id: Principal.fromText(canister.principal_id),
+              canister_id: Principal.fromText(canister!.principal_id),
               controller_id: controllerId,
             },
           },
@@ -549,7 +549,7 @@ describe('Canisters', () => {
         operation: [
           {
             AddCanisterController: {
-              canister_id: Principal.fromText(canister.principal_id),
+              canister_id: Principal.fromText(canister!.principal_id),
               controller_id: controllerId,
             },
           },
@@ -574,12 +574,12 @@ describe('Canisters', () => {
       await driver.proposals.addCanisterController(
         controllerIdentity,
         project.id,
-        Principal.fromText(canister.principal_id),
+        Principal.fromText(canister!.principal_id),
         controllerId,
       );
 
       const controllers = await driver.pic.getControllers(
-        Principal.fromText(canister.principal_id),
+        Principal.fromText(canister!.principal_id),
       );
       const hasCorrectController = controllers.some(
         c => c.compareTo(controllerId) === 'eq',
@@ -620,12 +620,12 @@ describe('Canisters', () => {
       await driver.proposals.addCanisterController(
         aliceIdentity,
         project.id,
-        Principal.fromText(canister.principal_id),
+        Principal.fromText(canister!.principal_id),
         controllerId,
       );
 
       const controllers = await driver.pic.getControllers(
-        Principal.fromText(canister.principal_id),
+        Principal.fromText(canister!.principal_id),
       );
       const hasCorrectController = controllers.some(
         c => c.compareTo(controllerId) === 'eq',

@@ -4,5 +4,6 @@
     "types": ["bun"],
     "baseUrl": "."
   },
-  "include": ["src"]
+  "include": ["src/**/*.ts"],
+  "exclude": [".turbo", "dist", "node_modules"]
 }

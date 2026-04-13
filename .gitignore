@@ -5,12 +5,12 @@
 # dfx temporary files
 .dfx
 
-# rust
+# build output
 target
-
-# frontend code
 node_modules
 dist
+.turbo
+tsconfig.tsbuildinfo
 
 # environment variables
 .env*

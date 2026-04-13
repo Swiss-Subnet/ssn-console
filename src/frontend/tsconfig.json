@@ -1,16 +1,14 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "skipLibCheck": true,
-    "noEmit": true,
+    "lib": ["DOM", "ESNext"],
     "jsx": "react-jsx",
     "types": ["vite/client"],
-
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [".turbo", "dist", "node_modules"]
 }

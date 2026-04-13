@@ -30,7 +30,7 @@ export const CreateCanisterButton: FC<CreateCanisterButtonProps> = ({
     <LoadingButton
       variant="default"
       isLoading={isCreating}
-      className={className}
+      {...(className !== undefined ? { className } : {})}
       onClick={() => onCreateCanisterClicked()}
     >
       Create Canister

@@ -63,19 +63,19 @@ Start the local replica and deploy canisters:
 Build the backend API library:
 
 ```shell
-bun run -F @ssn/backend-api build
+bun turbo -F @ssn/backend-api build
 ```
 
 Build the management canister library:
 
 ```shell
-bun run -F @ssn/management-canister build
+bun turbo -F @ssn/management-canister build
 ```
 
 Run the frontend development server:
 
 ```shell
-bun run -F frontend start
+bun turbo -F frontend start
 ```
 
 ### Format code:
@@ -111,13 +111,13 @@ dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
 To export a CSV of all canisters tracked by the Console:
 
 ```shell
-bun run -F scripts fetch-canisters-csv
+bun turbo -F scripts fetch-canisters-csv
 ```
 
 The above script defaults to mainnet, to use a different network:
 
 ```shell
-bun run -F scripts fetch-canisters-csv --network="local"
+bun turbo -F scripts fetch-canisters-csv --network="local"
 ```
 
 ### Canister history canister
@@ -131,7 +131,7 @@ dfx canister call --network test canister-history list_subnet_canister_ranges '(
 Get the current subnet canister ranges from the subnet:
 
 ```shell
-bun run -F scripts fetch-subnet-canister-ranges
+bun turbo -F scripts fetch-subnet-canister-ranges
 ```
 
 Set the subnet canister ranges in the canister:

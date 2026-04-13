@@ -2,6 +2,7 @@ import { useEffect, type FC } from 'react';
 import { useNavigate } from 'react-router';
 import { useAppStore } from '@/lib/store';
 import { useRequireAuth } from '@/lib/auth';
+import { isNil, isNotNil } from '@/lib/nil';
 
 const RedirectToCanisters: FC = () => {
   useRequireAuth();
@@ -9,8 +10,9 @@ const RedirectToCanisters: FC = () => {
   const { projects } = useAppStore();
 
   useEffect(() => {
-    if (projects.length > 0) {
-      navigate(`/projects/${projects[0].id}/canisters`, { replace: true });
+    const defaultProject = projects[0];
+    if (isNotNil(defaultProject)) {
+      navigate(`/projects/${defaultProject.id}/canisters`, { replace: true });
     }
   }, [navigate, projects]);
 

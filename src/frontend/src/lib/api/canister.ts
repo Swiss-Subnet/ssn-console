@@ -3,6 +3,7 @@ import {
   mapOkResponse,
   type ListMyCanistersResponse,
 } from '@/lib/api-models';
+import { isNil } from '@/lib/nil';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import { Principal } from '@icp-sdk/core/principal';
 import type { _SERVICE } from '@ssn/backend-api';
@@ -18,10 +19,13 @@ export class CanisterApi {
 
   public async createCanister(): Promise<void> {
     const res = await this.actor.list_my_projects({});
-    const okRes = mapOkResponse(res);
+    const [project] = mapOkResponse(res).projects;
+    if (isNil(project)) {
+      throw new Error('Default project not found');
+    }
 
     const createRes = await this.actor.create_proposal({
-      project_id: okRes.projects[0].id,
+      project_id: project.id,
       operation: [
         {
           CreateCanister: {},
@@ -36,10 +40,13 @@ export class CanisterApi {
     controllerId: string,
   ): Promise<void> {
     const res = await this.actor.list_my_projects({});
-    const okRes = mapOkResponse(res);
+    const [project] = mapOkResponse(res).projects;
+    if (isNil(project)) {
+      throw new Error('Default project not found');
+    }
 
     const createRes = await this.actor.create_proposal({
-      project_id: okRes.projects[0].id,
+      project_id: project.id,
       operation: [
         {
           AddCanisterController: {

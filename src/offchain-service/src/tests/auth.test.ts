@@ -20,7 +20,7 @@ describe('POST /auth/email-verification', () => {
     expect(response.status).toBe(204);
     expect(sendMailSpy).toHaveBeenCalled();
 
-    const sendMailCall = sendMailSpy.mock.calls[0][0];
+    const sendMailCall = sendMailSpy.mock.calls[0]![0];
     expect(sendMailCall.to).toBe(testEmail);
     expect(sendMailCall.html).toContain('href=');
     expect(sendMailCall.html).toContain('verify?token=');

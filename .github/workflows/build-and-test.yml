@@ -47,7 +47,7 @@ jobs:
         run: dfx build backend --check
 
       - name: pic-js tests
-        run: bun run -F backend-tests test
+        run: bun turbo -F backend-tests test
 
   build_and_test_canister_history:
     name: Build and Test Canister History
@@ -66,7 +66,7 @@ jobs:
         run: dfx build canister-history --check
 
       - name: pic-js tests
-        run: bun run -F canister-history-tests test
+        run: bun turbo -F canister-history-tests test
 
   build_and_test_cycles_monitor:
     name: Build and Test Cycles Monitor
@@ -85,7 +85,23 @@ jobs:
         run: dfx build cycles-monitor --check
 
       - name: pic-js tests
-        run: bun run -F cycles-monitor-tests test
+        run: bun turbo -F cycles-monitor-tests test
+
+  type_check_typescript:
+    name: Type Check TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Build
+        run: bun turbo build
+
+      - name: Type check
+        run: bun type-check
 
   build_offchain_service:
     name: Build Offchain Service
@@ -108,4 +124,4 @@ jobs:
         uses: ./.github/actions/setup-bun
 
       - name: Unit tests
-        run: bun run -F offchain-service test
+        run: bun turbo -F offchain-service test

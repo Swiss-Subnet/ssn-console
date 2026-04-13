@@ -1,11 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["node", "vitest"],
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
-    "skipLibCheck": true
+    "types": ["bun", "vitest"]
   },
-  "include": ["./src/**/*.ts", "./global-setup.ts", "./types.d.ts"]
+  "include": ["src/**/*.ts", "global-setup.ts", "types.d.ts"],
+  "exclude": [".turbo", "node_modules"]
 }

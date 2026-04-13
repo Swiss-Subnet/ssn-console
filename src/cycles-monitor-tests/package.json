@@ -2,7 +2,7 @@
   "name": "cycles-monitor-tests",
   "private": true,
   "scripts": {
-    "test": "tsc && vitest run"
+    "test": "vitest run"
   },
   "dependencies": {
     "@ssn/cycles-monitor-api": "workspace:*"
