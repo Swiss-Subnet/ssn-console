@@ -91,13 +91,13 @@ export const ProjectSelector: FC = () => {
                     key={org.id}
                     className="p-2"
                     disabled={isActive}
-                    render={
-                      isActive ? undefined : (
+                    {...(!isActive && {
+                      render: (
                         <NavLink
                           to={`/projects/${org.projects[0]?.id}/canisters`}
                         />
-                      )
-                    }
+                      ),
+                    })}
                   >
                     <Building2 className="size-3.5" />
                     {org.name}
