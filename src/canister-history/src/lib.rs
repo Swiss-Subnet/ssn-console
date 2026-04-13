@@ -30,7 +30,7 @@ mod tests {
     #[test]
     fn check_candid_interface() {
         service_compatible(
-            CandidSource::File(Path::new("./canister_history.did")),
+            CandidSource::File(Path::new("../canister-history-api/canister_history.did")),
             CandidSource::Text(&__export_service()),
         )
         .unwrap();
