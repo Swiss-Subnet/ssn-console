@@ -33,6 +33,51 @@ export const createProjectsSlice: AppStateCreator<ProjectsSlice> = (
   clearProjects() {
     set({ projects: [] });
   },
+
+  async loadOrgProjects(orgId: string) {
+    const projectApi = get().getProjectApi();
+    const res = await projectApi.listOrgProjects({ orgId });
+    return res.projects;
+  },
+
+  async createProject(orgId: string, name: string) {
+    const projectApi = get().getProjectApi();
+    const res = await projectApi.createProject({ orgId, name });
+    set(state => ({
+      projects: [...state.projects, res.project],
+    }));
+    return res.project;
+  },
+
+  async updateProject(projectId: string, name: string) {
+    const projectApi = get().getProjectApi();
+    const res = await projectApi.updateProject({ projectId, name });
+    set(state => ({
+      projects: state.projects.map(p => (p.id === projectId ? res.project : p)),
+    }));
+    return res.project;
+  },
+
+  async deleteProject(projectId: string) {
+    const projectApi = get().getProjectApi();
+    await projectApi.deleteProject({ projectId });
+    set(state => ({
+      projects: state.projects.filter(p => p.id !== projectId),
+    }));
+  },
+
+  async loadProjectTeams(projectId: string) {
+    const res = await get().getProjectApi().listProjectTeams({ projectId });
+    return res.teams;
+  },
+
+  async addTeamToProject(projectId: string, teamId: string) {
+    await get().getProjectApi().addTeamToProject({ projectId, teamId });
+  },
+
+  async removeTeamFromProject(projectId: string, teamId: string) {
+    await get().getProjectApi().removeTeamFromProject({ projectId, teamId });
+  },
 });
 
 function selectProjects(state: AppSlice): Project[] {

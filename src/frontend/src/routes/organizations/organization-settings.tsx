@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAppStore, selectOrgMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
-import type { OrgUser, Team } from '@/lib/api-models';
+import type { OrgUser, Project, Team } from '@/lib/api-models';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useForm } from 'react-hook-form';
@@ -23,6 +23,7 @@ import { z } from 'zod';
 import { OrganizationTeams } from './organization-teams';
 import { OrganizationMembers } from './organization-members';
 import { OrganizationInvitations } from './organization-invitations';
+import { OrganizationProjects } from './organization-projects';
 
 const formSchema = z.object({
   name: z
@@ -37,8 +38,13 @@ type FormData = z.infer<typeof formSchema>;
 const OrganizationSettings: FC = () => {
   const { orgId } = useParams();
   const navigate = useNavigate();
-  const { updateOrganization, deleteOrganization, loadOrgUsers, loadOrgTeams } =
-    useAppStore();
+  const {
+    updateOrganization,
+    deleteOrganization,
+    loadOrgUsers,
+    loadOrgTeams,
+    loadOrgProjects,
+  } = useAppStore();
   const orgMap = useAppStore(selectOrgMap);
 
   const organization = useMemo(
@@ -53,6 +59,7 @@ const OrganizationSettings: FC = () => {
 
   const [members, setMembers] = useState<OrgUser[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const refreshMembers = useCallback(async () => {
@@ -73,6 +80,15 @@ const OrganizationSettings: FC = () => {
     }
   }, [orgId, loadOrgTeams]);
 
+  const refreshProjects = useCallback(async () => {
+    if (!orgId) return;
+    try {
+      setProjects(await loadOrgProjects(orgId));
+    } catch (err) {
+      showErrorToast('Failed to load projects', err);
+    }
+  }, [orgId, loadOrgProjects]);
+
   useEffect(() => {
     if (organization) {
       form.reset({ name: organization.name });
@@ -82,7 +98,8 @@ const OrganizationSettings: FC = () => {
   useEffect(() => {
     refreshMembers();
     refreshTeams();
-  }, [refreshMembers, refreshTeams]);
+    refreshProjects();
+  }, [refreshMembers, refreshTeams, refreshProjects]);
 
   if (isNil(orgId) || isNil(organization)) {
     return (
@@ -164,6 +181,8 @@ const OrganizationSettings: FC = () => {
         </Card>
 
         <OrganizationTeams orgId={orgId} teams={teams} />
+
+        <OrganizationProjects orgId={orgId} projects={projects} />
 
         <OrganizationMembers members={members} />
 

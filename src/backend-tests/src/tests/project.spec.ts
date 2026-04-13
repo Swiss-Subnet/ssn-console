@@ -88,7 +88,9 @@ describe('Projects', () => {
       const { projects } = extractOkResponse(res);
       expect(projects).toHaveLength(3);
       const names = projects.map((p: { name: string }) => p.name).sort();
-      expect(names).toEqual(['Default Project', 'Second Project', projectName].sort());
+      expect(names).toEqual(
+        ['Default Project', 'Second Project', projectName].sort(),
+      );
     });
 
     it('should not list projects from other orgs', async () => {
@@ -470,9 +472,7 @@ describe('Projects', () => {
         project_id: fakeOrgId,
         team_id: fakeOrgId,
       });
-      expect('Err' in res && res.Err.message).toContain(
-        'Project with id',
-      );
+      expect('Err' in res && res.Err.message).toContain('Project with id');
     });
 
     it('should return an error for a non-existent team', async () => {
@@ -511,9 +511,7 @@ describe('Projects', () => {
         project_id: project.id,
         team_id: bobTeam.id,
       });
-      expect('Err' in res && res.Err.message).toContain(
-        'same organization',
-      );
+      expect('Err' in res && res.Err.message).toContain('same organization');
     });
 
     it('should attach a team to a project', async () => {
