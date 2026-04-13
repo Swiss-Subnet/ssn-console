@@ -10,6 +10,7 @@ import type {
   CreateTermsAndConditionsRequest,
   Organization,
   Project,
+  Team,
 } from '@/lib/api-models';
 import type {
   CanisterApi,
@@ -19,6 +20,7 @@ import type {
   TermsAndConditionsApi,
   ProjectApi,
   OrganizationApi,
+  TeamApi,
   AuthApi,
 } from '@/lib/api';
 import type { ActorSubclass, HttpAgent, Identity } from '@icp-sdk/core/agent';
@@ -50,6 +52,7 @@ export type ApiSlice = {
   termsAndConditionsApi: TermsAndConditionsApi;
   projectApi: ProjectApi;
   organizationApi: OrganizationApi;
+  teamApi: TeamApi;
 
   setAgentIdentity: (identity: Identity) => void;
 };
@@ -141,6 +144,19 @@ export type OrganizationsSlice = {
   deleteOrganization: (orgId: string) => Promise<void>;
 };
 
+export type TeamsSlice = {
+  isTeamsInitialized: boolean;
+  teams: Team[];
+
+  initializeTeams: () => Promise<void>;
+  clearTeams: () => void;
+  loadOrgTeams: (orgId: string) => Promise<Team[]>;
+  createTeam: (orgId: string, name: string) => Promise<Team>;
+  updateTeam: (teamId: string, name: string) => Promise<Team>;
+  deleteTeam: (teamId: string) => Promise<void>;
+  addUserToTeam: (teamId: string, userId: string) => Promise<void>;
+};
+
 export type AppSlice = AuthSlice &
   ApiSlice &
   UserProfileSlice &
@@ -149,6 +165,7 @@ export type AppSlice = AuthSlice &
   TrustedPartnersSlice &
   TermsAndConditionsSlice &
   ProjectsSlice &
-  OrganizationsSlice;
+  OrganizationsSlice &
+  TeamsSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;

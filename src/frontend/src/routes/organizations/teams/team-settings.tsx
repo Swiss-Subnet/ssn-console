@@ -11,10 +11,10 @@ import {
 } from '@/components/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useAppStore, selectOrgMap } from '@/lib/store';
+import { useAppStore, selectTeamMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useEffect, useMemo, useState, type FC } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router';
@@ -25,21 +25,21 @@ const formSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, 'Organization name is required')
-    .max(100, 'Organization name cannot exceed 100 characters'),
+    .min(1, 'Team name is required')
+    .max(100, 'Team name cannot exceed 100 characters'),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-const OrganizationSettings: FC = () => {
-  const { orgId } = useParams();
+const TeamSettings: FC = () => {
+  const { orgId, teamId } = useParams();
   const navigate = useNavigate();
-  const { updateOrganization, deleteOrganization } = useAppStore();
-  const orgMap = useAppStore(selectOrgMap);
+  const { updateTeam, deleteTeam } = useAppStore();
+  const teamMap = useAppStore(selectTeamMap);
 
-  const organization = useMemo(
-    () => (orgId ? orgMap.get(orgId) : undefined),
-    [orgId, orgMap],
+  const team = useMemo(
+    () => (teamId ? teamMap.get(teamId) : undefined),
+    [teamId, teamMap],
   );
 
   const form = useForm<FormData>({
@@ -48,25 +48,25 @@ const OrganizationSettings: FC = () => {
   });
 
   useEffect(() => {
-    if (organization) {
-      form.reset({ name: organization.name });
+    if (team) {
+      form.reset({ name: team.name });
     }
-  }, [organization, form]);
+  }, [team, form]);
 
-  if (isNil(orgId) || isNil(organization)) {
+  if (isNil(orgId) || isNil(teamId) || isNil(team)) {
     return (
       <Container>
-        <p className="text-muted-foreground">Organization not found.</p>
+        <p className="text-muted-foreground">Team not found.</p>
       </Container>
     );
   }
 
   async function onSubmit(formData: FormData): Promise<void> {
     try {
-      await updateOrganization(orgId!, formData.name);
-      showSuccessToast('Organization updated successfully!');
+      await updateTeam(teamId!, formData.name);
+      showSuccessToast('Team updated successfully!');
     } catch (err) {
-      showErrorToast('Failed to update organization', err);
+      showErrorToast('Failed to update team', err);
     }
   }
 
@@ -75,11 +75,11 @@ const OrganizationSettings: FC = () => {
   async function onDelete(): Promise<void> {
     setIsDeleting(true);
     try {
-      await deleteOrganization(orgId!);
-      showSuccessToast('Organization deleted successfully!');
-      navigate('/');
+      await deleteTeam(teamId!);
+      showSuccessToast('Team deleted successfully!');
+      navigate(`/organizations/${orgId}/teams`);
     } catch (err) {
-      showErrorToast('Failed to delete organization', err);
+      showErrorToast('Failed to delete team', err);
     } finally {
       setIsDeleting(false);
     }
@@ -89,7 +89,13 @@ const OrganizationSettings: FC = () => {
     <Container>
       <div className="space-y-6">
         <div className="mx-auto max-w-md">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              navigate(`/organizations/${orgId}/teams`, { replace: true })
+            }
+          >
             <ArrowLeft className="mr-1 size-3.5" />
             Back
           </Button>
@@ -97,7 +103,7 @@ const OrganizationSettings: FC = () => {
 
         <Card className="mx-auto max-w-md">
           <CardHeader>
-            <CardTitle>Organization Settings</CardTitle>
+            <CardTitle>Team Settings</CardTitle>
           </CardHeader>
 
           <CardContent>
@@ -111,7 +117,7 @@ const OrganizationSettings: FC = () => {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Organization Name</FormLabel>
+                      <FormLabel>Team Name</FormLabel>
 
                       <FormControl>
                         <Input {...field} />
@@ -137,32 +143,12 @@ const OrganizationSettings: FC = () => {
 
         <Card className="mx-auto max-w-md">
           <CardHeader>
-            <CardTitle>Teams</CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Manage the teams in this organization.
-            </p>
-
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/organizations/${orgId}/teams`)}
-            >
-              <Users className="mr-1 size-3.5" />
-              Manage Teams
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="mx-auto max-w-md">
-          <CardHeader>
             <CardTitle>Danger Zone</CardTitle>
           </CardHeader>
 
           <CardContent>
             <p className="text-muted-foreground mb-4 text-sm">
-              Delete this organization. All projects must be removed first.
+              Delete this team. All projects must be removed first.
             </p>
 
             <LoadingButton
@@ -170,7 +156,7 @@ const OrganizationSettings: FC = () => {
               isLoading={isDeleting}
               onClick={onDelete}
             >
-              Delete Organization
+              Delete Team
             </LoadingButton>
           </CardContent>
         </Card>
@@ -179,4 +165,4 @@ const OrganizationSettings: FC = () => {
   );
 };
 
-export default OrganizationSettings;
+export default TeamSettings;

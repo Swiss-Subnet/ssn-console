@@ -7,6 +7,7 @@ import {
   TermsAndConditionsApi,
   ProjectApi,
   OrganizationApi,
+  TeamApi,
   AuthApi,
 } from '@/lib/api';
 import { OFFCHAIN_SERVICE_URL } from '@/env';
@@ -47,6 +48,7 @@ const trustedPartnerApi = new TrustedPartnerApi(actor);
 const termsAndConditionsApi = new TermsAndConditionsApi(actor);
 const projectApi = new ProjectApi(actor);
 const organizationApi = new OrganizationApi(actor);
+const teamApi = new TeamApi(actor);
 const authApi = new AuthApi(OFFCHAIN_SERVICE_URL);
 
 export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
@@ -55,11 +57,12 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
   userProfileApi,
   canisterApi,
   managementCanisterApi,
-  authApi,
   trustedPartnerApi,
   termsAndConditionsApi,
   projectApi,
   organizationApi,
+  teamApi,
+  authApi,
 
   setAgentIdentity: identity => {
     const { agent } = get();

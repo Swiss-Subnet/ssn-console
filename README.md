@@ -84,7 +84,8 @@ browser where you are signed in.
 
 ### Local User Activation
 
-New users start with `Pending` status. Activate via dfx:
+New users start with `Pending` status. Activating via dfx is
+sufficient to use the app locally -- email verification is optional:
 
 ```shell
 dfx canister call backend list_user_profiles '(record {})'

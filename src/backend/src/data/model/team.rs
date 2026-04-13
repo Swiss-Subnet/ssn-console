@@ -1,10 +1,15 @@
-use canister_utils::{deserialize_cbor, serialize_cbor};
+use canister_utils::{deserialize_cbor, serialize_cbor, Uuid};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Team {
+    // Falls back to nil UUID when deserializing teams created before
+    // this field existed. The organization_team_index is the
+    // authoritative source for old records.
+    #[serde(default)]
+    pub org_id: Uuid,
     pub name: String,
 }
 

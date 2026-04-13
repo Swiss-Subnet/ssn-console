@@ -1,7 +1,65 @@
 import "../../canister-utils/error.did";
 
-type ListMyTeamsResponse = variant {
+type ListTeamsResponse = variant {
   Ok : vec Team;
+  Err : ApiError;
+};
+
+type CreateTeamRequest = record {
+  org_id : text;
+  name : text;
+};
+
+type CreateTeamResponse = variant {
+  Ok : record {
+    team : Team;
+  };
+  Err : ApiError;
+};
+
+type GetTeamRequest = record {
+  team_id : text;
+};
+
+type GetTeamResponse = variant {
+  Ok : record {
+    team : Team;
+  };
+  Err : ApiError;
+};
+
+type ListOrgTeamsRequest = record {
+  org_id : text;
+};
+
+type UpdateTeamRequest = record {
+  team_id : text;
+  name : text;
+};
+
+type UpdateTeamResponse = variant {
+  Ok : record {
+    team : Team;
+  };
+  Err : ApiError;
+};
+
+type DeleteTeamRequest = record {
+  team_id : text;
+};
+
+type DeleteTeamResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type AddUserToTeamRequest = record {
+  team_id : text;
+  user_id : text;
+};
+
+type AddUserToTeamResponse = variant {
+  Ok : record {};
   Err : ApiError;
 };
 
@@ -11,5 +69,11 @@ type Team = record {
 };
 
 service : {
-  list_my_teams : () -> (ListMyTeamsResponse) query;
+  list_my_teams : () -> (ListTeamsResponse) query;
+  list_org_teams : (ListOrgTeamsRequest) -> (ListTeamsResponse) query;
+  create_team : (CreateTeamRequest) -> (CreateTeamResponse);
+  get_team : (GetTeamRequest) -> (GetTeamResponse) query;
+  update_team : (UpdateTeamRequest) -> (UpdateTeamResponse);
+  delete_team : (DeleteTeamRequest) -> (DeleteTeamResponse);
+  add_user_to_team : (AddUserToTeamRequest) -> (AddUserToTeamResponse);
 };

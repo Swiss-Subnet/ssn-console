@@ -39,6 +39,19 @@ pub fn add_team_to_project(team_id: Uuid, project_id: Uuid) {
     });
 }
 
+pub fn remove_team_project_links(team_id: Uuid) {
+    mutate_state(|s| {
+        while let Some((tid, pid)) = s
+            .team_project_index
+            .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
+            .next()
+        {
+            s.team_project_index.remove(&(tid, pid));
+            s.project_team_index.remove(&(pid, tid));
+        }
+    });
+}
+
 pub fn get_project(project_id: &Uuid) -> Option<Project> {
     with_state(|s| s.projects.get(project_id))
 }
@@ -63,6 +76,14 @@ pub fn list_team_project_ids(team_id: Uuid) -> Vec<Uuid> {
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
             .map(|(_, project_id)| project_id)
             .collect()
+    })
+}
+
+pub fn team_has_projects(team_id: Uuid) -> bool {
+    with_state(|s| {
+        s.team_project_index
+            .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
+            .any(|_| true)
     })
 }
 
