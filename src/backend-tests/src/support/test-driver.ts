@@ -65,7 +65,10 @@ export class TestDriver {
       idlFactory,
       wasm: BACKEND_WASM_PATH,
       sender: controllerIdentity.getPrincipal(),
-      environmentVariables: [{ name: 'PUBLIC_KEY', value: PUBLIC_KEY }],
+      environmentVariables: [
+        { name: 'PUBLIC_KEY', value: PUBLIC_KEY },
+        { name: 'OFFCHAIN_SERVICE_URL', value: 'http://localhost:3000' },
+      ],
     });
   }
 

@@ -1,0 +1,18 @@
+name: Import DFX Identity
+description: Import DFX Identity
+
+inputs:
+  identity_pem:
+    description: 'The PEM encoded DFX identity secret'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Import DFX identity
+      shell: bash
+      run: |
+        echo "${{ inputs.identity_pem }}" > ./identity.pem
+        dfx identity import --ic --storage-mode plaintext deploy-identity ./identity.pem
+        rm -f ./identity.pem
+        dfx identity use deploy-identity

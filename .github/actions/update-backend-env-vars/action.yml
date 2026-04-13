@@ -1,0 +1,42 @@
+name: Update backend env vars
+description: Update backend env vars
+
+inputs:
+  network:
+    description: The ICP network to update the canister env vars on
+    required: true
+
+  public_key:
+    description: The public signing key of the offchain service
+    required: true
+
+  offchain_service_url:
+    description: The root URL of the offchain service
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Update backend env vars
+      shell: bash
+      run: |
+        CANISTER_ID=$(dfx canister id backend --network ${{ inputs.network }})
+        FORMATTED_PUBLIC_KEY=$(echo "${{ inputs.public_key }}" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
+
+        dfx canister call aaaaa-aa update_settings "(
+          record {
+            canister_id = principal \"$CANISTER_ID\";
+            settings = record {
+              environment_variables = opt vec {
+                record {
+                  name = \"PUBLIC_KEY\";
+                  value = \"$FORMATTED_PUBLIC_KEY\";
+                };
+                record {
+                  name = \"OFFCHAIN_SERVICE_URL\";
+                  value = \"${{ inputs.offchain_service_url }}\";
+                };
+              };
+            };
+          }
+        )" --network ${{ inputs.network }}

@@ -1,4 +1,4 @@
-use crate::env;
+use crate::env::{self, load_runtime_env};
 use ic_asset_certification::{Asset, AssetConfig, AssetEncoding, AssetFallbackConfig, AssetRouter};
 use ic_cdk::{
     api::{certified_data_set, data_certificate},
@@ -137,12 +137,15 @@ fn serve_asset(req: &HttpRequest) -> HttpResponse<'static> {
 }
 
 fn get_asset_headers(additional_headers: Vec<HeaderField>) -> Vec<HeaderField> {
-    let mut connect_src = vec!["'self'"];
+    let offchain_service_url =
+        load_runtime_env("OFFCHAIN_SERVICE_URL").expect("OFFCHAIN_SERVICE_URL env var is required");
+
+    let mut connect_src = vec!["'self'", &offchain_service_url];
     if env::is_local() {
-        connect_src.push("localhost:8000");
+        connect_src.push("http://localhost:8000");
     } else {
-        connect_src.push("icp0.io");
-        connect_src.push("icp-api.io");
+        connect_src.push("https://icp0.io");
+        connect_src.push("https://icp-api.io");
     }
     let connect_src = connect_src.join(" ");
 

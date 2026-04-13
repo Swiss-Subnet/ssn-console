@@ -25,33 +25,17 @@ jobs:
       - name: Setup DFX
         uses: ./.github/actions/setup-dfx
 
-      - name: Import DFX identity
-        run: |
-          echo "${{ secrets.IDENTITY_PEM }}" > ./production.pem
-          dfx identity import --ic --storage-mode plaintext production ./production.pem
-          rm -f ./production.pem
-          dfx identity use production
+      - name: Import DFX Identity
+        uses: ./.github/actions/import-dfx-identity
+        with:
+          identity_pem: ${{ secrets.IDENTITY_PEM }}
 
-      - name: Update Canister Environment Variables
-        env:
-          PUBLIC_KEY: ${{ secrets.PUBLIC_KEY }}
-        run: |
-          BACKEND_ID=$(dfx canister id backend --network production)
-          FORMATTED_KEY=$(echo "$PUBLIC_KEY" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
-
-          dfx canister call aaaaa-aa update_settings "(
-            record {
-              canister_id = principal \"$BACKEND_ID\";
-              settings = record {
-                environment_variables = opt vec {
-                  record {
-                    name = \"PUBLIC_KEY\";
-                    value = \"$FORMATTED_KEY\";
-                  };
-                };
-              };
-            }
-          )" --network production
+      - name: Update backend env vars
+        uses: ./.github/actions/update-backend-env-vars
+        with:
+          network: production
+          public_key: ${{ secrets.PUBLIC_KEY }}
+          offchain_service_url: ${{ secrets.OFFCHAIN_SERVICE_URL }}
 
       - name: Deploy to production
         run: dfx deploy --network production

@@ -21,6 +21,13 @@ dfx start --background --clean
 echo "✅ DFX started!"
 
 echo
+echo "🏗️ Creating canisters..."
+dfx canister create --all
+echo "✅ Canisters created!"
+
+./scripts/update-local-env.sh
+
+echo
 echo "📦 Deploying canisters..."
 dfx deploy
 echo "✅ Canisters deployed!"
@@ -31,7 +38,6 @@ dfx ledger fabricate-cycles --all --t 1000000000
 echo "✅ Canister cycles gifted!"
 
 ./scripts/update-local-history-ranges.sh
-./scripts/update-local-env.sh
 
 echo
 echo "🔔 Triggering canister-history sync..."
