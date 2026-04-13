@@ -5,10 +5,6 @@ use std::borrow::Cow;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Team {
-    // Falls back to nil UUID when deserializing teams created before
-    // this field existed. The organization_team_index is the
-    // authoritative source for old records.
-    #[serde(default)]
     pub org_id: Uuid,
     pub name: String,
 }

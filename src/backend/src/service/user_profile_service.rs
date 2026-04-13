@@ -117,10 +117,6 @@ pub fn get_user_stats() -> GetUserStatsResponse {
     map_get_user_stats_response(user_profile_repository::get_user_stats())
 }
 
-pub fn migrate_email_verified() {
-    user_profile_repository::migrate_email_verified();
-}
-
 pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> ApiResult {
     let pub_key_str = load_runtime_env("PUBLIC_KEY")?;
 

@@ -133,24 +133,6 @@ pub fn list_user_team_ids(user_id: Uuid) -> Vec<Uuid> {
     })
 }
 
-// Backfills Team.org_id for teams persisted before the field existed.
-// The organization_team_index is the authoritative source: for each
-// (org_id, team_id) pair, set the team's org_id if it is still the
-// default nil UUID.
-pub fn migrate_team_org_ids() {
-    mutate_state(|s| {
-        let pairs: Vec<(Uuid, Uuid)> = s.organization_team_index.iter().collect();
-        for (org_id, team_id) in pairs {
-            if let Some(mut team) = s.teams.get(&team_id) {
-                if team.org_id == Uuid::MIN {
-                    team.org_id = org_id;
-                    s.teams.insert(team_id, team);
-                }
-            }
-        }
-    });
-}
-
 pub fn list_user_teams(user_id: Uuid) -> Vec<(Uuid, Team)> {
     with_state(|s| {
         s.user_team_index
