@@ -15,7 +15,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 
 const Verify: FC = () => {
   const navigate = useNavigate();
-  const { getUserProfileApi, setEmailVerified } = useAppStore();
+  const { userProfileApi, setEmailVerified } = useAppStore();
   const [searchParams] = useSearchParams();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -33,8 +33,7 @@ const Verify: FC = () => {
     (async () => {
       setIsLoading(true);
       try {
-        const api = getUserProfileApi();
-        await api.verifyMyEmail(token);
+        await userProfileApi.verifyMyEmail(token);
         setIsSuccess(true);
         setEmailVerified();
       } catch (err) {
@@ -44,7 +43,7 @@ const Verify: FC = () => {
         setIsLoading(false);
       }
     })();
-  }, [searchParams, getUserProfileApi]);
+  }, [searchParams, userProfileApi]);
 
   return (
     <Container>

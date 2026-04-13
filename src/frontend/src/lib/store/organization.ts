@@ -14,8 +14,7 @@ export const createOrganizationsSlice: AppStateCreator<OrganizationsSlice> = (
   organizations: [],
 
   async initializeOrganizations() {
-    const { getOrganizationApi, isAuthenticated } = get();
-    const organizationApi = getOrganizationApi();
+    const { organizationApi, isAuthenticated } = get();
 
     if (!isAuthenticated) {
       set({ isOrganizationsInitialized: true });

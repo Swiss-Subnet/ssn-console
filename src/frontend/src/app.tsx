@@ -5,21 +5,15 @@ import { useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
 
 export const App: FC = () => {
-  const { initializeAuth, initializeApi } = useAppStore();
+  const { initializeAuth } = useAppStore();
 
   useEffect(() => {
-    try {
-      initializeApi();
-    } catch (err) {
-      showErrorToast('Failed to initialize API', err);
-    }
-
     try {
       initializeAuth();
     } catch (err) {
       showErrorToast('Failed to initialize auth client', err);
     }
-  }, [initializeApi, initializeAuth]);
+  }, [initializeAuth]);
 
   return (
     <ThemeProvider>

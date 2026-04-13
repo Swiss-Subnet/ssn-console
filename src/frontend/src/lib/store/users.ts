@@ -8,13 +8,8 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
   userStats: null,
 
   async initializeUsers() {
-    const {
-      getUserProfileApi,
-      isAuthenticated,
-      isProfileInitialized,
-      profile,
-    } = get();
-    const userProfileApi = getUserProfileApi();
+    const { userProfileApi, isAuthenticated, isProfileInitialized, profile } =
+      get();
 
     if (!isProfileInitialized) {
       throw new Error('User profile is not initialized');
@@ -53,13 +48,8 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
   },
 
   async setUserStatus(userId, status) {
-    const {
-      getUserProfileApi,
-      isAuthenticated,
-      isProfileInitialized,
-      profile,
-    } = get();
-    const userProfileApi = getUserProfileApi();
+    const { userProfileApi, isAuthenticated, isProfileInitialized, profile } =
+      get();
 
     if (!isProfileInitialized || isNil(profile)) {
       throw new Error('User profile is not initialized');

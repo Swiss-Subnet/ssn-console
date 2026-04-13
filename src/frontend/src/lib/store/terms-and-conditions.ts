@@ -10,8 +10,7 @@ export const createTermsAndConditionsSlice: AppStateCreator<
   termsAndConditions: null,
 
   async initializeTermsAndConditions() {
-    const { getTermsAndConditionsApi, isAuthenticated, profile } = get();
-    const termsAndConditionsApi = getTermsAndConditionsApi();
+    const { termsAndConditionsApi, isAuthenticated, profile } = get();
 
     if (!isAuthenticated || profile?.isAdmin) {
       set({ isTermsAndConditionsInitialized: true });
@@ -33,7 +32,7 @@ export const createTermsAndConditionsSlice: AppStateCreator<
 
   async upsertTermsAndConditionsDecision(req) {
     const {
-      getTermsAndConditionsApi,
+      termsAndConditionsApi,
       initializeTermsAndConditions,
       isTermsAndConditionsInitialized,
       isAuthenticated,
@@ -54,7 +53,6 @@ export const createTermsAndConditionsSlice: AppStateCreator<
       throw new Error('Admins cannot upsert terms and conditions responses');
     }
 
-    const termsAndConditionsApi = getTermsAndConditionsApi();
     await termsAndConditionsApi.upsertTermsAndConditionsDecision(req);
     await initializeTermsAndConditions();
   },
@@ -64,7 +62,7 @@ export const createTermsAndConditionsSlice: AppStateCreator<
       profile,
       isTermsAndConditionsInitialized,
       isAuthenticated,
-      getTermsAndConditionsApi,
+      termsAndConditionsApi,
     } = get();
 
     if (!isTermsAndConditionsInitialized) {
@@ -83,7 +81,6 @@ export const createTermsAndConditionsSlice: AppStateCreator<
       );
     }
 
-    const termsAndConditionsApi = getTermsAndConditionsApi();
     await termsAndConditionsApi.createTermsAndConditions(req);
   },
 });
