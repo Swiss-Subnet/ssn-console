@@ -59,6 +59,7 @@
         "@dfinity/zod-schemas": "^3.0.2",
         "@hookform/resolvers": "^5.2.2",
         "@ssn/backend-api": "workspace:*",
+        "@ssn/canister-history-api": "workspace:*",
         "@ssn/management-canister": "workspace:*",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",

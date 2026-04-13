@@ -16,3 +16,17 @@ export function useRequireProjectId(): string {
     return projectId;
   }, [projectId]);
 }
+
+export function useRequireCanisterId(): string {
+  const { canisterId } = useParams();
+  const returnTo = useReturnTo();
+
+  return useMemo(() => {
+    if (isNil(canisterId)) {
+      returnTo('/');
+      throw new Error(':canisterId param is required');
+    }
+
+    return canisterId;
+  }, [canisterId]);
+}

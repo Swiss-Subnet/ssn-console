@@ -1,4 +1,5 @@
 export * from './canister';
+export * from './canister-history';
 export * from './error';
 export * from './management-canister';
 export * from './organization';

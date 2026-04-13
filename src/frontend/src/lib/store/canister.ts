@@ -16,9 +16,14 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   canisters: null,
 
   async initializeCanisters(projectId) {
-    const { isAuthenticated, refreshCanisters } = get();
+    const { isAuthenticated, canisters, refreshCanisters } = get();
 
     if (!isAuthenticated) {
+      set({ isCanistersInitialized: true });
+      return;
+    }
+
+    if (canisters?.has(projectId)) {
       set({ isCanistersInitialized: true });
       return;
     }

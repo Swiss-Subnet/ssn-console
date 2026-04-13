@@ -14,6 +14,7 @@ import type {
 } from '@/lib/api-models';
 import type {
   CanisterApi,
+  CanisterHistoryApi,
   TrustedPartnerApi,
   UserProfileApi,
   ManagementCanisterApi,
@@ -46,6 +47,7 @@ export type ApiSlice = {
   actor: ActorSubclass<_SERVICE>;
   userProfileApi: UserProfileApi;
   canisterApi: CanisterApi;
+  canisterHistoryApi: CanisterHistoryApi;
   authApi: AuthApi;
   managementCanisterApi: ManagementCanisterApi;
   trustedPartnerApi: TrustedPartnerApi;

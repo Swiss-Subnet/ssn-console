@@ -8,6 +8,7 @@ const TermsAndConditions = lazy(
   () => import('@/routes/terms-and-conditions/terms-and-conditions'),
 );
 const Canisters = lazy(() => import('@/routes/canisters/canisters'));
+const CanisterDetail = lazy(() => import('@/routes/canisters/canister-detail'));
 const RedirectToProjectCanisters = lazy(
   () =>
     import('@/routes/redirect-to-project-canisters/redirect-to-project-canisters'),
@@ -51,6 +52,7 @@ export const Router: FC = () => (
 
         <Route path="projects/:projectId" element={<ProjectLayout />}>
           <Route path="canisters" element={<Canisters />} />
+          <Route path="canisters/:canisterId" element={<CanisterDetail />} />
         </Route>
       </Route>
     </Routes>

@@ -1,78 +1,92 @@
-import { Fragment, useMemo, type FC } from 'react';
+import { useMemo, type FC } from 'react';
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemSeparator,
-} from '@/components/ui/item';
-import { AddControllerForm } from '@/routes/canisters/add-controller-form';
+import { Badge } from '@/components/ui/badge';
 import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-canister-controller-cta';
-import { isNil, isNotNil } from '@/lib/nil';
-import type { Canister } from '@/lib/api-models';
+import { isNil } from '@/lib/nil';
+import { CanisterStatus, type Canister } from '@/lib/api-models';
+import { formatBytes, formatCycles } from '@/lib/format';
+import { useRequireProjectId } from '@/lib/params';
+import { Link } from 'react-router';
 
 export type CanisterGridEntryProps = {
   canister: Canister;
 };
 
-export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
-  const isMissingController = useMemo(() => isNil(canister.info), [canister]);
+function statusBadgeVariant(
+  status: CanisterStatus,
+): 'success' | 'outline' | 'destructive' {
+  switch (status) {
+    case CanisterStatus.Running:
+      return 'success';
+    case CanisterStatus.Stopping:
+      return 'outline';
+    case CanisterStatus.Stopped:
+      return 'destructive';
+  }
+}
 
-  const hasControllers = useMemo(
-    () =>
-      isNotNil(canister.info) && canister.info.settings.controllers.length > 0,
-    [canister],
-  );
+export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
+  const projectId = useRequireProjectId();
+  const isMissingController = useMemo(() => isNil(canister.info), [canister]);
 
   return (
     <>
-      <Card>
+      <Card size="sm">
         <CardHeader>
           <CardTitle>Canister</CardTitle>
-          <CardDescription>{canister.principal}</CardDescription>
+          <CardDescription className="truncate font-mono">
+            {canister.principal}
+          </CardDescription>
+          {canister.info && (
+            <CardAction>
+              <Badge variant={statusBadgeVariant(canister.info.status)}>
+                {canister.info.status}
+              </Badge>
+            </CardAction>
+          )}
         </CardHeader>
 
-        <CardContent>
-          <CardTitle>Controllers</CardTitle>
-
-          {hasControllers ? (
-            <ItemGroup className="mt-3">
-              <ItemSeparator />
-              {canister.info?.settings.controllers.map(
-                (controller, i, controllers) => (
-                  <Fragment key={controller}>
-                    <Item>
-                      <ItemContent>
-                        <ItemDescription>{controller}</ItemDescription>
-                      </ItemContent>
-                    </Item>
-
-                    {i !== controllers.length - 1 && <ItemSeparator />}
-                  </Fragment>
-                ),
-              )}
-              <ItemSeparator />
-            </ItemGroup>
-          ) : (
-            <CardDescription>
-              There are no controllers for this canister!
-            </CardDescription>
-          )}
-        </CardContent>
-
-        {!isMissingController && (
-          <CardFooter className="flex justify-center">
-            <AddControllerForm canisterId={canister.principal} />
-          </CardFooter>
+        {canister.info && (
+          <CardContent>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <div className="text-muted-foreground mb-0.5">Cycles</div>
+                <div className="font-medium">
+                  {formatCycles(canister.info.cycles)}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground mb-0.5">Memory</div>
+                <div className="font-medium">
+                  {formatBytes(canister.info.memorySize)}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground mb-0.5">Burn / day</div>
+                <div className="font-medium">
+                  {formatCycles(canister.info.idleCyclesBurnedPerDay)}
+                </div>
+              </div>
+            </div>
+          </CardContent>
         )}
+
+        <CardFooter>
+          <Link
+            to={`/projects/${projectId}/canisters/${canister.id}`}
+            className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+          >
+            View details &rarr;
+          </Link>
+        </CardFooter>
       </Card>
 
       {isMissingController && (
