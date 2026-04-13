@@ -29,21 +29,19 @@ pub fn add_default_team(user_id: Uuid, org_id: Uuid) -> Uuid {
 // org has no projects.
 pub fn delete_org_teams(org_id: Uuid) {
     mutate_state(|s| {
-        let org_teams: Vec<_> = s
+        while let Some((oid, team_id)) = s
             .organization_team_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .collect();
-
-        for (oid, team_id) in org_teams {
+            .next()
+        {
             s.organization_team_index.remove(&(oid, team_id));
             s.teams.remove(&team_id);
 
-            let user_links: Vec<_> = s
+            while let Some((tid, uid)) = s
                 .team_user_index
                 .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
-                .collect();
-
-            for (tid, uid) in user_links {
+                .next()
+            {
                 s.team_user_index.remove(&(tid, uid));
                 s.user_team_index.remove(&(uid, tid));
             }
