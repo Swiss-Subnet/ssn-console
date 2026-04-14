@@ -49,30 +49,28 @@ const TeamList: FC = () => {
   return (
     <Container>
       <div className="mx-auto max-w-md space-y-6">
-        <div className="flex items-center justify-between">
-          <Breadcrumbs
-            items={[
-              { label: 'Home', to: '/canisters' },
-              {
-                label: organization.name,
-                to: `/organizations/${orgId}/settings`,
-              },
-              { label: 'Teams' },
-            ]}
-          />
-
-          <Button
-            size="sm"
-            onClick={() => navigate(`/organizations/${orgId}/teams/new`)}
-          >
-            <Plus className="mr-1 size-3.5" />
-            New Team
-          </Button>
-        </div>
+        <Breadcrumbs
+          items={[
+            { label: 'Home', to: '/canisters' },
+            {
+              label: organization.name,
+              to: `/organizations/${orgId}/settings`,
+            },
+            { label: 'Teams' },
+          ]}
+        />
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Teams in {organization.name}</CardTitle>
+
+            <Button
+              size="sm"
+              onClick={() => navigate(`/organizations/${orgId}/teams/new`)}
+            >
+              <Plus className="mr-1 size-3.5" />
+              New Team
+            </Button>
           </CardHeader>
 
           <CardContent>
