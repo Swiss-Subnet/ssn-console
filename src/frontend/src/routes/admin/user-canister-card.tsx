@@ -123,9 +123,7 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
             </div>
             <div>
               <div className="text-muted-foreground mb-0.5">Memory</div>
-              <div className="font-medium">
-                {formatBytes(info.memorySize)}
-              </div>
+              <div className="font-medium">{formatBytes(info.memorySize)}</div>
             </div>
             <div>
               <div className="text-muted-foreground mb-0.5">Burn / day</div>

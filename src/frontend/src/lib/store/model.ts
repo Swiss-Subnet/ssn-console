@@ -102,7 +102,10 @@ export type CanistersSlice = {
     controllerId: string,
     projectId: string,
   ) => Promise<void>;
-  removeCanister: (canisterRecordId: string, projectId: string) => Promise<void>;
+  removeCanister: (
+    canisterRecordId: string,
+    projectId: string,
+  ) => Promise<void>;
 };
 
 export type TrustedPartnersSlice = {

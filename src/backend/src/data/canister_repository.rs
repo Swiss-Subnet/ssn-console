@@ -55,7 +55,9 @@ pub fn get_canister_count() -> u64 {
 
 pub fn get_canister_in_project(project_id: Uuid, canister_id: Uuid) -> Option<Canister> {
     with_state(|s| {
-        if s.project_canister_index.contains(&(project_id, canister_id)) {
+        if s.project_canister_index
+            .contains(&(project_id, canister_id))
+        {
             s.canisters.get(&canister_id)
         } else {
             None
