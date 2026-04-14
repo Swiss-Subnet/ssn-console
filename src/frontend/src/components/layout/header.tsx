@@ -25,6 +25,28 @@ export const Header: FC = () => {
 
       <NavigationMenu>
         <NavigationMenuList>
+          {isAuthenticated && (
+            <>
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  className={navigationMenuTriggerStyle()}
+                  render={<NavLink to="/dashboard" />}
+                >
+                  Dashboard
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  className={navigationMenuTriggerStyle()}
+                  render={<NavLink to="/billing" />}
+                >
+                  Billing
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            </>
+          )}
+
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}

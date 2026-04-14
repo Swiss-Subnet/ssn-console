@@ -15,6 +15,8 @@ const RedirectToProjectCanisters = lazy(
 );
 const Admin = lazy(() => import('@/routes/admin/admin'));
 const Verify = lazy(() => import('@/routes/verify/verify'));
+const Dashboard = lazy(() => import('@/routes/dashboard/dashboard'));
+const Billing = lazy(() => import('@/routes/billing/billing'));
 const CreateOrganization = lazy(
   () => import('@/routes/organizations/create-organization'),
 );
@@ -38,6 +40,8 @@ export const Router: FC = () => (
         <Route path="canisters" element={<RedirectToProjectCanisters />} />
         <Route path="admin" element={<Admin />} />
         <Route path="verify" element={<Verify />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="billing" element={<Billing />} />
         <Route path="organizations/new" element={<CreateOrganization />} />
         <Route
           path="organizations/:orgId/settings"

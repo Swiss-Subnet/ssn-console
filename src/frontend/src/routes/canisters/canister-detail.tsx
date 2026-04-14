@@ -350,25 +350,27 @@ const CanisterDetail: FC = () => {
 
   return (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', to: '/canisters' },
-            ...(organization
-              ? [
-                  {
-                    label: organization.name,
-                    to: `/organizations/${organization.id}/settings`,
-                  },
-                ]
-              : []),
-            {
-              label: project?.name ?? 'Project',
-              to: `/projects/${projectId}/canisters`,
-            },
-            { label: canisterLabel },
-          ]}
-        />
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/canisters' },
+          ...(organization
+            ? [
+                {
+                  label: organization.name,
+                  to: `/organizations/${organization.id}/settings`,
+                },
+              ]
+            : []),
+          {
+            label: project?.name ?? 'Project',
+            to: `/projects/${projectId}/canisters`,
+          },
+          { label: canisterLabel },
+        ]}
+      />
+
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <H1>Canister</H1>
         <Button
           variant="ghost"
           size="icon-sm"
@@ -378,8 +380,6 @@ const CanisterDetail: FC = () => {
           <RefreshCw className={isCanistersLoading ? 'animate-spin' : ''} />
         </Button>
       </div>
-
-      <H1 className="mt-3">Canister</H1>
 
       {isLoading ? (
         <div className="mt-6 flex flex-col gap-4">
