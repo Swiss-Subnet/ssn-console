@@ -1,7 +1,7 @@
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Header } from '@/components/layout/header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { useAppStore } from '@/lib/store';
+import { selectIsActive, useAppStore } from '@/lib/store';
 import { type FC } from 'react';
 import { Outlet } from 'react-router';
 import { Toaster } from 'sonner';
@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/loading-spinner';
 export const DefaultLayout: FC = () => {
   const { isProfileInitialized, isProfileLoading, isAuthenticated } =
     useAppStore();
+  const isActive = useAppStore(selectIsActive);
 
   if (!isProfileInitialized || isProfileLoading) {
     return (
@@ -27,7 +28,7 @@ export const DefaultLayout: FC = () => {
         <Header />
 
         <div className="flex flex-1">
-          {isAuthenticated ? (
+          {isAuthenticated && isActive ? (
             <SidebarProvider>
               <AppSidebar />
               <SidebarInset>

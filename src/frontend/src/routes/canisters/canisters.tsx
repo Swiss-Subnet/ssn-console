@@ -1,6 +1,5 @@
 import { H1 } from '@/components/typography/h1';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { useRequireAuth } from '@/lib/auth';
 import { selectOrgMap, selectProjectMap, useAppStore } from '@/lib/store';
 import { CanisterGrid } from '@/routes/canisters/canister-grid';
 import { CreateCanisterButton } from '@/routes/canisters/create-canister-button';
@@ -10,7 +9,6 @@ import { isNil } from '@/lib/nil';
 import { useRequireProjectId } from '@/lib/params';
 
 const Canisters: FC = () => {
-  useRequireAuth();
   const { isCanistersLoading, initializeCanisters, canisters } = useAppStore();
   const projectMap = useAppStore(selectProjectMap);
   const orgMap = useAppStore(selectOrgMap);

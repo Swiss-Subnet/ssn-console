@@ -1,6 +1,5 @@
 import { H1 } from '@/components/typography/h1';
 import { H2 } from '@/components/typography/h2';
-import { useRequireAdminAuth } from '@/lib/auth';
 import { TrustedPartnerForm } from '@/routes/admin/trusted-partner-form';
 import { TrustedPartnerTable } from '@/routes/admin/trusted-partner-table';
 import { UserTable } from '@/routes/admin/user-table';
@@ -16,8 +15,6 @@ import { TermsAndConditionsForm } from '@/routes/admin/terms-and-conditions-form
 import { Container } from '@/components/layout/container';
 
 const Admin: FC = () => {
-  useRequireAdminAuth();
-
   const { userStats } = useAppStore();
 
   return (
