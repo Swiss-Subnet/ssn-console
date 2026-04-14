@@ -4,6 +4,16 @@ use serde::Deserialize;
 pub type ListMyCanistersResponse = Vec<Canister>;
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListUserCanistersRequest {
+    pub user_id: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListUserCanistersResponse {
+    pub canisters: Vec<Canister>,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct ListAllCanistersRequest {
     pub limit: Option<u64>,
     pub page: Option<u64>,

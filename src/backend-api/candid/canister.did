@@ -99,7 +99,19 @@ type CanisterEnvironmentVariable = record {
   value : text;
 };
 
+type ListUserCanistersRequest = record {
+  user_id : text;
+};
+
+type ListUserCanistersResponse = variant {
+  Ok : record {
+    canisters : vec Canister;
+  };
+  Err : ApiError;
+};
+
 service : {
   list_my_canisters : () -> (ListMyCanistersResponse);
+  list_user_canisters : (ListUserCanistersRequest) -> (ListUserCanistersResponse);
   list_all_canisters : (ListAllCanistersRequest) -> (ListAllCanistersResponse) query;
 };

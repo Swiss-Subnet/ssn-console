@@ -1,7 +1,10 @@
 import {
   mapListMyCanistersResponse,
+  mapListUserCanistersResponse,
   mapOkResponse,
   type ListMyCanistersResponse,
+  type ListUserCanistersRequest,
+  type ListUserCanistersResponse,
 } from '@/lib/api-models';
 import { isNil } from '@/lib/nil';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
@@ -28,6 +31,14 @@ export class CanisterApi {
     const res = await this.actor.list_my_canisters();
 
     return mapListMyCanistersResponse(res);
+  }
+
+  public async listUserCanisters(
+    request: ListUserCanistersRequest,
+  ): Promise<ListUserCanistersResponse> {
+    const res = await this.actor.list_user_canisters(request);
+
+    return mapListUserCanistersResponse(res);
   }
 
   public async createCanister(): Promise<void> {
