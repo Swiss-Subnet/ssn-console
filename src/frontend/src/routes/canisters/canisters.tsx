@@ -1,6 +1,7 @@
 import { H1 } from '@/components/typography/h1';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { useRequireAuth } from '@/lib/auth';
-import { useAppStore } from '@/lib/store';
+import { selectOrgMap, selectProjectMap, useAppStore } from '@/lib/store';
 import { CanisterGrid } from '@/routes/canisters/canister-grid';
 import { CreateCanisterButton } from '@/routes/canisters/create-canister-button';
 import { useEffect, useMemo, type FC } from 'react';
@@ -11,11 +12,23 @@ import { useRequireProjectId } from '@/lib/params';
 const Canisters: FC = () => {
   useRequireAuth();
   const { isCanistersLoading, initializeCanisters, canisters } = useAppStore();
+  const projectMap = useAppStore(selectProjectMap);
+  const orgMap = useAppStore(selectOrgMap);
   const projectId = useRequireProjectId();
 
   useEffect(() => {
     initializeCanisters(projectId);
   }, [projectId]);
+
+  const project = useMemo(
+    () => projectMap.get(projectId) ?? null,
+    [projectId, projectMap],
+  );
+
+  const organization = useMemo(
+    () => (project ? (orgMap.get(project.orgId) ?? null) : null),
+    [project, orgMap],
+  );
 
   const projectCanisterMap = useMemo(
     () => canisters?.get(projectId) ?? null,
@@ -29,6 +42,21 @@ const Canisters: FC = () => {
 
   return (
     <>
+      <Breadcrumbs
+        className="mb-3"
+        items={[
+          { label: 'Home', to: '/canisters' },
+          ...(organization
+            ? [
+                {
+                  label: organization.name,
+                  to: `/organizations/${organization.id}/settings`,
+                },
+              ]
+            : []),
+          { label: project?.name ?? 'Project' },
+        ]}
+      />
       <H1>Canisters</H1>
       {isCanistersLoading || isNil(projectCanisters) ? (
         <CanisterSkeleton className="mt-8" />

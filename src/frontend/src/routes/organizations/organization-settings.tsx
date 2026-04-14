@@ -1,5 +1,6 @@
 import { LoadingButton } from '@/components/loading-button';
 import { Container } from '@/components/layout/container';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useAppStore, selectOrgMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useEffect, useMemo, useState, type FC } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router';
@@ -88,12 +89,13 @@ const OrganizationSettings: FC = () => {
   return (
     <Container>
       <div className="space-y-6">
-        <div className="mx-auto max-w-md">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="mr-1 size-3.5" />
-            Back
-          </Button>
-        </div>
+        <Breadcrumbs
+          className="mx-auto max-w-md"
+          items={[
+            { label: 'Home', to: '/canisters' },
+            { label: organization.name },
+          ]}
+        />
 
         <Card className="mx-auto max-w-md">
           <CardHeader>

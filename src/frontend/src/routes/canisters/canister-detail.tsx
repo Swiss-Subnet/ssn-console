@@ -1,4 +1,5 @@
 import { H1 } from '@/components/typography/h1';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import {
   Card,
   CardContent,
@@ -22,13 +23,12 @@ import {
 } from '@/lib/format';
 import { isNil } from '@/lib/nil';
 import { useRequireProjectId, useRequireCanisterId } from '@/lib/params';
-import { useAppStore } from '@/lib/store';
+import { selectOrgMap, selectProjectMap, useAppStore } from '@/lib/store';
 import { AddControllerForm } from '@/routes/canisters/add-controller-form';
 import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-canister-controller-cta';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useMemo, useState, type FC } from 'react';
-import { Link } from 'react-router';
 
 function statusBadgeVariant(
   status: CanisterStatus,
@@ -68,9 +68,15 @@ const SectionCard: FC<SectionCardProps> = ({ title, children, footer }) => (
   </Card>
 );
 
-type CanisterInfoSectionsProps = { info: CanisterInfo };
+type CanisterInfoSectionsProps = {
+  canisterPrincipal: string;
+  info: CanisterInfo;
+};
 
-const CanisterInfoSections: FC<CanisterInfoSectionsProps> = ({ info }) => {
+const CanisterInfoSections: FC<CanisterInfoSectionsProps> = ({
+  canisterPrincipal,
+  info,
+}) => {
   const logVisibilityLabel =
     typeof info.settings.logVisibility === 'string'
       ? info.settings.logVisibility === 'controllers'
@@ -82,9 +88,7 @@ const CanisterInfoSections: FC<CanisterInfoSectionsProps> = ({ info }) => {
     <div className="flex flex-col gap-4">
       <SectionCard
         title="Settings"
-        footer={
-          <AddControllerForm canisterId={info.settings.controllers[0] ?? ''} />
-        }
+        footer={<AddControllerForm canisterId={canisterPrincipal} />}
       >
         <StatRow
           label="Compute Allocation"
@@ -314,6 +318,8 @@ const CanisterDetail: FC = () => {
     refreshCanisters,
     canisters,
   } = useAppStore();
+  const projectMap = useAppStore(selectProjectMap);
+  const orgMap = useAppStore(selectOrgMap);
   const projectId = useRequireProjectId();
   const canisterId = useRequireCanisterId();
 
@@ -326,17 +332,43 @@ const CanisterDetail: FC = () => {
     [canisters, projectId, canisterId],
   );
 
+  const project = useMemo(
+    () => projectMap.get(projectId) ?? null,
+    [projectId, projectMap],
+  );
+
+  const organization = useMemo(
+    () => (project ? (orgMap.get(project.orgId) ?? null) : null),
+    [project, orgMap],
+  );
+
   const isLoading = isCanistersLoading || !isCanistersInitialized;
+
+  const canisterLabel = canister
+    ? `${canister.principal.slice(0, 5)}...${canister.principal.slice(-3)}`
+    : 'Canister';
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <Link
-          to={`/projects/${projectId}/canisters`}
-          className="text-muted-foreground hover:text-foreground text-xs transition-colors"
-        >
-          &larr; Canisters
-        </Link>
+      <div className="flex items-center justify-between gap-2">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', to: '/canisters' },
+            ...(organization
+              ? [
+                  {
+                    label: organization.name,
+                    to: `/organizations/${organization.id}/settings`,
+                  },
+                ]
+              : []),
+            {
+              label: project?.name ?? 'Project',
+              to: `/projects/${projectId}/canisters`,
+            },
+            { label: canisterLabel },
+          ]}
+        />
         <Button
           variant="ghost"
           size="icon-sm"
@@ -375,7 +407,10 @@ const CanisterDetail: FC = () => {
           {isNil(canister.info) ? (
             <AddMissingCanisterControllerCta canisterId={canister.principal} />
           ) : (
-            <CanisterInfoSections info={canister.info} />
+            <CanisterInfoSections
+              canisterPrincipal={canister.principal}
+              info={canister.info}
+            />
           )}
           <CanisterHistory canisterPrincipal={canister.principal} />
         </div>

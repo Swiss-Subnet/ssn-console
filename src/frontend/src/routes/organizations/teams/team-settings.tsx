@@ -1,5 +1,6 @@
 import { LoadingButton } from '@/components/loading-button';
 import { Container } from '@/components/layout/container';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -10,11 +11,9 @@ import {
   FormMessage,
 } from '@/components/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useAppStore, selectTeamMap } from '@/lib/store';
+import { useAppStore, selectOrgMap, selectTeamMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft } from 'lucide-react';
 import { useEffect, useMemo, useState, type FC } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router';
@@ -36,10 +35,16 @@ const TeamSettings: FC = () => {
   const navigate = useNavigate();
   const { updateTeam, deleteTeam } = useAppStore();
   const teamMap = useAppStore(selectTeamMap);
+  const orgMap = useAppStore(selectOrgMap);
 
   const team = useMemo(
     () => (teamId ? teamMap.get(teamId) : undefined),
     [teamId, teamMap],
+  );
+
+  const organization = useMemo(
+    () => (orgId ? orgMap.get(orgId) : undefined),
+    [orgId, orgMap],
   );
 
   const form = useForm<FormData>({
@@ -88,18 +93,18 @@ const TeamSettings: FC = () => {
   return (
     <Container>
       <div className="space-y-6">
-        <div className="mx-auto max-w-md">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              navigate(`/organizations/${orgId}/teams`, { replace: true })
-            }
-          >
-            <ArrowLeft className="mr-1 size-3.5" />
-            Back
-          </Button>
-        </div>
+        <Breadcrumbs
+          className="mx-auto max-w-md"
+          items={[
+            { label: 'Home', to: '/canisters' },
+            {
+              label: organization?.name ?? 'Organization',
+              to: `/organizations/${orgId}/settings`,
+            },
+            { label: 'Teams', to: `/organizations/${orgId}/teams` },
+            { label: team.name },
+          ]}
+        />
 
         <Card className="mx-auto max-w-md">
           <CardHeader>
