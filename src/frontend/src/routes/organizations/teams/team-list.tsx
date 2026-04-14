@@ -1,9 +1,10 @@
 import { Container } from '@/components/layout/container';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useEffect, useState, type FC } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { isNil } from '@/lib/nil';
@@ -49,16 +50,16 @@ const TeamList: FC = () => {
     <Container>
       <div className="mx-auto max-w-md space-y-6">
         <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              navigate(`/organizations/${orgId}/settings`, { replace: true })
-            }
-          >
-            <ArrowLeft className="mr-1 size-3.5" />
-            Back
-          </Button>
+          <Breadcrumbs
+            items={[
+              { label: 'Home', to: '/canisters' },
+              {
+                label: organization.name,
+                to: `/organizations/${orgId}/settings`,
+              },
+              { label: 'Teams' },
+            ]}
+          />
 
           <Button
             size="sm"

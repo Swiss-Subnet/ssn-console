@@ -6,7 +6,20 @@ import {
 import { isNil } from '@/lib/nil';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import { Principal } from '@icp-sdk/core/principal';
-import type { _SERVICE } from '@ssn/backend-api';
+import type { _SERVICE, Proposal } from '@ssn/backend-api';
+
+function assertProposalExecuted(proposal: Proposal): void {
+  const [status] = proposal.status;
+  if (isNil(status)) {
+    throw new Error('Proposal returned without a status');
+  }
+  if ('Failed' in status) {
+    throw new Error(status.Failed.message);
+  }
+  if ('Rejected' in status) {
+    throw new Error('Proposal was rejected');
+  }
+}
 
 export class CanisterApi {
   constructor(private readonly actor: ActorSubclass<_SERVICE>) {}
@@ -32,7 +45,7 @@ export class CanisterApi {
         },
       ],
     });
-    mapOkResponse(createRes);
+    assertProposalExecuted(mapOkResponse(createRes));
   }
 
   public async addCanisterController(
@@ -56,6 +69,6 @@ export class CanisterApi {
         },
       ],
     });
-    mapOkResponse(createRes);
+    assertProposalExecuted(mapOkResponse(createRes));
   }
 }
