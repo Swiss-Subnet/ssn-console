@@ -88,7 +88,9 @@ describe('list_all_canisters', () => {
       for (let i = 0; i < numAliceProjects; i++) {
         await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
       }
-      const aliceCanistersRes = await driver.actor.list_my_canisters();
+      const aliceCanistersRes = await driver.actor.list_my_canisters({
+        project_id: aliceProject.id,
+      });
       aliceCanisters = extractOkResponse(aliceCanistersRes);
 
       [bobIdentity, bobProfile] = await driver.users.createUser();
@@ -98,7 +100,9 @@ describe('list_all_canisters', () => {
       for (let i = 0; i < numBobProjects; i++) {
         await driver.proposals.createCanister(bobIdentity, bobProject.id);
       }
-      const bobCanistersRes = await driver.actor.list_my_canisters();
+      const bobCanistersRes = await driver.actor.list_my_canisters({
+        project_id: bobProject.id,
+      });
       bobCanisters = extractOkResponse(bobCanistersRes);
     });
 

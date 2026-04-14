@@ -7,11 +7,14 @@ use crate::{
         canister_repository, organization_repository, project_repository, team_repository,
         user_profile_repository, Canister,
     },
-    dto::{self, ListMyCanistersResponse, ListUserCanistersRequest, ListUserCanistersResponse},
+    dto::{
+        self, ListMyCanistersRequest, ListMyCanistersResponse, ListUserCanistersRequest,
+        ListUserCanistersResponse,
+    },
     mapping::map_canister_response,
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiResult, Uuid};
 use futures::future::join_all;
 use ic_cdk::{
     api::canister_self,
@@ -20,36 +23,40 @@ use ic_cdk::{
     },
 };
 
-pub async fn list_my_canisters(caller: Principal) -> ApiResult<ListMyCanistersResponse> {
+pub async fn list_my_canisters(
+    caller: Principal,
+    request: ListMyCanistersRequest,
+) -> ApiResult<ListMyCanistersResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
-    list_user_canisters_internal(user_id).await
+    let project_id = request.project_id.as_str().try_into()?;
+    let team_ids = team_repository::list_user_team_ids(user_id);
+    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
+    list_canisters_by_project_internal(project_id).await
 }
 
 pub async fn list_user_canisters(
     request: ListUserCanistersRequest,
 ) -> ApiResult<ListUserCanistersResponse> {
     let user_id = request.user_id.as_str().try_into()?;
-    let canisters = list_user_canisters_internal(user_id).await?;
+    let team_ids = team_repository::list_user_team_ids(user_id);
+
+    let mut project_ids = team_ids
+        .into_iter()
+        .flat_map(project_repository::list_team_project_ids)
+        .collect::<Vec<_>>();
+
+    project_ids.sort();
+    project_ids.dedup();
+
+    let mut canisters = vec![];
+    for project_id in project_ids {
+        canisters.extend(list_canisters_by_project_internal(project_id).await?);
+    }
+
     Ok(ListUserCanistersResponse { canisters })
 }
 
-async fn list_user_canisters_internal(user_id: Uuid) -> ApiResult<Vec<dto::Canister>> {
-    let team_id = team_repository::list_user_team_ids(user_id)
-        .first()
-        .cloned()
-        .ok_or_else(|| {
-            ApiError::internal_error("User does not have a default team.".to_string())
-        })?;
-
-    let project_id = project_repository::list_team_project_ids(team_id)
-        .first()
-        .cloned()
-        .ok_or_else(|| {
-            ApiError::internal_error(
-                "User's default team does not have a default project.".to_string(),
-            )
-        })?;
-
+async fn list_canisters_by_project_internal(project_id: Uuid) -> ApiResult<Vec<dto::Canister>> {
     let project_canisters = canister_repository::list_canisters_by_project(project_id);
     let mut canisters = vec![];
 

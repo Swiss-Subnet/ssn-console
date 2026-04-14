@@ -46,6 +46,7 @@ export const Router: FC = () => (
         />
         <Route path="verify" element={<Verify />} />
         <Route path="dashboard" element={<Dashboard />} />
+
         <Route path="billing" element={<Billing />} />
         <Route path="organizations/new" element={<CreateOrganization />} />
         <Route

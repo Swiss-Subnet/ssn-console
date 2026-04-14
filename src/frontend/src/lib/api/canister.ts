@@ -2,6 +2,7 @@ import {
   mapListMyCanistersResponse,
   mapListUserCanistersResponse,
   mapOkResponse,
+  type ListMyCanistersRequest,
   type ListMyCanistersResponse,
   type ListUserCanistersRequest,
   type ListUserCanistersResponse,
@@ -27,8 +28,10 @@ function assertProposalExecuted(proposal: Proposal): void {
 export class CanisterApi {
   constructor(private readonly actor: ActorSubclass<_SERVICE>) {}
 
-  public async listMyCanisters(): Promise<ListMyCanistersResponse> {
-    const res = await this.actor.list_my_canisters();
+  public async listMyCanisters(
+    request: ListMyCanistersRequest,
+  ): Promise<ListMyCanistersResponse> {
+    const res = await this.actor.list_my_canisters(request);
 
     return mapListMyCanistersResponse(res);
   }
@@ -41,15 +44,9 @@ export class CanisterApi {
     return mapListUserCanistersResponse(res);
   }
 
-  public async createCanister(): Promise<void> {
-    const res = await this.actor.list_my_projects({});
-    const [project] = mapOkResponse(res).projects;
-    if (isNil(project)) {
-      throw new Error('Default project not found');
-    }
-
+  public async createCanister(projectId: string): Promise<void> {
     const createRes = await this.actor.create_proposal({
-      project_id: project.id,
+      project_id: projectId,
       operation: [
         {
           CreateCanister: {},
