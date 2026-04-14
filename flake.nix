@@ -74,12 +74,14 @@
           ];
 
           shellHook = ''
-            echo "SSN Console dev shell"
-            echo "  Rust:  $(rustc --version)"
-            echo "  Bun:   $(bun --version)"
-            echo "  Node:  $(node --version)"
-            echo "  dfx:   $(dfx --version)"
-            echo "  SSL:   $(openssl version)"
+            if [ -t 1 ]; then
+              echo "SSN Console dev shell"
+              echo "  Rust:  $(rustc --version)"
+              echo "  Bun:   $(bun --version)"
+              echo "  Node:  $(node --version)"
+              echo "  dfx:   $(dfx --version)"
+              echo "  SSL:   $(openssl version)"
+            fi
           '';
         };
       }
