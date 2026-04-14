@@ -76,6 +76,15 @@ export function noProfileError(principal: Principal): ApiErrorResponse {
   };
 }
 
+export function inactiveUserError(): ApiErrorResponse {
+  return {
+    Err: {
+      code: [{ Unauthorized: {} }],
+      message: `Inactive users cannot perform this action.`,
+    },
+  };
+}
+
 export function noTermsAndConditionsError(id: string): ApiErrorResponse {
   return {
     Err: {

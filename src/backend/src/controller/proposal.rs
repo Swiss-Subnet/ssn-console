@@ -8,7 +8,7 @@ use ic_cdk::{api::msg_caller, *};
 #[update]
 async fn create_proposal(request: CreateProposalRequest) -> ApiResultDto<CreateProposalResponse> {
     let caller = msg_caller();
-    if let Err(err) = access_control_service::assert_accepted_latest_terms_and_conditions(&caller) {
+    if let Err(err) = access_control_service::assert_has_platform_access(&caller) {
         return ApiResultDto::Err(err);
     }
 

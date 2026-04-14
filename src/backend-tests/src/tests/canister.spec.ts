@@ -3,6 +3,7 @@ import {
   anonymousIdentity,
   controllerIdentity,
   extractOkResponse,
+  inactiveUserError,
   latestTermsAndConditionsError,
   noProfileError,
   notOwnedProjectError,
@@ -103,9 +104,8 @@ describe('Canisters', () => {
     });
 
     it('should return an empty array when the user has no canisters', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
 
       const canistersRes = await driver.actor.list_my_canisters();
       const canisters = extractOkResponse(canistersRes);
@@ -113,16 +113,14 @@ describe('Canisters', () => {
     });
 
     it('should return all canisters owned by the user', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
       const aliceProject = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
       await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
 
-      const bobIdentity = generateRandomIdentity();
+      const [bobIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(bobIdentity);
-      await driver.actor.create_my_user_profile();
       const bobProject = await driver.getDefaultProject();
       await driver.proposals.createCanister(bobIdentity, bobProject.id);
       await driver.proposals.createCanister(bobIdentity, bobProject.id);
@@ -169,11 +167,22 @@ describe('Canisters', () => {
       expect(res).toEqual(noProfileError(aliceIdentity.getPrincipal()));
     });
 
-    it('should return an error for a project the user does not have access to', async () => {
+    it('should return an error for an inactive user', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
-      const aliceProfileRes = await driver.actor.create_my_user_profile();
-      const aliceProfile = extractOkResponse(aliceProfileRes);
+
+      await driver.actor.create_my_user_profile();
+      const project = await driver.getDefaultProject();
+
+      const res = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      expect(res).toEqual(inactiveUserError());
+    });
+
+    it('should return an error for a project the user does not have access to', async () => {
+      const [aliceIdentity, aliceProfile] = await driver.users.createUser();
 
       const bobIdentity = generateRandomIdentity();
       driver.actor.setIdentity(bobIdentity);
@@ -189,10 +198,8 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a project that does not exist', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity, aliceProfile] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      const aliceProfileRes = await driver.actor.create_my_user_profile();
-      const aliceProfile = extractOkResponse(aliceProfileRes);
 
       const res = await driver.actor.create_proposal({
         project_id: projectId,
@@ -202,9 +209,8 @@ describe('Canisters', () => {
     });
 
     it('should create a canister for a valid user', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
@@ -215,9 +221,7 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a user who has not accepted the latest terms and conditions', async () => {
-      const aliceIdentity = generateRandomIdentity();
-      driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
+      const [aliceIdentity] = await driver.users.createUser();
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
@@ -236,9 +240,7 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a user who has explicitly rejected the latest terms and conditions', async () => {
-      const aliceIdentity = generateRandomIdentity();
-      driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
+      const [aliceIdentity] = await driver.users.createUser();
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
@@ -284,9 +286,7 @@ describe('Canisters', () => {
     });
 
     it('should create a canister for a user who has accepted the latest terms and conditions', async () => {
-      const aliceIdentity = generateRandomIdentity();
-      driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
+      const [aliceIdentity] = await driver.users.createUser();
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
@@ -353,10 +353,7 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a project the user does not have access to', async () => {
-      const aliceIdentity = generateRandomIdentity();
-      driver.actor.setIdentity(aliceIdentity);
-      const aliceProfileRes = await driver.actor.create_my_user_profile();
-      const aliceProfile = extractOkResponse(aliceProfileRes);
+      const [aliceIdentity, aliceProfile] = await driver.users.createUser();
 
       const bobIdentity = generateRandomIdentity();
       driver.actor.setIdentity(bobIdentity);
@@ -379,10 +376,8 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a project that does not exist', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity, aliceProfile] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      const aliceProfileRes = await driver.actor.create_my_user_profile();
-      const aliceProfile = extractOkResponse(aliceProfileRes);
 
       const res = await driver.actor.create_proposal({
         project_id: projectId,
@@ -399,9 +394,8 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a canister that does not exist', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
       const project = await driver.getDefaultProject();
 
       const proposal = await driver.proposals.addCanisterController(
@@ -421,9 +415,8 @@ describe('Canisters', () => {
     });
 
     it('should return an error if the controller has already been added', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
@@ -457,9 +450,8 @@ describe('Canisters', () => {
     });
 
     it('should add a controller for a valid user and canister', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
@@ -483,9 +475,8 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a user who has not accepted the latest terms and conditions', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
@@ -515,9 +506,8 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a user who has explicitly rejected the latest terms and conditions', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
@@ -588,9 +578,8 @@ describe('Canisters', () => {
     });
 
     it('should add a controller for a user who has accepted the latest terms and conditions', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();

@@ -81,16 +81,9 @@ describe('list_all_canisters', () => {
       const numAliceProjects = 5;
       const numBobProjects = 3;
 
-      aliceIdentity = generateRandomIdentity();
-      bobIdentity = generateRandomIdentity();
-
+      [aliceIdentity, aliceProfile] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
       await driver.actor.update_my_user_profile({ email: [aliceEmail] });
-
-      const aliceProfileRes = await driver.actor.get_my_user_profile();
-      aliceProfile = extractOkResponse(aliceProfileRes)[0]!;
-
       const aliceProject = await driver.getDefaultProject();
       for (let i = 0; i < numAliceProjects; i++) {
         await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
@@ -98,13 +91,9 @@ describe('list_all_canisters', () => {
       const aliceCanistersRes = await driver.actor.list_my_canisters();
       aliceCanisters = extractOkResponse(aliceCanistersRes);
 
+      [bobIdentity, bobProfile] = await driver.users.createUser();
       driver.actor.setIdentity(bobIdentity);
-      await driver.actor.create_my_user_profile();
       await driver.actor.update_my_user_profile({ email: [bobEmail] });
-
-      const bobProfileRes = await driver.actor.get_my_user_profile();
-      bobProfile = extractOkResponse(bobProfileRes)[0]!;
-
       const bobProject = await driver.getDefaultProject();
       for (let i = 0; i < numBobProjects; i++) {
         await driver.proposals.createCanister(bobIdentity, bobProject.id);
