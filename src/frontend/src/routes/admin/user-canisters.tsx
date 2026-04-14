@@ -1,7 +1,6 @@
 import { Container } from '@/components/layout/container';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { H1 } from '@/components/typography/h1';
-import { useRequireAdminAuth } from '@/lib/auth';
 import { useAppStore } from '@/lib/store';
 import { useCallback, useEffect, useState, type FC } from 'react';
 import { useParams, Link } from 'react-router';
@@ -13,8 +12,6 @@ import { showErrorToast } from '@/lib/toast';
 import { UserCanisterCard } from '@/routes/admin/user-canister-card';
 
 const UserCanisters: FC = () => {
-  useRequireAdminAuth();
-
   const { userId } = useParams<{ userId: string }>();
   const { canisterApi } = useAppStore();
   const [canisters, setCanisters] = useState<Canister[] | null>(null);

@@ -5,7 +5,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
 import { CanisterStatus } from '@/lib/api-models';
-import { useRequireAuth } from '@/lib/auth';
 import { formatBytes, formatCycles } from '@/lib/format';
 import { isNotNil } from '@/lib/nil';
 import { selectOrgsWithProjects, useAppStore } from '@/lib/store';
@@ -22,7 +21,6 @@ const StatRow: FC<StatRowProps> = ({ label, value }) => (
 );
 
 const Dashboard: FC = () => {
-  useRequireAuth();
   const { organizations, projects, teams, canisters, initializeCanisters } =
     useAppStore();
   const orgsWithProjects = useAppStore(selectOrgsWithProjects);

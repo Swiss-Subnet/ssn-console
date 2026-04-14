@@ -1,11 +1,9 @@
 import { useEffect, type FC } from 'react';
 import { useNavigate } from 'react-router';
 import { useAppStore } from '@/lib/store';
-import { useRequireAuth } from '@/lib/auth';
 import { isNil, isNotNil } from '@/lib/nil';
 
 const RedirectToCanisters: FC = () => {
-  useRequireAuth();
   const navigate = useNavigate();
   const { projects } = useAppStore();
 

@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useRequireAuth } from '@/lib/auth';
 import {
   CanisterStatus,
   type CanisterChange,
@@ -310,7 +309,6 @@ const CanisterHistory: FC<CanisterHistoryProps> = ({ canisterPrincipal }) => {
 };
 
 const CanisterDetail: FC = () => {
-  useRequireAuth();
   const {
     isCanistersLoading,
     isCanistersInitialized,

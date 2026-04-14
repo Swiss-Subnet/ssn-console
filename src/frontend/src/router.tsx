@@ -1,5 +1,7 @@
+import { AdminRoute } from '@/components/layout/admin-route';
 import { DefaultLayout } from '@/components/layout/default-layout';
 import { ProjectLayout } from '@/components/layout/project-layout';
+import { ProtectedRoute } from '@/components/layout/protected-route';
 import { lazy, type FC } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
 
@@ -38,31 +40,39 @@ export const Router: FC = () => (
       <Route element={<DefaultLayout />}>
         <Route index element={<Home />} />
         <Route path="terms-and-conditions" element={<TermsAndConditions />} />
-        <Route path="canisters" element={<RedirectToProjectCanisters />} />
-        <Route path="admin" element={<Admin />} />
-        <Route
-          path="admin/users/:userId/canisters"
-          element={<UserCanisters />}
-        />
         <Route path="verify" element={<Verify />} />
-        <Route path="dashboard" element={<Dashboard />} />
 
-        <Route path="billing" element={<Billing />} />
-        <Route path="organizations/new" element={<CreateOrganization />} />
-        <Route
-          path="organizations/:orgId/settings"
-          element={<OrganizationSettings />}
-        />
-        <Route path="organizations/:orgId/teams" element={<TeamList />} />
-        <Route path="organizations/:orgId/teams/new" element={<CreateTeam />} />
-        <Route
-          path="organizations/:orgId/teams/:teamId/settings"
-          element={<TeamSettings />}
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route path="canisters" element={<RedirectToProjectCanisters />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="billing" element={<Billing />} />
+          <Route path="organizations/new" element={<CreateOrganization />} />
+          <Route
+            path="organizations/:orgId/settings"
+            element={<OrganizationSettings />}
+          />
+          <Route path="organizations/:orgId/teams" element={<TeamList />} />
+          <Route
+            path="organizations/:orgId/teams/new"
+            element={<CreateTeam />}
+          />
+          <Route
+            path="organizations/:orgId/teams/:teamId/settings"
+            element={<TeamSettings />}
+          />
 
-        <Route path="projects/:projectId" element={<ProjectLayout />}>
-          <Route path="canisters" element={<Canisters />} />
-          <Route path="canisters/:canisterId" element={<CanisterDetail />} />
+          <Route path="projects/:projectId" element={<ProjectLayout />}>
+            <Route path="canisters" element={<Canisters />} />
+            <Route path="canisters/:canisterId" element={<CanisterDetail />} />
+          </Route>
+        </Route>
+
+        <Route element={<AdminRoute />}>
+          <Route path="admin" element={<Admin />} />
+          <Route
+            path="admin/users/:userId/canisters"
+            element={<UserCanisters />}
+          />
         </Route>
       </Route>
     </Routes>
