@@ -56,6 +56,13 @@ export class CanisterApi {
     assertProposalExecuted(mapOkResponse(createRes));
   }
 
+  public async removeCanister(canisterId: string): Promise<void> {
+    const res = await this.actor.remove_my_canister({
+      canister_id: canisterId,
+    });
+    mapOkResponse(res);
+  }
+
   public async addCanisterController(
     canisterId: string,
     controllerId: string,

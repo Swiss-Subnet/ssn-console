@@ -53,6 +53,24 @@ pub fn get_canister_count() -> u64 {
     with_state(|s| s.canisters.len())
 }
 
+pub fn get_canister_in_project(project_id: Uuid, canister_id: Uuid) -> Option<Canister> {
+    with_state(|s| {
+        if s.project_canister_index.contains(&(project_id, canister_id)) {
+            s.canisters.get(&canister_id)
+        } else {
+            None
+        }
+    })
+}
+
+pub fn remove_canister(project_id: Uuid, canister_id: Uuid) {
+    mutate_state(|s| {
+        s.canisters.remove(&canister_id);
+        s.project_canister_index.remove(&(project_id, canister_id));
+        s.canister_project_index.remove(&canister_id);
+    });
+}
+
 struct CanisterState {
     canisters: CanisterMemory,
     project_canister_index: ProjectCanisterIndexMemory,

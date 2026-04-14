@@ -12,7 +12,30 @@ import {
 } from '../support';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Principal } from '@icp-sdk/core/principal';
+import { IDL } from '@icp-sdk/core/candid';
 import type { Canister } from '@ssn/backend-api';
+
+const MANAGEMENT_CANISTER_ID = Principal.fromText('aaaaa-aa');
+const DeleteCanisterArgs = IDL.Record({ canister_id: IDL.Principal });
+
+async function deleteCanisterOnChain(
+  driver: TestDriver,
+  canisterPrincipal: Principal,
+): Promise<void> {
+  await driver.pic.addCycles(canisterPrincipal, 1_000_000_000_000n);
+  await driver.pic.stopCanister({
+    canisterId: canisterPrincipal,
+    sender: driver.canisterId,
+  });
+  await driver.pic.updateCall({
+    canisterId: MANAGEMENT_CANISTER_ID,
+    method: 'delete_canister',
+    arg: new Uint8Array(
+      IDL.encode([DeleteCanisterArgs], [{ canister_id: canisterPrincipal }]),
+    ),
+    sender: driver.canisterId,
+  });
+}
 
 describe('Canisters', () => {
   const projectId = '9c9cfd54-b456-42bb-892f-6bc7b1907aeb';
@@ -24,8 +47,8 @@ describe('Canisters', () => {
   async function expectCanister(canister: Canister): Promise<void> {
     expect(canister).toEqual({
       id: expect.any(String),
-      info: [
-        {
+      state: {
+        Accessible: {
           cycles: 0n,
           idle_cycles_burned_per_day: expect.any(BigInt),
           memory_metrics: {
@@ -66,7 +89,7 @@ describe('Canisters', () => {
           },
           version: 0n,
         },
-      ],
+      },
       principal_id: expect.any(String),
     });
 
@@ -649,6 +672,93 @@ describe('Canisters', () => {
         c => c.compareTo(controllerId) === 'eq',
       );
       expect(hasCorrectController).toBe(true);
+    });
+  });
+
+  describe('deleted canisters', () => {
+    async function createAndDeleteCanister(): Promise<{
+      identity: ReturnType<typeof generateRandomIdentity>;
+      projectId: string;
+      record: Canister;
+    }> {
+      const identity = generateRandomIdentity();
+      driver.actor.setIdentity(identity);
+      await driver.actor.create_my_user_profile();
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(identity, project.id);
+
+      const before = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      expect(before).toHaveLength(1);
+      const record = before[0]!;
+
+      await deleteCanisterOnChain(
+        driver,
+        Principal.fromText(record.principal_id),
+      );
+
+      return { identity, projectId: project.id, record };
+    }
+
+    it('list_my_canisters reports Deleted state for canisters removed on-chain', async () => {
+      const { projectId, record } = await createAndDeleteCanister();
+
+      const after = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: projectId }),
+      );
+      expect(after).toHaveLength(1);
+      expect(after[0]!.id).toBe(record.id);
+      expect(after[0]!.state).toEqual({ Deleted: null });
+    });
+
+    it('remove_my_canister deletes the record for a canister removed on-chain', async () => {
+      const { projectId, record } = await createAndDeleteCanister();
+
+      const removeRes = await driver.actor.remove_my_canister({
+        canister_id: record.id,
+      });
+      extractOkResponse(removeRes);
+
+      const after = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: projectId }),
+      );
+      expect(after).toEqual([]);
+    });
+
+    it('remove_my_canister rejects canisters that still exist on-chain', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.create_my_user_profile();
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
+      const [record] = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+
+      const removeRes = await driver.actor.remove_my_canister({
+        canister_id: record!.id,
+      });
+      expect(removeRes).toHaveProperty('Err');
+
+      const after = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      expect(after).toHaveLength(1);
+    });
+
+    it('remove_my_canister rejects callers who do not own the canister', async () => {
+      const { record } = await createAndDeleteCanister();
+
+      const bobIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(bobIdentity);
+      await driver.actor.create_my_user_profile();
+
+      const removeRes = await driver.actor.remove_my_canister({
+        canister_id: record.id,
+      });
+      expect(removeRes).toHaveProperty('Err');
     });
   });
 });

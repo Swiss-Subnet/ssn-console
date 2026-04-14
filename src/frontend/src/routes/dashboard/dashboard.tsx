@@ -4,7 +4,7 @@ import { H1 } from '@/components/typography/h1';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
-import { CanisterStatus } from '@/lib/api-models';
+import { CanisterAvailability, CanisterStatus } from '@/lib/api-models';
 import { formatBytes, formatCycles } from '@/lib/format';
 import { isNotNil } from '@/lib/nil';
 import { selectOrgsWithProjects, useAppStore } from '@/lib/store';
@@ -52,14 +52,16 @@ const Dashboard: FC = () => {
     let withInfo = 0;
 
     for (const canister of defaultCanisters) {
-      if (!canister.info) continue;
+      if (canister.state.availability !== CanisterAvailability.Accessible)
+        continue;
+      const { info } = canister.state;
       withInfo += 1;
-      totalCycles += canister.info.cycles;
-      totalIdleBurn += canister.info.idleCyclesBurnedPerDay;
-      totalMemory += canister.info.memorySize;
-      if (canister.info.status === CanisterStatus.Running) running += 1;
-      else if (canister.info.status === CanisterStatus.Stopping) stopping += 1;
-      else if (canister.info.status === CanisterStatus.Stopped) stopped += 1;
+      totalCycles += info.cycles;
+      totalIdleBurn += info.idleCyclesBurnedPerDay;
+      totalMemory += info.memorySize;
+      if (info.status === CanisterStatus.Running) running += 1;
+      else if (info.status === CanisterStatus.Stopping) stopping += 1;
+      else if (info.status === CanisterStatus.Stopped) stopped += 1;
     }
 
     return {

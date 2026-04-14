@@ -10,6 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  CanisterAvailability,
   CanisterStatus,
   type CanisterChange,
   type CanisterInfo,
@@ -25,6 +26,7 @@ import { useRequireProjectId, useRequireCanisterId } from '@/lib/params';
 import { selectOrgMap, selectProjectMap, useAppStore } from '@/lib/store';
 import { AddControllerForm } from '@/routes/canisters/add-controller-form';
 import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-canister-controller-cta';
+import { DeletedCanisterCta } from '@/routes/canisters/deleted-canister-cta';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useMemo, useState, type FC } from 'react';
@@ -395,20 +397,29 @@ const CanisterDetail: FC = () => {
             <p className="text-center font-mono text-xs break-all">
               {canister.principal}
             </p>
-            {canister.info && (
-              <Badge variant={statusBadgeVariant(canister.info.status)}>
-                {canister.info.status}
+            {canister.state.availability ===
+              CanisterAvailability.Accessible && (
+              <Badge variant={statusBadgeVariant(canister.state.info.status)}>
+                {canister.state.info.status}
               </Badge>
+            )}
+            {canister.state.availability === CanisterAvailability.Deleted && (
+              <Badge variant="destructive">Deleted</Badge>
             )}
           </div>
 
-          {isNil(canister.info) ? (
-            <AddMissingCanisterControllerCta canisterId={canister.principal} />
-          ) : (
+          {canister.state.availability === CanisterAvailability.Accessible ? (
             <CanisterInfoSections
               canisterPrincipal={canister.principal}
-              info={canister.info}
+              info={canister.state.info}
             />
+          ) : canister.state.availability === CanisterAvailability.Deleted ? (
+            <DeletedCanisterCta
+              canisterRecordId={canister.id}
+              canisterPrincipal={canister.principal}
+            />
+          ) : (
+            <AddMissingCanisterControllerCta canisterId={canister.principal} />
           )}
           <CanisterHistory canisterPrincipal={canister.principal} />
         </div>
