@@ -4,6 +4,8 @@ import { Principal } from '@icp-sdk/core/principal';
 import type {
   canister_status_result as ApiCanisterStatusResponse,
   update_settings_args as ApiUpdateSettingsRequest,
+  start_canister_args as ApiStartCanisterRequest,
+  stop_canister_args as ApiStopCanisterRequest,
 } from '@ssn/management-canister';
 
 export interface ApiCanisterStatusRequest {
@@ -161,5 +163,29 @@ export function mapUpdateSettingsRequest(
       environment_variables: toCandidOpt(req.settings.environmentVariables),
     },
     sender_canister_version: toCandidOpt(req.senderCanisterVersion),
+  };
+}
+
+export interface StartCanisterRequest {
+  canisterId: string;
+}
+
+export function mapStartCanisterRequest(
+  req: StartCanisterRequest,
+): ApiStartCanisterRequest {
+  return {
+    canister_id: Principal.fromText(req.canisterId),
+  };
+}
+
+export interface StopCanisterRequest {
+  canisterId: string;
+}
+
+export function mapStopCanisterRequest(
+  req: StopCanisterRequest,
+): ApiStopCanisterRequest {
+  return {
+    canister_id: Principal.fromText(req.canisterId),
   };
 }

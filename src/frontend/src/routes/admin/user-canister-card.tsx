@@ -1,6 +1,9 @@
 import { CanisterStatus, type Canister } from '@/lib/api-models';
 import { formatBytes, formatCycles } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
+import { LoadingButton } from '@/components/loading-button';
+import { useAppStore } from '@/lib/store';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import {
   Card,
   CardAction,
@@ -9,10 +12,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { type FC } from 'react';
+import { useState, type FC } from 'react';
 
 export type UserCanisterCardProps = {
   canister: Canister;
+  onStatusChange?: () => void | Promise<void>;
 };
 
 function statusBadgeVariant(
@@ -28,7 +32,43 @@ function statusBadgeVariant(
   }
 }
 
-export const UserCanisterCard: FC<UserCanisterCardProps> = ({ canister }) => {
+export const UserCanisterCard: FC<UserCanisterCardProps> = ({
+  canister,
+  onStatusChange,
+}) => {
+  const { managementCanisterApi } = useAppStore();
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  const handleStart = async () => {
+    try {
+      setIsActionLoading(true);
+      await managementCanisterApi.startCanister({
+        canisterId: canister.principal,
+      });
+      await onStatusChange?.();
+      showSuccessToast('Canister started successfully');
+    } catch (err) {
+      showErrorToast('Failed to start canister', err);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleStop = async () => {
+    try {
+      setIsActionLoading(true);
+      await managementCanisterApi.stopCanister({
+        canisterId: canister.principal,
+      });
+      await onStatusChange?.();
+      showSuccessToast('Canister stopped successfully');
+    } catch (err) {
+      showErrorToast('Failed to stop canister', err);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
   return (
     <Card size="sm">
       <CardHeader>
@@ -37,7 +77,27 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({ canister }) => {
           {canister.principal}
         </CardDescription>
         {canister.info && (
-          <CardAction>
+          <CardAction className="flex items-center gap-2">
+            {canister.info.status === CanisterStatus.Stopped && (
+              <LoadingButton
+                variant="outline"
+                size="xs"
+                onClick={handleStart}
+                isLoading={isActionLoading}
+              >
+                Start
+              </LoadingButton>
+            )}
+            {canister.info.status === CanisterStatus.Running && (
+              <LoadingButton
+                variant="outline"
+                size="xs"
+                onClick={handleStop}
+                isLoading={isActionLoading}
+              >
+                Stop
+              </LoadingButton>
+            )}
             <Badge variant={statusBadgeVariant(canister.info.status)}>
               {canister.info.status}
             </Badge>

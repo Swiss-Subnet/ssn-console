@@ -3,7 +3,7 @@ import { LoadingSpinner } from '@/components/loading-spinner';
 import { H1 } from '@/components/typography/h1';
 import { useRequireAdminAuth } from '@/lib/auth';
 import { useAppStore } from '@/lib/store';
-import { useEffect, useState, type FC } from 'react';
+import { useCallback, useEffect, useState, type FC } from 'react';
 import { useParams, Link } from 'react-router';
 import {
   type ListUserCanistersResponse,
@@ -20,33 +20,25 @@ const UserCanisters: FC = () => {
   const [canisters, setCanisters] = useState<Canister[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!userId) return;
+  const fetchCanisters = useCallback(() => {
+    if (!userId) return Promise.resolve();
 
-    let isMounted = true;
-    setIsLoading(true);
-
-    canisterApi
+    return canisterApi
       .listUserCanisters({ user_id: userId })
       .then((res: ListUserCanistersResponse) => {
-        if (isMounted) {
-          setCanisters(res.canisters);
-        }
+        setCanisters(res.canisters);
       })
       .catch((err: unknown) => {
-        if (isMounted) {
-          showErrorToast('Failed to fetch user canisters', err);
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        showErrorToast('Failed to fetch user canisters', err);
       });
+  }, [userId, canisterApi]);
 
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    setIsLoading(true);
+
+    fetchCanisters().finally(() => {
+      setIsLoading(false);
+    });
   }, [userId, canisterApi]);
 
   return (
@@ -72,7 +64,11 @@ const UserCanisters: FC = () => {
         ) : canisters && canisters.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
             {canisters.map(canister => (
-              <UserCanisterCard key={canister.id} canister={canister} />
+              <UserCanisterCard
+                key={canister.id}
+                canister={canister}
+                onStatusChange={fetchCanisters}
+              />
             ))}
           </div>
         ) : (
