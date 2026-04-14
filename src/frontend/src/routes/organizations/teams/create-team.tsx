@@ -64,7 +64,6 @@ const CreateTeam: FC = () => {
   return (
     <Container>
       <Breadcrumbs
-        className="mx-auto max-w-md"
         items={[
           { label: 'Home', to: '/canisters' },
           {

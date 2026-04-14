@@ -88,15 +88,14 @@ const OrganizationSettings: FC = () => {
 
   return (
     <Container>
-      <div className="space-y-6">
-        <Breadcrumbs
-          className="mx-auto max-w-md"
-          items={[
-            { label: 'Home', to: '/canisters' },
-            { label: organization.name },
-          ]}
-        />
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/canisters' },
+          { label: organization.name },
+        ]}
+      />
 
+      <div className="mt-6 space-y-6">
         <Card className="mx-auto max-w-md">
           <CardHeader>
             <CardTitle>Organization Settings</CardTitle>

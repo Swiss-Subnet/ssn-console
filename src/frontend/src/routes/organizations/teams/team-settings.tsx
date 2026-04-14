@@ -92,20 +92,19 @@ const TeamSettings: FC = () => {
 
   return (
     <Container>
-      <div className="space-y-6">
-        <Breadcrumbs
-          className="mx-auto max-w-md"
-          items={[
-            { label: 'Home', to: '/canisters' },
-            {
-              label: organization?.name ?? 'Organization',
-              to: `/organizations/${orgId}/settings`,
-            },
-            { label: 'Teams', to: `/organizations/${orgId}/teams` },
-            { label: team.name },
-          ]}
-        />
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/canisters' },
+          {
+            label: organization?.name ?? 'Organization',
+            to: `/organizations/${orgId}/settings`,
+          },
+          { label: 'Teams', to: `/organizations/${orgId}/teams` },
+          { label: team.name },
+        ]}
+      />
 
+      <div className="mt-6 space-y-6">
         <Card className="mx-auto max-w-md">
           <CardHeader>
             <CardTitle>Team Settings</CardTitle>
