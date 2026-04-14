@@ -1,7 +1,7 @@
 use crate::{
     dto::{
-        ListAllCanistersRequest, ListAllCanistersResponse, ListMyCanistersResponse,
-        ListUserCanistersRequest, ListUserCanistersResponse,
+        ListAllCanistersRequest, ListAllCanistersResponse, ListMyCanistersRequest,
+        ListMyCanistersResponse, ListUserCanistersRequest, ListUserCanistersResponse,
     },
     service::canister_service,
 };
@@ -9,13 +9,17 @@ use canister_utils::{assert_authenticated, assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[update]
-async fn list_my_canisters() -> ApiResultDto<ListMyCanistersResponse> {
+async fn list_my_canisters(
+    request: ListMyCanistersRequest,
+) -> ApiResultDto<ListMyCanistersResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
     }
 
-    canister_service::list_my_canisters(caller).await.into()
+    canister_service::list_my_canisters(caller, request)
+        .await
+        .into()
 }
 
 #[update]

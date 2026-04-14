@@ -4,6 +4,7 @@ import { fromCandidOpt } from '@/lib/utils';
 import type {
   Canister as ApiCanister,
   ListMyCanistersResponse as ApiListMyCanistersResponse,
+  ListMyCanistersRequest as ApiListMyCanistersRequest,
   ListUserCanistersResponse as ApiListUserCanistersResponse,
   ListUserCanistersRequest,
 } from '@ssn/backend-api';
@@ -13,7 +14,10 @@ export type ListUserCanistersResponse = {
   canisters: Canister[];
 };
 
-export type { ListUserCanistersRequest };
+export type {
+  ListUserCanistersRequest,
+  ApiListMyCanistersRequest as ListMyCanistersRequest,
+};
 
 export type Canister = {
   id: string;

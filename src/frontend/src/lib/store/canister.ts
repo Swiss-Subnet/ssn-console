@@ -40,7 +40,9 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
 
     set({ isCanistersLoading: true });
     try {
-      const canisters = await canisterApi.listMyCanisters();
+      const canisters = await canisterApi.listMyCanisters({
+        project_id: projectId,
+      });
       set(state => {
         const newCanisters = state.canisters
           ? new Map(state.canisters)
@@ -61,7 +63,7 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
   async createCanister(projectId) {
     const { canisterApi, refreshCanisters } = get();
 
-    await canisterApi.createCanister();
+    await canisterApi.createCanister(projectId);
     await refreshCanisters(projectId);
   },
 

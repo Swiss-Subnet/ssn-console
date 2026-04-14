@@ -91,7 +91,9 @@ describe('Canisters', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      const res = await driver.actor.list_my_canisters();
+      const res = await driver.actor.list_my_canisters({
+        project_id: projectId,
+      });
       expect(res).toEqual(unauthenticatedError);
     });
 
@@ -99,7 +101,9 @@ describe('Canisters', () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      const res = await driver.actor.list_my_canisters();
+      const res = await driver.actor.list_my_canisters({
+        project_id: projectId,
+      });
       expect(res).toEqual(noProfileError(aliceIdentity.getPrincipal()));
     });
 
@@ -107,7 +111,10 @@ describe('Canisters', () => {
       const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
 
-      const canistersRes = await driver.actor.list_my_canisters();
+      const project = await driver.getDefaultProject();
+      const canistersRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const canisters = extractOkResponse(canistersRes);
       expect(canisters).toEqual([]);
     });
@@ -127,7 +134,9 @@ describe('Canisters', () => {
       await driver.proposals.createCanister(bobIdentity, bobProject.id);
 
       driver.actor.setIdentity(aliceIdentity);
-      const aliceCanistersRes = await driver.actor.list_my_canisters();
+      const aliceCanistersRes = await driver.actor.list_my_canisters({
+        project_id: aliceProject.id,
+      });
       const aliceCanisters = extractOkResponse(aliceCanistersRes);
 
       expect(aliceCanisters.length).toBe(2);
@@ -135,7 +144,9 @@ describe('Canisters', () => {
       await expectCanister(aliceCanisters[1]!);
 
       driver.actor.setIdentity(bobIdentity);
-      const bobCanistersRes = await driver.actor.list_my_canisters();
+      const bobCanistersRes = await driver.actor.list_my_canisters({
+        project_id: bobProject.id,
+      });
       const bobCanisters = extractOkResponse(bobCanistersRes);
 
       expect(bobCanisters.length).toBe(3);
@@ -215,7 +226,9 @@ describe('Canisters', () => {
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
 
-      const canisterRes = await driver.actor.list_my_canisters();
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const [canister] = extractOkResponse(canisterRes);
       await expectCanister(canister!);
     });
@@ -280,7 +293,9 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(controllerIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const [canister] = extractOkResponse(canisterRes);
       await expectCanister(canister!);
     });
@@ -310,7 +325,9 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const [canister] = extractOkResponse(canisterRes);
       await expectCanister(canister!);
     });
@@ -420,7 +437,9 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const [canister] = extractOkResponse(canisterRes);
       const canisterId = Principal.fromText(canister!.principal_id);
 
@@ -455,7 +474,9 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const [canister] = extractOkResponse(canisterRes);
 
       await driver.proposals.addCanisterController(
@@ -480,7 +501,9 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const [canister] = extractOkResponse(canisterRes);
 
       driver.actor.setIdentity(controllerIdentity);
@@ -511,7 +534,9 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const [canister] = extractOkResponse(canisterRes);
 
       driver.actor.setIdentity(controllerIdentity);
@@ -558,7 +583,9 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(controllerIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const [canister] = extractOkResponse(canisterRes);
 
       await driver.proposals.addCanisterController(
@@ -603,7 +630,9 @@ describe('Canisters', () => {
 
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
-      const canisterRes = await driver.actor.list_my_canisters();
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
       const [canister] = extractOkResponse(canisterRes);
 
       await driver.proposals.addCanisterController(
