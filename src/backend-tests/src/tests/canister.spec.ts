@@ -1,4 +1,5 @@
 import { generateRandomIdentity } from '@dfinity/pic';
+import type { Identity } from '@icp-sdk/core/agent';
 import {
   anonymousIdentity,
   controllerIdentity,
@@ -677,13 +678,12 @@ describe('Canisters', () => {
 
   describe('deleted canisters', () => {
     async function createAndDeleteCanister(): Promise<{
-      identity: ReturnType<typeof generateRandomIdentity>;
+      identity: Identity;
       projectId: string;
       record: Canister;
     }> {
-      const identity = generateRandomIdentity();
+      const [identity] = await driver.users.createUser();
       driver.actor.setIdentity(identity);
-      await driver.actor.create_my_user_profile();
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(identity, project.id);
 
@@ -727,9 +727,8 @@ describe('Canisters', () => {
     });
 
     it('remove_my_canister rejects canisters that still exist on-chain', async () => {
-      const aliceIdentity = generateRandomIdentity();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
-      await driver.actor.create_my_user_profile();
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(aliceIdentity, project.id);
 
@@ -751,9 +750,8 @@ describe('Canisters', () => {
     it('remove_my_canister rejects callers who do not own the canister', async () => {
       const { record } = await createAndDeleteCanister();
 
-      const bobIdentity = generateRandomIdentity();
+      const [bobIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(bobIdentity);
-      await driver.actor.create_my_user_profile();
 
       const removeRes = await driver.actor.remove_my_canister({
         canister_id: record.id,
