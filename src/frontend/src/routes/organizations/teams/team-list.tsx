@@ -48,18 +48,18 @@ const TeamList: FC = () => {
 
   return (
     <Container>
-      <div className="mx-auto max-w-md space-y-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', to: '/canisters' },
-            {
-              label: organization.name,
-              to: `/organizations/${orgId}/settings`,
-            },
-            { label: 'Teams' },
-          ]}
-        />
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/canisters' },
+          {
+            label: organization.name,
+            to: `/organizations/${orgId}/settings`,
+          },
+          { label: 'Teams' },
+        ]}
+      />
 
+      <div className="mx-auto mt-6 max-w-md space-y-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Teams in {organization.name}</CardTitle>

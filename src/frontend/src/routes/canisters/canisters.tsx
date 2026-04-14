@@ -43,7 +43,6 @@ const Canisters: FC = () => {
   return (
     <>
       <Breadcrumbs
-        className="mb-3"
         items={[
           { label: 'Home', to: '/canisters' },
           ...(organization
@@ -57,7 +56,7 @@ const Canisters: FC = () => {
           { label: project?.name ?? 'Project' },
         ]}
       />
-      <H1>Canisters</H1>
+      <H1 className="mt-3">Canisters</H1>
       {isCanistersLoading || isNil(projectCanisters) ? (
         <CanisterSkeleton className="mt-8" />
       ) : (

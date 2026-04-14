@@ -14,7 +14,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { isNil } from '@/lib/nil';
-import { useRequireProjectId } from '@/lib/params';
 import {
   selectOrgMap,
   selectOrgsWithProjects,
@@ -29,18 +28,22 @@ import {
   Settings,
 } from 'lucide-react';
 import { useMemo, type FC } from 'react';
-import { NavLink } from 'react-router';
+import { NavLink, useParams } from 'react-router';
 
 export const ProjectSelector: FC = () => {
   const { isMobile } = useSidebar();
-  const projectId = useRequireProjectId();
+  const { projectId: projectIdParam } = useParams();
   const orgsWithProjects = useAppStore(selectOrgsWithProjects);
   const projectMap = useAppStore(selectProjectMap);
   const orgMap = useAppStore(selectOrgMap);
+  const projects = useAppStore(s => s.projects);
+
+  const activeProjectId = projectIdParam ?? projects[0]?.id;
 
   const activeProject = useMemo(
-    () => projectMap.get(projectId) ?? null,
-    [projectId, projectMap],
+    () =>
+      isNil(activeProjectId) ? null : (projectMap.get(activeProjectId) ?? null),
+    [activeProjectId, projectMap],
   );
 
   const activeOrganization = useMemo(() => {
@@ -62,6 +65,10 @@ export const ProjectSelector: FC = () => {
 
     return activeOrgWithProjects?.projects ?? [];
   }, [activeOrganization, orgsWithProjects]);
+
+  if (orgsWithProjects.length === 0) {
+    return null;
+  }
 
   return (
     <SidebarMenu>
@@ -167,11 +174,19 @@ export const ProjectSelector: FC = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <SidebarMenuButton>
-            <FolderOpen className="size-4" />
+          activeProject && (
+            <SidebarMenuButton
+              render={
+                <NavLink to={`/projects/${activeProject.id}/canisters`} />
+              }
+            >
+              <FolderOpen className="size-4" />
 
-            <span className="truncate text-sm">{activeProject?.name}</span>
-          </SidebarMenuButton>
+              <div className="flex flex-1 flex-col">
+                <span className="truncate text-sm">{activeProject.name}</span>
+              </div>
+            </SidebarMenuButton>
+          )
         )}
       </SidebarMenuItem>
     </SidebarMenu>
