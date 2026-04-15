@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   anonymousIdentity,
+  controllerIdentity,
   extractOkResponse,
   noOrgError,
   noProfileError,
@@ -29,6 +30,17 @@ describe('Projects', () => {
     const profile = extractOkResponse(profileRes);
     const orgsRes = await driver.actor.list_my_organizations();
     const [org] = extractOkResponse(orgsRes);
+    if (!org) {
+      throw new Error('Expected default organization after signup');
+    }
+
+    driver.actor.setIdentity(controllerIdentity);
+    await driver.actor.update_user_profile({
+      user_id: profile.id,
+      status: [{ Active: null }],
+    });
+    driver.actor.setIdentity(identity);
+
     return { identity, profile, org };
   }
 
@@ -56,8 +68,8 @@ describe('Projects', () => {
       const [bobOrg] = extractOkResponse(bobOrgsRes);
 
       driver.actor.setIdentity(alice.identity);
-      const res = await driver.actor.list_org_projects({ org_id: bobOrg.id });
-      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg.id));
+      const res = await driver.actor.list_org_projects({ org_id: bobOrg!.id });
+      expect(res).toEqual(noOrgError(alice.profile.id, bobOrg!.id));
     });
 
     it('should list the default project after signup', async () => {
@@ -106,10 +118,10 @@ describe('Projects', () => {
       const bobOrgsRes = await driver.actor.list_my_organizations();
       const [bobOrg] = extractOkResponse(bobOrgsRes);
 
-      const res = await driver.actor.list_org_projects({ org_id: bobOrg.id });
+      const res = await driver.actor.list_org_projects({ org_id: bobOrg!.id });
       const { projects } = extractOkResponse(res);
       expect(projects).toHaveLength(1);
-      expect(projects[0].name).toBe('Default Project');
+      expect(projects[0]!.name).toBe('Default Project');
     });
   });
 
@@ -366,7 +378,7 @@ describe('Projects', () => {
       expect(projects).toHaveLength(1);
 
       const res = await driver.actor.delete_project({
-        project_id: projects[0].id,
+        project_id: projects[0]!.id,
       });
       expect('Err' in res && res.Err.message).toContain('last project');
     });
@@ -403,7 +415,7 @@ describe('Projects', () => {
       const [team] = extractOkResponse(teamsRes);
       await driver.actor.add_team_to_project({
         project_id: project.id,
-        team_id: team.id,
+        team_id: team!.id,
       });
 
       await driver.proposals.createCanister(identity, project.id);
@@ -452,7 +464,7 @@ describe('Projects', () => {
       });
       const teams = extractOkResponse(res);
       expect(teams).toHaveLength(1);
-      expect(teams[0].id).toBe(defaultTeam.id);
+      expect(teams[0]!.id).toBe(defaultTeam!.id);
     });
   });
 
@@ -509,7 +521,7 @@ describe('Projects', () => {
       driver.actor.setIdentity(alice.identity);
       const res = await driver.actor.add_team_to_project({
         project_id: project.id,
-        team_id: bobTeam.id,
+        team_id: bobTeam!.id,
       });
       expect('Err' in res && res.Err.message).toContain('same organization');
     });
@@ -592,7 +604,7 @@ describe('Projects', () => {
 
       const res = await driver.actor.remove_team_from_project({
         project_id: defaultProject.id,
-        team_id: defaultTeam.id,
+        team_id: defaultTeam!.id,
       });
       expect('Err' in res && res.Err.message).toContain('last team');
     });

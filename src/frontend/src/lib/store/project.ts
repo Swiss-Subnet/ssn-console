@@ -35,13 +35,13 @@ export const createProjectsSlice: AppStateCreator<ProjectsSlice> = (
   },
 
   async loadOrgProjects(orgId: string) {
-    const projectApi = get().getProjectApi();
+    const { projectApi } = get();
     const res = await projectApi.listOrgProjects({ orgId });
     return res.projects;
   },
 
   async createProject(orgId: string, name: string) {
-    const projectApi = get().getProjectApi();
+    const { projectApi } = get();
     const res = await projectApi.createProject({ orgId, name });
     set(state => ({
       projects: [...state.projects, res.project],
@@ -50,7 +50,7 @@ export const createProjectsSlice: AppStateCreator<ProjectsSlice> = (
   },
 
   async updateProject(projectId: string, name: string) {
-    const projectApi = get().getProjectApi();
+    const { projectApi } = get();
     const res = await projectApi.updateProject({ projectId, name });
     set(state => ({
       projects: state.projects.map(p => (p.id === projectId ? res.project : p)),
@@ -59,7 +59,7 @@ export const createProjectsSlice: AppStateCreator<ProjectsSlice> = (
   },
 
   async deleteProject(projectId: string) {
-    const projectApi = get().getProjectApi();
+    const { projectApi } = get();
     await projectApi.deleteProject({ projectId });
     set(state => ({
       projects: state.projects.filter(p => p.id !== projectId),
@@ -67,16 +67,16 @@ export const createProjectsSlice: AppStateCreator<ProjectsSlice> = (
   },
 
   async loadProjectTeams(projectId: string) {
-    const res = await get().getProjectApi().listProjectTeams({ projectId });
+    const res = await get().projectApi.listProjectTeams({ projectId });
     return res.teams;
   },
 
   async addTeamToProject(projectId: string, teamId: string) {
-    await get().getProjectApi().addTeamToProject({ projectId, teamId });
+    await get().projectApi.addTeamToProject({ projectId, teamId });
   },
 
   async removeTeamFromProject(projectId: string, teamId: string) {
-    await get().getProjectApi().removeTeamFromProject({ projectId, teamId });
+    await get().projectApi.removeTeamFromProject({ projectId, teamId });
   },
 });
 
