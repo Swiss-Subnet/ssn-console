@@ -1,15 +1,11 @@
 import { Container } from '@/components/layout/container';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { LoadingButton } from '@/components/loading-button';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
-import { ArrowLeft } from 'lucide-react';
 import { useState, type FC } from 'react';
-import { useNavigate } from 'react-router';
 
 const MyInvitations: FC = () => {
-  const navigate = useNavigate();
   const { myInvites, acceptOrgInvite, declineOrgInvite } = useAppStore();
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -40,17 +36,6 @@ const MyInvitations: FC = () => {
   return (
     <Container>
       <div className="space-y-6">
-        <div className="mx-auto max-w-2xl">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/', { replace: true })}
-          >
-            <ArrowLeft className="mr-1 size-3.5" />
-            Back
-          </Button>
-        </div>
-
         <Card className="mx-auto max-w-2xl">
           <CardHeader>
             <CardTitle>Your invitations</CardTitle>

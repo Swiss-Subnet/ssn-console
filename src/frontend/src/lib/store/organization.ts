@@ -63,7 +63,7 @@ export const createOrganizationsSlice: AppStateCreator<OrganizationsSlice> = (
   },
 
   async loadOrgUsers(orgId: string) {
-    return get().getOrganizationApi().listOrgUsers({ orgId });
+    return get().organizationApi.listOrgUsers({ orgId });
   },
 });
 

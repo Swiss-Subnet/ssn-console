@@ -499,7 +499,7 @@ describe('Teams', () => {
       // Alice invites Bob to her org, Bob accepts.
       driver.actor.setIdentity(alice.identity);
       const inviteRes = await driver.actor.create_org_invite({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
         target: { UserId: bob.profile.id },
       });
       const { invite } = extractOkResponse(inviteRes);
@@ -524,14 +524,14 @@ describe('Teams', () => {
     it('should list team members', async () => {
       const alice = await setupUser();
       const teamsRes = await driver.actor.list_org_teams({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
       });
       const [defaultTeam] = extractOkResponse(teamsRes);
 
       const bob = await setupUser();
       driver.actor.setIdentity(alice.identity);
       const inviteRes = await driver.actor.create_org_invite({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
         target: { UserId: bob.profile.id },
       });
       const { invite } = extractOkResponse(inviteRes);
@@ -540,12 +540,12 @@ describe('Teams', () => {
 
       driver.actor.setIdentity(alice.identity);
       await driver.actor.add_user_to_team({
-        team_id: defaultTeam.id,
+        team_id: defaultTeam!.id,
         user_id: bob.profile.id,
       });
 
       const listRes = await driver.actor.list_team_users({
-        team_id: defaultTeam.id,
+        team_id: defaultTeam!.id,
       });
       const members = extractOkResponse(listRes);
       expect(members.map(m => m.id).sort()).toEqual(
@@ -556,15 +556,15 @@ describe('Teams', () => {
     it('should reject list_team_users for a non-member', async () => {
       const alice = await setupUser();
       const teamsRes = await driver.actor.list_org_teams({
-        org_id: alice.org.id,
+        org_id: alice.org!.id,
       });
       const [defaultTeam] = extractOkResponse(teamsRes);
 
       const bob = await setupUser();
       const res = await driver.actor.list_team_users({
-        team_id: defaultTeam.id,
+        team_id: defaultTeam!.id,
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
     });
 
     it('should be idempotent when adding an existing member', async () => {

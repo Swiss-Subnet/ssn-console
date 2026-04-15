@@ -35,6 +35,25 @@ pub fn create_org_invite(
         .map_err(ApiError::client_error)
         .and_then(normalize_target)?;
 
+    // For UserId/Principal targets, reject if the user is already a member.
+    // Email targets are intentionally not resolved here, to preserve the
+    // anti-enumeration property described above; accept-time idempotency
+    // covers the duplicate case.
+    let already_member_user_id = match &target {
+        data::InviteTarget::UserId(target_user_id) => Some(*target_user_id),
+        data::InviteTarget::Principal(target_principal) => {
+            user_profile_repository::get_user_id_by_principal(target_principal)
+        }
+        data::InviteTarget::Email(_) => None,
+    };
+    if let Some(target_user_id) = already_member_user_id {
+        if organization_repository::assert_user_in_org(target_user_id, org_id).is_ok() {
+            return Err(ApiError::client_error(
+                "User is already a member of this organization.".to_string(),
+            ));
+        }
+    }
+
     invite_repository::sweep_expired_org_invites(org_id, now_ns);
     if invite_repository::count_pending_invites_for_org(org_id, now_ns)
         >= MAX_PENDING_INVITES_PER_ORG

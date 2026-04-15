@@ -34,6 +34,7 @@ describe('Org Invites', () => {
     const profile = extractOkResponse(profileRes);
     const orgsRes = await driver.actor.list_my_organizations();
     const [org] = extractOkResponse(orgsRes);
+    if (!org) throw new Error('expected default org');
     return { identity, profile, org };
   }
 
@@ -123,6 +124,64 @@ describe('Org Invites', () => {
       });
       const { invite } = extractOkResponse(res);
       expect(invite.target).toEqual({ Principal: target });
+    });
+
+    it('should reject inviting a user id who is already an org member', async () => {
+      const alice = await setupUser();
+      const bob = await setupUser();
+
+      // Bob joins alice's org via an accepted invite.
+      driver.actor.setIdentity(alice.identity);
+      const joinRes = await driver.actor.create_org_invite({
+        org_id: alice.org.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite: joinInvite } = extractOkResponse(joinRes);
+      driver.actor.setIdentity(bob.identity);
+      extractOkResponse(
+        await driver.actor.accept_org_invite({ invite_id: joinInvite.id }),
+      );
+
+      // A second invite targeting bob (already a member) must be rejected.
+      driver.actor.setIdentity(alice.identity);
+      const res = await driver.actor.create_org_invite({
+        org_id: alice.org.id,
+        target: { UserId: bob.profile.id },
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: 'User is already a member of this organization.',
+        },
+      });
+    });
+
+    it('should reject inviting a principal who is already an org member', async () => {
+      const alice = await setupUser();
+      const bob = await setupUser();
+
+      driver.actor.setIdentity(alice.identity);
+      const joinRes = await driver.actor.create_org_invite({
+        org_id: alice.org.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite: joinInvite } = extractOkResponse(joinRes);
+      driver.actor.setIdentity(bob.identity);
+      extractOkResponse(
+        await driver.actor.accept_org_invite({ invite_id: joinInvite.id }),
+      );
+
+      driver.actor.setIdentity(alice.identity);
+      const res = await driver.actor.create_org_invite({
+        org_id: alice.org.id,
+        target: { Principal: bob.identity.getPrincipal() },
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: 'User is already a member of this organization.',
+        },
+      });
     });
 
     it('should reject the 11th pending invite in an org', async () => {
@@ -281,7 +340,7 @@ describe('Org Invites', () => {
       const listRes = await driver.actor.list_org_invites({ org_id: org.id });
       const invites = extractOkResponse(listRes);
       expect(invites).toHaveLength(1);
-      expect(invites[0].status).toEqual({ Revoked: null });
+      expect(invites[0]!.status).toEqual({ Revoked: null });
     });
 
     it('should reject revocation by an org member who did not create the invite', async () => {
@@ -368,7 +427,7 @@ describe('Org Invites', () => {
       const res = await driver.actor.list_my_invites();
       const invites = extractOkResponse(res);
       expect(invites).toHaveLength(1);
-      expect(invites[0].org_id).toBe(alice.org.id);
+      expect(invites[0]!.org_id).toBe(alice.org.id);
     });
 
     it('should match an invite targeted at a principal the user owns', async () => {
@@ -541,7 +600,7 @@ describe('Org Invites', () => {
         org_id: alice.org.id,
       });
       const invites = extractOkResponse(listRes);
-      expect(invites[0].status).toEqual({ Accepted: null });
+      expect(invites[0]!.status).toEqual({ Accepted: null });
     });
 
     it('should reject a second acceptance of the same invite', async () => {
@@ -597,7 +656,7 @@ describe('Org Invites', () => {
         org_id: alice.org.id,
       });
       const invites = extractOkResponse(listRes);
-      expect(invites[0].status).toEqual({ Declined: null });
+      expect(invites[0]!.status).toEqual({ Declined: null });
     });
   });
 });

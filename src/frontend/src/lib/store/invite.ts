@@ -9,14 +9,14 @@ export const createInvitesSlice: AppStateCreator<InvitesSlice> = (
   myInvites: [],
 
   async initializeMyInvites() {
-    const { getInviteApi, isAuthenticated } = get();
+    const { inviteApi, isAuthenticated } = get();
     if (!isAuthenticated) {
       set({ isMyInvitesInitialized: true });
       return;
     }
 
     try {
-      const invites = await getInviteApi().listMyInvites();
+      const invites = await inviteApi.listMyInvites();
       set({ myInvites: invites });
     } finally {
       set({ isMyInvitesInitialized: true });
@@ -28,24 +28,24 @@ export const createInvitesSlice: AppStateCreator<InvitesSlice> = (
   },
 
   async refreshMyInvites() {
-    const invites = await get().getInviteApi().listMyInvites();
+    const invites = await get().inviteApi.listMyInvites();
     set({ myInvites: invites });
   },
 
   async createOrgInvite(req: CreateOrgInviteRequest): Promise<OrgInvite> {
-    return get().getInviteApi().createOrgInvite(req);
+    return get().inviteApi.createOrgInvite(req);
   },
 
   async listOrgInvites(orgId: string): Promise<OrgInvite[]> {
-    return get().getInviteApi().listOrgInvites({ orgId });
+    return get().inviteApi.listOrgInvites({ orgId });
   },
 
   async revokeOrgInvite(inviteId: string): Promise<void> {
-    await get().getInviteApi().revokeOrgInvite({ inviteId });
+    await get().inviteApi.revokeOrgInvite({ inviteId });
   },
 
   async acceptOrgInvite(inviteId: string): Promise<void> {
-    await get().getInviteApi().acceptOrgInvite({ inviteId });
+    await get().inviteApi.acceptOrgInvite({ inviteId });
     set(state => ({
       myInvites: state.myInvites.filter(i => i.id !== inviteId),
     }));
@@ -53,7 +53,7 @@ export const createInvitesSlice: AppStateCreator<InvitesSlice> = (
   },
 
   async declineOrgInvite(inviteId: string): Promise<void> {
-    await get().getInviteApi().declineOrgInvite({ inviteId });
+    await get().inviteApi.declineOrgInvite({ inviteId });
     set(state => ({
       myInvites: state.myInvites.filter(i => i.id !== inviteId),
     }));

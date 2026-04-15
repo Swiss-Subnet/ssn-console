@@ -64,7 +64,7 @@ export const createTeamsSlice: AppStateCreator<TeamsSlice> = (set, get) => ({
   },
 
   async loadTeamUsers(teamId: string) {
-    return get().getTeamApi().listTeamUsers({ teamId });
+    return get().teamApi.listTeamUsers({ teamId });
   },
 });
 
