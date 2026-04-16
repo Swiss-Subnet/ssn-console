@@ -8,13 +8,21 @@ use super::{
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
+fn org_index_key(inv: &OrgInvite, invite_id: Uuid) -> (Uuid, (u8, u64), Uuid) {
+    (inv.org_id, (inv.status.as_u8(), inv.expires_at_ns), invite_id)
+}
+
+fn status_index_key(inv: &OrgInvite, invite_id: Uuid) -> ((u8, u64), Uuid) {
+    ((inv.status.as_u8(), inv.expires_at_ns), invite_id)
+}
+
 pub fn create_invite(invite: OrgInvite) -> Uuid {
     let invite_id = Uuid::new();
     mutate_state(|s| {
         s.organization_invite_index
-            .insert((invite.org_id, invite_id));
+            .insert(org_index_key(&invite, invite_id));
         s.invite_status_index
-            .insert((invite.status.as_u8(), invite_id));
+            .insert(status_index_key(&invite, invite_id));
         s.invites.insert(invite_id, invite);
     });
     invite_id
@@ -29,10 +37,14 @@ pub fn update_invite(invite_id: Uuid, invite: OrgInvite) -> ApiResult {
         let old = s.invites.get(&invite_id).ok_or_else(|| {
             ApiError::client_error(format!("Invite with id {invite_id} does not exist."))
         })?;
+        s.organization_invite_index
+            .remove(&org_index_key(&old, invite_id));
         s.invite_status_index
-            .remove(&(old.status.as_u8(), invite_id));
+            .remove(&status_index_key(&old, invite_id));
+        s.organization_invite_index
+            .insert(org_index_key(&invite, invite_id));
         s.invite_status_index
-            .insert((invite.status.as_u8(), invite_id));
+            .insert(status_index_key(&invite, invite_id));
         s.invites.insert(invite_id, invite);
         Ok(())
     })
@@ -45,8 +57,13 @@ pub fn list_org_invites_by_creator(
 ) -> Vec<(Uuid, OrgInvite)> {
     with_state(|s| {
         s.organization_invite_index
-            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .filter_map(|(_, invite_id)| s.invites.get(&invite_id).map(|inv| (invite_id, inv)))
+            .range(
+                (org_id, (u8::MIN, u64::MIN), Uuid::MIN)
+                    ..=(org_id, (u8::MAX, u64::MAX), Uuid::MAX),
+            )
+            .filter_map(|(_, _, invite_id)| {
+                s.invites.get(&invite_id).map(|inv| (invite_id, inv))
+            })
             .filter(|(_, inv)| inv.created_by == created_by)
             .filter(|(_, inv)| {
                 !(inv.status == InviteStatus::Pending && inv.expires_at_ns <= now_ns)
@@ -56,48 +73,44 @@ pub fn list_org_invites_by_creator(
 }
 
 pub fn list_pending_invites(now_ns: u64) -> Vec<(Uuid, OrgInvite)> {
-    let pending_status = InviteStatus::Pending.as_u8();
+    let pending = InviteStatus::Pending.as_u8();
     with_state(|s| {
         s.invite_status_index
-            .range((pending_status, Uuid::MIN)..=(pending_status, Uuid::MAX))
-            .filter_map(|(_, invite_id)| s.invites.get(&invite_id).map(|inv| (invite_id, inv)))
-            .filter(|(_, inv)| inv.expires_at_ns > now_ns)
+            .range(((pending, now_ns), Uuid::MIN)..=((pending, u64::MAX), Uuid::MAX))
+            .filter_map(|(_, invite_id)| {
+                s.invites.get(&invite_id).map(|inv| (invite_id, inv))
+            })
             .collect()
     })
 }
 
 pub fn count_pending_invites_for_org(org_id: Uuid, now_ns: u64) -> usize {
+    let pending = InviteStatus::Pending.as_u8();
     with_state(|s| {
         s.organization_invite_index
-            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .filter(|(_, invite_id)| match s.invites.get(invite_id) {
-                Some(inv) => inv.status == InviteStatus::Pending && inv.expires_at_ns > now_ns,
-                None => false,
-            })
+            .range(
+                (org_id, (pending, now_ns), Uuid::MIN)
+                    ..=(org_id, (pending, u64::MAX), Uuid::MAX),
+            )
             .count()
     })
 }
 
 pub fn sweep_expired_org_invites(org_id: Uuid, now_ns: u64) {
+    let pending = InviteStatus::Pending.as_u8();
     mutate_state(|s| {
-        while let Some(invite_id) = s
+        let expired: Vec<_> = s
             .organization_invite_index
-            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .find_map(|(_, invite_id)| {
-                s.invites.get(&invite_id).and_then(|inv| {
-                    if inv.status == InviteStatus::Pending && inv.expires_at_ns <= now_ns {
-                        Some(invite_id)
-                    } else {
-                        None
-                    }
-                })
-            })
-        {
-            if let Some(inv) = s.invites.remove(&invite_id) {
-                s.invite_status_index
-                    .remove(&(inv.status.as_u8(), invite_id));
-            }
-            s.organization_invite_index.remove(&(org_id, invite_id));
+            .range(
+                (org_id, (pending, u64::MIN), Uuid::MIN)
+                    ..=(org_id, (pending, now_ns), Uuid::MAX),
+            )
+            .collect();
+        for key @ (_, (status, expires_at_ns), invite_id) in expired {
+            s.invites.remove(&invite_id);
+            s.organization_invite_index.remove(&key);
+            s.invite_status_index
+                .remove(&((status, expires_at_ns), invite_id));
         }
     });
 }
