@@ -16,7 +16,7 @@ import { Principal } from '@icp-sdk/core/principal';
 import { IDL } from '@icp-sdk/core/candid';
 import type { Canister } from '@ssn/backend-api';
 
-const MANAGEMENT_CANISTER_ID = Principal.fromText('aaaaa-aa');
+const MANAGEMENT_CANISTER_ID = Principal.managementCanister();
 const DeleteCanisterArgs = IDL.Record({ canister_id: IDL.Principal });
 
 async function deleteCanisterOnChain(

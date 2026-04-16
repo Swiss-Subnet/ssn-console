@@ -117,21 +117,11 @@ fn classify_canister_status_error(err: CallError) -> CanisterState {
 pub async fn remove_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
     let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
 
-    let team_id = team_repository::list_user_team_ids(user_id)
-        .first()
-        .cloned()
-        .ok_or_else(|| {
-            ApiError::internal_error("User does not have a default team.".to_string())
-        })?;
+    let project_id = canister_repository::get_canister_project_id(canister_id)
+        .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
 
-    let project_id = project_repository::list_team_project_ids(team_id)
-        .first()
-        .cloned()
-        .ok_or_else(|| {
-            ApiError::internal_error(
-                "User's default team does not have a default project.".to_string(),
-            )
-        })?;
+    let team_ids = team_repository::list_user_team_ids(user_id);
+    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
 
     let canister = canister_repository::get_canister_in_project(project_id, canister_id)
         .ok_or_else(|| {

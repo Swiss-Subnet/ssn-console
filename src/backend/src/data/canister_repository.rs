@@ -53,6 +53,10 @@ pub fn get_canister_count() -> u64 {
     with_state(|s| s.canisters.len())
 }
 
+pub fn get_canister_project_id(canister_id: Uuid) -> Option<Uuid> {
+    with_state(|s| s.canister_project_index.get(&canister_id))
+}
+
 pub fn get_canister_in_project(project_id: Uuid, canister_id: Uuid) -> Option<Canister> {
     with_state(|s| {
         if s.project_canister_index
