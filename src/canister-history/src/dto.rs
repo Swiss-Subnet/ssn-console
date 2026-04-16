@@ -48,6 +48,7 @@ pub struct ListCanisterChangesRequest {
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct ListCanisterChangesResponse {
     pub changes: Vec<CanisterChange>,
+    pub is_deleted: bool,
     pub meta: PaginationMetaResponse,
 }
 

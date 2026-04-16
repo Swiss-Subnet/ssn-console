@@ -76,8 +76,13 @@ pub fn list_canister_changes(req: ListCanisterChangesRequest) -> ListCanisterCha
         .map(map_canister_change_response)
         .collect::<Vec<_>>();
 
+    let is_deleted = repository::get_canister_change_info(req.canister_id)
+        .map(|info| info.is_deleted)
+        .unwrap_or(false);
+
     ListCanisterChangesResponse {
         changes,
+        is_deleted,
         meta: PaginationMetaResponse {
             limit,
             page,

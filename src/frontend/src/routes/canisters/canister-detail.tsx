@@ -54,7 +54,7 @@ const StatRow: FC<StatRowProps> = ({ label, value }) => (
 );
 
 type SectionCardProps = {
-  title: string;
+  title: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
 };
@@ -269,16 +269,27 @@ type CanisterHistoryProps = { canisterPrincipal: string };
 const CanisterHistory: FC<CanisterHistoryProps> = ({ canisterPrincipal }) => {
   const { canisterHistoryApi } = useAppStore();
   const [changes, setChanges] = useState<CanisterChange[] | null>(null);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
     canisterHistoryApi
       .listCanisterChanges(canisterPrincipal)
-      .then(res => setChanges(res.changes))
+      .then(res => {
+        setChanges(res.changes);
+        setIsDeleted(res.isDeleted);
+      })
       .catch(() => setChanges([]));
   }, [canisterPrincipal]);
 
   return (
-    <SectionCard title="History">
+    <SectionCard
+      title={
+        <div className="flex items-center gap-2">
+          History
+          {isDeleted && <Badge variant="destructive">Deleted</Badge>}
+        </div>
+      }
+    >
       {changes === null ? (
         <p className="text-muted-foreground text-xs">Loading...</p>
       ) : changes.length === 0 ? (

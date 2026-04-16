@@ -48,6 +48,7 @@ type ListCanisterChangesRequest = record {
 type ListCanisterChangesResponse = variant {
   Ok : record {
     changes : vec CanisterChange;
+    is_deleted : bool;
     meta : PaginationMetaResponse;
   };
   Err : ApiError;

@@ -30,6 +30,7 @@ export type CanisterChange = {
 
 export type ListCanisterChangesResponse = {
   changes: CanisterChange[];
+  isDeleted: boolean;
   totalPages: bigint;
 };
 
@@ -106,6 +107,7 @@ export function mapListCanisterChangesResponse(
   }
   return {
     changes: res.Ok.changes.map(mapCanisterChange),
+    isDeleted: res.Ok.is_deleted,
     totalPages: res.Ok.meta.total_pages,
   };
 }
