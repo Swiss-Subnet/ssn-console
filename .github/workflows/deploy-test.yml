@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: test
-      url: https://r5rta-kyaaa-aaaax-qaaca-cai.icp0.io
+      url: https://staging-console.subnet.ch/
     env:
       DFX_WARNING: -mainnet_plaintext_identity
     steps:
