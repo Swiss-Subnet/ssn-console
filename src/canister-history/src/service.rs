@@ -141,13 +141,14 @@ pub async fn sync_canister_histories() -> ApiResult {
 /// previously stored changes, and inserts any new changes into the repository.
 /// It also handles cases where changes may have been missed due to truncation.
 async fn process_canister_changes(canister_id: Principal) -> ApiResult {
-    let mut stored_canister_info = repository::get_canister_change_info(canister_id)
-        .unwrap_or_else(|| CanisterChangeInfo {
-            total_num_changes: 0,
-            stored_num_changes: 0,
-            missed_ranges: vec![],
-            is_deleted: false,
-        });
+    let existing = repository::get_canister_change_info(canister_id);
+
+    let mut stored_canister_info = existing.clone().unwrap_or_else(|| CanisterChangeInfo {
+        total_num_changes: 0,
+        stored_num_changes: 0,
+        missed_ranges: vec![],
+        is_deleted: false,
+    });
 
     if stored_canister_info.is_deleted {
         return Ok(());
@@ -156,8 +157,10 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
     let canister_info = match get_canister_info(canister_id).await {
         Ok(info) => info,
         Err(GetCanisterInfoError::CanisterDeleted) => {
-            stored_canister_info.is_deleted = true;
-            repository::upsert_canister_change_info(canister_id, stored_canister_info);
+            if existing.is_some() {
+                stored_canister_info.is_deleted = true;
+                repository::upsert_canister_change_info(canister_id, stored_canister_info);
+            }
             return Ok(());
         }
         Err(GetCanisterInfoError::Other(err)) => return Err(err),
