@@ -9,7 +9,11 @@ use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
 fn org_index_key(inv: &OrgInvite, invite_id: Uuid) -> (Uuid, (u8, u64), Uuid) {
-    (inv.org_id, (inv.status.as_u8(), inv.expires_at_ns), invite_id)
+    (
+        inv.org_id,
+        (inv.status.as_u8(), inv.expires_at_ns),
+        invite_id,
+    )
 }
 
 fn status_index_key(inv: &OrgInvite, invite_id: Uuid) -> ((u8, u64), Uuid) {
@@ -58,12 +62,9 @@ pub fn list_org_invites_by_creator(
     with_state(|s| {
         s.organization_invite_index
             .range(
-                (org_id, (u8::MIN, u64::MIN), Uuid::MIN)
-                    ..=(org_id, (u8::MAX, u64::MAX), Uuid::MAX),
+                (org_id, (u8::MIN, u64::MIN), Uuid::MIN)..=(org_id, (u8::MAX, u64::MAX), Uuid::MAX),
             )
-            .filter_map(|(_, _, invite_id)| {
-                s.invites.get(&invite_id).map(|inv| (invite_id, inv))
-            })
+            .filter_map(|(_, _, invite_id)| s.invites.get(&invite_id).map(|inv| (invite_id, inv)))
             .filter(|(_, inv)| inv.created_by == created_by)
             .filter(|(_, inv)| {
                 !(inv.status == InviteStatus::Pending && inv.expires_at_ns <= now_ns)
@@ -77,9 +78,7 @@ pub fn list_pending_invites(now_ns: u64) -> Vec<(Uuid, OrgInvite)> {
     with_state(|s| {
         s.invite_status_index
             .range(((pending, now_ns), Uuid::MIN)..=((pending, u64::MAX), Uuid::MAX))
-            .filter_map(|(_, invite_id)| {
-                s.invites.get(&invite_id).map(|inv| (invite_id, inv))
-            })
+            .filter_map(|(_, invite_id)| s.invites.get(&invite_id).map(|inv| (invite_id, inv)))
             .collect()
     })
 }
@@ -89,8 +88,7 @@ pub fn count_pending_invites_for_org(org_id: Uuid, now_ns: u64) -> usize {
     with_state(|s| {
         s.organization_invite_index
             .range(
-                (org_id, (pending, now_ns), Uuid::MIN)
-                    ..=(org_id, (pending, u64::MAX), Uuid::MAX),
+                (org_id, (pending, now_ns), Uuid::MIN)..=(org_id, (pending, u64::MAX), Uuid::MAX),
             )
             .count()
     })
@@ -102,8 +100,7 @@ pub fn sweep_expired_org_invites(org_id: Uuid, now_ns: u64) {
         let expired: Vec<_> = s
             .organization_invite_index
             .range(
-                (org_id, (pending, u64::MIN), Uuid::MIN)
-                    ..=(org_id, (pending, now_ns), Uuid::MAX),
+                (org_id, (pending, u64::MIN), Uuid::MIN)..=(org_id, (pending, now_ns), Uuid::MAX),
             )
             .collect();
         for key @ (_, (status, expires_at_ns), invite_id) in expired {
