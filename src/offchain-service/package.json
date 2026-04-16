@@ -8,6 +8,10 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/opentelemetry": "^1.4.11",
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/resources": "^2.6.1",
+    "@opentelemetry/semantic-conventions": "^1.40.0",
     "elysia": "^1.4.27",
     "jose": "^6.2.1",
     "logixlysia": "^6.3.0",

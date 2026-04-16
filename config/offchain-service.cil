@@ -1,3 +1,6 @@
+(type alloy_otel_port_t)
+(typeattributeset port_type (alloy_otel_port_t))
+
 (block offchain-service
   (blockinherit container)
   (blockinherit restricted_net_container)
@@ -5,4 +8,5 @@
 
   (allow process ntop_port_t ( tcp_socket ( name_bind )))
   (allow process smtp_port_t ( tcp_socket ( name_connect )))
+  (allow process alloy_otel_port_t ( tcp_socket ( name_connect )))
 )
