@@ -1,10 +1,9 @@
 use super::{
     memory::{
         init_organization_project_index, init_project_team_index,
-        init_project_team_permissions_index, init_projects,
-        init_team_project_permissions_index, OrganizationProjectIndexMemory, ProjectMemory,
-        ProjectTeamIndexMemory, ProjectTeamPermissionsIndexMemory,
-        TeamProjectPermissionsIndexMemory,
+        init_project_team_permissions_index, init_projects, init_team_project_permissions_index,
+        OrganizationProjectIndexMemory, ProjectMemory, ProjectTeamIndexMemory,
+        ProjectTeamPermissionsIndexMemory, TeamProjectPermissionsIndexMemory,
     },
     Project, ProjectPermissions,
 };
