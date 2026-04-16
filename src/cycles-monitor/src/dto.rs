@@ -2,32 +2,45 @@ use candid::{CandidType, Nat, Principal};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Deserialize, Serialize)]
-pub struct GetCanisterMetricsRequest {
-    pub canister_id: Principal,
-}
-
-#[derive(CandidType, Deserialize, Serialize)]
-pub struct CyclesConsumedResponse {
-    pub memory: Nat,
-    pub compute_allocation: Nat,
-    pub ingress_induction: Nat,
-    pub instructions: Nat,
-    pub request_and_response_transmission: Nat,
-    pub uninstall: Nat,
-    pub canister_creation: Nat,
-    pub http_outcalls: Nat,
-    pub burned_cycles: Nat,
-}
-
-#[derive(CandidType, Deserialize, Serialize)]
-pub struct GetCanisterMetricsResponse {
-    pub cycles_consumed: CyclesConsumedResponse,
-}
-
-#[derive(CandidType, Deserialize, Serialize)]
 pub struct TriggerSyncMetricsRequest {}
 
 #[derive(CandidType, Deserialize, Serialize)]
 pub struct TriggerSyncMetricsResponse {
     pub message: String,
 }
+
+#[derive(CandidType, Deserialize, Serialize)]
+pub struct ListSubnetCanisterIdsRequest {}
+
+#[derive(Debug, Clone, CandidType, Deserialize, Serialize)]
+pub struct ListSubnetCanisterIdsResponse {
+    pub canister_id_ranges: Vec<(Principal, Principal)>,
+}
+
+#[derive(CandidType, Deserialize, Serialize)]
+pub struct ListMetricsAfterRequest {
+    pub cursor: Option<Cursor>,
+}
+
+#[derive(CandidType, Deserialize, Serialize)]
+pub struct CyclesMetricsSnapshotDto {
+    pub timestamp_ns: u64,
+    pub canister_id: Principal,
+    pub memory: Nat,
+    pub compute_allocation: Nat,
+    pub ingress_induction: Nat,
+    pub instructions: Nat,
+    pub request_and_response_transmission: Nat,
+    pub uninstall: Nat,
+    pub http_outcalls: Nat,
+    pub burned_cycles: Nat,
+}
+
+#[derive(CandidType, Deserialize, Serialize)]
+pub struct ListMetricsAfterResponse {
+    pub snapshots: Vec<CyclesMetricsSnapshotDto>,
+    pub next_cursor: Option<Cursor>,
+}
+
+#[derive(CandidType, Deserialize, Serialize, PartialEq, Eq, Debug, Copy, Clone)]
+pub struct Cursor(pub u64, pub Principal);

@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "@ssn/cycles-monitor-api": "workspace:*",
+    "@ssn/canister-history-api": "workspace:*",
     "@ssn/test-utils": "workspace:*"
   }
 }

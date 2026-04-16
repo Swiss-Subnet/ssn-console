@@ -1,0 +1,30 @@
+name: Update cycles-monitor env vars
+description: Update cycles-monitor env vars
+
+inputs:
+  network:
+    description: The ICP network to update the canister env vars on
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Update cycles-monitor env vars
+      shell: bash
+      run: |
+        CYCLES_MONITOR_ID=$(dfx canister id cycles-monitor --network ${{ inputs.network }})
+        CANISTER_HISTORY_ID=$(dfx canister id canister-history --network ${{ inputs.network }})
+
+        dfx canister call aaaaa-aa update_settings "(
+          record {
+            canister_id = principal \"$CYCLES_MONITOR_ID\";
+            settings = record {
+              environment_variables = opt vec {
+                record {
+                  name = \"CANISTER_HISTORY_ID\";
+                  value = \"$CANISTER_HISTORY_ID\";
+                };
+              };
+            };
+          }
+        )" --network ${{ inputs.network }}

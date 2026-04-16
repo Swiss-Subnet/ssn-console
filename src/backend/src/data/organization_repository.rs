@@ -55,11 +55,12 @@ pub fn delete_org(org_id: Uuid) -> ApiResult {
             )));
         }
 
-        while let Some((oid, uid)) = s
+        let org_users = s
             .organization_user_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .next()
-        {
+            .collect::<Vec<_>>();
+
+        for (oid, uid) in org_users {
             s.organization_user_index.remove(&(oid, uid));
             s.user_organization_index.remove(&(uid, oid));
         }
