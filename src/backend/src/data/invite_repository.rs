@@ -1,7 +1,7 @@
 use super::{
     memory::{
-        init_org_invites, init_organization_invite_index, OrgInviteMemory,
-        OrganizationInviteIndexMemory,
+        init_invite_status_index, init_org_invites, init_organization_invite_index,
+        InviteStatusIndexMemory, OrgInviteMemory, OrganizationInviteIndexMemory,
     },
     InviteStatus, OrgInvite,
 };
@@ -13,6 +13,8 @@ pub fn create_invite(invite: OrgInvite) -> Uuid {
     mutate_state(|s| {
         s.organization_invite_index
             .insert((invite.org_id, invite_id));
+        s.invite_status_index
+            .insert((invite.status.as_u8(), invite_id));
         s.invites.insert(invite_id, invite);
     });
     invite_id
@@ -24,40 +26,44 @@ pub fn get_invite(invite_id: Uuid) -> Option<OrgInvite> {
 
 pub fn update_invite(invite_id: Uuid, invite: OrgInvite) -> ApiResult {
     mutate_state(|s| {
-        if !s.invites.contains_key(&invite_id) {
-            return Err(ApiError::client_error(format!(
-                "Invite with id {invite_id} does not exist."
-            )));
-        }
+        let old = s.invites.get(&invite_id).ok_or_else(|| {
+            ApiError::client_error(format!("Invite with id {invite_id} does not exist."))
+        })?;
+        s.invite_status_index
+            .remove(&(old.status.as_u8(), invite_id));
+        s.invite_status_index
+            .insert((invite.status.as_u8(), invite_id));
         s.invites.insert(invite_id, invite);
         Ok(())
     })
 }
 
-#[allow(dead_code)]
-pub fn list_org_invite_ids(org_id: Uuid) -> Vec<Uuid> {
-    with_state(|s| {
-        s.organization_invite_index
-            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .map(|(_, invite_id)| invite_id)
-            .collect()
-    })
-}
-
-pub fn list_org_invites(org_id: Uuid) -> Vec<(Uuid, OrgInvite)> {
+pub fn list_org_invites_by_creator(
+    org_id: Uuid,
+    created_by: Uuid,
+    now_ns: u64,
+) -> Vec<(Uuid, OrgInvite)> {
     with_state(|s| {
         s.organization_invite_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
             .filter_map(|(_, invite_id)| s.invites.get(&invite_id).map(|inv| (invite_id, inv)))
+            .filter(|(_, inv)| inv.created_by == created_by)
+            .filter(|(_, inv)| {
+                !(inv.status == InviteStatus::Pending && inv.expires_at_ns <= now_ns)
+            })
             .collect()
     })
 }
 
-// Scans all invites. The number of invites is bounded by
-// MAX_PENDING_INVITES_PER_ORG * number_of_orgs, plus expired invites
-// that have not yet been swept. Acceptable for the size of this system.
-pub fn iter_invites() -> Vec<(Uuid, OrgInvite)> {
-    with_state(|s| s.invites.iter().map(|e| e.into_pair()).collect())
+pub fn list_pending_invites(now_ns: u64) -> Vec<(Uuid, OrgInvite)> {
+    let pending_status = InviteStatus::Pending.as_u8();
+    with_state(|s| {
+        s.invite_status_index
+            .range((pending_status, Uuid::MIN)..=(pending_status, Uuid::MAX))
+            .filter_map(|(_, invite_id)| s.invites.get(&invite_id).map(|inv| (invite_id, inv)))
+            .filter(|(_, inv)| inv.expires_at_ns > now_ns)
+            .collect()
+    })
 }
 
 pub fn count_pending_invites_for_org(org_id: Uuid, now_ns: u64) -> usize {
@@ -72,8 +78,6 @@ pub fn count_pending_invites_for_org(org_id: Uuid, now_ns: u64) -> usize {
     })
 }
 
-// Removes all invites for an org that are expired at now_ns. Used
-// before creating a new invite to bound stale storage.
 pub fn sweep_expired_org_invites(org_id: Uuid, now_ns: u64) {
     mutate_state(|s| {
         while let Some(invite_id) = s
@@ -89,29 +93,19 @@ pub fn sweep_expired_org_invites(org_id: Uuid, now_ns: u64) {
                 })
             })
         {
-            s.invites.remove(&invite_id);
+            if let Some(inv) = s.invites.remove(&invite_id) {
+                s.invite_status_index
+                    .remove(&(inv.status.as_u8(), invite_id));
+            }
             s.organization_invite_index.remove(&(org_id, invite_id));
         }
     });
 }
 
-#[allow(dead_code)]
-pub fn delete_invite(invite_id: Uuid) -> ApiResult {
-    mutate_state(|s| {
-        let Some(invite) = s.invites.remove(&invite_id) else {
-            return Err(ApiError::client_error(format!(
-                "Invite with id {invite_id} does not exist."
-            )));
-        };
-        s.organization_invite_index
-            .remove(&(invite.org_id, invite_id));
-        Ok(())
-    })
-}
-
 struct InviteState {
     invites: OrgInviteMemory,
     organization_invite_index: OrganizationInviteIndexMemory,
+    invite_status_index: InviteStatusIndexMemory,
 }
 
 impl Default for InviteState {
@@ -119,6 +113,7 @@ impl Default for InviteState {
         Self {
             invites: init_org_invites(),
             organization_invite_index: init_organization_invite_index(),
+            invite_status_index: init_invite_status_index(),
         }
     }
 }

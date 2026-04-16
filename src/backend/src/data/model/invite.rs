@@ -19,6 +19,17 @@ pub enum InviteStatus {
     Revoked,
 }
 
+impl InviteStatus {
+    pub fn as_u8(&self) -> u8 {
+        match self {
+            InviteStatus::Pending => 0,
+            InviteStatus::Accepted => 1,
+            InviteStatus::Declined => 2,
+            InviteStatus::Revoked => 3,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrgInvite {
     pub org_id: Uuid,

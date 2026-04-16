@@ -98,10 +98,8 @@ pub fn list_org_invites(
     // emails/principals to other org members. Once an org permission
     // model exists, this should gate on an "invite manage" permission
     // so admins can see all org invites.
-    let invites = invite_repository::list_org_invites(org_id)
+    let invites = invite_repository::list_org_invites_by_creator(org_id, caller_user_id, now_ns)
         .into_iter()
-        .filter(|(_, inv)| !is_expired_pending(inv, now_ns))
-        .filter(|(_, inv)| inv.created_by == caller_user_id)
         .map(|(id, inv)| map_invite_to_dto(id, inv, org_name.clone()))
         .collect();
 
@@ -150,9 +148,8 @@ pub fn list_my_invites(caller: &Principal, now_ns: u64) -> ApiResult<ListMyInvit
         })?;
     let caller_principals = user_profile_repository::get_principals_by_user_id(caller_user_id);
 
-    let invites = invite_repository::iter_invites()
+    let invites = invite_repository::list_pending_invites(now_ns)
         .into_iter()
-        .filter(|(_, inv)| inv.status == InviteStatus::Pending && inv.expires_at_ns > now_ns)
         .filter(|(_, inv)| {
             invite_matches_user(
                 &inv.target,
@@ -256,10 +253,6 @@ fn normalize_target(target: data::InviteTarget) -> ApiResult<data::InviteTarget>
         }
         other => Ok(other),
     }
-}
-
-fn is_expired_pending(invite: &OrgInvite, now_ns: u64) -> bool {
-    invite.status == InviteStatus::Pending && invite.expires_at_ns <= now_ns
 }
 
 fn invite_matches_user(

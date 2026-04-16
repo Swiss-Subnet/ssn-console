@@ -56,3 +56,4 @@ pub(super) const CANISTER_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(27);
 
 pub(super) const ORG_INVITE_MEMORY_ID: MemoryId = MemoryId::new(28);
 pub(super) const ORGANIZATION_INVITE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(29);
+pub(super) const INVITE_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(30);
