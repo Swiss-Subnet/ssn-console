@@ -25,15 +25,11 @@ type ListSubnetCanisterRangesResponse = variant {
   Err : ApiError;
 };
 
-type ListSubnetCanisterIdsRequest = record {
-  limit : opt nat64;
-  page : opt nat64;
-};
+type ListSubnetCanisterIdsRequest = record {};
 
 type ListSubnetCanisterIdsResponse = variant {
   Ok : record {
-    canister_ids : vec principal;
-    meta : PaginationMetaResponse;
+    canister_id_ranges : vec record { principal; principal };
   };
   Err : ApiError;
 };

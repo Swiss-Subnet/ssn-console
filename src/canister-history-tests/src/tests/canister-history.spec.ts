@@ -9,18 +9,33 @@ import {
   TestDriver,
 } from '../support';
 import { Principal } from '@icp-sdk/core/principal';
-import { IDL } from '@icp-sdk/core/candid';
 import {
   type _SERVICE as ManagementCanisterService,
   idlFactory as managementCanisterIdlFactory,
 } from '@ssn/management-canister';
-import { generateRandomIdentity } from '@dfinity/pic';
+import { generateRandomIdentity, type Actor } from '@dfinity/pic';
 
 describe('Canister History', () => {
   let driver: TestDriver;
+  let managementCanister: Actor<ManagementCanisterService>;
+
+  async function deleteCanisterOnChain(canisterId: Principal): Promise<void> {
+    await managementCanister.stop_canister({ canister_id: canisterId });
+    await managementCanister.delete_canister({ canister_id: canisterId });
+  }
+
+  async function waitForSync(): Promise<void> {
+    await driver.pic.advanceTime(minutesToMilliseconds(5));
+    await driver.pic.tick(3);
+  }
 
   beforeEach(async () => {
     driver = await TestDriver.create();
+    managementCanister = driver.pic.createActor<ManagementCanisterService>(
+      managementCanisterIdlFactory,
+      Principal.managementCanister(),
+    );
+    managementCanister.setIdentity(controllerIdentity);
   });
 
   afterEach(async () => {
@@ -31,13 +46,7 @@ describe('Canister History', () => {
     it('should set and get subnet canister ranges', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const subnet = await driver.getSubnet();
-      const canisterRanges = subnet.canisterRanges.map<[Principal, Principal]>(
-        ({ start, end }) => [start, end],
-      );
-      await driver.actor.update_subnet_canister_ranges({
-        canister_ranges: canisterRanges,
-      });
+      const canisterRanges = await driver.setSubnetCanisterRanges();
 
       const subnetCanisterRangesRes =
         await driver.actor.list_subnet_canister_ranges({});
@@ -45,29 +54,23 @@ describe('Canister History', () => {
 
       expect(subnetCanisterRanges.canister_ranges).toEqual(canisterRanges);
 
-      await driver.pic.advanceCertifiedTime(minutesToMilliseconds(5));
-      await driver.pic.tick(3);
+      await waitForSync();
 
-      const subnetCanisterIdsRes = await driver.actor.list_subnet_canister_ids({
-        limit: [],
-        page: [],
-      });
+      const subnetCanisterIdsRes = await driver.actor.list_subnet_canister_ids(
+        {},
+      );
       const subnetCanisterIds = extractOkResponse(subnetCanisterIdsRes);
-      expect(subnetCanisterIds.canister_ids).toHaveLength(1);
+      expect(subnetCanisterIds.canister_id_ranges).toHaveLength(1);
     });
 
     it('should set and get an empty canister range', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      await driver.pic.advanceTime(minutesToMilliseconds(5));
-      await driver.pic.tick(3);
+      await waitForSync();
 
-      const canisterIds = await driver.actor.list_subnet_canister_ids({
-        limit: [],
-        page: [],
-      });
+      const canisterIds = await driver.actor.list_subnet_canister_ids({});
       const result = extractOkResponse(canisterIds);
-      expect(result.canister_ids).toHaveLength(0);
+      expect(result.canister_id_ranges).toHaveLength(0);
     });
 
     it('should throw an error when subnet range with too short principal is sent', async () => {
@@ -126,17 +129,30 @@ describe('Canister History', () => {
         'The end principal of the 0th provided subnet range is invalid: Principal must have length 10 to be a valid canister id, but it has length: 11',
       );
     });
+
+    it('should create holes for canisters deleted', async () => {
+      driver.actor.setIdentity(controllerIdentity);
+
+      await driver.setSubnetCanisterRanges();
+
+      const canisters = await driver.createCanisters(5);
+
+      await waitForSync();
+      await deleteCanisterOnChain(canisters[2]!);
+      await waitForSync();
+
+      const subnetCanisterIdsRes = await driver.actor.list_subnet_canister_ids(
+        {},
+      );
+      const subnetCanisterIds = extractOkResponse(subnetCanisterIdsRes);
+
+      expect(subnetCanisterIds.canister_id_ranges).toHaveLength(2);
+    });
   });
 
   describe('canister changes', async () => {
     it('should handle all types of changes', async () => {
       const otherController = generateRandomIdentity();
-      const managementCanister =
-        driver.pic.createActor<ManagementCanisterService>(
-          managementCanisterIdlFactory,
-          Principal.managementCanister(),
-        );
-      managementCanister.setIdentity(controllerIdentity);
       driver.actor.setIdentity(controllerIdentity);
 
       await driver.setSubnetCanisterRanges();
@@ -195,15 +211,13 @@ describe('Canister History', () => {
         sender_canister_version: [],
       });
 
-      await driver.pic.advanceTime(minutesToMilliseconds(5));
-      await driver.pic.tick(3);
+      await waitForSync();
 
-      const subnetCanisterIdsRes = await driver.actor.list_subnet_canister_ids({
-        limit: [],
-        page: [],
-      });
+      const subnetCanisterIdsRes = await driver.actor.list_subnet_canister_ids(
+        {},
+      );
       const subnetCanisterIds = extractOkResponse(subnetCanisterIdsRes);
-      expect(subnetCanisterIds.canister_ids).toHaveLength(2);
+      expect(subnetCanisterIds.canister_id_ranges).toHaveLength(1);
 
       const canisterChangesRes = await driver.actor.list_canister_changes({
         canister_id: canisterId,
@@ -302,23 +316,6 @@ describe('Canister History', () => {
   });
 
   describe('deleted canisters', () => {
-    async function triggerSyncAndWait(): Promise<void> {
-      driver.actor.setIdentity(controllerIdentity);
-
-      // Wait for any in-progress sync to finish, then trigger a new one
-      for (let i = 0; i < 20; i++) {
-        const res = await driver.actor.trigger_sync_canister_histories({});
-        const ok = extractOkResponse(res);
-        if (ok.message.includes('triggered successfully')) {
-          await driver.pic.tick(10);
-          return;
-        }
-        await driver.pic.tick(5);
-      }
-
-      throw new Error('Could not trigger a sync — previous one never finished');
-    }
-
     async function createAndSyncCanister(): Promise<Principal> {
       driver.actor.setIdentity(controllerIdentity);
 
@@ -326,35 +323,10 @@ describe('Canister History', () => {
         sender: controllerIdentity.getPrincipal(),
       });
 
-      // Set a narrow range covering only the canister-history canister
-      // and the newly created canister to keep sync fast.
-      await driver.actor.update_subnet_canister_ranges({
-        canister_ranges: [[driver.canisterId, canisterId]],
-      });
-
-      // The init timer fires a sync at t=0. Advance time so it triggers,
-      // then wait for it to fully complete before proceeding.
-      await driver.pic.advanceTime(minutesToMilliseconds(5));
-      await driver.pic.tick(10);
+      await driver.setSubnetCanisterRanges();
+      await waitForSync();
 
       return canisterId;
-    }
-
-    async function deleteCanisterOnChain(canisterId: Principal): Promise<void> {
-      await driver.pic.stopCanister({
-        canisterId,
-        sender: controllerIdentity.getPrincipal(),
-      });
-
-      const DeleteCanisterArgs = IDL.Record({ canister_id: IDL.Principal });
-      await driver.pic.updateCall({
-        canisterId: Principal.managementCanister(),
-        method: 'delete_canister',
-        arg: new Uint8Array(
-          IDL.encode([DeleteCanisterArgs], [{ canister_id: canisterId }]),
-        ),
-        sender: controllerIdentity.getPrincipal(),
-      });
     }
 
     it('should mark a canister as deleted after sync', async () => {
@@ -373,7 +345,7 @@ describe('Canister History', () => {
 
       // Delete the canister on-chain, then re-sync
       await deleteCanisterOnChain(canisterId);
-      await triggerSyncAndWait();
+      await waitForSync();
 
       // Verify is_deleted is now true
       const afterRes = await driver.actor.list_canister_changes({
@@ -395,17 +367,9 @@ describe('Canister History', () => {
         sender: controllerIdentity.getPrincipal(),
       });
 
+      await driver.setSubnetCanisterRanges();
       await deleteCanisterOnChain(canisterId);
-
-      // Set range covering this canister so the sync encounters it
-      // as an unknown deleted canister (no prior record).
-      await driver.actor.update_subnet_canister_ranges({
-        canister_ranges: [[driver.canisterId, canisterId]],
-      });
-
-      await driver.pic.advanceTime(minutesToMilliseconds(5));
-      await driver.pic.tick(10);
-      await triggerSyncAndWait();
+      await waitForSync();
 
       const res = await driver.actor.list_canister_changes({
         canister_id: canisterId,
@@ -424,7 +388,7 @@ describe('Canister History', () => {
       await deleteCanisterOnChain(canisterId);
 
       // First sync marks as deleted
-      await triggerSyncAndWait();
+      await waitForSync();
 
       const firstRes = await driver.actor.list_canister_changes({
         canister_id: canisterId,
@@ -435,7 +399,7 @@ describe('Canister History', () => {
       expect(extractOkResponse(firstRes).is_deleted).toBe(true);
 
       // Second sync should succeed without errors (skips deleted)
-      await triggerSyncAndWait();
+      await waitForSync();
 
       const secondRes = await driver.actor.list_canister_changes({
         canister_id: canisterId,

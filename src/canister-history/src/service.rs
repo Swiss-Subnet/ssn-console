@@ -31,28 +31,10 @@ pub fn list_subnet_canister_ranges() -> ListSubnetCanisterRangesResponse {
 }
 
 pub fn list_subnet_canister_ids(
-    req: ListSubnetCanisterIdsRequest,
+    _req: ListSubnetCanisterIdsRequest,
 ) -> ListSubnetCanisterIdsResponse {
-    let limit = req
-        .limit
-        .unwrap_or(DEFAULT_PAGINATION_LIMIT)
-        .clamp(MIN_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT);
-    let page = req.page.unwrap_or(DEFAULT_PAGINATION_PAGE);
-
-    let total_items = repository::get_subnet_canister_ids_count();
-    let total_pages = total_items.div_ceil(limit).max(MIN_PAGINATION_PAGE);
-    let page = page.clamp(MIN_PAGINATION_PAGE, total_pages);
-
-    let canister_ids = repository::list_subnet_canister_ids(limit as usize, page as usize);
-
     ListSubnetCanisterIdsResponse {
-        canister_ids,
-        meta: PaginationMetaResponse {
-            limit,
-            page,
-            total_items,
-            total_pages,
-        },
+        canister_id_ranges: repository::list_subnet_canister_id_ranges(),
     }
 }
 
@@ -167,8 +149,8 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
                 repository::upsert_canister_change_info(canister_id, stored_canister_info);
                 return Ok(());
             }
-            return Err(ApiError::dependency_error(format!(
-                "Canister {canister_id} does not exist"
+            return Err(ApiError::internal_error(format!(
+                "Canister {canister_id} not found"
             )));
         }
         Err(GetCanisterInfoError::Other(err)) => return Err(err),
