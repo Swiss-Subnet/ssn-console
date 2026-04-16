@@ -13,7 +13,8 @@ use canister_utils::{assert_controller, ApiError, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 canister_utils::define_timer!(
-    service::sync_canister_histories,
+    history_timer,
+    crate::service::sync_canister_histories,
     "canister history sync",
     crate::constants::MAX_TIME_BETWEEN_SYNCS_NANOS,
     crate::constants::MIN_TIME_BETWEEN_SYNCS_NANOS

@@ -1,9 +1,7 @@
 #[macro_export]
 macro_rules! define_timer {
-    ($timer_fn:path, $log_name:expr, $max_time:expr, $min_time:expr) => {
-        mod __timer_internal {
-            use super::*;
-
+    ($mod_name:ident, $timer_fn:path, $log_name:expr, $max_time:expr, $min_time:expr) => {
+        mod $mod_name {
             thread_local! {
                 static TIMERS: std::cell::Cell<Option<ic_cdk_timers::TimerId>> = const { std::cell::Cell::new(None) };
                 static IS_TIMER_RUNNING: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
@@ -50,6 +48,7 @@ macro_rules! define_timer {
                 });
 
                 ic_cdk::futures::spawn(async move {
+                    let _guard = guard_res;
                     run_timer_and_queue_next().await;
                 });
 
@@ -87,6 +86,6 @@ macro_rules! define_timer {
             }
         }
 
-        use __timer_internal::{setup_timer, run_timer};
+        use $mod_name::{setup_timer, run_timer};
     };
 }

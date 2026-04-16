@@ -9,7 +9,8 @@ use canister_utils::{assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 canister_utils::define_timer!(
-    service::sync_canister_cycles,
+    cycles_timer,
+    crate::service::sync_canister_cycles,
     "canister cycles sync",
     crate::constants::MAX_TIME_BETWEEN_SYNCS_NANOS,
     crate::constants::MIN_TIME_BETWEEN_SYNCS_NANOS
