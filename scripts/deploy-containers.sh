@@ -208,7 +208,7 @@ echo
 echo "🔎 --- Verifying remote Caddyfile exists. ---"
 remote_assert_contains "test -s ${REMOTE_CADDYFILE_PATH} && echo ok || true" "ok"
 
-# --- Generate Grafana Alloy Config
+# --- Generate Grafana Alloy Config ---
 
 echo
 echo "♻️ --- Substituting environment variables in the Grafana Alloy config. ---"
@@ -241,6 +241,11 @@ POLICY_LIST+=" ${REMOTE_POLICY_DIR}/${OFFCHAIN_SERVICE_POLICY_FILE_NAME}"
 echo
 echo "🔐 --- Loading SELinux policies on ${REMOTE_HOST}. ---"
 ssh_run "sudo semodule -i ${POLICY_LIST} /usr/share/udica/templates/{base_container.cil,net_container.cil}"
+
+echo
+echo "🔐 --- Configuring custom SELinux port labels on ${REMOTE_HOST}. ---"
+ssh_run "sudo semanage port -a -t caddy_admin_port_t -p tcp 2019 || sudo semanage port -m -t caddy_admin_port_t -p tcp 2019"
+ssh_run "sudo semanage port -a -t alloy_otel_port_t -p tcp 4318 || sudo semanage port -m -t alloy_otel_port_t -p tcp 4318"
 
 # --- Restart Services ---
 

@@ -9,11 +9,6 @@ import {
   ATTR_SERVICE_NAMESPACE,
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
 } from '@opentelemetry/semantic-conventions';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
-import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
-import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
-import { BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 
 import { authController, statusController } from './controller';
 import { env } from './env';
@@ -32,13 +27,6 @@ export const app = new Elysia()
         [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]:
           process.env['GRAFANA_ENVIRONMENT'],
       }),
-      traceExporter: new OTLPTraceExporter(),
-      metricReader: new PeriodicExportingMetricReader({
-        exporter: new OTLPMetricExporter(),
-      }),
-      logRecordProcessor: new BatchLogRecordProcessor(
-        new OTLPLogExporter(),
-      ) as any,
     }),
   )
   .use(cors({ origin: true }))

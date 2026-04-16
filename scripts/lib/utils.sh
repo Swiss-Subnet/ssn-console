@@ -4,7 +4,7 @@ local_assert_contains() {
   local cmd="$1"
   local expected="$2"
 
-  out=$(eval "$cmd" 2>&1) || { echo "$out"; fail "Local command failed: ${cmd}"; }
+  out=$(bash -c "$cmd" 2>&1) || { echo "$out"; fail "Local command failed: ${cmd}"; }
   if ! printf '%s' "$out" | grep -F --quiet -- "$expected"; then
     echo "---- Local output ----"
     printf '%s\n' "$out"

@@ -53,6 +53,7 @@ echo
 echo "⚙️ --- Configuring the grafana repositories on ${REMOTE_HOST}. ---"
 ssh_run "wget -q -O gpg.key https://rpm.grafana.com/gpg.key"
 ssh_run "sudo rpm --import gpg.key"
+ssh_run "rm -f gpg.key"
 ssh_run "echo -e '[grafana]\nname=grafana\nbaseurl=https://rpm.grafana.com\nrepo_gpgcheck=1\nenabled=1\ngpgcheck=1\ngpgkey=https://rpm.grafana.com/gpg.key\nsslverify=1\nsslcacert=/etc/pki/tls/certs/ca-bundle.crt' | sudo tee /etc/yum.repos.d/grafana.repo"
 
 echo
@@ -62,6 +63,11 @@ ssh_run "sudo dnf install -y alloy"
 echo
 echo "☑️ --- Enabling the Grafana Alloy service on ${REMOTE_HOST}. ---"
 ssh_run "sudo systemctl enable alloy.service"
+
+echo
+echo "🔎 --- Verifying Grafana Alloy service on ${REMOTE_HOST}. ---"
+remote_assert_equals "sudo systemctl is-enabled alloy.service" "enabled"
+echo "✅ --- Grafana Alloy service verified! ---"
 
 # --- Unprivileged Port Configuration ---
 
