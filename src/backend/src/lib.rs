@@ -26,6 +26,8 @@ fn export_candid() -> String {
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
     controller::http::init();
+    data::team_repository::migrate_org_team_permissions();
+    data::project_repository::migrate_project_team_permissions();
 }
 
 #[cfg(test)]

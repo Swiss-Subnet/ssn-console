@@ -1,10 +1,12 @@
 use super::{
     memory::{
-        init_organization_project_index, init_project_team_index, init_projects,
-        init_team_project_index, OrganizationProjectIndexMemory, ProjectMemory,
-        ProjectTeamIndexMemory, TeamProjectIndexMemory,
+        init_organization_project_index, init_project_team_index,
+        init_project_team_permissions_index, init_projects,
+        init_team_project_permissions_index, OrganizationProjectIndexMemory, ProjectMemory,
+        ProjectTeamIndexMemory, ProjectTeamPermissionsIndexMemory,
+        TeamProjectPermissionsIndexMemory,
     },
-    Project,
+    Project, ProjectPermissions,
 };
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::{cell::RefCell, collections::HashSet};
@@ -33,35 +35,51 @@ pub fn create_project(org_id: Uuid, project: Project) -> Uuid {
 }
 
 pub fn add_team_to_project(team_id: Uuid, project_id: Uuid) {
+    add_team_to_project_with_permissions(team_id, project_id, ProjectPermissions::ALL)
+}
+
+pub fn add_team_to_project_with_permissions(
+    team_id: Uuid,
+    project_id: Uuid,
+    permissions: ProjectPermissions,
+) {
     mutate_state(|s| {
-        s.project_team_index.insert((project_id, team_id));
-        s.team_project_index.insert((team_id, project_id));
+        s.project_team_permissions_index
+            .insert((project_id, team_id), permissions);
+        s.team_project_permissions_index
+            .insert((team_id, project_id), permissions);
     });
 }
 
 pub fn remove_team_from_project(team_id: Uuid, project_id: Uuid) {
     mutate_state(|s| {
-        s.project_team_index.remove(&(project_id, team_id));
-        s.team_project_index.remove(&(team_id, project_id));
+        s.project_team_permissions_index
+            .remove(&(project_id, team_id));
+        s.team_project_permissions_index
+            .remove(&(team_id, project_id));
     });
 }
 
 pub fn is_team_in_project(team_id: Uuid, project_id: Uuid) -> bool {
-    with_state(|s| s.project_team_index.contains(&(project_id, team_id)))
+    with_state(|s| {
+        s.project_team_permissions_index
+            .get(&(project_id, team_id))
+            .is_some()
+    })
 }
 
 pub fn list_project_team_ids(project_id: Uuid) -> Vec<Uuid> {
     with_state(|s| {
-        s.project_team_index
+        s.project_team_permissions_index
             .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
-            .map(|(_, team_id)| team_id)
+            .map(|entry| entry.key().1)
             .collect()
     })
 }
 
 pub fn project_team_count(project_id: Uuid) -> usize {
     with_state(|s| {
-        s.project_team_index
+        s.project_team_permissions_index
             .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
             .count()
     })
@@ -90,12 +108,13 @@ pub fn delete_project(project_id: Uuid, org_id: Uuid) -> ApiResult {
         s.organization_project_index.remove(&(org_id, project_id));
 
         while let Some((pid, team_id)) = s
-            .project_team_index
+            .project_team_permissions_index
             .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .map(|entry| *entry.key())
             .next()
         {
-            s.project_team_index.remove(&(pid, team_id));
-            s.team_project_index.remove(&(team_id, pid));
+            s.project_team_permissions_index.remove(&(pid, team_id));
+            s.team_project_permissions_index.remove(&(team_id, pid));
         }
 
         Ok(())
@@ -115,12 +134,13 @@ pub fn has_at_least_n_org_projects(org_id: Uuid, n: usize) -> bool {
 pub fn remove_team_project_links(team_id: Uuid) {
     mutate_state(|s| {
         while let Some((tid, pid)) = s
-            .team_project_index
+            .team_project_permissions_index
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
+            .map(|entry| *entry.key())
             .next()
         {
-            s.team_project_index.remove(&(tid, pid));
-            s.project_team_index.remove(&(pid, tid));
+            s.team_project_permissions_index.remove(&(tid, pid));
+            s.project_team_permissions_index.remove(&(pid, tid));
         }
     });
 }
@@ -158,18 +178,19 @@ fn list_all_team_project_ids(team_ids: &[Uuid]) -> HashSet<Uuid> {
 
 pub fn list_team_project_ids(team_id: Uuid) -> Vec<Uuid> {
     with_state(|s| {
-        s.team_project_index
+        s.team_project_permissions_index
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
-            .map(|(_, project_id)| project_id)
+            .map(|entry| entry.key().1)
             .collect()
     })
 }
 
 pub fn team_has_projects(team_id: Uuid) -> bool {
     with_state(|s| {
-        s.team_project_index
+        s.team_project_permissions_index
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
-            .any(|_| true)
+            .next()
+            .is_some()
     })
 }
 
@@ -197,9 +218,10 @@ pub fn assert_any_team_has_project(
 
 struct ProjectState {
     projects: ProjectMemory,
-    project_team_index: ProjectTeamIndexMemory,
-    team_project_index: TeamProjectIndexMemory,
+    project_team_index: ProjectTeamIndexMemory, // TODO: remove after migration has run on all environments
     organization_project_index: OrganizationProjectIndexMemory,
+    project_team_permissions_index: ProjectTeamPermissionsIndexMemory,
+    team_project_permissions_index: TeamProjectPermissionsIndexMemory,
 }
 
 impl Default for ProjectState {
@@ -207,14 +229,36 @@ impl Default for ProjectState {
         Self {
             projects: init_projects(),
             project_team_index: init_project_team_index(),
-            team_project_index: init_team_project_index(),
             organization_project_index: init_organization_project_index(),
+            project_team_permissions_index: init_project_team_permissions_index(),
+            team_project_permissions_index: init_team_project_permissions_index(),
         }
     }
 }
 
 thread_local! {
     static STATE: RefCell<ProjectState> = RefCell::new(ProjectState::default());
+}
+
+pub fn migrate_project_team_permissions() {
+    mutate_state(|s| {
+        let entries: Vec<(Uuid, Uuid)> = s
+            .project_team_index
+            .range((Uuid::MIN, Uuid::MIN)..=(Uuid::MAX, Uuid::MAX))
+            .collect();
+
+        for (project_id, team_id) in entries {
+            if s.project_team_permissions_index
+                .get(&(project_id, team_id))
+                .is_none()
+            {
+                s.project_team_permissions_index
+                    .insert((project_id, team_id), ProjectPermissions::ALL);
+                s.team_project_permissions_index
+                    .insert((team_id, project_id), ProjectPermissions::ALL);
+            }
+        }
+    });
 }
 
 fn with_state<R>(f: impl FnOnce(&ProjectState) -> R) -> R {
