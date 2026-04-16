@@ -13,10 +13,10 @@ use crate::model::CanisterChangeInfo;
 use crate::repository;
 use crate::{canister_id::CanisterIdRange, mapping::map_management_canister_change_response};
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult};
+use canister_utils::{call::is_destination_invalid, ApiError, ApiResult};
 use futures::future::join_all;
 use ic_cdk::{
-    call::Call,
+    call::{Call, CallFailed},
     management_canister::{CanisterInfoArgs, CanisterInfoResult},
 };
 
@@ -141,9 +141,6 @@ pub async fn sync_canister_histories() -> ApiResult {
 /// previously stored changes, and inserts any new changes into the repository.
 /// It also handles cases where changes may have been missed due to truncation.
 async fn process_canister_changes(canister_id: Principal) -> ApiResult {
-    // [TODO]: Detect deleted canisters
-    let canister_info = get_canister_info(canister_id).await?;
-
     let mut stored_canister_info = repository::get_canister_change_info(canister_id)
         .unwrap_or_else(|| CanisterChangeInfo {
             total_num_changes: 0,
@@ -155,6 +152,16 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
     if stored_canister_info.is_deleted {
         return Ok(());
     }
+
+    let canister_info = match get_canister_info(canister_id).await {
+        Ok(info) => info,
+        Err(GetCanisterInfoError::CanisterDeleted) => {
+            stored_canister_info.is_deleted = true;
+            repository::upsert_canister_change_info(canister_id, stored_canister_info);
+            return Ok(());
+        }
+        Err(GetCanisterInfoError::Other(err)) => return Err(err),
+    };
 
     // The starting index is the total number of changes ever, less than the
     // number of changes returned in this call
@@ -190,7 +197,14 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
     Ok(())
 }
 
-async fn get_canister_info(canister_id: Principal) -> ApiResult<CanisterInfoResult> {
+enum GetCanisterInfoError {
+    CanisterDeleted,
+    Other(ApiError),
+}
+
+async fn get_canister_info(
+    canister_id: Principal,
+) -> Result<CanisterInfoResult, GetCanisterInfoError> {
     Call::bounded_wait(Principal::management_canister(), "canister_info")
         .with_arg(&CanisterInfoArgs {
             canister_id,
@@ -198,14 +212,19 @@ async fn get_canister_info(canister_id: Principal) -> ApiResult<CanisterInfoResu
         })
         .await
         .map_err(|err| {
-            ApiError::dependency_error(format!(
+            if let CallFailed::CallRejected(rejected) = &err {
+                if is_destination_invalid(rejected) {
+                    return GetCanisterInfoError::CanisterDeleted;
+                }
+            }
+            GetCanisterInfoError::Other(ApiError::dependency_error(format!(
                 "Failed to call the `canister_info` management canister endpoint: {err}"
-            ))
+            )))
         })?
         .candid::<CanisterInfoResult>()
         .map_err(|err| {
-            ApiError::dependency_error(format!(
+            GetCanisterInfoError::Other(ApiError::dependency_error(format!(
                 "Failed to decode the candid response from the `canister_info` management canister endpoint: {err}"
-            ))
+            )))
         })
 }

@@ -1,4 +1,5 @@
 mod auth;
+pub mod call;
 mod cbor;
 mod error;
 mod principal;
