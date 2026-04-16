@@ -35,6 +35,11 @@ fn validate_email_shape(value: &str) -> ApiResult<()> {
             "Email domain must contain a '.'.".to_string(),
         ));
     }
+    if domain.split('.').any(|part| part.is_empty()) {
+        return Err(ApiError::client_error(
+            "Email domain labels must not be empty.".to_string(),
+        ));
+    }
     Ok(())
 }
 
@@ -100,6 +105,24 @@ mod tests {
     fn rejects_whitespace_inside() {
         let err = Email::try_from("al ice@example.com".to_string()).unwrap_err();
         assert!(err.message().contains("whitespace"));
+    }
+
+    #[test]
+    fn rejects_leading_dot_in_domain() {
+        let err = Email::try_from("alice@.example.com".to_string()).unwrap_err();
+        assert!(err.message().contains("domain labels"));
+    }
+
+    #[test]
+    fn rejects_trailing_dot_in_domain() {
+        let err = Email::try_from("alice@example.".to_string()).unwrap_err();
+        assert!(err.message().contains("domain labels"));
+    }
+
+    #[test]
+    fn rejects_consecutive_dots_in_domain() {
+        let err = Email::try_from("alice@example..com".to_string()).unwrap_err();
+        assert!(err.message().contains("domain labels"));
     }
 
     #[test]
