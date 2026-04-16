@@ -1,4 +1,4 @@
-import { useMemo, type FC } from 'react';
+import { type FC } from 'react';
 import {
   Card,
   CardAction,
@@ -10,8 +10,12 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-canister-controller-cta';
-import { isNil } from '@/lib/nil';
-import { CanisterStatus, type Canister } from '@/lib/api-models';
+import { DeletedCanisterCta } from '@/routes/canisters/deleted-canister-cta';
+import {
+  CanisterAvailability,
+  CanisterStatus,
+  type Canister,
+} from '@/lib/api-models';
 import { formatBytes, formatCycles } from '@/lib/format';
 import { useRequireProjectId } from '@/lib/params';
 import { Link } from 'react-router';
@@ -35,7 +39,10 @@ function statusBadgeVariant(
 
 export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
   const projectId = useRequireProjectId();
-  const isMissingController = useMemo(() => isNil(canister.info), [canister]);
+  const accessibleInfo =
+    canister.state.availability === CanisterAvailability.Accessible
+      ? canister.state.info
+      : null;
 
   return (
     <>
@@ -45,34 +52,39 @@ export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
           <CardDescription className="truncate font-mono">
             {canister.principal}
           </CardDescription>
-          {canister.info && (
+          {accessibleInfo && (
             <CardAction>
-              <Badge variant={statusBadgeVariant(canister.info.status)}>
-                {canister.info.status}
+              <Badge variant={statusBadgeVariant(accessibleInfo.status)}>
+                {accessibleInfo.status}
               </Badge>
+            </CardAction>
+          )}
+          {canister.state.availability === CanisterAvailability.Deleted && (
+            <CardAction>
+              <Badge variant="destructive">Deleted</Badge>
             </CardAction>
           )}
         </CardHeader>
 
-        {canister.info && (
+        {accessibleInfo && (
           <CardContent>
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div>
                 <div className="text-muted-foreground mb-0.5">Cycles</div>
                 <div className="font-medium">
-                  {formatCycles(canister.info.cycles)}
+                  {formatCycles(accessibleInfo.cycles)}
                 </div>
               </div>
               <div>
                 <div className="text-muted-foreground mb-0.5">Memory</div>
                 <div className="font-medium">
-                  {formatBytes(canister.info.memorySize)}
+                  {formatBytes(accessibleInfo.memorySize)}
                 </div>
               </div>
               <div>
                 <div className="text-muted-foreground mb-0.5">Burn / day</div>
                 <div className="font-medium">
-                  {formatCycles(canister.info.idleCyclesBurnedPerDay)}
+                  {formatCycles(accessibleInfo.idleCyclesBurnedPerDay)}
                 </div>
               </div>
             </div>
@@ -89,8 +101,14 @@ export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
         </CardFooter>
       </Card>
 
-      {isMissingController && (
+      {canister.state.availability === CanisterAvailability.Inaccessible && (
         <AddMissingCanisterControllerCta canisterId={canister.principal} />
+      )}
+      {canister.state.availability === CanisterAvailability.Deleted && (
+        <DeletedCanisterCta
+          canisterRecordId={canister.id}
+          canisterPrincipal={canister.principal}
+        />
       )}
     </>
   );

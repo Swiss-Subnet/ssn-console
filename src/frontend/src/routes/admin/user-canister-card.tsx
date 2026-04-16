@@ -1,4 +1,8 @@
-import { CanisterStatus, type Canister } from '@/lib/api-models';
+import {
+  CanisterAvailability,
+  CanisterStatus,
+  type Canister,
+} from '@/lib/api-models';
 import { formatBytes, formatCycles } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { LoadingButton } from '@/components/loading-button';
@@ -39,6 +43,11 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
   const { managementCanisterApi } = useAppStore();
   const [isActionLoading, setIsActionLoading] = useState(false);
 
+  const info =
+    canister.state.availability === CanisterAvailability.Accessible
+      ? canister.state.info
+      : null;
+
   const handleStart = async () => {
     try {
       setIsActionLoading(true);
@@ -76,9 +85,9 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
         <CardDescription className="truncate font-mono">
           {canister.principal}
         </CardDescription>
-        {canister.info && (
+        {info && (
           <CardAction className="flex items-center gap-2">
-            {canister.info.status === CanisterStatus.Stopped && (
+            {info.status === CanisterStatus.Stopped && (
               <LoadingButton
                 variant="outline"
                 size="xs"
@@ -88,7 +97,7 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
                 Start
               </LoadingButton>
             )}
-            {canister.info.status === CanisterStatus.Running && (
+            {info.status === CanisterStatus.Running && (
               <LoadingButton
                 variant="outline"
                 size="xs"
@@ -98,32 +107,28 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
                 Stop
               </LoadingButton>
             )}
-            <Badge variant={statusBadgeVariant(canister.info.status)}>
-              {canister.info.status}
+            <Badge variant={statusBadgeVariant(info.status)}>
+              {info.status}
             </Badge>
           </CardAction>
         )}
       </CardHeader>
 
-      {canister.info && (
+      {info && (
         <CardContent>
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div>
               <div className="text-muted-foreground mb-0.5">Cycles</div>
-              <div className="font-medium">
-                {formatCycles(canister.info.cycles)}
-              </div>
+              <div className="font-medium">{formatCycles(info.cycles)}</div>
             </div>
             <div>
               <div className="text-muted-foreground mb-0.5">Memory</div>
-              <div className="font-medium">
-                {formatBytes(canister.info.memorySize)}
-              </div>
+              <div className="font-medium">{formatBytes(info.memorySize)}</div>
             </div>
             <div>
               <div className="text-muted-foreground mb-0.5">Burn / day</div>
               <div className="font-medium">
-                {formatCycles(canister.info.idleCyclesBurnedPerDay)}
+                {formatCycles(info.idleCyclesBurnedPerDay)}
               </div>
             </div>
           </div>

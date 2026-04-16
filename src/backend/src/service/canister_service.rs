@@ -8,16 +8,17 @@ use crate::{
         user_profile_repository, Canister,
     },
     dto::{
-        self, ListMyCanistersRequest, ListMyCanistersResponse, ListUserCanistersRequest,
-        ListUserCanistersResponse,
+        self, CanisterState, ListMyCanistersRequest, ListMyCanistersResponse,
+        ListUserCanistersRequest, ListUserCanistersResponse,
     },
-    mapping::map_canister_response,
+    mapping::{map_canister_info, map_canister_response},
 };
 use candid::Principal;
-use canister_utils::{ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult, Uuid};
 use futures::future::join_all;
 use ic_cdk::{
     api::canister_self,
+    call::{Error as CallError, RejectCode},
     management_canister::{
         self, CanisterSettings, CanisterStatusArgs, CreateCanisterArgs, UpdateSettingsArgs,
     },
@@ -62,20 +63,85 @@ async fn list_canisters_by_project_internal(project_id: Uuid) -> ApiResult<Vec<d
 
     for chunk in project_canisters.chunks(MAX_CALLS_PER_BATCH) {
         let canister_futures = chunk.iter().map(|(id, canister)| async move {
-            match management_canister::canister_status(&CanisterStatusArgs {
-                canister_id: canister.principal,
-            })
-            .await
-            {
-                Ok(res) => map_canister_response(id, canister, Some(res)),
-                Err(_) => map_canister_response(id, canister, None),
-            }
+            let state = fetch_canister_state(canister.principal).await;
+            map_canister_response(id, canister, state)
         });
 
         canisters.extend(join_all(canister_futures).await);
     }
 
     Ok(canisters)
+}
+
+async fn fetch_canister_state(canister_id: Principal) -> CanisterState {
+    match management_canister::canister_status(&CanisterStatusArgs { canister_id }).await {
+        Ok(info) => CanisterState::Accessible(Box::new(map_canister_info(info))),
+        Err(err) => classify_canister_status_error(err),
+    }
+}
+
+// ic-cdk 0.19 does not expose the numeric IC error code (IC0301, etc.) as a
+// typed field. CallRejected only exposes reject_code() (the coarse RejectCode
+// enum) and reject_message() (free text). The struct's own source comment
+// confirms it: "Once we have ic0.msg_error_code system API, we will only store
+// the error_code in this struct." So the underlying replica work is planned
+// but not shipped yet -- see
+// https://github.com/dfinity/ic/blob/ac5a702/packages/ic-error-types/src/lib.rs#L176
+// (those constants exist on the replica side but aren't surfaced through the
+// canister-side ic0 system API).
+//
+// Practically that leaves three options for distinguishing IC0301:
+//   1. RejectCode::DestinationInvalid (what we use) -- coarse but type-safe.
+//      The replica maps IC0301 to DestinationInvalid. False positives are
+//      theoretically possible, but for a canister we recorded post-creation
+//      this overwhelmingly means deleted.
+//   2. String-match on reject_message() -- more precise, but brittle: messages
+//      have changed across replica versions and there's no contract.
+//   3. Both -- belt-and-braces.
+//
+// We stick with #1: a string check would depend on undocumented message text
+// and the practical difference is near zero. When ic-cdk gains the error_code
+// getter, swap this for error_code() == ErrorCode::CanisterNotFound.
+//
+// Other rejections (most commonly "not a controller") map to Inaccessible so
+// the user can still recover via the missing-controller flow.
+fn classify_canister_status_error(err: CallError) -> CanisterState {
+    if let CallError::CallRejected(rejected) = &err {
+        if rejected.reject_code() == Ok(RejectCode::DestinationInvalid) {
+            return CanisterState::Deleted;
+        }
+    }
+    CanisterState::Inaccessible
+}
+
+pub async fn remove_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
+    let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
+
+    let project_id = canister_repository::get_canister_project_id(canister_id)
+        .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
+
+    let team_ids = team_repository::list_user_team_ids(user_id);
+    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
+
+    let canister = canister_repository::get_canister_in_project(project_id, canister_id)
+        .ok_or_else(|| {
+            ApiError::client_error(format!(
+                "Canister {canister_id} not found in user's project."
+            ))
+        })?;
+
+    match fetch_canister_state(canister.principal).await {
+        CanisterState::Deleted => {
+            canister_repository::remove_canister(project_id, canister_id);
+            Ok(())
+        }
+        CanisterState::Accessible(_) | CanisterState::Inaccessible => {
+            Err(ApiError::client_error(format!(
+                "Canister {} still exists on the network and cannot be removed from the dashboard.",
+                canister.principal
+            )))
+        }
+    }
 }
 
 pub fn list_all_canisters(
