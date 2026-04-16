@@ -14,11 +14,11 @@ use crate::{
     mapping::{map_canister_info, map_canister_response},
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{call::is_destination_invalid, ApiError, ApiResult, Uuid};
 use futures::future::join_all;
 use ic_cdk::{
     api::canister_self,
-    call::{Error as CallError, RejectCode},
+    call::Error as CallError,
     management_canister::{
         self, CanisterSettings, CanisterStatusArgs, CreateCanisterArgs, UpdateSettingsArgs,
     },
@@ -107,7 +107,7 @@ async fn fetch_canister_state(canister_id: Principal) -> CanisterState {
 // the user can still recover via the missing-controller flow.
 fn classify_canister_status_error(err: CallError) -> CanisterState {
     if let CallError::CallRejected(rejected) = &err {
-        if rejected.reject_code() == Ok(RejectCode::DestinationInvalid) {
+        if is_destination_invalid(rejected) {
             return CanisterState::Deleted;
         }
     }
