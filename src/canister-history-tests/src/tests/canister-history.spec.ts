@@ -9,6 +9,7 @@ import {
   TestDriver,
 } from '../support';
 import { Principal } from '@icp-sdk/core/principal';
+import { IDL } from '@icp-sdk/core/candid';
 import {
   type _SERVICE as ManagementCanisterService,
   idlFactory as managementCanisterIdlFactory,
@@ -297,6 +298,152 @@ describe('Canister History', () => {
         origin: [{ FromUser: { user_id: controllerIdentity.getPrincipal() } }],
         details: [{ CodeUninstall: {} }],
       });
+    });
+  });
+
+  describe('deleted canisters', () => {
+    async function triggerSyncAndWait(): Promise<void> {
+      driver.actor.setIdentity(controllerIdentity);
+
+      // Wait for any in-progress sync to finish, then trigger a new one
+      for (let i = 0; i < 20; i++) {
+        const res = await driver.actor.trigger_sync_canister_histories({});
+        const ok = extractOkResponse(res);
+        if (ok.message.includes('triggered successfully')) {
+          await driver.pic.tick(10);
+          return;
+        }
+        await driver.pic.tick(5);
+      }
+
+      throw new Error('Could not trigger a sync — previous one never finished');
+    }
+
+    async function createAndSyncCanister(): Promise<Principal> {
+      driver.actor.setIdentity(controllerIdentity);
+
+      const canisterId = await driver.pic.createCanister({
+        sender: controllerIdentity.getPrincipal(),
+      });
+
+      // Set a narrow range covering only the canister-history canister
+      // and the newly created canister to keep sync fast.
+      await driver.actor.update_subnet_canister_ranges({
+        canister_ranges: [[driver.canisterId, canisterId]],
+      });
+
+      // The init timer fires a sync at t=0. Advance time so it triggers,
+      // then wait for it to fully complete before proceeding.
+      await driver.pic.advanceTime(minutesToMilliseconds(5));
+      await driver.pic.tick(10);
+
+      return canisterId;
+    }
+
+    async function deleteCanisterOnChain(canisterId: Principal): Promise<void> {
+      await driver.pic.stopCanister({
+        canisterId,
+        sender: controllerIdentity.getPrincipal(),
+      });
+
+      const DeleteCanisterArgs = IDL.Record({ canister_id: IDL.Principal });
+      await driver.pic.updateCall({
+        canisterId: Principal.managementCanister(),
+        method: 'delete_canister',
+        arg: new Uint8Array(
+          IDL.encode([DeleteCanisterArgs], [{ canister_id: canisterId }]),
+        ),
+        sender: controllerIdentity.getPrincipal(),
+      });
+    }
+
+    it('should mark a canister as deleted after sync', async () => {
+      const canisterId = await createAndSyncCanister();
+
+      // Verify is_deleted is false before deletion
+      const beforeRes = await driver.actor.list_canister_changes({
+        canister_id: canisterId,
+        limit: [],
+        page: [],
+        reverse: [],
+      });
+      const before = extractOkResponse(beforeRes);
+      expect(before.is_deleted).toBe(false);
+      expect(before.changes).toHaveLength(1);
+
+      // Delete the canister on-chain, then re-sync
+      await deleteCanisterOnChain(canisterId);
+      await triggerSyncAndWait();
+
+      // Verify is_deleted is now true
+      const afterRes = await driver.actor.list_canister_changes({
+        canister_id: canisterId,
+        limit: [],
+        page: [],
+        reverse: [],
+      });
+      const after = extractOkResponse(afterRes);
+      expect(after.is_deleted).toBe(true);
+      expect(after.changes).toHaveLength(1);
+    });
+
+    it('should not mark unknown canisters as deleted', async () => {
+      driver.actor.setIdentity(controllerIdentity);
+
+      // Create and immediately delete a canister without syncing first
+      const canisterId = await driver.pic.createCanister({
+        sender: controllerIdentity.getPrincipal(),
+      });
+
+      // Set range covering this canister
+      await driver.actor.update_subnet_canister_ranges({
+        canister_ranges: [[driver.canisterId, canisterId]],
+      });
+
+      await deleteCanisterOnChain(canisterId);
+
+      // Wait for init sync, then trigger a fresh sync
+      await driver.pic.advanceTime(minutesToMilliseconds(5));
+      await driver.pic.tick(10);
+      await triggerSyncAndWait();
+
+      const res = await driver.actor.list_canister_changes({
+        canister_id: canisterId,
+        limit: [],
+        page: [],
+        reverse: [],
+      });
+      const result = extractOkResponse(res);
+      expect(result.is_deleted).toBe(false);
+      expect(result.changes).toHaveLength(0);
+    });
+
+    it('should skip already-deleted canisters on subsequent syncs', async () => {
+      const canisterId = await createAndSyncCanister();
+
+      await deleteCanisterOnChain(canisterId);
+
+      // First sync marks as deleted
+      await triggerSyncAndWait();
+
+      const firstRes = await driver.actor.list_canister_changes({
+        canister_id: canisterId,
+        limit: [],
+        page: [],
+        reverse: [],
+      });
+      expect(extractOkResponse(firstRes).is_deleted).toBe(true);
+
+      // Second sync should succeed without errors (skips deleted)
+      await triggerSyncAndWait();
+
+      const secondRes = await driver.actor.list_canister_changes({
+        canister_id: canisterId,
+        limit: [],
+        page: [],
+        reverse: [],
+      });
+      expect(extractOkResponse(secondRes).is_deleted).toBe(true);
     });
   });
 });
