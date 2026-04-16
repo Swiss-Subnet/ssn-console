@@ -1,0 +1,2 @@
+pub const MAX_TIME_BETWEEN_SYNCS_NANOS: u64 = 300_000_000_000; // 5 minutes
+pub const MIN_TIME_BETWEEN_SYNCS_NANOS: u64 = 60_000_000_000; // 1 minute

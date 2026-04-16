@@ -3,6 +3,7 @@ use canister_utils::ApiResultDto;
 use dto::*;
 use ic_cdk::*;
 
+mod constants;
 mod controller;
 mod dto;
 mod service;

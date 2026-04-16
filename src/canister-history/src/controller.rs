@@ -1,6 +1,5 @@
 use crate::{
     canister_id::CanisterId,
-    constants::{MAX_TIME_BETWEEN_SYNCS_NANOS, MIN_TIME_BETWEEN_SYNCS_NANOS},
     dto::{
         ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterIdsRequest,
         ListSubnetCanisterIdsResponse, ListSubnetCanisterRangesRequest,
@@ -11,61 +10,23 @@ use crate::{
     service,
 };
 use canister_utils::{assert_controller, ApiError, ApiResultDto};
-use ic_cdk::{api::msg_caller, futures::spawn, *};
-use ic_cdk_timers::{clear_timer, set_timer, TimerId};
-use std::{cell::Cell, time::Duration};
+use ic_cdk::{api::msg_caller, *};
 
-thread_local! {
-    static TIMERS: Cell<Option<TimerId>> = const { Cell::new(None) };
-    static IS_SYNC_RUNNING: Cell<bool> = const { Cell::new(false) };
-}
-
-struct SyncRunGuard;
-
-impl SyncRunGuard {
-    fn new() -> Result<Self, ()> {
-        if IS_SYNC_RUNNING.with(|f| f.get()) {
-            Err(())
-        } else {
-            IS_SYNC_RUNNING.with(|f| f.replace(true));
-            Ok(SyncRunGuard)
-        }
-    }
-}
-
-impl Drop for SyncRunGuard {
-    fn drop(&mut self) {
-        IS_SYNC_RUNNING.with(|f| {
-            f.set(false);
-        });
-    }
-}
+canister_utils::define_timer!(
+    service::sync_canister_histories,
+    "canister history sync",
+    crate::constants::MAX_TIME_BETWEEN_SYNCS_NANOS,
+    crate::constants::MIN_TIME_BETWEEN_SYNCS_NANOS
+);
 
 #[init]
 fn init() {
-    setup_timers();
+    setup_timer();
 }
 
 #[post_upgrade]
 fn post_upgrade() {
-    setup_timers();
-}
-
-fn setup_timers() {
-    let timer_id = set_timer(Duration::from_nanos(0), async {
-        sync_canister_histories().await;
-    });
-    TIMERS.with(|t| t.set(Some(timer_id)));
-}
-
-async fn sync_canister_histories() {
-    let guard_res = SyncRunGuard::new();
-    if guard_res.is_err() {
-        ic_cdk::println!("Sync already in progress; skipping this run.");
-        return;
-    }
-
-    sync_and_queue_canister_histories().await;
+    setup_timer();
 }
 
 #[update]
@@ -77,44 +38,14 @@ fn trigger_sync_canister_histories(
         return ApiResultDto::Err(err);
     }
 
-    let guard_res = SyncRunGuard::new();
-    if guard_res.is_err() {
-        return ApiResultDto::Ok(crate::dto::TriggerSyncCanisterHistoriesResponse {
-            message: "Sync is already in progress. No new sync was triggered.".to_string(),
-        });
-    }
+    let message = match run_timer() {
+        Ok(_) => "Sync triggered successfully.",
+        Err(msg) => msg,
+    };
 
-    TIMERS.with(|t| {
-        if let Some(id) = t.replace(None) {
-            clear_timer(id);
-        }
-    });
-
-    spawn(async move {
-        sync_and_queue_canister_histories().await;
-    });
-
-    ApiResultDto::Ok(crate::dto::TriggerSyncCanisterHistoriesResponse {
-        message: "Sync triggered successfully.".to_string(),
+    ApiResultDto::Ok(TriggerSyncCanisterHistoriesResponse {
+        message: message.to_string(),
     })
-}
-
-async fn sync_and_queue_canister_histories() {
-    let current_time_nanos = ic_cdk::api::time();
-    if let Err(err) = service::sync_canister_histories().await {
-        ic_cdk::println!("Failed to perform canister history sync: {err:?}");
-    }
-    let end_time_nanos = ic_cdk::api::time();
-    let time_diff_nanos = end_time_nanos.saturating_sub(current_time_nanos);
-
-    let next_run_nanos = MAX_TIME_BETWEEN_SYNCS_NANOS
-        .saturating_sub(time_diff_nanos)
-        .max(MIN_TIME_BETWEEN_SYNCS_NANOS);
-
-    let timer_id = set_timer(Duration::from_nanos(next_run_nanos), async {
-        sync_canister_histories().await;
-    });
-    TIMERS.with(|t| t.set(Some(timer_id)));
 }
 
 #[update]

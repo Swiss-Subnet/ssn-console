@@ -4,6 +4,7 @@ mod cbor;
 mod error;
 mod principal;
 mod rand;
+mod timer;
 mod uuid;
 
 pub use auth::*;

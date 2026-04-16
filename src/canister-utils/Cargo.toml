@@ -12,3 +12,4 @@ ic-cdk.workspace = true
 ciborium = "0.2"
 fastrand = "2"
 uuid = { version = "1", features = ["serde"] }
+ic-cdk-timers.workspace = true

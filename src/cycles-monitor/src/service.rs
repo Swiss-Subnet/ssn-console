@@ -2,6 +2,10 @@ use crate::dto::{CyclesConsumedResponse, GetCanisterMetricsRequest, GetCanisterM
 use candid::Nat;
 use canister_utils::ApiResult;
 
+pub async fn sync_canister_cycles() -> ApiResult<()> {
+    Ok(())
+}
+
 pub async fn get_canister_metrics(
     _req: GetCanisterMetricsRequest,
 ) -> ApiResult<GetCanisterMetricsResponse> {
