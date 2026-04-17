@@ -165,8 +165,11 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
             if existing.is_some() {
                 stored_canister_info.is_deleted = true;
                 repository::upsert_canister_change_info(canister_id, stored_canister_info);
+                return Ok(());
             }
-            return Ok(());
+            return Err(ApiError::dependency_error(format!(
+                "Canister {canister_id} does not exist"
+            )));
         }
         Err(GetCanisterInfoError::Other(err)) => return Err(err),
     };

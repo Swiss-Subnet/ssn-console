@@ -395,14 +395,14 @@ describe('Canister History', () => {
         sender: controllerIdentity.getPrincipal(),
       });
 
-      // Set range covering this canister
+      await deleteCanisterOnChain(canisterId);
+
+      // Set range covering this canister so the sync encounters it
+      // as an unknown deleted canister (no prior record).
       await driver.actor.update_subnet_canister_ranges({
         canister_ranges: [[driver.canisterId, canisterId]],
       });
 
-      await deleteCanisterOnChain(canisterId);
-
-      // Wait for init sync, then trigger a fresh sync
       await driver.pic.advanceTime(minutesToMilliseconds(5));
       await driver.pic.tick(10);
       await triggerSyncAndWait();
