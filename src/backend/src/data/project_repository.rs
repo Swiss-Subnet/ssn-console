@@ -247,6 +247,7 @@ pub fn migrate_project_team_permissions() {
             .collect();
 
         for (project_id, team_id) in entries {
+            s.project_team_index.remove(&(project_id, team_id));
             if s.project_team_permissions_index
                 .get(&(project_id, team_id))
                 .is_none()

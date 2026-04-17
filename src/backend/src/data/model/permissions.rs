@@ -9,9 +9,10 @@ pub struct OrgPermissions(u64);
 impl OrgPermissions {
     pub const EMPTY: Self = Self(0);
 
-    // Full administrative control over the organization. Implies all other
-    // org-level permissions. Holders can change billing, delete the org,
-    // and perform any action that a more specific flag would grant.
+    // Manage team permission assignments within the organization: grant
+    // or revoke flags on existing teams. Does not, on its own, grant any
+    // of the other org-level permissions — callers that want full control
+    // should assign OrgPermissions::ALL.
     pub const ORG_ADMIN: Self = Self(1 << 0);
 
     // Invite new members to the organization, remove existing members, and
@@ -24,9 +25,9 @@ impl OrgPermissions {
     // or removing users from a team requires MEMBER_MANAGE.
     pub const TEAM_MANAGE: Self = Self(1 << 2);
 
-    // Create new projects inside the organization. The creating team
-    // automatically receives PROJECT_ADMIN on the new project. Deleting
-    // a project requires PROJECT_ADMIN on the project itself.
+    // Create new projects inside the organization. The creating team is
+    // linked to the new project with ProjectPermissions::ALL. Deleting a
+    // project requires PROJECT_ADMIN on the project itself.
     pub const PROJECT_CREATE: Self = Self(1 << 3);
 
     // View and modify billing information, payment methods, and spending
@@ -105,9 +106,10 @@ pub struct ProjectPermissions(u64);
 impl ProjectPermissions {
     pub const EMPTY: Self = Self(0);
 
-    // Full administrative control over the project. Implies all other
-    // project-level permissions. Holders can delete the project, manage
-    // approval policies, and change team permission assignments.
+    // Manage team permission assignments on the project: grant or revoke
+    // flags on linked teams, and delete the project itself. Does not, on
+    // its own, grant any of the other project-level permissions — callers
+    // that want full control should assign ProjectPermissions::ALL.
     pub const PROJECT_ADMIN: Self = Self(1 << 0);
 
     // Create, delete, and update top-level settings of canisters within

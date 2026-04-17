@@ -11,7 +11,7 @@ use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
 pub fn create_team(user_id: Uuid, org_id: Uuid, team: Team) -> Uuid {
-    create_team_with_permissions(user_id, org_id, team, OrgPermissions::ORG_ADMIN)
+    create_team_with_permissions(user_id, org_id, team, OrgPermissions::ALL)
 }
 
 pub fn create_team_with_permissions(
@@ -215,12 +215,13 @@ pub fn migrate_org_team_permissions() {
             .collect();
 
         for (org_id, team_id) in entries {
+            s.organization_team_index.remove(&(org_id, team_id));
             if s.organization_team_permissions_index
                 .get(&(org_id, team_id))
                 .is_none()
             {
                 s.organization_team_permissions_index
-                    .insert((org_id, team_id), OrgPermissions::ORG_ADMIN);
+                    .insert((org_id, team_id), OrgPermissions::ALL);
             }
         }
     });
