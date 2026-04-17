@@ -36,18 +36,16 @@ fn trigger_sync_metrics(
     }
 
     let message = match run_timer() {
-        Ok(_) => "Sync triggered successfully.",
+        Ok(_) => "Sync triggered successfully.".to_string(),
         Err(msg) => msg,
     };
 
-    ApiResultDto::Ok(TriggerSyncMetricsResponse {
-        message: message.to_string(),
-    })
+    ApiResultDto::Ok(TriggerSyncMetricsResponse { message })
 }
 
 #[update]
 async fn get_canister_metrics(
-    req: GetCanisterMetricsRequest,
+    _req: GetCanisterMetricsRequest,
 ) -> ApiResultDto<GetCanisterMetricsResponse> {
-    service::get_canister_metrics(req).await.into()
+    service::get_canister_metrics().await.into()
 }

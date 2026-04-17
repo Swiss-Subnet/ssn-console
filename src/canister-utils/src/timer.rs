@@ -35,10 +35,10 @@ macro_rules! define_timer {
                 TIMERS.with(|t| t.set(Some(timer_id)));
             }
 
-            pub fn run_timer() -> Result<(), &'static str> {
+            pub fn run_timer() -> Result<(), String> {
                 let guard_res = TimerRunGuard::new();
                 if guard_res.is_err() {
-                    return Err("Sync is already in progress. No new sync was triggered.");
+                    return Err(format!("Timer already in progress. No new timer was triggered for {}.", $log_name));
                 }
 
                 TIMERS.with(|t| {
@@ -58,7 +58,7 @@ macro_rules! define_timer {
             async fn timer_fn() {
                 let guard_res = TimerRunGuard::new();
                 if guard_res.is_err() {
-                    ic_cdk::println!("Sync already in progress; skipping this run for {}.", $log_name);
+                    ic_cdk::println!("Timer already in progress; skipping this run for {}.", $log_name);
                     return;
                 }
 

@@ -62,6 +62,9 @@ pub fn list_subnet_canister_id_ranges() -> Vec<(Principal, Principal)> {
             }
 
             let Ok(canister_id) = CanisterId::try_from(principal) else {
+                // this shouldn't ever happen since we get the list of canister IDs
+                // by iterating through all possible canister ids on the subnet
+                ic_cdk::println!("Warning: {principal} is not a valid canister id");
                 continue;
             };
 

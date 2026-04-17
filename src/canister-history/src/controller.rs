@@ -40,13 +40,11 @@ fn trigger_sync_canister_histories(
     }
 
     let message = match run_timer() {
-        Ok(_) => "Sync triggered successfully.",
+        Ok(_) => "Sync triggered successfully.".to_string(),
         Err(msg) => msg,
     };
 
-    ApiResultDto::Ok(TriggerSyncCanisterHistoriesResponse {
-        message: message.to_string(),
-    })
+    ApiResultDto::Ok(TriggerSyncCanisterHistoriesResponse { message })
 }
 
 #[update]
