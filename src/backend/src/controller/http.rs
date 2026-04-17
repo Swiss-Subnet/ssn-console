@@ -1,4 +1,5 @@
-use crate::env::{self, load_runtime_env};
+use crate::env;
+use canister_utils::env::load_runtime_env;
 use ic_asset_certification::{Asset, AssetConfig, AssetEncoding, AssetFallbackConfig, AssetRouter};
 use ic_cdk::{
     api::{certified_data_set, data_certificate},

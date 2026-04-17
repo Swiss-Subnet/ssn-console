@@ -9,7 +9,6 @@ use crate::{
         ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
         VerifyEmailRequest,
     },
-    env::load_runtime_env,
     jwt::{extract_ed25519_public_key_from_pem, verify_jwt},
     mapping::{
         map_create_my_user_profile_response, map_get_my_user_profile_response,
@@ -17,7 +16,7 @@ use crate::{
     },
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{env::load_runtime_env, ApiError, ApiResult, Uuid};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
