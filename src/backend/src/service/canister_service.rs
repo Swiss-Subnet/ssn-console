@@ -14,7 +14,7 @@ use crate::{
     mapping::{map_canister_info, map_canister_response},
 };
 use candid::Principal;
-use canister_utils::{call::is_destination_invalid, ApiError, ApiResult, Uuid};
+use canister_utils::{is_destination_invalid, ApiError, ApiResult, Uuid};
 use futures::future::join_all;
 use ic_cdk::{
     api::canister_self,

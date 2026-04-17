@@ -1,5 +1,4 @@
 use crate::{
-    canister_id::CanisterId,
     dto::{
         ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterIdsRequest,
         ListSubnetCanisterIdsResponse, ListSubnetCanisterRangesRequest,
@@ -9,7 +8,7 @@ use crate::{
     },
     service,
 };
-use canister_utils::{assert_controller, ApiError, ApiResultDto};
+use canister_utils::{assert_controller, ApiError, ApiResultDto, CanisterId};
 use ic_cdk::{api::msg_caller, *};
 
 canister_utils::define_timer!(

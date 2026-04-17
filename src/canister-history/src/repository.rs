@@ -9,7 +9,7 @@ use crate::{
     model::{CanisterChange, CanisterChangeInfo, CanisterChangeOrigin, SubnetCanisterRangeInfo},
 };
 use candid::Principal;
-use canister_utils::Uuid;
+use canister_utils::{CanisterId, Uuid};
 use either::Either;
 use std::cell::RefCell;
 
