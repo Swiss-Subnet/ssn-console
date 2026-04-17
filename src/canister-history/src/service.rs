@@ -1,6 +1,6 @@
 use crate::constants::{
-    CHANGES_TO_REQUEST, DEFAULT_PAGINATION_LIMIT, DEFAULT_PAGINATION_PAGE, MAX_CALLS_PER_BATCH,
-    MAX_PAGINATION_LIMIT, MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
+    CHANGES_TO_REQUEST, DEFAULT_PAGINATION_LIMIT, DEFAULT_PAGINATION_PAGE, MAX_PAGINATION_LIMIT,
+    MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
 };
 use crate::dto::{
     ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterIdsRequest,
@@ -11,7 +11,9 @@ use crate::mapping::{map_canister_change_response, map_management_canister_chang
 use crate::model::CanisterChangeInfo;
 use crate::repository;
 use candid::Principal;
-use canister_utils::{is_destination_invalid, ApiError, ApiResult, CanisterId, CanisterIdRange};
+use canister_utils::{
+    is_destination_invalid, ApiError, ApiResult, CanisterId, CanisterIdRange, MAX_CALLS_PER_BATCH,
+};
 use futures::future::join_all;
 use ic_cdk::{
     call::{Call, CallFailed},
