@@ -2,6 +2,7 @@ pub mod access_control_service;
 pub mod approval_policy_service;
 pub mod canister_service;
 pub mod cycles_ledger_service;
+pub mod invite_service;
 pub mod organization_service;
 pub mod project_service;
 pub mod proposal_service;

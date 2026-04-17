@@ -5,9 +5,10 @@ use crate::{
     dto::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
         DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
-        ListOrgTeamsRequest, ListTeamsResponse, UpdateTeamRequest, UpdateTeamResponse,
+        ListOrgTeamsRequest, ListTeamUsersRequest, ListTeamUsersResponse, ListTeamsResponse,
+        UpdateTeamRequest, UpdateTeamResponse,
     },
-    mapping::{map_list_teams_response, map_team_to_response},
+    mapping::{map_list_team_users_response, map_list_teams_response, map_team_to_response},
     validation::TeamName,
 };
 use candid::Principal;
@@ -105,6 +106,24 @@ pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult<Dele
     team_repository::delete_team(team_id, team.org_id)?;
 
     Ok(DeleteTeamResponse {})
+}
+
+pub fn list_team_users(
+    caller: &Principal,
+    req: ListTeamUsersRequest,
+) -> ApiResult<ListTeamUsersResponse> {
+    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
+    let team = team_repository::get_team(team_id)
+        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
+    organization_repository::assert_user_in_org(caller_user_id, team.org_id)?;
+
+    let users = team_repository::list_team_user_ids(team_id)
+        .into_iter()
+        .filter_map(|id| user_profile_repository::get_user_profile_by_user_id(&id).map(|p| (id, p)))
+        .collect::<Vec<_>>();
+
+    Ok(map_list_team_users_response(users))
 }
 
 pub fn add_user_to_team(

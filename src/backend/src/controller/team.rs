@@ -2,7 +2,8 @@ use crate::{
     dto::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
         DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
-        ListOrgTeamsRequest, ListTeamsResponse, UpdateTeamRequest, UpdateTeamResponse,
+        ListOrgTeamsRequest, ListTeamUsersRequest, ListTeamUsersResponse, ListTeamsResponse,
+        UpdateTeamRequest, UpdateTeamResponse,
     },
     service::team_service,
 };
@@ -77,4 +78,14 @@ fn add_user_to_team(req: AddUserToTeamRequest) -> ApiResultDto<AddUserToTeamResp
     }
 
     team_service::add_user_to_team(&caller, req).into()
+}
+
+#[query]
+fn list_team_users(req: ListTeamUsersRequest) -> ApiResultDto<ListTeamUsersResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    team_service::list_team_users(&caller, req).into()
 }

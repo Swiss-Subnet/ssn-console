@@ -33,6 +33,7 @@ const TeamSettings = lazy(
   () => import('@/routes/organizations/teams/team-settings'),
 );
 const UserCanisters = lazy(() => import('@/routes/admin/user-canisters'));
+const MyInvitations = lazy(() => import('@/routes/invitations/my-invitations'));
 
 export const Router: FC = () => (
   <BrowserRouter>
@@ -60,6 +61,7 @@ export const Router: FC = () => (
             path="organizations/:orgId/teams/:teamId/settings"
             element={<TeamSettings />}
           />
+          <Route path="invitations" element={<MyInvitations />} />
 
           <Route path="projects/:projectId" element={<ProjectLayout />}>
             <Route path="canisters" element={<Canisters />} />

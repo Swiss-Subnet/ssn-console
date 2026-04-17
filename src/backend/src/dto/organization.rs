@@ -41,3 +41,17 @@ pub struct DeleteOrganizationRequest {
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct DeleteOrganizationResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListOrgUsersRequest {
+    pub org_id: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct OrgUser {
+    pub id: String,
+    pub email: Option<String>,
+    pub email_verified: bool,
+}
+
+pub type ListOrgUsersResponse = Vec<OrgUser>;

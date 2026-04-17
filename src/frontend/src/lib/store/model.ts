@@ -1,6 +1,8 @@
 import type {
   Canister,
   CreateTrustedPartnerRequest,
+  CreateOrgInviteRequest,
+  OrgInvite,
   TrustedPartner,
   UserProfile,
   UserStatus,
@@ -22,6 +24,7 @@ import type {
   ProjectApi,
   OrganizationApi,
   TeamApi,
+  InviteApi,
   AuthApi,
 } from '@/lib/api';
 import type { ActorSubclass, HttpAgent, Identity } from '@icp-sdk/core/agent';
@@ -55,6 +58,7 @@ export type ApiSlice = {
   projectApi: ProjectApi;
   organizationApi: OrganizationApi;
   teamApi: TeamApi;
+  inviteApi: InviteApi;
 
   setAgentIdentity: (identity: Identity) => void;
 };
@@ -148,6 +152,23 @@ export type OrganizationsSlice = {
   createOrganization: (name: string) => Promise<Organization>;
   updateOrganization: (orgId: string, name: string) => Promise<Organization>;
   deleteOrganization: (orgId: string) => Promise<void>;
+  loadOrgUsers: (
+    orgId: string,
+  ) => Promise<import('@/lib/api-models').OrgUser[]>;
+};
+
+export type InvitesSlice = {
+  isMyInvitesInitialized: boolean;
+  myInvites: OrgInvite[];
+
+  initializeMyInvites: () => Promise<void>;
+  clearMyInvites: () => void;
+  refreshMyInvites: () => Promise<void>;
+  createOrgInvite: (req: CreateOrgInviteRequest) => Promise<OrgInvite>;
+  listOrgInvites: (orgId: string) => Promise<OrgInvite[]>;
+  revokeOrgInvite: (inviteId: string) => Promise<void>;
+  acceptOrgInvite: (inviteId: string) => Promise<void>;
+  declineOrgInvite: (inviteId: string) => Promise<void>;
 };
 
 export type TeamsSlice = {
@@ -161,6 +182,9 @@ export type TeamsSlice = {
   updateTeam: (teamId: string, name: string) => Promise<Team>;
   deleteTeam: (teamId: string) => Promise<void>;
   addUserToTeam: (teamId: string, userId: string) => Promise<void>;
+  loadTeamUsers: (
+    teamId: string,
+  ) => Promise<import('@/lib/api-models').TeamUser[]>;
 };
 
 export type AppSlice = AuthSlice &
@@ -172,6 +196,7 @@ export type AppSlice = AuthSlice &
   TermsAndConditionsSlice &
   ProjectsSlice &
   OrganizationsSlice &
-  TeamsSlice;
+  TeamsSlice &
+  InvitesSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;

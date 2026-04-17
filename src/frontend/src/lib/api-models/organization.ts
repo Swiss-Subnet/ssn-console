@@ -9,7 +9,10 @@ import type {
   UpdateOrganizationResponse as ApiUpdateOrganizationResponse,
   DeleteOrganizationRequest as ApiDeleteOrganizationRequest,
   DeleteOrganizationResponse as ApiDeleteOrganizationResponse,
+  ListOrgUsersRequest as ApiListOrgUsersRequest,
+  ListOrgUsersResponse as ApiListOrgUsersResponse,
   Organization as ApiOrganization,
+  OrgUser as ApiOrgUser,
 } from '@ssn/backend-api';
 
 export type Organization = {
@@ -108,4 +111,34 @@ export function mapDeleteOrganizationResponse(
   res: ApiDeleteOrganizationResponse,
 ): void {
   mapOkResponse(res);
+}
+
+export type OrgUser = {
+  id: string;
+  email: string | null;
+  emailVerified: boolean;
+};
+
+export type ListOrgUsersRequest = {
+  orgId: string;
+};
+
+function mapOrgUserResponse(user: ApiOrgUser): OrgUser {
+  return {
+    id: user.id,
+    email: user.email[0] ?? null,
+    emailVerified: user.email_verified,
+  };
+}
+
+export function mapListOrgUsersRequest(
+  req: ListOrgUsersRequest,
+): ApiListOrgUsersRequest {
+  return { org_id: req.orgId };
+}
+
+export function mapListOrgUsersResponse(
+  res: ApiListOrgUsersResponse,
+): OrgUser[] {
+  return mapOkResponse(res).map(mapOrgUserResponse);
 }

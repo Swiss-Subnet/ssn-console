@@ -486,9 +486,7 @@ describe('Teams', () => {
       expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
     });
 
-    // Blocked: no "add user to org" API exists yet, so we cannot
-    // get Bob into Alice's org to test the happy path.
-    it.skip('should add a user to the team', async () => {
+    it('should add a user to the team after they accept an org invite', async () => {
       const alice = await setupUser();
       const createRes = await driver.actor.create_team({
         org_id: alice.org!.id,
@@ -497,7 +495,18 @@ describe('Teams', () => {
       const { team } = extractOkResponse(createRes);
 
       const bob = await setupUser();
-      // TODO: add Bob to Alice's org here once the API exists.
+
+      // Alice invites Bob to her org, Bob accepts.
+      driver.actor.setIdentity(alice.identity);
+      const inviteRes = await driver.actor.create_org_invite({
+        org_id: alice.org!.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite } = extractOkResponse(inviteRes);
+      driver.actor.setIdentity(bob.identity);
+      await driver.actor.accept_org_invite({ invite_id: invite.id });
+
+      // Alice can now add Bob to the team.
       driver.actor.setIdentity(alice.identity);
       const addRes = await driver.actor.add_user_to_team({
         team_id: team.id,
@@ -510,6 +519,52 @@ describe('Teams', () => {
       const teamsRes = await driver.actor.list_my_teams();
       const teams = extractOkResponse(teamsRes);
       expect(teams.map(t => t.id)).toContain(team.id);
+    });
+
+    it('should list team members', async () => {
+      const alice = await setupUser();
+      const teamsRes = await driver.actor.list_org_teams({
+        org_id: alice.org!.id,
+      });
+      const [defaultTeam] = extractOkResponse(teamsRes);
+
+      const bob = await setupUser();
+      driver.actor.setIdentity(alice.identity);
+      const inviteRes = await driver.actor.create_org_invite({
+        org_id: alice.org!.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite } = extractOkResponse(inviteRes);
+      driver.actor.setIdentity(bob.identity);
+      await driver.actor.accept_org_invite({ invite_id: invite.id });
+
+      driver.actor.setIdentity(alice.identity);
+      await driver.actor.add_user_to_team({
+        team_id: defaultTeam!.id,
+        user_id: bob.profile.id,
+      });
+
+      const listRes = await driver.actor.list_team_users({
+        team_id: defaultTeam!.id,
+      });
+      const members = extractOkResponse(listRes);
+      expect(members.map(m => m.id).sort()).toEqual(
+        [alice.profile.id, bob.profile.id].sort(),
+      );
+    });
+
+    it('should reject list_team_users for a non-member', async () => {
+      const alice = await setupUser();
+      const teamsRes = await driver.actor.list_org_teams({
+        org_id: alice.org!.id,
+      });
+      const [defaultTeam] = extractOkResponse(teamsRes);
+
+      const bob = await setupUser();
+      const res = await driver.actor.list_team_users({
+        team_id: defaultTeam!.id,
+      });
+      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
     });
 
     it('should be idempotent when adding an existing member', async () => {

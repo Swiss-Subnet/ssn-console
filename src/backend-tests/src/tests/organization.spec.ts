@@ -332,4 +332,50 @@ describe('Organizations', () => {
       expect(orgs.map(o => o.id)).not.toContain(newOrg.id);
     });
   });
+
+  describe('list_org_users', () => {
+    it('should return an error for an anonymous user', async () => {
+      driver.actor.setIdentity(anonymousIdentity);
+      const res = await driver.actor.list_org_users({ org_id: fakeOrgId });
+      expect(res).toEqual(unauthenticatedError);
+    });
+
+    it('should return an error if the caller is not in the org', async () => {
+      const alice = await setupUser();
+      const bob = await setupUser();
+      const res = await driver.actor.list_org_users({ org_id: alice.org!.id });
+      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
+    });
+
+    it('should list the sole member of a fresh org', async () => {
+      const { org, profile } = await setupUser();
+      const res = await driver.actor.list_org_users({ org_id: org!.id });
+      const users = extractOkResponse(res);
+      expect(users).toHaveLength(1);
+      expect(users[0]!.id).toBe(profile.id);
+      expect(users[0]!.email_verified).toBe(false);
+    });
+
+    it('should include a user who joined via invite acceptance', async () => {
+      const alice = await setupUser();
+      const bob = await setupUser();
+
+      driver.actor.setIdentity(alice.identity);
+      const inviteRes = await driver.actor.create_org_invite({
+        org_id: alice.org!.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite } = extractOkResponse(inviteRes);
+
+      driver.actor.setIdentity(bob.identity);
+      await driver.actor.accept_org_invite({ invite_id: invite.id });
+
+      driver.actor.setIdentity(alice.identity);
+      const res = await driver.actor.list_org_users({ org_id: alice.org!.id });
+      const users = extractOkResponse(res);
+      expect(users.map(u => u.id).sort()).toEqual(
+        [alice.profile.id, bob.profile.id].sort(),
+      );
+    });
+  });
 });

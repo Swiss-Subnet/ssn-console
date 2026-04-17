@@ -11,16 +11,18 @@ import {
   FormMessage,
 } from '@/components/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { useAppStore, selectOrgMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
+import type { OrgUser, Team } from '@/lib/api-models';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Users } from 'lucide-react';
-import { useEffect, useMemo, useState, type FC } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router';
 import { isNil } from '@/lib/nil';
 import { z } from 'zod';
+import { OrganizationTeams } from './organization-teams';
+import { OrganizationMembers } from './organization-members';
+import { OrganizationInvitations } from './organization-invitations';
 
 const formSchema = z.object({
   name: z
@@ -35,7 +37,8 @@ type FormData = z.infer<typeof formSchema>;
 const OrganizationSettings: FC = () => {
   const { orgId } = useParams();
   const navigate = useNavigate();
-  const { updateOrganization, deleteOrganization } = useAppStore();
+  const { updateOrganization, deleteOrganization, loadOrgUsers, loadOrgTeams } =
+    useAppStore();
   const orgMap = useAppStore(selectOrgMap);
 
   const organization = useMemo(
@@ -48,11 +51,38 @@ const OrganizationSettings: FC = () => {
     defaultValues: { name: '' },
   });
 
+  const [members, setMembers] = useState<OrgUser[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const refreshMembers = useCallback(async () => {
+    if (!orgId) return;
+    try {
+      setMembers(await loadOrgUsers(orgId));
+    } catch (err) {
+      showErrorToast('Failed to load members', err);
+    }
+  }, [orgId, loadOrgUsers]);
+
+  const refreshTeams = useCallback(async () => {
+    if (!orgId) return;
+    try {
+      setTeams(await loadOrgTeams(orgId));
+    } catch (err) {
+      showErrorToast('Failed to load teams', err);
+    }
+  }, [orgId, loadOrgTeams]);
+
   useEffect(() => {
     if (organization) {
       form.reset({ name: organization.name });
     }
   }, [organization, form]);
+
+  useEffect(() => {
+    refreshMembers();
+    refreshTeams();
+  }, [refreshMembers, refreshTeams]);
 
   if (isNil(orgId) || isNil(organization)) {
     return (
@@ -70,8 +100,6 @@ const OrganizationSettings: FC = () => {
       showErrorToast('Failed to update organization', err);
     }
   }
-
-  const [isDeleting, setIsDeleting] = useState(false);
 
   async function onDelete(): Promise<void> {
     setIsDeleting(true);
@@ -96,7 +124,7 @@ const OrganizationSettings: FC = () => {
       />
 
       <div className="mt-6 space-y-6">
-        <Card className="mx-auto max-w-md">
+        <Card className="mx-auto max-w-2xl">
           <CardHeader>
             <CardTitle>Organization Settings</CardTitle>
           </CardHeader>
@@ -125,7 +153,6 @@ const OrganizationSettings: FC = () => {
 
                 <LoadingButton
                   type="submit"
-                  className="w-full"
                   isLoading={form.formState.isSubmitting}
                   disabled={!form.formState.isDirty}
                 >
@@ -136,27 +163,13 @@ const OrganizationSettings: FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="mx-auto max-w-md">
-          <CardHeader>
-            <CardTitle>Teams</CardTitle>
-          </CardHeader>
+        <OrganizationTeams orgId={orgId} teams={teams} />
 
-          <CardContent>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Manage the teams in this organization.
-            </p>
+        <OrganizationMembers members={members} />
 
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/organizations/${orgId}/teams`)}
-            >
-              <Users className="mr-1 size-3.5" />
-              Manage Teams
-            </Button>
-          </CardContent>
-        </Card>
+        <OrganizationInvitations orgId={orgId} />
 
-        <Card className="mx-auto max-w-md">
+        <Card className="mx-auto max-w-2xl">
           <CardHeader>
             <CardTitle>Danger Zone</CardTitle>
           </CardHeader>

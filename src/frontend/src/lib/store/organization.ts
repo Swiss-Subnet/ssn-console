@@ -61,6 +61,10 @@ export const createOrganizationsSlice: AppStateCreator<OrganizationsSlice> = (
       organizations: state.organizations.filter(org => org.id !== orgId),
     }));
   },
+
+  async loadOrgUsers(orgId: string) {
+    return get().organizationApi.listOrgUsers({ orgId });
+  },
 });
 
 function selectOrgs(state: AppSlice): Organization[] {

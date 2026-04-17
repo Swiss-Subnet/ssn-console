@@ -8,12 +8,16 @@ import {
   mapUpdateOrganizationResponse,
   mapDeleteOrganizationRequest,
   mapDeleteOrganizationResponse,
+  mapListOrgUsersRequest,
+  mapListOrgUsersResponse,
   type ListMyOrganizationsResponse,
   type CreateOrganizationRequest,
   type OrganizationResponse,
   type GetOrganizationRequest,
   type UpdateOrganizationRequest,
   type DeleteOrganizationRequest,
+  type ListOrgUsersRequest,
+  type OrgUser,
 } from '@/lib/api-models';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import type { _SERVICE } from '@ssn/backend-api';
@@ -60,5 +64,10 @@ export class OrganizationApi {
       mapDeleteOrganizationRequest(req),
     );
     mapDeleteOrganizationResponse(res);
+  }
+
+  public async listOrgUsers(req: ListOrgUsersRequest): Promise<OrgUser[]> {
+    const res = await this.actor.list_org_users(mapListOrgUsersRequest(req));
+    return mapListOrgUsersResponse(res);
   }
 }

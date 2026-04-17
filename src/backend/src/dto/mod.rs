@@ -1,6 +1,7 @@
 mod approval_policy;
 mod canister;
 mod cycles_ledger;
+mod invite;
 mod organization;
 mod project;
 mod proposal;
@@ -12,6 +13,7 @@ mod user_profile;
 pub use approval_policy::*;
 pub use canister::*;
 pub use cycles_ledger::*;
+pub use invite::*;
 pub use organization::*;
 pub use project::*;
 pub use proposal::*;
