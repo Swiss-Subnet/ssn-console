@@ -1,4 +1,4 @@
-use crate::dto::{CyclesConsumedResponse, GetCanisterMetricsRequest, GetCanisterMetricsResponse};
+use crate::dto::{CyclesConsumedResponse, GetCanisterMetricsResponse};
 use candid::Nat;
 use canister_utils::ApiResult;
 
@@ -6,9 +6,7 @@ pub async fn sync_canister_cycles() -> ApiResult<()> {
     Ok(())
 }
 
-pub async fn get_canister_metrics(
-    _req: GetCanisterMetricsRequest,
-) -> ApiResult<GetCanisterMetricsResponse> {
+pub async fn get_canister_metrics() -> ApiResult<GetCanisterMetricsResponse> {
     Ok(GetCanisterMetricsResponse {
         cycles_consumed: CyclesConsumedResponse {
             memory: Nat::from(1_000_000u64),

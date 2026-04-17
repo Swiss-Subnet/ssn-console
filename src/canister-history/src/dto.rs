@@ -26,15 +26,11 @@ pub struct ListSubnetCanisterRangesResponse {
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct ListSubnetCanisterIdsRequest {
-    pub limit: Option<u64>,
-    pub page: Option<u64>,
-}
+pub struct ListSubnetCanisterIdsRequest {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct ListSubnetCanisterIdsResponse {
-    pub canister_ids: Vec<Principal>,
-    pub meta: PaginationMetaResponse,
+    pub canister_id_ranges: Vec<(Principal, Principal)>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

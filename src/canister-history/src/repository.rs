@@ -1,4 +1,5 @@
 use crate::{
+    canister_id::CanisterId,
     memory::{
         init_canister_changes, init_canister_id_timestamp_change_index, init_canister_infos,
         init_origin_timestamp_change_index, init_subnet_canister_range_info, CanisterChangeMemory,
@@ -45,17 +46,54 @@ pub fn insert_change(change: CanisterChange) -> Uuid {
     id
 }
 
-pub fn get_subnet_canister_ids_count() -> u64 {
-    with_state(|s| s.canister_infos.len())
-}
+// this operation will become expensive as the number of canisters of the subnet grow
+// if should be replaced with the `list_canisters` method once that is added
+// https://github.com/dfinity/portal/pull/6223/files
 
-pub fn list_subnet_canister_ids(limit: usize, page: usize) -> Vec<Principal> {
+pub fn list_subnet_canister_id_ranges() -> Vec<(Principal, Principal)> {
     with_state(|s| {
-        s.canister_infos
-            .keys()
-            .skip(limit * (page - 1))
-            .take(limit)
-            .collect::<Vec<_>>()
+        let mut ranges: Vec<(Principal, Principal)> = Vec::new();
+        let mut current_range_start: Option<CanisterId> = None;
+        let mut current_range_end: Option<CanisterId> = None;
+
+        for (principal, info) in s.canister_infos.iter().map(|entry| entry.into_pair()) {
+            if info.is_deleted {
+                continue;
+            }
+
+            let Ok(canister_id) = CanisterId::try_from(principal) else {
+                // this shouldn't ever happen since we get the list of canister IDs
+                // by iterating through all possible canister ids on the subnet
+                ic_cdk::println!("Warning: {principal} is not a valid canister id");
+                continue;
+            };
+
+            match (current_range_start, current_range_end) {
+                (None, None) => {
+                    current_range_start = Some(canister_id);
+                    current_range_end = Some(canister_id);
+                }
+                (Some(start), Some(end)) => {
+                    let end_u64: u64 = end.into();
+                    let current_u64: u64 = canister_id.into();
+
+                    if current_u64 == end_u64 + 1 {
+                        current_range_end = Some(canister_id);
+                    } else {
+                        ranges.push((start.into(), end.into()));
+                        current_range_start = Some(canister_id);
+                        current_range_end = Some(canister_id);
+                    }
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        if let (Some(start), Some(end)) = (current_range_start, current_range_end) {
+            ranges.push((start.into(), end.into()));
+        }
+
+        ranges
     })
 }
 

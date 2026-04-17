@@ -194,7 +194,7 @@ dfx canister call --network test canister-history update_subnet_canister_ranges 
 List the tracked canisters:
 
 ```shell
-dfx canister call --network test canister-history list_subnet_canister_ids '(record { page = null; limit = null })'
+dfx canister call --network test canister-history list_subnet_canister_ids '(record {})'
 ```
 
 List changes for a specific canister:

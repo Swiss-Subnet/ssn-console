@@ -60,15 +60,23 @@ export class TestDriver {
     await this.pic.tearDown();
   }
 
-  public async setSubnetCanisterRanges(): Promise<void> {
+  public async setSubnetCanisterRanges(
+    rangeSize = 10,
+  ): Promise<[Principal, Principal][]> {
     const subnet = await this.getSubnet();
+
     const canisterRanges = subnet.canisterRanges.map<[Principal, Principal]>(
-      ({ start, end }) => [start, end],
+      ({ start }) => {
+        const stepsToTake = Math.max(0, rangeSize - 1);
+        return [start, incrementCanisterId(start, stepsToTake)];
+      },
     );
 
     await this.actor.update_subnet_canister_ranges({
       canister_ranges: canisterRanges,
     });
+
+    return canisterRanges;
   }
 
   public async getSubnet(): Promise<SubnetTopology> {
@@ -81,12 +89,17 @@ export class TestDriver {
     return firstSubnet;
   }
 
-  public async createCanisters(numCanisters = 1): Promise<void> {
+  public async createCanisters(numCanisters = 1): Promise<Principal[]> {
+    const canisterIds = [];
+
     for (let i = 0; i < numCanisters; i++) {
-      await this.pic.createCanister({
+      const canisterId = await this.pic.createCanister({
         sender: controllerIdentity.getPrincipal(),
       });
+      canisterIds.push(canisterId);
     }
+
+    return canisterIds;
   }
 
   public async createControllerChanges(
@@ -104,4 +117,27 @@ export class TestDriver {
       });
     }
   }
+}
+
+// turns a canister id into a u64 and increments it
+export function incrementCanisterId(
+  canisterId: Principal,
+  steps: number,
+): Principal {
+  const bytes = canisterId.toUint8Array();
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+
+  const currentU64 = view.getBigUint64(0, false);
+  const nextU64 = currentU64 + BigInt(steps);
+
+  const endBytes = new Uint8Array(10);
+  const endView = new DataView(endBytes.buffer);
+
+  endView.setBigUint64(0, nextU64, false);
+  // reserved byte
+  endBytes[8] = 0x01;
+  // opaque id class
+  endBytes[9] = 0x01;
+
+  return Principal.fromUint8Array(endBytes);
 }
