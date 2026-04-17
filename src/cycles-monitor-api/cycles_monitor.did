@@ -20,6 +20,13 @@ type GetCanisterMetricsResponse = record {
   cycles_consumed : CyclesConsumedResponse;
 };
 
+type TriggerSyncMetricsRequest = record {};
+
+type TriggerSyncMetricsResponse = record {
+  message : text;
+};
+
 service : {
   get_canister_metrics : (GetCanisterMetricsRequest) -> (variant { Ok : GetCanisterMetricsResponse; Err : ApiError });
+  trigger_sync_metrics : (TriggerSyncMetricsRequest) -> (variant { Ok : TriggerSyncMetricsResponse; Err : ApiError });
 };

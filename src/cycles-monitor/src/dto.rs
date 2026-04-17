@@ -23,3 +23,11 @@ pub struct CyclesConsumedResponse {
 pub struct GetCanisterMetricsResponse {
     pub cycles_consumed: CyclesConsumedResponse,
 }
+
+#[derive(CandidType, Deserialize, Serialize)]
+pub struct TriggerSyncMetricsRequest {}
+
+#[derive(CandidType, Deserialize, Serialize)]
+pub struct TriggerSyncMetricsResponse {
+    pub message: String,
+}
