@@ -1,7 +1,7 @@
 use crate::{
     constants::{
-        DEFAULT_PAGINATION_LIMIT, DEFAULT_PAGINATION_PAGE, MAX_CALLS_PER_BATCH,
-        MAX_PAGINATION_LIMIT, MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
+        DEFAULT_PAGINATION_LIMIT, DEFAULT_PAGINATION_PAGE, MAX_PAGINATION_LIMIT,
+        MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
     },
     data::{
         canister_repository, organization_repository, project_repository, team_repository,
@@ -14,7 +14,7 @@ use crate::{
     mapping::{map_canister_info, map_canister_response},
 };
 use candid::Principal;
-use canister_utils::{is_destination_invalid, ApiError, ApiResult, Uuid};
+use canister_utils::{is_destination_invalid, ApiError, ApiResult, Uuid, MAX_CALLS_PER_BATCH};
 use futures::future::join_all;
 use ic_cdk::{
     api::canister_self,
