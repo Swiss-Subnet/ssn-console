@@ -32,6 +32,10 @@ type ListOrgTeamsRequest = record {
   org_id : text;
 };
 
+type ListProjectTeamsRequest = record {
+  project_id : text;
+};
+
 type UpdateTeamRequest = record {
   team_id : text;
   name : text;
@@ -86,6 +90,7 @@ type Team = record {
 service : {
   list_my_teams : () -> (ListTeamsResponse) query;
   list_org_teams : (ListOrgTeamsRequest) -> (ListTeamsResponse) query;
+  list_project_teams : (ListProjectTeamsRequest) -> (ListTeamsResponse) query;
   create_team : (CreateTeamRequest) -> (CreateTeamResponse);
   get_team : (GetTeamRequest) -> (GetTeamResponse) query;
   update_team : (UpdateTeamRequest) -> (UpdateTeamResponse);

@@ -9,15 +9,68 @@ type ListMyProjectsResponse = variant {
   Err : ApiError;
 };
 
+type ListOrgProjectsRequest = record {
+  org_id : text;
+};
+
+type ListOrgProjectsResponse = variant {
+  Ok : record {
+    projects : vec Project;
+  };
+  Err : ApiError;
+};
+
 type CreateProjectRequest = record {
   org_id : text;
   name : text;
 };
 
-type CreateProjectResponse = variant {
+type ProjectResponse = variant {
   Ok : record {
     project : Project;
   };
+  Err : ApiError;
+};
+
+type CreateProjectResponse = ProjectResponse;
+type GetProjectResponse = ProjectResponse;
+type UpdateProjectResponse = ProjectResponse;
+
+type GetProjectRequest = record {
+  project_id : text;
+};
+
+type UpdateProjectRequest = record {
+  project_id : text;
+  name : text;
+};
+
+type DeleteProjectRequest = record {
+  project_id : text;
+};
+
+type DeleteProjectResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type AddTeamToProjectRequest = record {
+  project_id : text;
+  team_id : text;
+};
+
+type AddTeamToProjectResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type RemoveTeamFromProjectRequest = record {
+  project_id : text;
+  team_id : text;
+};
+
+type RemoveTeamFromProjectResponse = variant {
+  Ok : record {};
   Err : ApiError;
 };
 
@@ -29,5 +82,11 @@ type Project = record {
 
 service : {
   list_my_projects : (ListMyProjectsRequest) -> (ListMyProjectsResponse) query;
+  list_org_projects : (ListOrgProjectsRequest) -> (ListOrgProjectsResponse) query;
   create_project : (CreateProjectRequest) -> (CreateProjectResponse);
+  get_project : (GetProjectRequest) -> (GetProjectResponse) query;
+  update_project : (UpdateProjectRequest) -> (UpdateProjectResponse);
+  delete_project : (DeleteProjectRequest) -> (DeleteProjectResponse);
+  add_team_to_project : (AddTeamToProjectRequest) -> (AddTeamToProjectResponse);
+  remove_team_from_project : (RemoveTeamFromProjectRequest) -> (RemoveTeamFromProjectResponse);
 };

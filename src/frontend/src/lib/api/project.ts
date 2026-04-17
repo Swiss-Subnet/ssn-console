@@ -1,10 +1,33 @@
 import {
+  mapAddTeamToProjectRequest,
+  mapAddTeamToProjectResponse,
   mapCreateProjectRequest,
   mapCreateProjectResponse,
+  mapDeleteProjectRequest,
+  mapDeleteProjectResponse,
+  mapGetProjectRequest,
+  mapGetProjectResponse,
   mapListMyProjectsResponse,
+  mapListOrgProjectsRequest,
+  mapListOrgProjectsResponse,
+  mapListProjectTeamsRequest,
+  mapListTeamsResponse,
+  mapRemoveTeamFromProjectRequest,
+  mapRemoveTeamFromProjectResponse,
+  mapUpdateProjectRequest,
+  mapUpdateProjectResponse,
+  type AddTeamToProjectRequest,
   type CreateProjectRequest,
-  type CreateProjectResponse,
+  type DeleteProjectRequest,
+  type GetProjectRequest,
   type ListMyProjectsResponse,
+  type ListOrgProjectsRequest,
+  type ListOrgProjectsResponse,
+  type ListProjectTeamsRequest,
+  type ListTeamsResponse,
+  type ProjectResponse,
+  type RemoveTeamFromProjectRequest,
+  type UpdateProjectRequest,
 } from '@/lib/api-models';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import type { _SERVICE } from '@ssn/backend-api';
@@ -14,15 +37,64 @@ export class ProjectApi {
 
   public async listMyProjects(): Promise<ListMyProjectsResponse> {
     const res = await this.actor.list_my_projects({});
-
     return mapListMyProjectsResponse(res);
+  }
+
+  public async listOrgProjects(
+    req: ListOrgProjectsRequest,
+  ): Promise<ListOrgProjectsResponse> {
+    const res = await this.actor.list_org_projects(
+      mapListOrgProjectsRequest(req),
+    );
+    return mapListOrgProjectsResponse(res);
   }
 
   public async createProject(
     req: CreateProjectRequest,
-  ): Promise<CreateProjectResponse> {
+  ): Promise<ProjectResponse> {
     const res = await this.actor.create_project(mapCreateProjectRequest(req));
-
     return mapCreateProjectResponse(res);
+  }
+
+  public async getProject(req: GetProjectRequest): Promise<ProjectResponse> {
+    const res = await this.actor.get_project(mapGetProjectRequest(req));
+    return mapGetProjectResponse(res);
+  }
+
+  public async updateProject(
+    req: UpdateProjectRequest,
+  ): Promise<ProjectResponse> {
+    const res = await this.actor.update_project(mapUpdateProjectRequest(req));
+    return mapUpdateProjectResponse(res);
+  }
+
+  public async deleteProject(req: DeleteProjectRequest): Promise<void> {
+    const res = await this.actor.delete_project(mapDeleteProjectRequest(req));
+    mapDeleteProjectResponse(res);
+  }
+
+  public async listProjectTeams(
+    req: ListProjectTeamsRequest,
+  ): Promise<ListTeamsResponse> {
+    const res = await this.actor.list_project_teams(
+      mapListProjectTeamsRequest(req),
+    );
+    return mapListTeamsResponse(res);
+  }
+
+  public async addTeamToProject(req: AddTeamToProjectRequest): Promise<void> {
+    const res = await this.actor.add_team_to_project(
+      mapAddTeamToProjectRequest(req),
+    );
+    mapAddTeamToProjectResponse(res);
+  }
+
+  public async removeTeamFromProject(
+    req: RemoveTeamFromProjectRequest,
+  ): Promise<void> {
+    const res = await this.actor.remove_team_from_project(
+      mapRemoveTeamFromProjectRequest(req),
+    );
+    mapRemoveTeamFromProjectResponse(res);
   }
 }

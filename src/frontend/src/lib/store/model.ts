@@ -141,6 +141,13 @@ export type ProjectsSlice = {
 
   initializeProjects: () => Promise<void>;
   clearProjects: () => void;
+  loadOrgProjects: (orgId: string) => Promise<Project[]>;
+  createProject: (orgId: string, name: string) => Promise<Project>;
+  updateProject: (projectId: string, name: string) => Promise<Project>;
+  deleteProject: (projectId: string) => Promise<void>;
+  loadProjectTeams: (projectId: string) => Promise<Team[]>;
+  addTeamToProject: (projectId: string, teamId: string) => Promise<void>;
+  removeTeamFromProject: (projectId: string, teamId: string) => Promise<void>;
 };
 
 export type OrganizationsSlice = {

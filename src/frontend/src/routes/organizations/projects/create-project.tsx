@@ -1,0 +1,119 @@
+import { LoadingButton } from '@/components/loading-button';
+import { Container } from '@/components/layout/container';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useAppStore } from '@/lib/store';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft } from 'lucide-react';
+import type { FC } from 'react';
+import { useForm } from 'react-hook-form';
+import { useNavigate, useParams } from 'react-router';
+import { isNil } from '@/lib/nil';
+import { selectOrgMap } from '@/lib/store';
+import { z } from 'zod';
+
+const formSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Project name is required')
+    .max(100, 'Project name cannot exceed 100 characters'),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+const CreateProject: FC = () => {
+  const { orgId } = useParams();
+  const navigate = useNavigate();
+  const { createProject } = useAppStore();
+  const orgMap = useAppStore(selectOrgMap);
+  const organization = orgId ? orgMap.get(orgId) : undefined;
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { name: '' },
+  });
+
+  if (isNil(orgId) || isNil(organization)) {
+    return (
+      <Container>
+        <p className="text-muted-foreground">Organization not found.</p>
+      </Container>
+    );
+  }
+
+  async function onSubmit(formData: FormData): Promise<void> {
+    try {
+      const project = await createProject(orgId!, formData.name);
+      showSuccessToast('Project created successfully!');
+      navigate(`/organizations/${orgId}/projects/${project.id}/settings`);
+    } catch (err) {
+      showErrorToast('Failed to create project', err);
+    }
+  }
+
+  return (
+    <Container>
+      <div className="mx-auto max-w-md">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            navigate(`/organizations/${orgId}/projects`, { replace: true })
+          }
+        >
+          <ArrowLeft className="mr-1 size-3.5" />
+          Back
+        </Button>
+      </div>
+
+      <Card className="mx-auto mt-6 max-w-md">
+        <CardHeader>
+          <CardTitle>Create Project</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          <Form {...form}>
+            <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project Name</FormLabel>
+
+                    <FormControl>
+                      <Input placeholder="My Project" {...field} />
+                    </FormControl>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <LoadingButton
+                type="submit"
+                className="w-full"
+                isLoading={form.formState.isSubmitting}
+              >
+                Create Project
+              </LoadingButton>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </Container>
+  );
+};
+
+export default CreateProject;

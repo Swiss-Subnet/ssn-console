@@ -8,6 +8,14 @@ use crate::data::{
 use canister_utils::Uuid;
 use std::cell::RefCell;
 
+pub fn project_has_canisters(project_id: Uuid) -> bool {
+    with_state(|s| {
+        s.project_canister_index
+            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .any(|_| true)
+    })
+}
+
 pub fn list_canisters_by_project(project_id: Uuid) -> Vec<(Uuid, Canister)> {
     with_state(|s| {
         s.project_canister_index
