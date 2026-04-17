@@ -31,6 +31,7 @@
       "name": "backend-tests",
       "dependencies": {
         "@ssn/backend-api": "workspace:*",
+        "@ssn/test-utils": "workspace:*",
       },
     },
     "src/canister-history-api": {
@@ -41,6 +42,7 @@
       "dependencies": {
         "@ssn/canister-history-api": "workspace:*",
         "@ssn/management-canister": "workspace:*",
+        "@ssn/test-utils": "workspace:*",
       },
     },
     "src/cycles-monitor-api": {
@@ -50,6 +52,7 @@
       "name": "cycles-monitor-tests",
       "dependencies": {
         "@ssn/cycles-monitor-api": "workspace:*",
+        "@ssn/test-utils": "workspace:*",
       },
     },
     "src/frontend": {
@@ -117,6 +120,15 @@
       "dependencies": {
         "@ssn/backend-api": "workspace:*",
         "@ssn/canister-history-api": "workspace:*",
+      },
+    },
+    "src/test-utils": {
+      "name": "@ssn/test-utils",
+      "dependencies": {
+        "@ssn/backend-api": "workspace:*",
+        "@ssn/canister-history-api": "workspace:*",
+        "@ssn/cycles-monitor-api": "workspace:*",
+        "@ssn/management-canister": "workspace:*",
       },
     },
   },
@@ -445,6 +457,8 @@
     "@ssn/cycles-monitor-api": ["@ssn/cycles-monitor-api@workspace:src/cycles-monitor-api"],
 
     "@ssn/management-canister": ["@ssn/management-canister@workspace:src/management-canister"],
+
+    "@ssn/test-utils": ["@ssn/test-utils@workspace:src/test-utils"],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 

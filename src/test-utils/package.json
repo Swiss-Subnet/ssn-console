@@ -1,0 +1,12 @@
+{
+  "name": "@ssn/test-utils",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@ssn/backend-api": "workspace:*",
+    "@ssn/canister-history-api": "workspace:*",
+    "@ssn/cycles-monitor-api": "workspace:*",
+    "@ssn/management-canister": "workspace:*"
+  }
+}

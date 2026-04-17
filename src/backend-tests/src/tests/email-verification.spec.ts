@@ -1,14 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  anonymousIdentity,
-  extractOkResponse,
-  noProfileError,
-  TestDriver,
-  unauthenticatedError,
-} from '../support';
+import { noProfileError, TestDriver, unauthenticatedError } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 import { createTestJwt, PRIVATE_KEY, PUBLIC_KEY } from '../support';
 import * as crypto from 'node:crypto';
+import { anonymousIdentity, extractOkResponse } from '@ssn/test-utils';
 
 describe('Email Verification', () => {
   let driver: TestDriver;
@@ -162,7 +157,11 @@ describe('Email Verification', () => {
     const invalidKeyBase64 = invalidKeyBytes.toString('base64');
     const invalidPem = `-----BEGIN PUBLIC KEY-----\n${invalidKeyBase64}\n-----END PUBLIC KEY-----`;
 
-    await driver.setEnvironmentVariable('PUBLIC_KEY', invalidPem);
+    await driver.setEnvironmentVariable(
+      driver.canisterId,
+      'PUBLIC_KEY',
+      invalidPem,
+    );
 
     const res = await driver.actor.verify_my_email({ token });
 
@@ -174,7 +173,11 @@ describe('Email Verification', () => {
     });
 
     // Restore the valid key
-    await driver.setEnvironmentVariable('PUBLIC_KEY', PUBLIC_KEY);
+    await driver.setEnvironmentVariable(
+      driver.canisterId,
+      'PUBLIC_KEY',
+      PUBLIC_KEY,
+    );
   });
 
   it('should return an error for invalid jwt signature', async () => {

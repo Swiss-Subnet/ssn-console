@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  anonymousIdentity,
-  controllerIdentity,
-  extractOkResponse,
   noOrgError,
   noProfileError,
   noProjectTeamLinkError,
@@ -12,6 +9,11 @@ import {
   unauthenticatedError,
 } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
+import {
+  anonymousIdentity,
+  controllerIdentity,
+  extractOkResponse,
+} from '@ssn/test-utils';
 
 describe('Projects', () => {
   let driver: TestDriver;

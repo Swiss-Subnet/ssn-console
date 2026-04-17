@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  anonymousIdentity,
-  extractOkResponse,
   lacksOrgPermissionError,
   noOrgError,
   noProfileError,
@@ -10,6 +8,7 @@ import {
   unauthenticatedError,
 } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
+import { anonymousIdentity, extractOkResponse } from '@ssn/test-utils';
 
 describe('Teams', () => {
   let driver: TestDriver;

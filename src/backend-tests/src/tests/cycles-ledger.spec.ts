@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { anonymousIdentity, controllerIdentity, TestDriver } from '../support';
+import { TestDriver } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
+import { anonymousIdentity, controllerIdentity } from '@ssn/test-utils';
 
 describe('Cycles Ledger', () => {
   let driver: TestDriver;

@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  anonymousIdentity,
-  type ApiErrorResponse,
-  TestDriver,
-} from '../support';
+import { TestDriver } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
+import { anonymousIdentity, type ApiErrorResponse } from '@ssn/test-utils';
 
 describe('Access control', () => {
   let driver: TestDriver;

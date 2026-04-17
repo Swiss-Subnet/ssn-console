@@ -1,4 +1,4 @@
-import { type ApiError } from '@ssn/canister-history-api';
+import { type ApiError } from '@ssn/backend-api';
 
 export interface ApiSuccessResponse<T> {
   Ok: T;

@@ -1,9 +1,6 @@
 import { generateRandomIdentity } from '@dfinity/pic';
 import type { Identity } from '@icp-sdk/core/agent';
 import {
-  anonymousIdentity,
-  controllerIdentity,
-  extractOkResponse,
   inactiveUserError,
   latestTermsAndConditionsError,
   noProfileError,
@@ -15,6 +12,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Principal } from '@icp-sdk/core/principal';
 import { IDL } from '@icp-sdk/core/candid';
 import type { Canister } from '@ssn/backend-api';
+import {
+  anonymousIdentity,
+  controllerIdentity,
+  extractOkResponse,
+} from '@ssn/test-utils';
 
 const MANAGEMENT_CANISTER_ID = Principal.managementCanister();
 const DeleteCanisterArgs = IDL.Record({ canister_id: IDL.Principal });

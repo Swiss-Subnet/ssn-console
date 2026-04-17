@@ -1,19 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  BACKEND_WASM_PATH,
-  controllerIdentity,
-  extractErrResponse,
-  extractOkResponse,
-  millisecondsToNanoseconds,
-  minutesToMilliseconds,
-  TestDriver,
-} from '../support';
+import { TestDriver } from '../support';
 import { Principal } from '@icp-sdk/core/principal';
 import {
   type _SERVICE as ManagementCanisterService,
   idlFactory as managementCanisterIdlFactory,
 } from '@ssn/management-canister';
 import { generateRandomIdentity, type Actor } from '@dfinity/pic';
+import {
+  BACKEND_WASM_PATH,
+  CANISTER_HISTORY_WASM_PATH,
+  controllerIdentity,
+  extractErrResponse,
+  extractOkResponse,
+  millisecondsToNanoseconds,
+  minutesToMilliseconds,
+} from '@ssn/test-utils';
 
 describe('Canister History', () => {
   let driver: TestDriver;
@@ -169,7 +170,7 @@ describe('Canister History', () => {
       await driver.pic.setTime(deploymentTimestamp);
       await driver.pic.installCode({
         canisterId,
-        wasm: BACKEND_WASM_PATH,
+        wasm: CANISTER_HISTORY_WASM_PATH,
         sender: controllerIdentity.getPrincipal(),
       });
 

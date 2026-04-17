@@ -37,7 +37,8 @@
     "src/cycles-monitor-tests",
     "src/management-canister",
     "src/offchain-service",
-    "src/scripts"
+    "src/scripts",
+    "src/test-utils"
   ],
   "trustedDependencies": [
     "@dfinity/pic"

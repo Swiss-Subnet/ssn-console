@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  anonymousIdentity,
   createTestJwt,
-  extractOkResponse,
   noOrgError,
   noProfileError,
   PRIVATE_KEY,
@@ -10,6 +8,7 @@ import {
   unauthenticatedError,
 } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
+import { anonymousIdentity, extractOkResponse } from '@ssn/test-utils';
 
 describe('Org Invites', () => {
   let driver: TestDriver;
