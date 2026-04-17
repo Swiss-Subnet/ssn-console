@@ -1,5 +1,4 @@
 use crate::{
-    canister_id::CanisterId,
     memory::{
         init_canister_changes, init_canister_id_timestamp_change_index, init_canister_infos,
         init_origin_timestamp_change_index, init_subnet_canister_range_info, CanisterChangeMemory,
@@ -9,7 +8,7 @@ use crate::{
     model::{CanisterChange, CanisterChangeInfo, CanisterChangeOrigin, SubnetCanisterRangeInfo},
 };
 use candid::Principal;
-use canister_utils::Uuid;
+use canister_utils::{CanisterId, Uuid};
 use either::Either;
 use std::cell::RefCell;
 

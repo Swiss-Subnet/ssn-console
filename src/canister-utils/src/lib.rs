@@ -1,5 +1,6 @@
 mod auth;
-pub mod call;
+mod call;
+mod canister_id;
 mod cbor;
 mod error;
 mod principal;
@@ -8,6 +9,8 @@ mod timer;
 mod uuid;
 
 pub use auth::*;
+pub use call::*;
+pub use canister_id::*;
 pub use cbor::*;
 pub use error::*;
 pub use principal::*;
