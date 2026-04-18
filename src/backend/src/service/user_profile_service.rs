@@ -16,7 +16,7 @@ use crate::{
     },
 };
 use candid::Principal;
-use canister_utils::{env::load_runtime_env, ApiError, ApiResult, Uuid};
+use canister_utils::{load_runtime_env, ApiError, ApiResult, Uuid};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
