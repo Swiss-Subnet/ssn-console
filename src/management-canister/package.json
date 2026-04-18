@@ -2,7 +2,7 @@
   "name": "@ssn/management-canister",
   "private": true,
   "scripts": {
-    "build": "icp-bindgen --did-file ./ic.did --out-dir ./dist --force --actor-disabled"
+    "build": "bun --bun icp-bindgen --did-file ./ic.did --out-dir ./dist --force --actor-disabled"
   },
   "module": "dist/declarations/ic.did.js",
   "types": "dist/declarations/ic.did.d.ts",
