@@ -14,12 +14,17 @@ runs:
       run: |
         CYCLES_MONITOR_ID=$(dfx canister id cycles-monitor --network ${{ inputs.network }})
         CANISTER_HISTORY_ID=$(dfx canister id canister-history --network ${{ inputs.network }})
+        FORMATTED_PUBLIC_KEY=$(echo "${{ inputs.public_key }}" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
 
         dfx canister call aaaaa-aa update_settings "(
           record {
             canister_id = principal \"$CYCLES_MONITOR_ID\";
             settings = record {
               environment_variables = opt vec {
+                record {
+                  name = \"PUBLIC_KEY\";
+                  value = \"$FORMATTED_PUBLIC_KEY\";
+                };
                 record {
                   name = \"CANISTER_HISTORY_ID\";
                   value = \"$CANISTER_HISTORY_ID\";

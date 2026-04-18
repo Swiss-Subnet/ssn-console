@@ -43,6 +43,7 @@ export QUADLET_OUTPUT_DIR="${TMP_OUTPUT_DIR}/${QUADLET_DIRNAME}"
 export REMOTE_HOME_DIR="/home/$REMOTE_USER"
 export REMOTE_QUADLET_DIR="${REMOTE_HOME_DIR}/.config/containers/systemd"
 export REMOTE_VOLUME_DIR="${REMOTE_HOME_DIR}/.config/containers/volumes"
+export REMOTE_SYSTEMD_DIR="${REMOTE_HOME_DIR}/.config/systemd/user"
 export REMOTE_IMAGE_DIR="${REMOTE_HOME_DIR}/${IMAGE_DIRNAME}"
 export REMOTE_POLICY_DIR="${REMOTE_HOME_DIR}/${POLICY_DIRNAME}"
 
@@ -85,6 +86,31 @@ export OFFCHAIN_CONTAINER_PATH="${ROOT_DIR}/config/offchain-service.containerfil
 
 export REMOTE_OFFCHAIN_SERVICE_TAR_PATH="${REMOTE_IMAGE_DIR}/${OFFCHAIN_SERVICE_TAR_NAME}"
 
+# --- Canister OTLP Syncer Variables ---
+
+export CANISTER_ID_CYCLES_MONITOR=$(jq -r ".[\"cycles-monitor\"].${DFX_NETWORK}" "${ROOT_DIR}/canister_ids.json")
+if [ -z "${CANISTER_ID_CYCLES_MONITOR}" ] || [ "${CANISTER_ID_CYCLES_MONITOR}" = "null" ]; then
+  echo
+  echo "💢 --- Failed to find cycles-monitor ID for network '${DFX_NETWORK}' in canister_ids.json! Exiting. ---"
+  exit 1
+fi
+
+export CANISTER_OTLP_SYNCER_IMAGE_NAMESPACE="localhost"
+export CANISTER_OTLP_SYNCER_IMAGE_NAME="canister-otlp-syncer"
+export CANISTER_OTLP_SYNCER_SERVICE_NAME="canister-otlp-syncer"
+
+export CANISTER_OTLP_SYNCER_TAR_NAME="${CANISTER_OTLP_SYNCER_SERVICE_NAME}.tar"
+export CANISTER_OTLP_SYNCER_TAR_PATH="${IMAGE_OUTPUT_DIR}/${CANISTER_OTLP_SYNCER_TAR_NAME}"
+
+export CANISTER_OTLP_SYNCER_POLICY_FILE_NAME="canister-otlp-syncer.cil"
+export CANISTER_OTLP_SYNCER_POLICY_PATH="${CONFIG_INPUT_DIR}/${CANISTER_OTLP_SYNCER_POLICY_FILE_NAME}"
+
+export CANISTER_OTLP_SYNCER_CONTAINER_PATH="${CONFIG_INPUT_DIR}/canister-otlp-syncer.containerfile"
+export CANISTER_OTLP_SYNCER_TIMER_PATH="${CONFIG_INPUT_DIR}/canister-otlp-syncer.timer"
+
+export REMOTE_CANISTER_OTLP_SYNCER_TAR_PATH="${REMOTE_IMAGE_DIR}/${CANISTER_OTLP_SYNCER_TAR_NAME}"
+export REMOTE_CANISTER_OTLP_SYNCER_TIMER_PATH="${REMOTE_SYSTEMD_DIR}/canister-otlp-syncer.timer"
+
 # --- Grafana Alloy Variables ---
 
 export ALLOY_CONFIG_FILENAME="config.alloy"
@@ -108,6 +134,10 @@ ssh_run "mkdir -p ${REMOTE_IMAGE_DIR}"
 echo
 echo "📂 --- Ensuring the remote quadlet directory exists. ---"
 ssh_run "mkdir -p ${REMOTE_QUADLET_DIR}"
+
+echo
+echo "📂 --- Ensuring the remote systemd user directory exists. ---"
+ssh_run "mkdir -p ${REMOTE_SYSTEMD_DIR}"
 
 echo
 echo "📂 --- Ensuring the remote policy directory exists. ---"
@@ -166,6 +196,22 @@ echo "🔎 --- Verifying local offchain-service image and tar. ---"
 docker image inspect "${OFFCHAIN_SERVICE_IMAGE_NAMESPACE}/${OFFCHAIN_SERVICE_IMAGE_NAME}" >/dev/null 2>&1 || fail "Docker image not found: ${OFFCHAIN_SERVICE_IMAGE_NAMESPACE}/${OFFCHAIN_SERVICE_IMAGE_NAME}"
 [ -s "${OFFCHAIN_SERVICE_TAR_PATH}" ] || fail "Offchain-service tar not created: ${OFFCHAIN_SERVICE_TAR_PATH}"
 
+
+# --- Build Canister OTLP Syncer Image ---
+
+echo
+echo "🛠️ --- Building the ${CANISTER_OTLP_SYNCER_SERVICE_NAME} container image. ---"
+docker build -t "${CANISTER_OTLP_SYNCER_IMAGE_NAMESPACE}/${CANISTER_OTLP_SYNCER_IMAGE_NAME}" -f "${CANISTER_OTLP_SYNCER_CONTAINER_PATH}" "${ROOT_DIR}"
+
+echo
+echo "💾 --- Saving the ${CANISTER_OTLP_SYNCER_SERVICE_NAME} container image to ${CANISTER_OTLP_SYNCER_TAR_PATH}. ---"
+docker save "${CANISTER_OTLP_SYNCER_IMAGE_NAMESPACE}/${CANISTER_OTLP_SYNCER_IMAGE_NAME}" > "${CANISTER_OTLP_SYNCER_TAR_PATH}"
+
+echo
+echo "🔎 --- Verifying local canister-otlp-syncer image and tar. ---"
+docker image inspect "${CANISTER_OTLP_SYNCER_IMAGE_NAMESPACE}/${CANISTER_OTLP_SYNCER_IMAGE_NAME}" >/dev/null 2>&1 || fail "Docker image not found: ${CANISTER_OTLP_SYNCER_IMAGE_NAMESPACE}/${CANISTER_OTLP_SYNCER_IMAGE_NAME}"
+[ -s "${CANISTER_OTLP_SYNCER_TAR_PATH}" ] || fail "Canister OTLP syncer tar not created: ${CANISTER_OTLP_SYNCER_TAR_PATH}"
+
 # --- Transfer Images ---
 
 echo
@@ -176,6 +222,7 @@ echo
 echo "🔎 --- Verifying remote images tar files exist. ---"
 remote_assert_contains "test -s ${REMOTE_CADDY_TAR_PATH} && echo ok || true" "ok"
 remote_assert_contains "test -s ${REMOTE_OFFCHAIN_SERVICE_TAR_PATH} && echo ok || true" "ok"
+remote_assert_contains "test -s ${REMOTE_CANISTER_OTLP_SYNCER_TAR_PATH} && echo ok || true" "ok"
 
 # --- Substitute Quadlet Files ---
 
@@ -193,6 +240,13 @@ done
 echo
 echo "📦 --- Transferring the ${QUADLET_OUTPUT_DIR} directory to ${REMOTE_HOST}. ---"
 scp_run "${QUADLET_OUTPUT_DIR}/." "${REMOTE_QUADLET_DIR}"
+
+# --- Transfer Systemd Timer Files ---
+
+echo
+echo "📦 --- Transferring the canister-otlp-syncer timer to ${REMOTE_HOST}. ---"
+scp_run "${CANISTER_OTLP_SYNCER_TIMER_PATH}" "${REMOTE_SYSTEMD_DIR}/canister-otlp-syncer.timer"
+
 
 # --- Generate Caddyfile ---
 
@@ -233,10 +287,16 @@ echo
 echo "📦 --- Transferring the ${OFFCHAIN_SERVICE_POLICY_PATH} file to ${REMOTE_HOST}. ---"
 scp_run "${OFFCHAIN_SERVICE_POLICY_PATH}" "${REMOTE_POLICY_DIR}/"
 
+echo
+echo "📦 --- Transferring the ${CANISTER_OTLP_SYNCER_POLICY_PATH} file to ${REMOTE_HOST}. ---"
+scp_run "${CANISTER_OTLP_SYNCER_POLICY_PATH}" "${REMOTE_POLICY_DIR}/"
+
+
 # --- Load Policies ---
 
 POLICY_LIST="${REMOTE_POLICY_DIR}/${CADDY_POLICY_FILE_NAME}"
 POLICY_LIST+=" ${REMOTE_POLICY_DIR}/${OFFCHAIN_SERVICE_POLICY_FILE_NAME}"
+POLICY_LIST+=" ${REMOTE_POLICY_DIR}/${CANISTER_OTLP_SYNCER_POLICY_FILE_NAME}"
 
 echo
 echo "🔐 --- Loading SELinux policies on ${REMOTE_HOST}. ---"
@@ -258,6 +318,10 @@ echo "📦 --- Loading ${OFFCHAIN_SERVICE_SERVICE_NAME} image from ${REMOTE_OFFC
 ssh_run "podman load < ${REMOTE_OFFCHAIN_SERVICE_TAR_PATH}"
 
 echo
+echo "📦 --- Loading ${CANISTER_OTLP_SYNCER_SERVICE_NAME} image from ${REMOTE_CANISTER_OTLP_SYNCER_TAR_PATH}. ---"
+ssh_run "podman load < ${REMOTE_CANISTER_OTLP_SYNCER_TAR_PATH}"
+
+echo
 echo "🔄 --- Reloading the systemd user daemon. ---"
 ssh_run "systemctl --user daemon-reload"
 
@@ -270,6 +334,10 @@ echo "🚀 --- Restarting the ${OFFCHAIN_SERVICE_SERVICE_NAME} service on ${REMO
 ssh_run "systemctl --user restart ${OFFCHAIN_SERVICE_SERVICE_NAME}.service"
 
 echo
+echo "🚀 --- Enabling and starting the ${CANISTER_OTLP_SYNCER_SERVICE_NAME} timer on ${REMOTE_HOST}. ---"
+ssh_run "systemctl --user enable --now ${CANISTER_OTLP_SYNCER_SERVICE_NAME}.timer"
+
+echo
 echo "🚀 --- Restarting the Grafana Alloy service on ${REMOTE_HOST}. ---"
 ssh_run "sudo systemctl restart alloy.service"
 
@@ -277,6 +345,7 @@ echo
 echo "🔎 --- Verifying services are active. ---"
 remote_assert_equals "systemctl --user is-active ${CADDY_SERVICE_NAME}.service" "active"
 remote_assert_equals "systemctl --user is-active ${OFFCHAIN_SERVICE_SERVICE_NAME}.service" "active"
+remote_assert_equals "systemctl --user is-active ${CANISTER_OTLP_SYNCER_SERVICE_NAME}.timer" "active"
 remote_assert_equals "sudo systemctl is-active alloy.service" "active"
 
 echo

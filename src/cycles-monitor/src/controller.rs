@@ -6,6 +6,8 @@ use crate::{
     },
     env, service,
 };
+use base64::{engine::general_purpose, Engine as _};
+use candid::Principal;
 use canister_utils::{assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
@@ -31,6 +33,7 @@ fn post_upgrade() {
 
 fn check_env_vars() {
     env::init_canister_history_id();
+    env::init_public_key();
 }
 
 #[update]
@@ -53,8 +56,32 @@ fn trigger_sync_metrics(
 #[update]
 fn list_metrics_after(req: ListMetricsAfterRequest) -> ApiResultDto<ListMetricsAfterResponse> {
     let caller = msg_caller();
-    if let Err(err) = assert_controller(&caller) {
-        return ApiResultDto::Err(err);
+    let pub_key_pem = env::get_public_key();
+
+    // Parse PEM by extracting the base64 part
+    let base64_str = pub_key_pem
+        .lines()
+        .filter(|line| !line.starts_with("-----"))
+        .collect::<String>();
+
+    let pub_key_der = match general_purpose::STANDARD.decode(base64_str.trim()) {
+        Ok(der) => der,
+        Err(_) => {
+            return ApiResultDto::Err(canister_utils::ApiError::internal_error(
+                "Failed to decode public key".to_string(),
+            ))
+        }
+    };
+
+    let expected_principal = Principal::self_authenticating(&pub_key_der);
+
+    let is_expected_principal = caller == expected_principal;
+    let is_controller = assert_controller(&caller).is_ok();
+
+    if !is_expected_principal && !is_controller {
+        return ApiResultDto::Err(canister_utils::ApiError::unauthorized(
+            "Unauthorized".to_string(),
+        ));
     }
 
     ApiResultDto::Ok(service::list_metrics_after(req, MAX_SNAPSHOTS_PER_RESPONSE))

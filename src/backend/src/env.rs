@@ -13,7 +13,7 @@ thread_local! {
 
     pub static PUBLIC_KEY: String = {
         load_runtime_env("PUBLIC_KEY").expect("PUBLIC_KEY env var is required")
-    }
+    };
 }
 
 pub fn init_offchain_service_url() {
