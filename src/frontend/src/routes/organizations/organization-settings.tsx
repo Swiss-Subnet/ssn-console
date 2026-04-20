@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAppStore, selectOrgMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
-import type { OrgUser, Project, Team } from '@/lib/api-models';
+import type { OrgTeam, OrgUser, Project } from '@/lib/api-models';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useForm } from 'react-hook-form';
@@ -58,7 +58,7 @@ const OrganizationSettings: FC = () => {
   });
 
   const [members, setMembers] = useState<OrgUser[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<OrgTeam[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -160,7 +160,10 @@ const OrganizationSettings: FC = () => {
                       <FormLabel>Organization Name</FormLabel>
 
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          disabled={!organization.yourPermissions.orgAdmin}
+                        />
                       </FormControl>
 
                       <FormMessage />
@@ -171,7 +174,10 @@ const OrganizationSettings: FC = () => {
                 <LoadingButton
                   type="submit"
                   isLoading={form.formState.isSubmitting}
-                  disabled={!form.formState.isDirty}
+                  disabled={
+                    !form.formState.isDirty ||
+                    !organization.yourPermissions.orgAdmin
+                  }
                 >
                   Save Changes
                 </LoadingButton>
@@ -180,33 +186,43 @@ const OrganizationSettings: FC = () => {
           </CardContent>
         </Card>
 
-        <OrganizationTeams orgId={orgId} teams={teams} />
+        <OrganizationTeams
+          orgId={orgId}
+          teams={teams}
+          canManageTeams={organization.yourPermissions.teamManage}
+        />
 
-        <OrganizationProjects orgId={orgId} projects={projects} />
+        <OrganizationProjects
+          orgId={orgId}
+          projects={projects}
+          canCreateProject={organization.yourPermissions.projectCreate}
+        />
 
         <OrganizationMembers members={members} />
 
         <OrganizationInvitations orgId={orgId} />
 
-        <Card className="mx-auto max-w-2xl">
-          <CardHeader>
-            <CardTitle>Danger Zone</CardTitle>
-          </CardHeader>
+        {organization.yourPermissions.orgAdmin && (
+          <Card className="mx-auto max-w-2xl">
+            <CardHeader>
+              <CardTitle>Danger Zone</CardTitle>
+            </CardHeader>
 
-          <CardContent>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Delete this organization. All projects must be removed first.
-            </p>
+            <CardContent>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Delete this organization. All projects must be removed first.
+              </p>
 
-            <LoadingButton
-              variant="destructive"
-              isLoading={isDeleting}
-              onClick={onDelete}
-            >
-              Delete Organization
-            </LoadingButton>
-          </CardContent>
-        </Card>
+              <LoadingButton
+                variant="destructive"
+                isLoading={isDeleting}
+                onClick={onDelete}
+              >
+                Delete Organization
+              </LoadingButton>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </Container>
   );

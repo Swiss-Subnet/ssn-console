@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  allOrgPermissions,
+  emptyOrgPermissions,
   lacksOrgPermissionError,
   noOrgError,
   noProfileError,
@@ -78,8 +80,13 @@ describe('Teams', () => {
       const { org } = await setupUser();
       const res = await driver.actor.list_org_teams({ org_id: org!.id });
       const teams = extractOkResponse(res);
-      expect(teams).toHaveLength(1);
-      expect(teams[0]!.name).toBe('Default Team');
+      expect(teams).toEqual([
+        {
+          id: expect.any(String),
+          name: 'Default Team',
+          permissions: allOrgPermissions,
+        },
+      ]);
     });
   });
 
@@ -599,7 +606,12 @@ describe('Teams', () => {
       const getTeamRes = await driver.actor.get_team({
         team_id: defaultTeam!.id,
       });
-      expect(extractOkResponse(getTeamRes)).toEqual({ team: defaultTeam });
+      // get_team returns the plain Team shape (no org-permission field);
+      // list_org_teams returns OrgTeam with `permissions`. Compare only the
+      // shared fields.
+      expect(extractOkResponse(getTeamRes)).toEqual({
+        team: { id: defaultTeam!.id, name: defaultTeam!.name },
+      });
 
       const listMembersRes = await driver.actor.list_team_users({
         team_id: defaultTeam!.id,
@@ -639,6 +651,118 @@ describe('Teams', () => {
       expect(addMemberRes).toEqual(
         lacksOrgPermissionError(bob.profile.id, alice.org!.id, 'MEMBER_MANAGE'),
       );
+    });
+  });
+
+  describe('update_team_org_permissions', () => {
+    it('should return an error for an anonymous user', async () => {
+      driver.actor.setIdentity(anonymousIdentity);
+      const res = await driver.actor.update_team_org_permissions({
+        team_id: fakeTeamId,
+        permissions: emptyOrgPermissions,
+      });
+      expect(res).toEqual(unauthenticatedError);
+    });
+
+    it('should return an error for a non-existent team', async () => {
+      await setupUser();
+      const res = await driver.actor.update_team_org_permissions({
+        team_id: fakeTeamId,
+        permissions: allOrgPermissions,
+      });
+      expect(res).toEqual(teamNotFoundOrNoAccessError(fakeTeamId));
+    });
+
+    it('should return an error if the caller lacks ORG_ADMIN', async () => {
+      const alice = await setupUser();
+      const teamsRes = await driver.actor.list_org_teams({
+        org_id: alice.org!.id,
+      });
+      const [defaultTeam] = extractOkResponse(teamsRes);
+
+      // Second team granted only TEAM_MANAGE; Bob on that team — no ORG_ADMIN.
+      const secondRes = await driver.actor.create_team({
+        org_id: alice.org!.id,
+        name: 'Second',
+      });
+      const { team: secondTeam } = extractOkResponse(secondRes);
+      await driver.actor.update_team_org_permissions({
+        team_id: secondTeam.id,
+        permissions: { ...emptyOrgPermissions, team_manage: true },
+      });
+
+      const bob = await setupUser();
+      driver.actor.setIdentity(alice.identity);
+      const inviteRes = await driver.actor.create_org_invite({
+        org_id: alice.org!.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite } = extractOkResponse(inviteRes);
+      driver.actor.setIdentity(bob.identity);
+      await driver.actor.accept_org_invite({ invite_id: invite.id });
+      driver.actor.setIdentity(alice.identity);
+      await driver.actor.add_user_to_team({
+        team_id: secondTeam.id,
+        user_id: bob.profile.id,
+      });
+
+      driver.actor.setIdentity(bob.identity);
+      const res = await driver.actor.update_team_org_permissions({
+        team_id: defaultTeam!.id,
+        permissions: allOrgPermissions,
+      });
+      expect(res).toEqual(
+        lacksOrgPermissionError(bob.profile.id, alice.org!.id, 'ORG_ADMIN'),
+      );
+    });
+
+    it('should reject demoting the only team holding ORG_ADMIN', async () => {
+      const { org } = await setupUser();
+      const teamsRes = await driver.actor.list_org_teams({ org_id: org!.id });
+      const [defaultTeam] = extractOkResponse(teamsRes);
+
+      const res = await driver.actor.update_team_org_permissions({
+        team_id: defaultTeam!.id,
+        permissions: emptyOrgPermissions,
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Organization with id ${org!.id} must retain at least one team with ORG_ADMIN and at least one member.`,
+        },
+      });
+    });
+
+    it('should update permissions and return the updated team', async () => {
+      const { org } = await setupUser();
+      const createRes = await driver.actor.create_team({
+        org_id: org!.id,
+        name: 'Second',
+      });
+      const { team: second } = extractOkResponse(createRes);
+
+      const newPerms = {
+        ...emptyOrgPermissions,
+        team_manage: true,
+        member_manage: true,
+      };
+      const updateRes = await driver.actor.update_team_org_permissions({
+        team_id: second.id,
+        permissions: newPerms,
+      });
+      expect(extractOkResponse(updateRes)).toEqual({
+        team: {
+          id: second.id,
+          name: second.name,
+          permissions: newPerms,
+        },
+      });
+
+      // Verify via list_org_teams
+      const listRes = await driver.actor.list_org_teams({ org_id: org!.id });
+      const teams = extractOkResponse(listRes);
+      const updated = teams.find(t => t.id === second.id);
+      expect(updated?.permissions).toEqual(newPerms);
     });
   });
 });

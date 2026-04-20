@@ -59,6 +59,9 @@ const TeamSettings: FC = () => {
     [orgId, orgMap],
   );
 
+  const canTeamManage = organization?.yourPermissions.teamManage ?? false;
+  const canMemberManage = organization?.yourPermissions.memberManage ?? false;
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: '' },
@@ -187,7 +190,7 @@ const TeamSettings: FC = () => {
                       <FormLabel>Team Name</FormLabel>
 
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} disabled={!canTeamManage} />
                       </FormControl>
 
                       <FormMessage />
@@ -199,7 +202,7 @@ const TeamSettings: FC = () => {
                   type="submit"
                   className="w-full"
                   isLoading={form.formState.isSubmitting}
-                  disabled={!form.formState.isDirty}
+                  disabled={!form.formState.isDirty || !canTeamManage}
                 >
                   Save Changes
                 </LoadingButton>
@@ -248,64 +251,70 @@ const TeamSettings: FC = () => {
               </Table>
             )}
 
-            <Separator />
+            {canMemberManage && (
+              <>
+                <Separator />
 
-            <div className="space-y-3">
-              <p className="text-muted-foreground text-sm">
-                Add an existing organization member to this team.
+                <div className="space-y-3">
+                  <p className="text-muted-foreground text-sm">
+                    Add an existing organization member to this team.
+                  </p>
+
+                  {addableOrgMembers.length === 0 ? (
+                    <p className="text-muted-foreground text-sm italic">
+                      All organization members are already on this team.
+                    </p>
+                  ) : (
+                    <>
+                      <select
+                        className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
+                        value={selectedUserId}
+                        onChange={e => setSelectedUserId(e.target.value)}
+                      >
+                        <option value="">Select a member...</option>
+                        {addableOrgMembers.map(m => (
+                          <option key={m.id} value={m.id}>
+                            {m.email ?? m.id}
+                          </option>
+                        ))}
+                      </select>
+
+                      <LoadingButton
+                        isLoading={isAdding}
+                        disabled={!selectedUserId}
+                        onClick={onAddMember}
+                      >
+                        Add to Team
+                      </LoadingButton>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {canTeamManage && (
+          <Card className="mx-auto max-w-md">
+            <CardHeader>
+              <CardTitle>Danger Zone</CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Delete this team. All projects must be removed first.
               </p>
 
-              {addableOrgMembers.length === 0 ? (
-                <p className="text-muted-foreground text-sm italic">
-                  All organization members are already on this team.
-                </p>
-              ) : (
-                <>
-                  <select
-                    className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-                    value={selectedUserId}
-                    onChange={e => setSelectedUserId(e.target.value)}
-                  >
-                    <option value="">Select a member...</option>
-                    {addableOrgMembers.map(m => (
-                      <option key={m.id} value={m.id}>
-                        {m.email ?? m.id}
-                      </option>
-                    ))}
-                  </select>
-
-                  <LoadingButton
-                    isLoading={isAdding}
-                    disabled={!selectedUserId}
-                    onClick={onAddMember}
-                  >
-                    Add to Team
-                  </LoadingButton>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mx-auto max-w-md">
-          <CardHeader>
-            <CardTitle>Danger Zone</CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Delete this team. All projects must be removed first.
-            </p>
-
-            <LoadingButton
-              variant="destructive"
-              isLoading={isDeleting}
-              onClick={onDelete}
-            >
-              Delete Team
-            </LoadingButton>
-          </CardContent>
-        </Card>
+              <LoadingButton
+                variant="destructive"
+                isLoading={isDeleting}
+                onClick={onDelete}
+              >
+                Delete Team
+              </LoadingButton>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </Container>
   );

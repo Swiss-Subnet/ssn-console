@@ -1,4 +1,8 @@
 import { mapOkResponse } from '@/lib/api-models/error';
+import {
+  mapOrgPermissions,
+  type OrgPermissions,
+} from '@/lib/api-models/permissions';
 import type {
   ListMyOrganizationsResponse as ApiListMyOrganizationsResponse,
   CreateOrganizationRequest as ApiCreateOrganizationRequest,
@@ -18,6 +22,7 @@ import type {
 export type Organization = {
   id: string;
   name: string;
+  yourPermissions: OrgPermissions;
 };
 
 export type ListMyOrganizationsResponse = {
@@ -49,6 +54,7 @@ function mapOrganizationResponse(res: ApiOrganization): Organization {
   return {
     id: res.id,
     name: res.name,
+    yourPermissions: mapOrgPermissions(res.your_permissions),
   };
 }
 

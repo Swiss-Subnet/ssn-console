@@ -11,11 +11,13 @@ import {
   mapListOrgProjectsRequest,
   mapListOrgProjectsResponse,
   mapListProjectTeamsRequest,
-  mapListTeamsResponse,
+  mapListProjectTeamsResponse,
   mapRemoveTeamFromProjectRequest,
   mapRemoveTeamFromProjectResponse,
   mapUpdateProjectRequest,
   mapUpdateProjectResponse,
+  mapUpdateTeamProjectPermissionsRequest,
+  mapUpdateTeamProjectPermissionsResponse,
   type AddTeamToProjectRequest,
   type CreateProjectRequest,
   type DeleteProjectRequest,
@@ -24,10 +26,12 @@ import {
   type ListOrgProjectsRequest,
   type ListOrgProjectsResponse,
   type ListProjectTeamsRequest,
-  type ListTeamsResponse,
+  type ListProjectTeamsResponse,
   type ProjectResponse,
+  type ProjectTeamResponse,
   type RemoveTeamFromProjectRequest,
   type UpdateProjectRequest,
+  type UpdateTeamProjectPermissionsRequest,
 } from '@/lib/api-models';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import type { _SERVICE } from '@ssn/backend-api';
@@ -75,11 +79,11 @@ export class ProjectApi {
 
   public async listProjectTeams(
     req: ListProjectTeamsRequest,
-  ): Promise<ListTeamsResponse> {
+  ): Promise<ListProjectTeamsResponse> {
     const res = await this.actor.list_project_teams(
       mapListProjectTeamsRequest(req),
     );
-    return mapListTeamsResponse(res);
+    return mapListProjectTeamsResponse(res);
   }
 
   public async addTeamToProject(req: AddTeamToProjectRequest): Promise<void> {
@@ -96,5 +100,14 @@ export class ProjectApi {
       mapRemoveTeamFromProjectRequest(req),
     );
     mapRemoveTeamFromProjectResponse(res);
+  }
+
+  public async updateTeamProjectPermissions(
+    req: UpdateTeamProjectPermissionsRequest,
+  ): Promise<ProjectTeamResponse> {
+    const res = await this.actor.update_team_project_permissions(
+      mapUpdateTeamProjectPermissionsRequest(req),
+    );
+    return mapUpdateTeamProjectPermissionsResponse(res);
   }
 }

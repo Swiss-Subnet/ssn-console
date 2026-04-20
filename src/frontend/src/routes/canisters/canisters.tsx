@@ -60,7 +60,9 @@ const Canisters: FC = () => {
       ) : (
         <>
           <CanisterGrid className="mt-8" canisters={projectCanisters} />
-          <CreateCanisterButton className="mt-4" />
+          {project?.yourPermissions.canisterManage && (
+            <CreateCanisterButton className="mt-4" />
+          )}
         </>
       )}
     </>

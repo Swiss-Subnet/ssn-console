@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppStore, selectProjectMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
-import type { Team } from '@/lib/api-models';
+import type { OrgTeam, ProjectTeam } from '@/lib/api-models';
 import {
   Table,
   TableBody,
@@ -64,8 +64,8 @@ const ProjectSettings: FC = () => {
     defaultValues: { name: '' },
   });
 
-  const [orgTeams, setOrgTeams] = useState<Team[]>([]);
-  const [projectTeams, setProjectTeams] = useState<Team[]>([]);
+  const [orgTeams, setOrgTeams] = useState<OrgTeam[]>([]);
+  const [projectTeams, setProjectTeams] = useState<ProjectTeam[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
   const [removingTeamId, setRemovingTeamId] = useState<string | null>(null);
@@ -116,6 +116,9 @@ const ProjectSettings: FC = () => {
       </Container>
     );
   }
+
+  const canEditSettings = project.yourPermissions.projectSettings;
+  const canProjectAdmin = project.yourPermissions.projectAdmin;
 
   async function onSubmit(formData: FormData): Promise<void> {
     try {
@@ -202,7 +205,7 @@ const ProjectSettings: FC = () => {
                       <FormLabel>Project Name</FormLabel>
 
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} disabled={!canEditSettings} />
                       </FormControl>
 
                       <FormMessage />
@@ -214,7 +217,7 @@ const ProjectSettings: FC = () => {
                   type="submit"
                   className="w-full"
                   isLoading={form.formState.isSubmitting}
-                  disabled={!form.formState.isDirty}
+                  disabled={!form.formState.isDirty || !canEditSettings}
                 >
                   Save Changes
                 </LoadingButton>
@@ -246,15 +249,17 @@ const ProjectSettings: FC = () => {
                     <TableRow key={t.id}>
                       <TableCell>{t.name}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={removingTeamId === t.id}
-                          onClick={() => onRemoveTeam(t.id)}
-                          aria-label={`Remove ${t.name}`}
-                        >
-                          <X className="size-3.5" />
-                        </Button>
+                        {canProjectAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={removingTeamId === t.id}
+                            onClick={() => onRemoveTeam(t.id)}
+                            aria-label={`Remove ${t.name}`}
+                          >
+                            <X className="size-3.5" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -262,64 +267,70 @@ const ProjectSettings: FC = () => {
               </Table>
             )}
 
-            <Separator />
+            {canProjectAdmin && (
+              <>
+                <Separator />
 
-            <div className="space-y-3">
-              <p className="text-muted-foreground text-sm">
-                Attach an existing team to this project.
+                <div className="space-y-3">
+                  <p className="text-muted-foreground text-sm">
+                    Attach an existing team to this project.
+                  </p>
+
+                  {addableOrgTeams.length === 0 ? (
+                    <p className="text-muted-foreground text-sm italic">
+                      All teams in this organization are already attached.
+                    </p>
+                  ) : (
+                    <>
+                      <select
+                        className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
+                        value={selectedTeamId}
+                        onChange={e => setSelectedTeamId(e.target.value)}
+                      >
+                        <option value="">Select a team...</option>
+                        {addableOrgTeams.map(t => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <LoadingButton
+                        isLoading={isAdding}
+                        disabled={!selectedTeamId}
+                        onClick={onAddTeam}
+                      >
+                        Add Team
+                      </LoadingButton>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {canProjectAdmin && (
+          <Card className="mx-auto max-w-md">
+            <CardHeader>
+              <CardTitle>Danger Zone</CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Delete this project. All canisters must be removed first.
               </p>
 
-              {addableOrgTeams.length === 0 ? (
-                <p className="text-muted-foreground text-sm italic">
-                  All teams in this organization are already attached.
-                </p>
-              ) : (
-                <>
-                  <select
-                    className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-                    value={selectedTeamId}
-                    onChange={e => setSelectedTeamId(e.target.value)}
-                  >
-                    <option value="">Select a team...</option>
-                    {addableOrgTeams.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <LoadingButton
-                    isLoading={isAdding}
-                    disabled={!selectedTeamId}
-                    onClick={onAddTeam}
-                  >
-                    Add Team
-                  </LoadingButton>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mx-auto max-w-md">
-          <CardHeader>
-            <CardTitle>Danger Zone</CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Delete this project. All canisters must be removed first.
-            </p>
-
-            <LoadingButton
-              variant="destructive"
-              isLoading={isDeleting}
-              onClick={onDelete}
-            >
-              Delete Project
-            </LoadingButton>
-          </CardContent>
-        </Card>
+              <LoadingButton
+                variant="destructive"
+                isLoading={isDeleting}
+                onClick={onDelete}
+              >
+                Delete Project
+              </LoadingButton>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </Container>
   );

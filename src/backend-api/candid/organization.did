@@ -1,4 +1,5 @@
 import "../../canister-utils/error.did";
+import "./permissions.did";
 
 type ListMyOrganizationsResponse = variant {
   Ok : vec Organization;
@@ -66,6 +67,7 @@ type ListOrgUsersResponse = variant {
 type Organization = record {
   id : text;
   name : text;
+  your_permissions : OrgPermissions;
 };
 
 service : {

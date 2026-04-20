@@ -1,4 +1,9 @@
 import { mapOkResponse } from '@/lib/api-models/error';
+import {
+  mapProjectPermissions,
+  mapProjectPermissionsToApi,
+  type ProjectPermissions,
+} from '@/lib/api-models/permissions';
 import type {
   Project as ApiProject,
   CreateProjectRequest as ApiCreateProjectRequest,
@@ -17,12 +22,17 @@ import type {
   RemoveTeamFromProjectRequest as ApiRemoveTeamFromProjectRequest,
   RemoveTeamFromProjectResponse as ApiRemoveTeamFromProjectResponse,
   ListProjectTeamsRequest as ApiListProjectTeamsRequest,
+  UpdateTeamProjectPermissionsRequest as ApiUpdateTeamProjectPermissionsRequest,
+  UpdateTeamProjectPermissionsResponse as ApiUpdateTeamProjectPermissionsResponse,
 } from '@ssn/backend-api';
+import type { ProjectTeam } from '@/lib/api-models/team';
+import { mapProjectTeamResponse } from '@/lib/api-models/team';
 
 export type Project = {
   id: string;
   orgId: string;
   name: string;
+  yourPermissions: ProjectPermissions;
 };
 
 export function mapProjectResponse(res: ApiProject): Project {
@@ -30,6 +40,7 @@ export function mapProjectResponse(res: ApiProject): Project {
     id: res.id,
     orgId: res.org_id,
     name: res.name,
+    yourPermissions: mapProjectPermissions(res.your_permissions),
   };
 }
 
@@ -193,4 +204,31 @@ export function mapListProjectTeamsRequest(
   req: ListProjectTeamsRequest,
 ): ApiListProjectTeamsRequest {
   return { project_id: req.projectId };
+}
+
+export type UpdateTeamProjectPermissionsRequest = {
+  projectId: string;
+  teamId: string;
+  permissions: ProjectPermissions;
+};
+
+export function mapUpdateTeamProjectPermissionsRequest(
+  req: UpdateTeamProjectPermissionsRequest,
+): ApiUpdateTeamProjectPermissionsRequest {
+  return {
+    project_id: req.projectId,
+    team_id: req.teamId,
+    permissions: mapProjectPermissionsToApi(req.permissions),
+  };
+}
+
+export type ProjectTeamResponse = {
+  team: ProjectTeam;
+};
+
+export function mapUpdateTeamProjectPermissionsResponse(
+  res: ApiUpdateTeamProjectPermissionsResponse,
+): ProjectTeamResponse {
+  const okRes = mapOkResponse(res);
+  return { team: mapProjectTeamResponse(okRes.team) };
 }

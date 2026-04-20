@@ -1,4 +1,5 @@
 import "../../canister-utils/error.did";
+import "./permissions.did";
 
 type ListMyProjectsRequest = record {};
 
@@ -74,10 +75,24 @@ type RemoveTeamFromProjectResponse = variant {
   Err : ApiError;
 };
 
+type UpdateTeamProjectPermissionsRequest = record {
+  project_id : text;
+  team_id : text;
+  permissions : ProjectPermissions;
+};
+
+type UpdateTeamProjectPermissionsResponse = variant {
+  Ok : record {
+    team : ProjectTeam;
+  };
+  Err : ApiError;
+};
+
 type Project = record {
   org_id : text;
   id : text;
   name : text;
+  your_permissions : ProjectPermissions;
 };
 
 service : {
@@ -89,4 +104,5 @@ service : {
   delete_project : (DeleteProjectRequest) -> (DeleteProjectResponse);
   add_team_to_project : (AddTeamToProjectRequest) -> (AddTeamToProjectResponse);
   remove_team_from_project : (RemoveTeamFromProjectRequest) -> (RemoveTeamFromProjectResponse);
+  update_team_project_permissions : (UpdateTeamProjectPermissionsRequest) -> (UpdateTeamProjectPermissionsResponse);
 };

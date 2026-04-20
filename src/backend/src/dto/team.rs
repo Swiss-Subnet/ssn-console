@@ -1,12 +1,31 @@
+use super::{OrgPermissions, ProjectPermissions};
 use candid::CandidType;
 use serde::Deserialize;
 
 pub type ListTeamsResponse = Vec<Team>;
+pub type ListOrgTeamsResponse = Vec<OrgTeam>;
+pub type ListProjectTeamsResponse = Vec<ProjectTeam>;
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct Team {
     pub id: String,
     pub name: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct OrgTeam {
+    pub id: String,
+    pub name: String,
+    // Permissions this team holds within its parent org.
+    pub permissions: OrgPermissions,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ProjectTeam {
+    pub id: String,
+    pub name: String,
+    // Permissions this team holds on the project it was listed under.
+    pub permissions: ProjectPermissions,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
@@ -56,6 +75,29 @@ pub struct AddUserToTeamRequest {
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct AddUserToTeamResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct UpdateTeamOrgPermissionsRequest {
+    pub team_id: String,
+    pub permissions: OrgPermissions,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct UpdateTeamOrgPermissionsResponse {
+    pub team: OrgTeam,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct UpdateTeamProjectPermissionsRequest {
+    pub project_id: String,
+    pub team_id: String,
+    pub permissions: ProjectPermissions,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct UpdateTeamProjectPermissionsResponse {
+    pub team: ProjectTeam,
+}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct ListTeamUsersRequest {

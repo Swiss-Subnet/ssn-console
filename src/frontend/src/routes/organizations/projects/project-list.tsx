@@ -45,6 +45,8 @@ const ProjectList: FC = () => {
     );
   }
 
+  const canCreateProject = organization.yourPermissions.projectCreate;
+
   return (
     <Container>
       <div className="mx-auto max-w-md space-y-6">
@@ -60,13 +62,15 @@ const ProjectList: FC = () => {
             Back
           </Button>
 
-          <Button
-            size="sm"
-            onClick={() => navigate(`/organizations/${orgId}/projects/new`)}
-          >
-            <Plus className="mr-1 size-3.5" />
-            New Project
-          </Button>
+          {canCreateProject && (
+            <Button
+              size="sm"
+              onClick={() => navigate(`/organizations/${orgId}/projects/new`)}
+            >
+              <Plus className="mr-1 size-3.5" />
+              New Project
+            </Button>
+          )}
         </div>
 
         <Card>

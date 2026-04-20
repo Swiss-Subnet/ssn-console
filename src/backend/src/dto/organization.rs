@@ -1,3 +1,4 @@
+use super::OrgPermissions;
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -7,6 +8,10 @@ pub type ListMyOrganizationsResponse = Vec<Organization>;
 pub struct Organization {
     pub id: String,
     pub name: String,
+    // Union of the caller's org-level permissions across every team they
+    // belong to within this org. Used by clients to gate UI without a
+    // follow-up request.
+    pub your_permissions: OrgPermissions,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

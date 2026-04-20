@@ -9,7 +9,7 @@ import { useEffect, useState, type FC } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { isNil } from '@/lib/nil';
 import { selectOrgMap } from '@/lib/store';
-import type { Team } from '@/lib/api-models';
+import type { OrgTeam } from '@/lib/api-models';
 
 const TeamList: FC = () => {
   const { orgId } = useParams();
@@ -18,7 +18,7 @@ const TeamList: FC = () => {
   const orgMap = useAppStore(selectOrgMap);
   const organization = orgId ? orgMap.get(orgId) : undefined;
 
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<OrgTeam[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +46,8 @@ const TeamList: FC = () => {
     );
   }
 
+  const canManageTeams = organization.yourPermissions.teamManage;
+
   return (
     <Container>
       <Breadcrumbs
@@ -64,13 +66,15 @@ const TeamList: FC = () => {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Teams in {organization.name}</CardTitle>
 
-            <Button
-              size="sm"
-              onClick={() => navigate(`/organizations/${orgId}/teams/new`)}
-            >
-              <Plus className="mr-1 size-3.5" />
-              New Team
-            </Button>
+            {canManageTeams && (
+              <Button
+                size="sm"
+                onClick={() => navigate(`/organizations/${orgId}/teams/new`)}
+              >
+                <Plus className="mr-1 size-3.5" />
+                New Team
+              </Button>
+            )}
           </CardHeader>
 
           <CardContent>

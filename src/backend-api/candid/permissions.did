@@ -1,0 +1,18 @@
+type OrgPermissions = record {
+  org_admin : bool;
+  member_manage : bool;
+  team_manage : bool;
+  project_create : bool;
+  billing_manage : bool;
+};
+
+type ProjectPermissions = record {
+  project_admin : bool;
+  canister_manage : bool;
+  proposal_create : bool;
+  proposal_approve : bool;
+  canister_operate : bool;
+  canister_read : bool;
+  approval_policy_manage : bool;
+  project_settings : bool;
+};

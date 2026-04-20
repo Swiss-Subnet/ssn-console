@@ -3,9 +3,10 @@ use crate::{
         AddTeamToProjectRequest, AddTeamToProjectResponse, CreateProjectRequest,
         CreateProjectResponse, DeleteProjectRequest, DeleteProjectResponse, GetProjectRequest,
         GetProjectResponse, ListMyProjectsRequest, ListMyProjectsResponse, ListOrgProjectsRequest,
-        ListOrgProjectsResponse, ListProjectTeamsRequest, ListTeamsResponse,
+        ListOrgProjectsResponse, ListProjectTeamsRequest, ListProjectTeamsResponse,
         RemoveTeamFromProjectRequest, RemoveTeamFromProjectResponse, UpdateProjectRequest,
-        UpdateProjectResponse,
+        UpdateProjectResponse, UpdateTeamProjectPermissionsRequest,
+        UpdateTeamProjectPermissionsResponse,
     },
     service::project_service,
 };
@@ -73,7 +74,7 @@ fn delete_project(req: DeleteProjectRequest) -> ApiResultDto<DeleteProjectRespon
 }
 
 #[query]
-fn list_project_teams(req: ListProjectTeamsRequest) -> ApiResultDto<ListTeamsResponse> {
+fn list_project_teams(req: ListProjectTeamsRequest) -> ApiResultDto<ListProjectTeamsResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
@@ -102,4 +103,16 @@ fn remove_team_from_project(
     }
 
     project_service::remove_team_from_project(&caller, req).into()
+}
+
+#[update]
+fn update_team_project_permissions(
+    req: UpdateTeamProjectPermissionsRequest,
+) -> ApiResultDto<UpdateTeamProjectPermissionsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    project_service::update_team_project_permissions(&caller, req).into()
 }

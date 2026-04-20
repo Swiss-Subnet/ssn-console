@@ -2,7 +2,8 @@ use crate::{
     dto::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
         DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
-        ListOrgTeamsRequest, ListTeamUsersRequest, ListTeamUsersResponse, ListTeamsResponse,
+        ListOrgTeamsRequest, ListOrgTeamsResponse, ListTeamUsersRequest, ListTeamUsersResponse,
+        ListTeamsResponse, UpdateTeamOrgPermissionsRequest, UpdateTeamOrgPermissionsResponse,
         UpdateTeamRequest, UpdateTeamResponse,
     },
     service::team_service,
@@ -21,7 +22,7 @@ fn list_my_teams() -> ApiResultDto<ListTeamsResponse> {
 }
 
 #[query]
-fn list_org_teams(req: ListOrgTeamsRequest) -> ApiResultDto<ListTeamsResponse> {
+fn list_org_teams(req: ListOrgTeamsRequest) -> ApiResultDto<ListOrgTeamsResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
@@ -88,4 +89,16 @@ fn list_team_users(req: ListTeamUsersRequest) -> ApiResultDto<ListTeamUsersRespo
     }
 
     team_service::list_team_users(&caller, req).into()
+}
+
+#[update]
+fn update_team_org_permissions(
+    req: UpdateTeamOrgPermissionsRequest,
+) -> ApiResultDto<UpdateTeamOrgPermissionsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    team_service::update_team_org_permissions(&caller, req).into()
 }

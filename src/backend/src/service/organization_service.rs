@@ -25,7 +25,13 @@ const MAX_ORGS_PER_USER: usize = 20;
 pub fn list_my_organizations(caller: &Principal) -> ApiResult<ListMyOrganizationsResponse> {
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
 
-    let organizations = organization_repository::list_user_orgs(user_id);
+    let organizations = organization_repository::list_user_orgs(user_id)
+        .into_iter()
+        .map(|(org_id, org)| {
+            let perms = team_repository::aggregate_user_org_permissions(user_id, org_id);
+            (org_id, org, perms)
+        })
+        .collect();
     Ok(map_list_my_organizations_response(organizations))
 }
 
@@ -77,7 +83,14 @@ pub fn create_organization(
         );
     }
 
-    Ok(map_organization_to_response(org_id, org))
+    // The caller is the sole member of the freshly-created default team,
+    // which was created with OrgPermissions::ALL. Aggregation is equivalent,
+    // but a direct constant keeps the bootstrap predictable.
+    Ok(map_organization_to_response(
+        org_id,
+        org,
+        OrgPermissions::ALL,
+    ))
 }
 
 pub fn get_organization(
@@ -90,7 +103,11 @@ pub fn get_organization(
     let org =
         organization_repository::get_org(auth.org_id()).expect("org must exist after OrgAuth");
 
-    Ok(map_organization_to_response(auth.org_id(), org))
+    Ok(map_organization_to_response(
+        auth.org_id(),
+        org,
+        auth.perms(),
+    ))
 }
 
 pub fn update_organization(
@@ -106,7 +123,11 @@ pub fn update_organization(
     };
     organization_repository::update_org(auth.org_id(), org.clone())?;
 
-    Ok(map_organization_to_response(auth.org_id(), org))
+    Ok(map_organization_to_response(
+        auth.org_id(),
+        org,
+        auth.perms(),
+    ))
 }
 
 // Deleting an org requires all projects to be removed first. Since

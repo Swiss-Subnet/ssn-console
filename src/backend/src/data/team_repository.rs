@@ -113,12 +113,20 @@ pub fn is_user_in_team(user_id: Uuid, team_id: Uuid) -> bool {
     with_state(|s| s.team_user_index.contains(&(team_id, user_id)))
 }
 
-#[allow(dead_code)]
-pub fn get_org_team_permissions(org_id: Uuid, team_id: Uuid) -> Option<OrgPermissions> {
-    with_state(|s| {
-        s.organization_team_permissions_index
+// Overwrite the org permissions granted to `team_id` within `org_id`. No-op
+// if the link is absent. Callers must check any invariants (e.g. ORG_ADMIN
+// populated) before calling — on the IC a post-mutation error does not roll
+// back state.
+pub fn set_org_team_permissions(org_id: Uuid, team_id: Uuid, permissions: OrgPermissions) {
+    mutate_state(|s| {
+        if s.organization_team_permissions_index
             .get(&(org_id, team_id))
-    })
+            .is_some()
+        {
+            s.organization_team_permissions_index
+                .insert((org_id, team_id), permissions);
+        }
+    });
 }
 
 // Union the OrgPermissions of every team the user belongs to within `org_id`.
@@ -174,19 +182,6 @@ pub fn add_user_to_team(user_id: Uuid, team_id: Uuid) {
     });
 }
 
-pub fn list_org_teams(org_id: Uuid) -> Vec<(Uuid, Team)> {
-    with_state(|s| {
-        s.organization_team_permissions_index
-            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .filter_map(|entry| {
-                let (_, team_id) = *entry.key();
-                s.teams.get(&team_id).map(|team| (team_id, team))
-            })
-            .collect()
-    })
-}
-
-#[allow(dead_code)]
 pub fn list_org_teams_with_permissions(org_id: Uuid) -> Vec<(Uuid, Team, OrgPermissions)> {
     with_state(|s| {
         s.organization_team_permissions_index

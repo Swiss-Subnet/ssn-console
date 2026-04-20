@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  allOrgPermissions,
+  allProjectPermissions,
   noProfileError,
   TestDriver,
   unauthenticatedError,
@@ -264,6 +266,7 @@ describe('User Profile', () => {
       expect(organizations[0]).toEqual({
         id: expect.any(String),
         name: 'Default Organization',
+        your_permissions: allOrgPermissions,
       });
 
       const projectsRes = await driver.actor.list_my_projects({});
@@ -273,6 +276,7 @@ describe('User Profile', () => {
         id: expect.any(String),
         org_id: organizations[0]!.id,
         name: 'Default Project',
+        your_permissions: allProjectPermissions,
       });
 
       const teamsRes = await driver.actor.list_my_teams();
@@ -324,6 +328,7 @@ describe('User Profile', () => {
       expect(organizations[0]).toEqual({
         id: expect.any(String),
         name: 'Default Organization',
+        your_permissions: allOrgPermissions,
       });
 
       const projectsRes = await driver.actor.list_my_projects({});
@@ -333,6 +338,7 @@ describe('User Profile', () => {
         id: expect.any(String),
         org_id: organizations[0]!.id,
         name: 'Default Project',
+        your_permissions: allProjectPermissions,
       });
 
       const teamsRes = await driver.actor.list_my_teams();
