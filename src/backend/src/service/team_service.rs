@@ -7,7 +7,9 @@ use crate::{
         UpdateTeamRequest, UpdateTeamResponse,
     },
     mapping::{map_list_team_users_response, map_list_teams_response, map_team_to_response},
-    service::access_control_service::{assert_org_admin_populated, require_team_access, OrgAuth},
+    service::access_control_service::{
+        assert_org_admin_populated_after_removing_team, require_team_access, OrgAuth,
+    },
     validation::TeamName,
 };
 use candid::Principal;
@@ -90,10 +92,10 @@ pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult<Dele
         ));
     }
 
+    assert_org_admin_populated_after_removing_team(auth.org_id(), team_id)?;
+
     project_repository::remove_team_project_links(team_id);
     team_repository::delete_team(team_id, auth.org_id())?;
-
-    assert_org_admin_populated(auth.org_id())?;
 
     Ok(DeleteTeamResponse {})
 }

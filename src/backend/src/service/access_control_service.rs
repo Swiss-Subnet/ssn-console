@@ -241,11 +241,16 @@ pub fn require_team_access(
     Ok((team, auth))
 }
 
-// Invariant: after any mutation that could break it, assert that at least
-// one team in the org still holds ORG_ADMIN and has at least one member.
-// Without this the org becomes unadministrable.
-pub fn assert_org_admin_populated(org_id: Uuid) -> ApiResult {
-    if !team_repository::org_admin_is_populated(org_id) {
+// Pre-mutation invariant: reject a team deletion that would leave the org
+// without any ORG_ADMIN-holding team with at least one member. Must be
+// called before the repository write — on the IC, returning Err after a
+// mutation does not roll back state, so a post-mutation check would leave
+// the org unadministrable on failure.
+pub fn assert_org_admin_populated_after_removing_team(
+    org_id: Uuid,
+    team_id: Uuid,
+) -> ApiResult {
+    if !team_repository::org_admin_is_populated_excluding_team(org_id, team_id) {
         return Err(ApiError::client_error(format!(
             "Organization with id {org_id} must retain at least one team with \
              ORG_ADMIN and at least one member."

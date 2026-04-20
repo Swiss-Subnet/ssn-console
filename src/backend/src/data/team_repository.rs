@@ -144,15 +144,20 @@ pub fn aggregate_user_org_permissions(user_id: Uuid, org_id: Uuid) -> OrgPermiss
     })
 }
 
-// Invariant check: at least one team in the org has ORG_ADMIN AND at least
-// one member. Called after any mutation that could break this (team
-// deletion, permission revocation, member removal).
-pub fn org_admin_is_populated(org_id: Uuid) -> bool {
+// Invariant predicate: would the org still have at least one team holding
+// ORG_ADMIN with at least one member if `excluded_team_id` were removed?
+// Used as a pre-mutation check on delete paths — on the IC, returning Err
+// after a mutation does not roll back state, so this must be evaluated
+// before any repository write that could break the invariant.
+pub fn org_admin_is_populated_excluding_team(org_id: Uuid, excluded_team_id: Uuid) -> bool {
     with_state(|s| {
         s.organization_team_permissions_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
             .any(|entry| {
                 let (_, team_id) = *entry.key();
+                if team_id == excluded_team_id {
+                    return false;
+                }
                 entry.value().contains(OrgPermissions::ORG_ADMIN)
                     && s.team_user_index
                         .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
