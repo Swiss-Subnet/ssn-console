@@ -67,6 +67,33 @@ pub fn is_team_in_project(team_id: Uuid, project_id: Uuid) -> bool {
     })
 }
 
+#[allow(dead_code)]
+pub fn get_project_team_permissions(project_id: Uuid, team_id: Uuid) -> Option<ProjectPermissions> {
+    with_state(|s| s.project_team_permissions_index.get(&(project_id, team_id)))
+}
+
+// Union ProjectPermissions of every team in `team_ids` that is linked to
+// `project_id`. Also returns whether any of those teams were linked.
+pub fn aggregate_team_project_permissions(
+    team_ids: &[Uuid],
+    project_id: Uuid,
+) -> (ProjectPermissions, bool) {
+    with_state(|s| {
+        let mut perms = ProjectPermissions::EMPTY;
+        let mut has_link = false;
+        for team_id in team_ids {
+            if let Some(p) = s
+                .project_team_permissions_index
+                .get(&(project_id, *team_id))
+            {
+                perms = perms.union(p);
+                has_link = true;
+            }
+        }
+        (perms, has_link)
+    })
+}
+
 pub fn list_project_team_ids(project_id: Uuid) -> Vec<Uuid> {
     with_state(|s| {
         s.project_team_permissions_index

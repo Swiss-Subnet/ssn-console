@@ -7,7 +7,7 @@ import {
   inactiveUserError,
   latestTermsAndConditionsError,
   noProfileError,
-  notOwnedProjectError,
+  projectNotFoundOrNoAccessError,
   TestDriver,
   unauthenticatedError,
 } from '../support';
@@ -217,7 +217,7 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a project the user does not have access to', async () => {
-      const [aliceIdentity, aliceProfile] = await driver.users.createUser();
+      const [aliceIdentity] = await driver.users.createUser();
 
       const bobIdentity = generateRandomIdentity();
       driver.actor.setIdentity(bobIdentity);
@@ -229,18 +229,20 @@ describe('Canisters', () => {
         project_id: bobProject.id,
         operation: [{ CreateCanister: {} }],
       });
-      expect(res).toEqual(notOwnedProjectError(aliceProfile.id, bobProject.id));
+      // Same error as "project does not exist" below: cross-org access and
+      // non-existent ids must be indistinguishable.
+      expect(res).toEqual(projectNotFoundOrNoAccessError(bobProject.id));
     });
 
     it('should return an error for a project that does not exist', async () => {
-      const [aliceIdentity, aliceProfile] = await driver.users.createUser();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
 
       const res = await driver.actor.create_proposal({
         project_id: projectId,
         operation: [{ CreateCanister: {} }],
       });
-      expect(res).toEqual(notOwnedProjectError(aliceProfile.id, projectId));
+      expect(res).toEqual(projectNotFoundOrNoAccessError(projectId));
     });
 
     it('should create a canister for a valid user', async () => {
@@ -394,7 +396,7 @@ describe('Canisters', () => {
     });
 
     it('should return an error for a project the user does not have access to', async () => {
-      const [aliceIdentity, aliceProfile] = await driver.users.createUser();
+      const [aliceIdentity] = await driver.users.createUser();
 
       const bobIdentity = generateRandomIdentity();
       driver.actor.setIdentity(bobIdentity);
@@ -413,11 +415,12 @@ describe('Canisters', () => {
           },
         ],
       });
-      expect(res).toEqual(notOwnedProjectError(aliceProfile.id, bobProject.id));
+      // Same error as "project does not exist" below.
+      expect(res).toEqual(projectNotFoundOrNoAccessError(bobProject.id));
     });
 
     it('should return an error for a project that does not exist', async () => {
-      const [aliceIdentity, aliceProfile] = await driver.users.createUser();
+      const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
 
       const res = await driver.actor.create_proposal({
@@ -431,7 +434,7 @@ describe('Canisters', () => {
           },
         ],
       });
-      expect(res).toEqual(notOwnedProjectError(aliceProfile.id, projectId));
+      expect(res).toEqual(projectNotFoundOrNoAccessError(projectId));
     });
 
     it('should return an error for a canister that does not exist', async () => {

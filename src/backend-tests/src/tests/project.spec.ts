@@ -5,6 +5,9 @@ import {
   extractOkResponse,
   noOrgError,
   noProfileError,
+  noProjectTeamLinkError,
+  projectNotFoundOrNoAccessError,
+  teamNotFoundOrNoAccessError,
   TestDriver,
   unauthenticatedError,
 } from '../support';
@@ -233,7 +236,7 @@ describe('Projects', () => {
     it('should return an error for a non-existent project', async () => {
       await setupUser();
       const res = await driver.actor.get_project({ project_id: fakeOrgId });
-      expect('Err' in res && res.Err.message).toContain('does not exist');
+      expect(res).toEqual(projectNotFoundOrNoAccessError(fakeOrgId));
     });
 
     it('should return an error if the caller is not in the org', async () => {
@@ -245,9 +248,11 @@ describe('Projects', () => {
         }),
       );
 
-      const bob = await setupUser();
+      await setupUser();
       const res = await driver.actor.get_project({ project_id: project.id });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      // Same error as "non-existent project" above: cross-org access must
+      // not be distinguishable from a missing id.
+      expect(res).toEqual(projectNotFoundOrNoAccessError(project.id));
     });
 
     it('should get a project', async () => {
@@ -285,7 +290,7 @@ describe('Projects', () => {
         project_id: fakeOrgId,
         name: 'x',
       });
-      expect('Err' in res && res.Err.message).toContain('does not exist');
+      expect(res).toEqual(projectNotFoundOrNoAccessError(fakeOrgId));
     });
 
     it('should return an error if the caller is not in the org', async () => {
@@ -297,12 +302,12 @@ describe('Projects', () => {
         }),
       );
 
-      const bob = await setupUser();
+      await setupUser();
       const res = await driver.actor.update_project({
         project_id: project.id,
         name: 'hijack',
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      expect(res).toEqual(projectNotFoundOrNoAccessError(project.id));
     });
 
     it('should return an error for an empty name', async () => {
@@ -352,7 +357,7 @@ describe('Projects', () => {
     it('should return an error for a non-existent project', async () => {
       await setupUser();
       const res = await driver.actor.delete_project({ project_id: fakeOrgId });
-      expect('Err' in res && res.Err.message).toContain('does not exist');
+      expect(res).toEqual(projectNotFoundOrNoAccessError(fakeOrgId));
     });
 
     it('should return an error if the caller is not in the org', async () => {
@@ -364,11 +369,11 @@ describe('Projects', () => {
         }),
       );
 
-      const bob = await setupUser();
+      await setupUser();
       const res = await driver.actor.delete_project({
         project_id: project.id,
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      expect(res).toEqual(projectNotFoundOrNoAccessError(project.id));
     });
 
     it('should return an error when deleting the last project', async () => {
@@ -445,11 +450,11 @@ describe('Projects', () => {
         }),
       );
 
-      const bob = await setupUser();
+      await setupUser();
       const res = await driver.actor.list_project_teams({
         project_id: project.id,
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org.id));
+      expect(res).toEqual(projectNotFoundOrNoAccessError(project.id));
     });
 
     it('should list teams attached to a project', async () => {
@@ -484,7 +489,7 @@ describe('Projects', () => {
         project_id: fakeOrgId,
         team_id: fakeOrgId,
       });
-      expect('Err' in res && res.Err.message).toContain('Project with id');
+      expect(res).toEqual(projectNotFoundOrNoAccessError(fakeOrgId));
     });
 
     it('should return an error for a non-existent team', async () => {
@@ -500,7 +505,7 @@ describe('Projects', () => {
         project_id: project.id,
         team_id: fakeOrgId,
       });
-      expect('Err' in res && res.Err.message).toContain('Team with id');
+      expect(res).toEqual(teamNotFoundOrNoAccessError(fakeOrgId));
     });
 
     it('should return an error when the team is in another org', async () => {
@@ -523,7 +528,9 @@ describe('Projects', () => {
         project_id: project.id,
         team_id: bobTeam!.id,
       });
-      expect('Err' in res && res.Err.message).toContain('same organization');
+      // Same error as "non-existent team" above: a project admin must not
+      // be able to probe team ids across orgs.
+      expect(res).toEqual(teamNotFoundOrNoAccessError(bobTeam!.id));
     });
 
     it('should attach a team to a project', async () => {
@@ -650,6 +657,104 @@ describe('Projects', () => {
         team_id: team.id,
       });
       expect(res).toEqual({ Ok: {} });
+    });
+  });
+
+  // An org member whose teams have no link to a given project must be denied
+  // on every project-scoped endpoint, even though they can see the org. This
+  // exercises the `has_link = false` branch of ProjectAuth inside the same
+  // org, which is distinct from the cross-org deny path covered elsewhere.
+  // All deny assertions share one PocketIC instance.
+  describe('permission enforcement for in-org member with unlinked team', () => {
+    it('should deny project-scoped ops when the caller has no team link', async () => {
+      const alice = await setupUser();
+      const defaultProject = await driver.getDefaultProject();
+
+      // Alice creates a second team, Team B. New teams have no project links
+      // until explicitly attached via add_team_to_project.
+      const createTeamRes = await driver.actor.create_team({
+        org_id: alice.org.id,
+        name: 'Team B',
+      });
+      const { team: teamB } = extractOkResponse(createTeamRes);
+
+      // Bob signs up (lands in his own default org), then Alice invites him
+      // into her org. Bob accepts, then Alice places him on Team B ONLY,
+      // never on the default team that owns defaultProject.
+      const bob = await setupUser();
+      driver.actor.setIdentity(alice.identity);
+      const inviteRes = await driver.actor.create_org_invite({
+        org_id: alice.org.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite } = extractOkResponse(inviteRes);
+      driver.actor.setIdentity(bob.identity);
+      await driver.actor.accept_org_invite({ invite_id: invite.id });
+      driver.actor.setIdentity(alice.identity);
+      await driver.actor.add_user_to_team({
+        team_id: teamB.id,
+        user_id: bob.profile.id,
+      });
+
+      // Bob acts. He is in alice.org, so org-scoped reads succeed.
+      driver.actor.setIdentity(bob.identity);
+
+      const myProjects = await driver.actor.list_my_projects({});
+      expect(extractOkResponse(myProjects).projects).toEqual([]);
+
+      const orgProjects = await driver.actor.list_org_projects({
+        org_id: alice.org.id,
+      });
+      const { projects } = extractOkResponse(orgProjects);
+      expect(projects.map(p => p.id)).toContain(defaultProject.id);
+
+      // Project-scoped endpoints must all deny — Bob's only team (Team B) is
+      // not linked to defaultProject, so ProjectAuth::require fails at the
+      // has_link check with the "does not have access" unauthorized error.
+      const getRes = await driver.actor.get_project({
+        project_id: defaultProject.id,
+      });
+      expect(getRes).toEqual(
+        noProjectTeamLinkError(bob.profile.id, defaultProject.id),
+      );
+
+      const updateRes = await driver.actor.update_project({
+        project_id: defaultProject.id,
+        name: 'Hijacked',
+      });
+      expect(updateRes).toEqual(
+        noProjectTeamLinkError(bob.profile.id, defaultProject.id),
+      );
+
+      const deleteRes = await driver.actor.delete_project({
+        project_id: defaultProject.id,
+      });
+      expect(deleteRes).toEqual(
+        noProjectTeamLinkError(bob.profile.id, defaultProject.id),
+      );
+
+      const listTeamsRes = await driver.actor.list_project_teams({
+        project_id: defaultProject.id,
+      });
+      expect(listTeamsRes).toEqual(
+        noProjectTeamLinkError(bob.profile.id, defaultProject.id),
+      );
+
+      const addTeamRes = await driver.actor.add_team_to_project({
+        project_id: defaultProject.id,
+        team_id: teamB.id,
+      });
+      expect(addTeamRes).toEqual(
+        noProjectTeamLinkError(bob.profile.id, defaultProject.id),
+      );
+
+      const removeTeamRes = await driver.actor.remove_team_from_project({
+        project_id: defaultProject.id,
+        team_id: teamB.id,
+      });
+      expect(removeTeamRes).toEqual(
+        noProjectTeamLinkError(bob.profile.id, defaultProject.id),
+      );
     });
   });
 });

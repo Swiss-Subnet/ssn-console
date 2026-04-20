@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   anonymousIdentity,
   extractOkResponse,
+  lacksOrgPermissionError,
   noOrgError,
   noProfileError,
+  teamNotFoundOrNoAccessError,
   TestDriver,
   unauthenticatedError,
 } from '../support';
@@ -215,12 +217,7 @@ describe('Teams', () => {
     it('should return an error for a non-existent team', async () => {
       await setupUser();
       const res = await driver.actor.get_team({ team_id: fakeTeamId });
-      expect(res).toEqual({
-        Err: {
-          code: [{ ClientError: {} }],
-          message: `Team with id ${fakeTeamId} does not exist.`,
-        },
-      });
+      expect(res).toEqual(teamNotFoundOrNoAccessError(fakeTeamId));
     });
 
     it('should return an error if the user is not in the org', async () => {
@@ -230,11 +227,13 @@ describe('Teams', () => {
       });
       const [aliceDefaultTeam] = extractOkResponse(aliceTeamsRes);
 
-      const bob = await setupUser();
+      await setupUser();
       const getRes = await driver.actor.get_team({
         team_id: aliceDefaultTeam!.id,
       });
-      expect(getRes).toEqual(noOrgError(bob.profile.id, alice.org!.id));
+      // Same error as "non-existent team" above: cross-org access must not
+      // be distinguishable from a missing id.
+      expect(getRes).toEqual(teamNotFoundOrNoAccessError(aliceDefaultTeam!.id));
     });
 
     it('should get a team', async () => {
@@ -266,12 +265,7 @@ describe('Teams', () => {
         team_id: fakeTeamId,
         name: 'New Name',
       });
-      expect(res).toEqual({
-        Err: {
-          code: [{ ClientError: {} }],
-          message: `Team with id ${fakeTeamId} does not exist.`,
-        },
-      });
+      expect(res).toEqual(teamNotFoundOrNoAccessError(fakeTeamId));
     });
 
     it('should return an error if the user is not in the org', async () => {
@@ -281,12 +275,12 @@ describe('Teams', () => {
       });
       const [aliceDefaultTeam] = extractOkResponse(aliceTeamsRes);
 
-      const bob = await setupUser();
+      await setupUser();
       const res = await driver.actor.update_team({
         team_id: aliceDefaultTeam!.id,
         name: 'Hijacked',
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
+      expect(res).toEqual(teamNotFoundOrNoAccessError(aliceDefaultTeam!.id));
     });
 
     it('should return an error for an empty name', async () => {
@@ -358,12 +352,7 @@ describe('Teams', () => {
     it('should return an error for a non-existent team', async () => {
       await setupUser();
       const res = await driver.actor.delete_team({ team_id: fakeTeamId });
-      expect(res).toEqual({
-        Err: {
-          code: [{ ClientError: {} }],
-          message: `Team with id ${fakeTeamId} does not exist.`,
-        },
-      });
+      expect(res).toEqual(teamNotFoundOrNoAccessError(fakeTeamId));
     });
 
     it('should return an error if the user is not in the org', async () => {
@@ -374,9 +363,9 @@ describe('Teams', () => {
       });
       const { team } = extractOkResponse(createRes);
 
-      const bob = await setupUser();
+      await setupUser();
       const res = await driver.actor.delete_team({ team_id: team.id });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
+      expect(res).toEqual(teamNotFoundOrNoAccessError(team.id));
     });
 
     it('should return an error when deleting the last team', async () => {
@@ -446,12 +435,7 @@ describe('Teams', () => {
         team_id: fakeTeamId,
         user_id: profile.id,
       });
-      expect(res).toEqual({
-        Err: {
-          code: [{ ClientError: {} }],
-          message: `Team with id ${fakeTeamId} does not exist.`,
-        },
-      });
+      expect(res).toEqual(teamNotFoundOrNoAccessError(fakeTeamId));
     });
 
     it('should return an error if the caller is not in the org', async () => {
@@ -466,7 +450,7 @@ describe('Teams', () => {
         team_id: aliceDefaultTeam!.id,
         user_id: bob.profile.id,
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
+      expect(res).toEqual(teamNotFoundOrNoAccessError(aliceDefaultTeam!.id));
     });
 
     it('should return an error if the target user is not in the org', async () => {
@@ -560,11 +544,11 @@ describe('Teams', () => {
       });
       const [defaultTeam] = extractOkResponse(teamsRes);
 
-      const bob = await setupUser();
+      await setupUser();
       const res = await driver.actor.list_team_users({
         team_id: defaultTeam!.id,
       });
-      expect(res).toEqual(noOrgError(bob.profile.id, alice.org!.id));
+      expect(res).toEqual(teamNotFoundOrNoAccessError(defaultTeam!.id));
     });
 
     it('should be idempotent when adding an existing member', async () => {
@@ -578,6 +562,84 @@ describe('Teams', () => {
         user_id: profile.id,
       });
       expect(res).toEqual({ Ok: {} });
+    });
+  });
+
+  // An org member who is not in any team has an aggregate of OrgPermissions
+  // EMPTY, so every bit-gated op must be denied with the "lacks required
+  // permissions" error. Read-only ops that require only org membership
+  // (OrgPermissions::EMPTY) must still succeed. Bundled into a single
+  // PocketIC instance to keep test setup cost down.
+  describe('permission enforcement for in-org member with no team', () => {
+    it('should allow membership-only reads and reject bit-gated ops', async () => {
+      const alice = await setupUser();
+      const aliceTeamsRes = await driver.actor.list_org_teams({
+        org_id: alice.org!.id,
+      });
+      const [defaultTeam] = extractOkResponse(aliceTeamsRes);
+
+      // Bob signs up (gets his own default org), then Alice invites him into
+      // her org. After accept_org_invite Bob is a member of Alice's org but
+      // is in NO team → aggregate OrgPermissions = EMPTY.
+      const bob = await setupUser();
+      driver.actor.setIdentity(alice.identity);
+      const inviteRes = await driver.actor.create_org_invite({
+        org_id: alice.org!.id,
+        target: { UserId: bob.profile.id },
+      });
+      const { invite } = extractOkResponse(inviteRes);
+      driver.actor.setIdentity(bob.identity);
+      await driver.actor.accept_org_invite({ invite_id: invite.id });
+
+      // Read-only endpoints require only org membership (EMPTY) — allow.
+      const listTeamsRes = await driver.actor.list_org_teams({
+        org_id: alice.org!.id,
+      });
+      expect(extractOkResponse(listTeamsRes)).toHaveLength(1);
+
+      const getTeamRes = await driver.actor.get_team({
+        team_id: defaultTeam!.id,
+      });
+      expect(extractOkResponse(getTeamRes)).toEqual({ team: defaultTeam });
+
+      const listMembersRes = await driver.actor.list_team_users({
+        team_id: defaultTeam!.id,
+      });
+      expect(extractOkResponse(listMembersRes).map(m => m.id)).toEqual([
+        alice.profile.id,
+      ]);
+
+      // Bit-gated endpoints — deny.
+      const createRes = await driver.actor.create_team({
+        org_id: alice.org!.id,
+        name: 'Hijacked',
+      });
+      expect(createRes).toEqual(
+        lacksOrgPermissionError(bob.profile.id, alice.org!.id, 'TEAM_MANAGE'),
+      );
+
+      const updateRes = await driver.actor.update_team({
+        team_id: defaultTeam!.id,
+        name: 'Hijacked',
+      });
+      expect(updateRes).toEqual(
+        lacksOrgPermissionError(bob.profile.id, alice.org!.id, 'TEAM_MANAGE'),
+      );
+
+      const deleteRes = await driver.actor.delete_team({
+        team_id: defaultTeam!.id,
+      });
+      expect(deleteRes).toEqual(
+        lacksOrgPermissionError(bob.profile.id, alice.org!.id, 'TEAM_MANAGE'),
+      );
+
+      const addMemberRes = await driver.actor.add_user_to_team({
+        team_id: defaultTeam!.id,
+        user_id: bob.profile.id,
+      });
+      expect(addMemberRes).toEqual(
+        lacksOrgPermissionError(bob.profile.id, alice.org!.id, 'MEMBER_MANAGE'),
+      );
     });
   });
 });
