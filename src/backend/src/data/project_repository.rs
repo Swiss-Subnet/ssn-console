@@ -228,20 +228,6 @@ pub fn org_has_projects(org_id: Uuid) -> bool {
     })
 }
 
-pub fn assert_any_team_has_project(
-    user_id: &Uuid,
-    team_ids: &[Uuid],
-    project_to_check: Uuid,
-) -> ApiResult {
-    if !list_all_team_project_ids(team_ids).contains(&project_to_check) {
-        return Err(ApiError::unauthorized(format!(
-            "User with id {user_id} does not have access to project with id {project_to_check}"
-        )));
-    }
-
-    Ok(())
-}
-
 struct ProjectState {
     projects: ProjectMemory,
     project_team_index: ProjectTeamIndexMemory, // TODO: remove after migration has run on all environments

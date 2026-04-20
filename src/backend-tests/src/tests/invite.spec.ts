@@ -374,7 +374,8 @@ describe('Org Invites', () => {
       expect(res).toEqual({
         Err: {
           code: [{ Unauthorized: {} }],
-          message: 'Only the inviter can revoke this invite.',
+          message:
+            'Only the inviter or a member manager can revoke this invite.',
         },
       });
     });

@@ -103,17 +103,13 @@ pub fn add_user_to_org(user_id: Uuid, org_id: Uuid) {
     });
 }
 
+// Predicate-only membership check. Authorization-grade checks must go
+// through `service::access_control_service::OrgAuth` so that a successful
+// check produces a capability token rather than a bare bool. This function
+// is reserved for cases that are not themselves authorization decisions
+// (e.g. "is the invite target already a member" idempotency checks).
 pub fn is_user_in_org(user_id: Uuid, org_id: Uuid) -> bool {
     with_state(|s| s.organization_user_index.contains(&(org_id, user_id)))
-}
-
-pub fn assert_user_in_org(user_id: Uuid, org_id: Uuid) -> ApiResult {
-    if !is_user_in_org(user_id, org_id) {
-        return Err(ApiError::unauthorized(format!(
-            "User with id {user_id} does not belong to org with id {org_id}"
-        )));
-    }
-    Ok(())
 }
 
 struct OrganizationState {

@@ -77,7 +77,19 @@ pub struct OrgAuth {
 impl OrgAuth {
     pub fn require(caller: &Principal, org_id: Uuid, needed: OrgPermissions) -> ApiResult<Self> {
         let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-        organization_repository::assert_user_in_org(user_id, org_id)?;
+        Self::require_for_user(user_id, org_id, needed)
+    }
+
+    // Same checks as `require`, but skips the principal-to-user lookup
+    // because the caller has already resolved it. Used by helpers like
+    // `require_team_access` that perform the lookup up front so they can
+    // surface resource-specific errors before the membership check runs.
+    fn require_for_user(user_id: Uuid, org_id: Uuid, needed: OrgPermissions) -> ApiResult<Self> {
+        if !organization_repository::is_user_in_org(user_id, org_id) {
+            return Err(ApiError::unauthorized(format!(
+                "User with id {user_id} does not belong to org with id {org_id}"
+            )));
+        }
 
         let perms = team_repository::aggregate_user_org_permissions(user_id, org_id);
         if !perms.contains(needed) {
@@ -102,9 +114,22 @@ impl OrgAuth {
         self.org_id
     }
 
-    #[allow(dead_code)]
     pub fn perms(&self) -> OrgPermissions {
         self.perms
+    }
+
+    // Assert that another user is a member of the same org this token
+    // authorizes. For use in endpoints that manipulate a peer user
+    // (e.g. add_user_to_team) without re-deriving the org_id from the
+    // peer's identity.
+    pub fn assert_member(&self, target_user_id: Uuid) -> ApiResult {
+        if !organization_repository::is_user_in_org(target_user_id, self.org_id) {
+            return Err(ApiError::unauthorized(format!(
+                "User with id {target_user_id} does not belong to org with id {}",
+                self.org_id
+            )));
+        }
+        Ok(())
     }
 }
 
@@ -212,7 +237,7 @@ pub fn require_team_access(
         return Err(team_not_found_or_no_access(team_id));
     }
 
-    let auth = OrgAuth::require(caller, team.org_id, needed)?;
+    let auth = OrgAuth::require_for_user(user_id, team.org_id, needed)?;
     Ok((team, auth))
 }
 

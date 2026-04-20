@@ -120,7 +120,7 @@ pub fn add_user_to_team(
     let team_id = Uuid::try_from(req.team_id.as_str())?;
     let target_user_id = Uuid::try_from(req.user_id.as_str())?;
     let (_team, auth) = require_team_access(caller, team_id, OrgPermissions::MEMBER_MANAGE)?;
-    crate::data::organization_repository::assert_user_in_org(target_user_id, auth.org_id())?;
+    auth.assert_member(target_user_id)?;
 
     if team_repository::is_user_in_team(target_user_id, team_id) {
         return Ok(AddUserToTeamResponse {});

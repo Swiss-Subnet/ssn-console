@@ -699,8 +699,14 @@ describe('Projects', () => {
       // Bob acts. He is in alice.org, so org-scoped reads succeed.
       driver.actor.setIdentity(bob.identity);
 
+      // Bob still has his own signup-created default project (in his own
+      // org) — list_my_projects is team-scoped, not org-scoped — but
+      // Alice's defaultProject must not appear since his only team in her
+      // org (Team B) has no link to it.
       const myProjects = await driver.actor.list_my_projects({});
-      expect(extractOkResponse(myProjects).projects).toEqual([]);
+      expect(
+        extractOkResponse(myProjects).projects.map(p => p.id),
+      ).not.toContain(defaultProject.id);
 
       const orgProjects = await driver.actor.list_org_projects({
         org_id: alice.org.id,
