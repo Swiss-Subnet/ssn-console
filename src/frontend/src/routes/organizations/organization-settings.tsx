@@ -198,7 +198,10 @@ const OrganizationSettings: FC = () => {
           canCreateProject={organization.yourPermissions.projectCreate}
         />
 
-        <OrganizationMembers members={members} />
+        <OrganizationMembers
+          members={members}
+          canSeeDetails={organization.yourPermissions.memberManage}
+        />
 
         <OrganizationInvitations orgId={orgId} />
 

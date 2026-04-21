@@ -13,10 +13,12 @@ import type { FC } from 'react';
 
 interface OrganizationMembersProps {
   members: OrgUser[];
+  canSeeDetails: boolean;
 }
 
 export const OrganizationMembers: FC<OrganizationMembersProps> = ({
   members,
+  canSeeDetails,
 }) => {
   return (
     <Card className="mx-auto max-w-2xl">
@@ -32,6 +34,7 @@ export const OrganizationMembers: FC<OrganizationMembersProps> = ({
             <TableHeader>
               <TableRow>
                 <TableHead>Email</TableHead>
+                {canSeeDetails && <TableHead>Teams</TableHead>}
                 <TableHead>User ID</TableHead>
               </TableRow>
             </TableHeader>
@@ -39,15 +42,33 @@ export const OrganizationMembers: FC<OrganizationMembersProps> = ({
               {members.map(m => (
                 <TableRow key={m.id}>
                   <TableCell>
-                    {m.email ?? (
-                      <span className="text-muted-foreground">(no email)</span>
-                    )}
-                    {m.email && !m.emailVerified && (
-                      <Badge variant="outline" className="ml-2">
-                        Unverified
-                      </Badge>
-                    )}
+                    <span className="flex flex-wrap items-center gap-2">
+                      {m.email ?? (
+                        <span className="text-muted-foreground">
+                          (no email)
+                        </span>
+                      )}
+                      {m.email && !m.emailVerified && (
+                        <Badge variant="outline">Unverified</Badge>
+                      )}
+                      {canSeeDetails && m.isOrgAdmin && <Badge>Admin</Badge>}
+                    </span>
                   </TableCell>
+                  {canSeeDetails && (
+                    <TableCell>
+                      {m.teams.length === 0 ? (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      ) : (
+                        <span className="flex flex-wrap gap-1">
+                          {m.teams.map(t => (
+                            <Badge key={t.id} variant="secondary">
+                              {t.name}
+                            </Badge>
+                          ))}
+                        </span>
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell className="font-mono text-xs">{m.id}</TableCell>
                 </TableRow>
               ))}

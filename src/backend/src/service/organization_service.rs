@@ -1,8 +1,8 @@
 use crate::{
     data::{
-        approval_policy_repository, organization_repository, project_repository, team_repository,
-        user_profile_repository, ApprovalPolicy, OperationType, OrgPermissions, Organization,
-        PolicyType,
+        self, approval_policy_repository, organization_repository, project_repository,
+        team_repository, user_profile_repository, ApprovalPolicy, OperationType, OrgPermissions,
+        Organization, PolicyType,
     },
     dto::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
@@ -40,11 +40,47 @@ pub fn list_org_users(
     req: ListOrgUsersRequest,
 ) -> ApiResult<ListOrgUsersResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
-    OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
+    let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
+
+    // Team membership and admin status leak organizational structure, so
+    // only callers who can manage members see them. Other members still
+    // get the list of who is in the org, just without per-user details.
+    let can_see_details = auth.perms().contains(OrgPermissions::MEMBER_MANAGE);
+
+    // Resolve every team in the org once, so per-user enrichment is lookups.
+    let org_teams: std::collections::HashMap<Uuid, (data::Team, OrgPermissions)> =
+        if can_see_details {
+            team_repository::list_org_teams_with_permissions(org_id)
+                .into_iter()
+                .map(|(team_id, team, perms)| (team_id, (team, perms)))
+                .collect()
+        } else {
+            std::collections::HashMap::new()
+        };
 
     let users = organization_repository::list_org_users(org_id)
         .into_iter()
-        .filter_map(|id| user_profile_repository::get_user_profile_by_user_id(&id).map(|p| (id, p)))
+        .filter_map(|user_id| {
+            user_profile_repository::get_user_profile_by_user_id(&user_id)
+                .map(|profile| (user_id, profile))
+        })
+        .map(|(user_id, profile)| {
+            if !can_see_details {
+                return (user_id, profile, Vec::new(), false);
+            }
+            let team_ids = team_repository::list_user_teams_in_org(user_id, org_id);
+            let teams: Vec<(Uuid, data::Team)> = team_ids
+                .iter()
+                .filter_map(|tid| org_teams.get(tid).map(|(t, _)| (*tid, t.clone())))
+                .collect();
+            let is_org_admin = team_ids.iter().any(|tid| {
+                org_teams
+                    .get(tid)
+                    .map(|(_, p)| p.contains(OrgPermissions::ORG_ADMIN))
+                    .unwrap_or(false)
+            });
+            (user_id, profile, teams, is_org_admin)
+        })
         .collect::<Vec<_>>();
 
     Ok(map_list_org_users_response(users))

@@ -4,7 +4,7 @@ use crate::{
         ListMyOrganizationsResponse, ListOrgUsersResponse, OrgUser, Organization,
         OrganizationResponse,
     },
-    mapping::map_org_permissions,
+    mapping::{map_org_permissions, map_team},
 };
 use canister_utils::Uuid;
 
@@ -37,13 +37,20 @@ pub fn map_organization_to_response(
     }
 }
 
-pub fn map_list_org_users_response(users: Vec<(Uuid, data::UserProfile)>) -> ListOrgUsersResponse {
+pub type OrgUserEntry = (Uuid, data::UserProfile, Vec<(Uuid, data::Team)>, bool);
+
+pub fn map_list_org_users_response(users: Vec<OrgUserEntry>) -> ListOrgUsersResponse {
     users
         .into_iter()
-        .map(|(id, profile)| OrgUser {
+        .map(|(id, profile, teams, is_org_admin)| OrgUser {
             id: id.to_string(),
             email: profile.email,
             email_verified: profile.email_verified,
+            teams: teams
+                .into_iter()
+                .map(|(team_id, team)| map_team(team_id, team))
+                .collect(),
+            is_org_admin,
         })
         .collect()
 }

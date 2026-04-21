@@ -1,5 +1,9 @@
 import { LoadingButton } from '@/components/loading-button';
 import { Container } from '@/components/layout/container';
+import {
+  PermissionsEditor,
+  projectPermissionFields,
+} from '@/components/permissions-editor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -13,15 +17,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppStore, selectProjectMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
-import type { OrgTeam, ProjectTeam } from '@/lib/api-models';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import type {
+  OrgTeam,
+  ProjectPermissions,
+  ProjectTeam,
+} from '@/lib/api-models';
 import { Separator } from '@/components/ui/separator';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, X } from 'lucide-react';
@@ -51,6 +51,7 @@ const ProjectSettings: FC = () => {
     loadProjectTeams,
     addTeamToProject,
     removeTeamFromProject,
+    updateTeamProjectPermissions,
   } = useAppStore();
   const projectMap = useAppStore(selectProjectMap);
 
@@ -142,6 +143,19 @@ const ProjectSettings: FC = () => {
     } finally {
       setIsAdding(false);
     }
+  }
+
+  async function onSaveTeamPermissions(
+    teamId: string,
+    permissions: ProjectPermissions,
+  ): Promise<void> {
+    const updated = await updateTeamProjectPermissions(
+      projectId!,
+      teamId,
+      permissions,
+    );
+    setProjectTeams(prev => prev.map(t => (t.id === teamId ? updated : t)));
+    showSuccessToast('Permissions updated');
   }
 
   async function onRemoveTeam(teamId: string): Promise<void> {
@@ -237,34 +251,34 @@ const ProjectSettings: FC = () => {
                 No teams attached yet.
               </p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Team</TableHead>
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {projectTeams.map(t => (
-                    <TableRow key={t.id}>
-                      <TableCell>{t.name}</TableCell>
-                      <TableCell>
-                        {canProjectAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={removingTeamId === t.id}
-                            onClick={() => onRemoveTeam(t.id)}
-                            aria-label={`Remove ${t.name}`}
-                          >
-                            <X className="size-3.5" />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="space-y-6">
+                {projectTeams.map((t, idx) => (
+                  <div key={t.id} className="space-y-4">
+                    {idx > 0 && <Separator />}
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{t.name}</p>
+                      {canProjectAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={removingTeamId === t.id}
+                          onClick={() => onRemoveTeam(t.id)}
+                          aria-label={`Remove ${t.name}`}
+                        >
+                          <X className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    <PermissionsEditor
+                      value={t.permissions}
+                      fields={projectPermissionFields}
+                      disabled={!canProjectAdmin}
+                      errorToastTitle="Failed to update permissions"
+                      onSave={next => onSaveTeamPermissions(t.id, next)}
+                    />
+                  </div>
+                ))}
+              </div>
             )}
 
             {canProjectAdmin && (

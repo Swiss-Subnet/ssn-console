@@ -1,4 +1,4 @@
-use super::OrgPermissions;
+use super::{OrgPermissions, Team};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -57,6 +57,12 @@ pub struct OrgUser {
     pub id: String,
     pub email: Option<String>,
     pub email_verified: bool,
+    // Teams the user belongs to within the org being listed.
+    pub teams: Vec<Team>,
+    // True iff any of `teams` holds `OrgPermissions::ORG_ADMIN`. Flags don't
+    // cascade, so this is specifically the ORG_ADMIN bit — not a summary of
+    // all admin-ish permissions.
+    pub is_org_admin: bool,
 }
 
 pub type ListOrgUsersResponse = Vec<OrgUser>;
