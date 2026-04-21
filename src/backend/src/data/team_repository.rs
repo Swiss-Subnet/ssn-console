@@ -1,21 +1,33 @@
 use super::{
     memory::{
-        init_organization_team_index, init_team_user_index, init_teams, init_user_team_index,
-        OrganizationTeamIndexMemory, TeamMemory, TeamUserIndexMemory, UserTeamIndexMemory,
+        init_organization_team_index, init_organization_team_permissions_index,
+        init_team_user_index, init_teams, init_user_team_index, OrganizationTeamIndexMemory,
+        OrganizationTeamPermissionsIndexMemory, TeamMemory, TeamUserIndexMemory,
+        UserTeamIndexMemory,
     },
-    Team,
+    OrgPermissions, Team,
 };
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
 pub fn create_team(user_id: Uuid, org_id: Uuid, team: Team) -> Uuid {
+    create_team_with_permissions(user_id, org_id, team, OrgPermissions::ALL)
+}
+
+pub fn create_team_with_permissions(
+    user_id: Uuid,
+    org_id: Uuid,
+    team: Team,
+    permissions: OrgPermissions,
+) -> Uuid {
     let team_id = Uuid::new();
 
     mutate_state(|s| {
         s.teams.insert(team_id, team);
         s.team_user_index.insert((team_id, user_id));
         s.user_team_index.insert((user_id, team_id));
-        s.organization_team_index.insert((org_id, team_id));
+        s.organization_team_permissions_index
+            .insert((org_id, team_id), permissions);
     });
 
     team_id
@@ -54,7 +66,8 @@ pub fn delete_team(team_id: Uuid, org_id: Uuid) -> ApiResult {
             )));
         }
 
-        s.organization_team_index.remove(&(org_id, team_id));
+        s.organization_team_permissions_index
+            .remove(&(org_id, team_id));
 
         while let Some((tid, uid)) = s
             .team_user_index
@@ -75,11 +88,13 @@ pub fn delete_team(team_id: Uuid, org_id: Uuid) -> ApiResult {
 pub fn delete_org_teams(org_id: Uuid) {
     mutate_state(|s| {
         while let Some((oid, team_id)) = s
-            .organization_team_index
+            .organization_team_permissions_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .map(|entry| *entry.key())
             .next()
         {
-            s.organization_team_index.remove(&(oid, team_id));
+            s.organization_team_permissions_index
+                .remove(&(oid, team_id));
             s.teams.remove(&team_id);
 
             while let Some((tid, uid)) = s
@@ -107,16 +122,33 @@ pub fn add_user_to_team(user_id: Uuid, team_id: Uuid) {
 
 pub fn list_org_teams(org_id: Uuid) -> Vec<(Uuid, Team)> {
     with_state(|s| {
-        s.organization_team_index
+        s.organization_team_permissions_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
-            .filter_map(|(_, team_id)| s.teams.get(&team_id).map(|team| (team_id, team)))
+            .filter_map(|entry| {
+                let (_, team_id) = *entry.key();
+                s.teams.get(&team_id).map(|team| (team_id, team))
+            })
+            .collect()
+    })
+}
+
+#[allow(dead_code)]
+pub fn list_org_teams_with_permissions(org_id: Uuid) -> Vec<(Uuid, Team, OrgPermissions)> {
+    with_state(|s| {
+        s.organization_team_permissions_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .filter_map(|entry| {
+                let (_, team_id) = *entry.key();
+                let perms = entry.value();
+                s.teams.get(&team_id).map(|team| (team_id, team, perms))
+            })
             .collect()
     })
 }
 
 pub fn has_at_least_n_org_teams(org_id: Uuid, n: usize) -> bool {
     with_state(|s| {
-        s.organization_team_index
+        s.organization_team_permissions_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
             .take(n)
             .count()
@@ -155,7 +187,8 @@ struct TeamState {
     teams: TeamMemory,
     team_user_index: TeamUserIndexMemory,
     user_team_index: UserTeamIndexMemory,
-    organization_team_index: OrganizationTeamIndexMemory,
+    organization_team_index: OrganizationTeamIndexMemory, // TODO: remove after migration has run on all environments
+    organization_team_permissions_index: OrganizationTeamPermissionsIndexMemory,
 }
 
 impl Default for TeamState {
@@ -165,12 +198,33 @@ impl Default for TeamState {
             team_user_index: init_team_user_index(),
             user_team_index: init_user_team_index(),
             organization_team_index: init_organization_team_index(),
+            organization_team_permissions_index: init_organization_team_permissions_index(),
         }
     }
 }
 
 thread_local! {
     static STATE: RefCell<TeamState> = RefCell::new(TeamState::default());
+}
+
+pub fn migrate_org_team_permissions() {
+    mutate_state(|s| {
+        let entries: Vec<(Uuid, Uuid)> = s
+            .organization_team_index
+            .range((Uuid::MIN, Uuid::MIN)..=(Uuid::MAX, Uuid::MAX))
+            .collect();
+
+        for (org_id, team_id) in entries {
+            s.organization_team_index.remove(&(org_id, team_id));
+            if s.organization_team_permissions_index
+                .get(&(org_id, team_id))
+                .is_none()
+            {
+                s.organization_team_permissions_index
+                    .insert((org_id, team_id), OrgPermissions::ALL);
+            }
+        }
+    });
 }
 
 fn with_state<R>(f: impl FnOnce(&TeamState) -> R) -> R {

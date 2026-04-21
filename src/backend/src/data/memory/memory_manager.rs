@@ -42,7 +42,9 @@ pub(super) const ORGANIZATION_TEAM_INDEX_MEMORY_ID: MemoryId = MemoryId::new(18)
 
 pub(super) const PROJECT_MEMORY_ID: MemoryId = MemoryId::new(19);
 pub(super) const PROJECT_TEAM_INDEX_MEMORY_ID: MemoryId = MemoryId::new(20);
-pub(super) const TEAM_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(21);
+// 21 was TEAM_PROJECT_INDEX, replaced by TEAM_PROJECT_PERMISSIONS_INDEX (33).
+// The backing stable memory page is still allocated (IC memory manager does
+// not reclaim pages), but the slot is not reused.
 pub(super) const ORGANIZATION_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(22);
 
 pub(super) const APPROVAL_POLICY_MEMORY_ID: MemoryId = MemoryId::new(23);
@@ -57,3 +59,7 @@ pub(super) const CANISTER_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(27);
 pub(super) const ORG_INVITE_MEMORY_ID: MemoryId = MemoryId::new(28);
 pub(super) const ORGANIZATION_INVITE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(29);
 pub(super) const INVITE_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(30);
+
+pub(super) const ORGANIZATION_TEAM_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(31);
+pub(super) const PROJECT_TEAM_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(32);
+pub(super) const TEAM_PROJECT_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(33);
