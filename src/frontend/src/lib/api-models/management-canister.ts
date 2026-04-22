@@ -6,6 +6,7 @@ import type {
   update_settings_args as ApiUpdateSettingsRequest,
   start_canister_args as ApiStartCanisterRequest,
   stop_canister_args as ApiStopCanisterRequest,
+  delete_canister_args as ApiDeleteCanisterRequest,
 } from '@ssn/management-canister';
 
 export interface ApiCanisterStatusRequest {
@@ -185,6 +186,18 @@ export interface StopCanisterRequest {
 export function mapStopCanisterRequest(
   req: StopCanisterRequest,
 ): ApiStopCanisterRequest {
+  return {
+    canister_id: Principal.fromText(req.canisterId),
+  };
+}
+
+export interface DeleteCanisterRequest {
+  canisterId: string;
+}
+
+export function mapDeleteCanisterRequest(
+  req: DeleteCanisterRequest,
+): ApiDeleteCanisterRequest {
   return {
     canister_id: Principal.fromText(req.canisterId),
   };
