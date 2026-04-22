@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import './mocks';
 import './setup';
-import { app } from '../index';
+import { app } from '../main';
 import { sendMailSpy } from './mocks';
 import { jwtVerify, importSPKI } from 'jose';
 import { publicKey } from './setup';

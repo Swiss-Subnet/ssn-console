@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import './mocks';
 import './setup';
-import { app } from '../index';
+import { app } from '../main';
 
 describe('GET /status', () => {
   it('should return 200', async () => {
