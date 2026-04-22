@@ -7,6 +7,8 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Canister {
     pub principal: Principal,
+    #[serde(default)]
+    pub name: Option<String>,
 }
 
 impl Storable for Canister {

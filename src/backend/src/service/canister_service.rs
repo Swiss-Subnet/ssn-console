@@ -9,10 +9,11 @@ use crate::{
     },
     dto::{
         self, CanisterState, ListMyCanistersRequest, ListMyCanistersResponse,
-        ListUserCanistersRequest, ListUserCanistersResponse,
+        ListUserCanistersRequest, ListUserCanistersResponse, UpdateMyCanisterNameRequest,
     },
     mapping::{map_canister_info, map_canister_response},
     service::access_control_service::ProjectAuth,
+    validation::CanisterName,
 };
 use candid::Principal;
 use canister_utils::{is_destination_invalid, ApiError, ApiResult, Uuid, MAX_CALLS_PER_BATCH};
@@ -113,6 +114,27 @@ fn classify_canister_status_error(err: CallError) -> CanisterState {
     CanisterState::Inaccessible
 }
 
+pub fn update_my_canister_name(
+    caller: Principal,
+    request: UpdateMyCanisterNameRequest,
+) -> ApiResult<()> {
+    let canister_id = Uuid::try_from(request.canister_id.as_str())?;
+    let project_id = canister_repository::get_canister_project_id(canister_id)
+        .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
+
+    let _auth = ProjectAuth::require(&caller, project_id, ProjectPermissions::CANISTER_MANAGE)?;
+
+    let name = match request.name {
+        Some(raw) => Some(CanisterName::try_from(raw)?.into_inner()),
+        None => None,
+    };
+
+    canister_repository::update_canister_name(canister_id, name)
+        .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
+
+    Ok(())
+}
+
 pub async fn remove_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
     let project_id = canister_repository::get_canister_project_id(canister_id)
         .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
@@ -198,6 +220,7 @@ pub async fn create_my_canister(project_id: Uuid) -> Result<(), String> {
 
     let canister = Canister {
         principal: result.canister_id,
+        name: None,
     };
     canister_repository::create_canister(project_id, canister.clone());
 

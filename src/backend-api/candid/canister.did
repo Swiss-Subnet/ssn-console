@@ -18,6 +18,16 @@ type RemoveMyCanisterResponse = variant {
   Err : ApiError;
 };
 
+type UpdateMyCanisterNameRequest = record {
+  canister_id : text;
+  name : opt text;
+};
+
+type UpdateMyCanisterNameResponse = variant {
+  Ok;
+  Err : ApiError;
+};
+
 type ListAllCanistersRequest = record {
   limit : opt nat64;
   page : opt nat64;
@@ -48,6 +58,7 @@ type PaginationMetaResponse = record {
 type Canister = record {
   id : text;
   principal_id : text;
+  name : opt text;
   state : CanisterState;
 };
 
@@ -133,5 +144,6 @@ service : {
   list_my_canisters : (ListMyCanistersRequest) -> (ListMyCanistersResponse);
   list_user_canisters : (ListUserCanistersRequest) -> (ListUserCanistersResponse);
   remove_my_canister : (RemoveMyCanisterRequest) -> (RemoveMyCanisterResponse);
+  update_my_canister_name : (UpdateMyCanisterNameRequest) -> (UpdateMyCanisterNameResponse);
   list_all_canisters : (ListAllCanistersRequest) -> (ListAllCanistersResponse) query;
 };

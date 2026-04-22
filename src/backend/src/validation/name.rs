@@ -3,6 +3,7 @@ use canister_utils::{ApiError, ApiResult};
 const MAX_ORG_NAME_LENGTH: usize = 100;
 const MAX_TEAM_NAME_LENGTH: usize = 100;
 const MAX_PROJECT_NAME_LENGTH: usize = 100;
+const MAX_CANISTER_NAME_LENGTH: usize = 100;
 
 fn validate_bounded_name(subject: &str, value: String, max: usize) -> ApiResult<String> {
     let trimmed = value.trim().to_string();
@@ -70,6 +71,23 @@ impl TryFrom<String> for ProjectName {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct CanisterName(String);
+
+impl CanisterName {
+    pub fn into_inner(self) -> String {
+        self.0
+    }
+}
+
+impl TryFrom<String> for CanisterName {
+    type Error = ApiError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        validate_bounded_name("Canister name", value, MAX_CANISTER_NAME_LENGTH).map(CanisterName)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -122,6 +140,31 @@ mod tests {
     fn team_name_rejects_too_long() {
         let long = "a".repeat(MAX_TEAM_NAME_LENGTH + 1);
         let err = TeamName::try_from(long).unwrap_err();
+        assert!(err.message().contains("cannot exceed"));
+    }
+
+    #[test]
+    fn canister_name_trims_whitespace() {
+        let name = CanisterName::try_from("  Ledger  ".to_string()).unwrap();
+        assert_eq!(name.into_inner(), "Ledger");
+    }
+
+    #[test]
+    fn canister_name_rejects_empty() {
+        let err = CanisterName::try_from("".to_string()).unwrap_err();
+        assert!(err.message().contains("Canister name cannot be empty"));
+    }
+
+    #[test]
+    fn canister_name_rejects_whitespace_only() {
+        let err = CanisterName::try_from("   ".to_string()).unwrap_err();
+        assert!(err.message().contains("Canister name cannot be empty"));
+    }
+
+    #[test]
+    fn canister_name_rejects_too_long() {
+        let long = "a".repeat(MAX_CANISTER_NAME_LENGTH + 1);
+        let err = CanisterName::try_from(long).unwrap_err();
         assert!(err.message().contains("cannot exceed"));
     }
 }

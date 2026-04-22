@@ -85,6 +85,15 @@ pub fn remove_canister(project_id: Uuid, canister_id: Uuid) {
     });
 }
 
+pub fn update_canister_name(canister_id: Uuid, name: Option<String>) -> Option<Canister> {
+    mutate_state(|s| {
+        let mut canister = s.canisters.get(&canister_id)?;
+        canister.name = name;
+        s.canisters.insert(canister_id, canister.clone());
+        Some(canister)
+    })
+}
+
 struct CanisterState {
     canisters: CanisterMemory,
     project_canister_index: ProjectCanisterIndexMemory,

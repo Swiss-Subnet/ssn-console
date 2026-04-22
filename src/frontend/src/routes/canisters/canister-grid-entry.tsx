@@ -48,7 +48,9 @@ export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
     <>
       <Card size="sm">
         <CardHeader>
-          <CardTitle>Canister</CardTitle>
+          <CardTitle className="truncate">
+            {canister.name ?? 'Canister'}
+          </CardTitle>
           <CardDescription className="truncate font-mono">
             {canister.principal}
           </CardDescription>

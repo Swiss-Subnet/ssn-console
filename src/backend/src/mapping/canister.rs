@@ -16,6 +16,7 @@ pub fn map_canister_response(
     Canister {
         id: id.to_string(),
         principal_id: canister.principal.to_string(),
+        name: canister.name.clone(),
         state,
     }
 }

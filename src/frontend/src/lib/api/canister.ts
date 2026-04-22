@@ -8,6 +8,7 @@ import {
   type ListUserCanistersResponse,
 } from '@/lib/api-models';
 import { isNil } from '@/lib/nil';
+import { toCandidOpt } from '@/lib/utils';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import { Principal } from '@icp-sdk/core/principal';
 import type { _SERVICE, Proposal } from '@ssn/backend-api';
@@ -59,6 +60,17 @@ export class CanisterApi {
   public async removeCanister(canisterId: string): Promise<void> {
     const res = await this.actor.remove_my_canister({
       canister_id: canisterId,
+    });
+    mapOkResponse(res);
+  }
+
+  public async updateCanisterName(
+    canisterId: string,
+    name: string | null,
+  ): Promise<void> {
+    const res = await this.actor.update_my_canister_name({
+      canister_id: canisterId,
+      name: toCandidOpt(name),
     });
     mapOkResponse(res);
   }

@@ -50,6 +50,7 @@ pub struct PaginationMetaResponse {
 pub struct Canister {
     pub id: String,
     pub principal_id: String,
+    pub name: Option<String>,
     pub state: CanisterState,
 }
 
@@ -63,6 +64,12 @@ pub enum CanisterState {
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct RemoveMyCanisterRequest {
     pub canister_id: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct UpdateMyCanisterNameRequest {
+    pub canister_id: String,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
