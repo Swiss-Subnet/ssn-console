@@ -1,4 +1,5 @@
 import { HeaderMenu } from '@/components/layout/header-menu';
+import { OrgSwitcher } from '@/components/layout/org-switcher';
 import { Logo } from '@/components/logo';
 import { ModeToggle } from '@/components/mode-toggle';
 import {
@@ -8,18 +9,21 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
-import { useAppStore } from '@/lib/store';
+import { selectIsActive, useAppStore } from '@/lib/store';
 import { type FC } from 'react';
 import { NavLink } from 'react-router';
 
 export const Header: FC = () => {
   const { isAuthenticated } = useAppStore();
+  const isActive = useAppStore(selectIsActive);
 
   return (
-    <header className="bg-background flex h-20 w-full flex-row items-center border-b p-3">
+    <header className="bg-background flex h-20 w-full flex-row items-center gap-8 border-b p-3">
       <NavLink to="/">
         <Logo className="h-13" />
       </NavLink>
+
+      {isAuthenticated && isActive && <OrgSwitcher />}
 
       <div className="flex-1" />
 

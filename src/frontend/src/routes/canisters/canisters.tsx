@@ -42,7 +42,6 @@ const Canisters: FC = () => {
     <>
       <Breadcrumbs
         items={[
-          { label: 'Home', to: '/canisters' },
           ...(organization
             ? [
                 {

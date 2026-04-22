@@ -1,6 +1,5 @@
 import { LoadingButton } from '@/components/loading-button';
 import { Container } from '@/components/layout/container';
-import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -50,14 +49,7 @@ const CreateOrganization: FC = () => {
 
   return (
     <Container>
-      <Breadcrumbs
-        items={[
-          { label: 'Home', to: '/canisters' },
-          { label: 'New Organization' },
-        ]}
-      />
-
-      <Card className="mx-auto mt-6 max-w-md">
+      <Card className="mx-auto max-w-md">
         <CardHeader>
           <CardTitle>Create Organization</CardTitle>
         </CardHeader>

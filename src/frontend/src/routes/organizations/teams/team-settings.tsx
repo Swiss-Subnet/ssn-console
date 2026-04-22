@@ -191,7 +191,6 @@ const TeamSettings: FC = () => {
     <Container>
       <Breadcrumbs
         items={[
-          { label: 'Home', to: '/canisters' },
           {
             label: organization?.name ?? 'Organization',
             to: `/organizations/${orgId}/settings`,
