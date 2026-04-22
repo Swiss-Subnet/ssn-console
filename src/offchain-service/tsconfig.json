@@ -6,6 +6,6 @@
     "types": ["bun"],
     "composite": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "build.ts"],
   "exclude": [".turbo", "dist", "node_modules"]
 }
