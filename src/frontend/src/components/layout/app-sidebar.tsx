@@ -12,11 +12,7 @@ import {
 } from '@/components/ui/sidebar';
 import { isNil } from '@/lib/nil';
 import { selectProjectMap, useAppStore } from '@/lib/store';
-import {
-  CreditCardIcon,
-  LayoutDashboardIcon,
-  UsersIcon,
-} from 'lucide-react';
+import { CreditCardIcon, LayoutDashboardIcon, UsersIcon } from 'lucide-react';
 import { useMemo, type FC } from 'react';
 import { NavLink, useParams } from 'react-router';
 

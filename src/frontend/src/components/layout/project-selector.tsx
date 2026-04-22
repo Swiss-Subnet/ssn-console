@@ -20,12 +20,7 @@ import {
   selectProjectMap,
   useAppStore,
 } from '@/lib/store';
-import {
-  ChevronsUpDown,
-  FolderOpen,
-  Plus,
-  Settings,
-} from 'lucide-react';
+import { ChevronsUpDown, FolderOpen, Plus, Settings } from 'lucide-react';
 import { useMemo, type FC } from 'react';
 import { NavLink, useParams } from 'react-router';
 
