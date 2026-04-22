@@ -1,11 +1,11 @@
 use crate::{
     data::{
-        approval_policy_repository, project_repository, proposal_repository, team_repository,
-        user_profile_repository, OperationType, PolicyType, Proposal, ProposalOperation,
+        approval_policy_repository, proposal_repository, OperationType, PolicyType,
+        ProjectPermissions, Proposal, ProposalOperation,
     },
     dto::{CreateProposalRequest, CreateProposalResponse},
     mapping::{map_create_proposal_request, map_create_proposal_response},
-    service::canister_service,
+    service::{access_control_service::ProjectAuth, canister_service},
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
@@ -16,9 +16,7 @@ pub async fn create_proposal(
 ) -> ApiResult<CreateProposalResponse> {
     let (project_id, proposal) = map_create_proposal_request(req)?;
 
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let team_ids = team_repository::list_user_team_ids(user_id);
-    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
+    ProjectAuth::require(caller, project_id, ProjectPermissions::PROPOSAL_CREATE)?;
 
     let proposal_id = proposal_repository::create_proposal(project_id, proposal.clone());
 

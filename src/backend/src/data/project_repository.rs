@@ -67,6 +67,33 @@ pub fn is_team_in_project(team_id: Uuid, project_id: Uuid) -> bool {
     })
 }
 
+#[allow(dead_code)]
+pub fn get_project_team_permissions(project_id: Uuid, team_id: Uuid) -> Option<ProjectPermissions> {
+    with_state(|s| s.project_team_permissions_index.get(&(project_id, team_id)))
+}
+
+// Union ProjectPermissions of every team in `team_ids` that is linked to
+// `project_id`. Also returns whether any of those teams were linked.
+pub fn aggregate_team_project_permissions(
+    team_ids: &[Uuid],
+    project_id: Uuid,
+) -> (ProjectPermissions, bool) {
+    with_state(|s| {
+        let mut perms = ProjectPermissions::EMPTY;
+        let mut has_link = false;
+        for team_id in team_ids {
+            if let Some(p) = s
+                .project_team_permissions_index
+                .get(&(project_id, *team_id))
+            {
+                perms = perms.union(p);
+                has_link = true;
+            }
+        }
+        (perms, has_link)
+    })
+}
+
 pub fn list_project_team_ids(project_id: Uuid) -> Vec<Uuid> {
     with_state(|s| {
         s.project_team_permissions_index
@@ -199,20 +226,6 @@ pub fn org_has_projects(org_id: Uuid) -> bool {
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
             .any(|_| true)
     })
-}
-
-pub fn assert_any_team_has_project(
-    user_id: &Uuid,
-    team_ids: &[Uuid],
-    project_to_check: Uuid,
-) -> ApiResult {
-    if !list_all_team_project_ids(team_ids).contains(&project_to_check) {
-        return Err(ApiError::unauthorized(format!(
-            "User with id {user_id} does not have access to project with id {project_to_check}"
-        )));
-    }
-
-    Ok(())
 }
 
 struct ProjectState {

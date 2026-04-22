@@ -113,6 +113,60 @@ pub fn is_user_in_team(user_id: Uuid, team_id: Uuid) -> bool {
     with_state(|s| s.team_user_index.contains(&(team_id, user_id)))
 }
 
+#[allow(dead_code)]
+pub fn get_org_team_permissions(org_id: Uuid, team_id: Uuid) -> Option<OrgPermissions> {
+    with_state(|s| {
+        s.organization_team_permissions_index
+            .get(&(org_id, team_id))
+    })
+}
+
+// Union the OrgPermissions of every team the user belongs to within `org_id`.
+// Returns OrgPermissions::EMPTY if the user has no teams in the org.
+pub fn aggregate_user_org_permissions(user_id: Uuid, org_id: Uuid) -> OrgPermissions {
+    with_state(|s| {
+        let team_ids: Vec<Uuid> = s
+            .user_team_index
+            .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))
+            .map(|(_, team_id)| team_id)
+            .collect();
+
+        let mut perms = OrgPermissions::EMPTY;
+        for team_id in team_ids {
+            if let Some(p) = s
+                .organization_team_permissions_index
+                .get(&(org_id, team_id))
+            {
+                perms = perms.union(p);
+            }
+        }
+        perms
+    })
+}
+
+// Invariant predicate: would the org still have at least one team holding
+// ORG_ADMIN with at least one member if `excluded_team_id` were removed?
+// Used as a pre-mutation check on delete paths — on the IC, returning Err
+// after a mutation does not roll back state, so this must be evaluated
+// before any repository write that could break the invariant.
+pub fn org_admin_is_populated_excluding_team(org_id: Uuid, excluded_team_id: Uuid) -> bool {
+    with_state(|s| {
+        s.organization_team_permissions_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .any(|entry| {
+                let (_, team_id) = *entry.key();
+                if team_id == excluded_team_id {
+                    return false;
+                }
+                entry.value().contains(OrgPermissions::ORG_ADMIN)
+                    && s.team_user_index
+                        .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
+                        .next()
+                        .is_some()
+            })
+    })
+}
+
 pub fn add_user_to_team(user_id: Uuid, team_id: Uuid) {
     mutate_state(|s| {
         s.team_user_index.insert((team_id, user_id));
@@ -170,6 +224,20 @@ pub fn list_user_team_ids(user_id: Uuid) -> Vec<Uuid> {
         s.user_team_index
             .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))
             .map(|(_, team_id)| team_id)
+            .collect()
+    })
+}
+
+// All teams in `org_id` that `user_id` belongs to.
+pub fn list_user_teams_in_org(user_id: Uuid, org_id: Uuid) -> Vec<Uuid> {
+    with_state(|s| {
+        s.user_team_index
+            .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))
+            .filter_map(|(_, team_id)| {
+                s.organization_team_permissions_index
+                    .get(&(org_id, team_id))
+                    .map(|_| team_id)
+            })
             .collect()
     })
 }

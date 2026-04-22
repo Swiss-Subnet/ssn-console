@@ -1,7 +1,5 @@
 use crate::{
-    data::{
-        organization_repository, project_repository, team_repository, user_profile_repository, Team,
-    },
+    data::{project_repository, team_repository, user_profile_repository, OrgPermissions, Team},
     dto::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
         DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
@@ -9,6 +7,9 @@ use crate::{
         UpdateTeamRequest, UpdateTeamResponse,
     },
     mapping::{map_list_team_users_response, map_list_teams_response, map_team_to_response},
+    service::access_control_service::{
+        assert_org_admin_populated_after_removing_team, require_team_access, OrgAuth,
+    },
     validation::TeamName,
 };
 use candid::Principal;
@@ -28,50 +29,42 @@ pub fn list_org_teams(
     req: ListOrgTeamsRequest,
 ) -> ApiResult<ListTeamsResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    organization_repository::assert_user_in_org(user_id, org_id)?;
+    let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
-    let teams = team_repository::list_org_teams(org_id);
+    let teams = team_repository::list_org_teams(auth.org_id());
     Ok(map_list_teams_response(teams))
 }
 
 pub fn create_team(caller: &Principal, req: CreateTeamRequest) -> ApiResult<CreateTeamResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    organization_repository::assert_user_in_org(user_id, org_id)?;
+    let auth = OrgAuth::require(caller, org_id, OrgPermissions::TEAM_MANAGE)?;
     let name = TeamName::try_from(req.name)?;
 
-    if team_repository::has_at_least_n_org_teams(org_id, MAX_TEAMS_PER_ORG) {
+    if team_repository::has_at_least_n_org_teams(auth.org_id(), MAX_TEAMS_PER_ORG) {
         return Err(ApiError::client_error(format!(
             "Cannot create more than {MAX_TEAMS_PER_ORG} teams per organization."
         )));
     }
 
     let team = Team {
-        org_id,
+        org_id: auth.org_id(),
         name: name.into_inner(),
     };
-    let team_id = team_repository::create_team(user_id, org_id, team.clone());
+    let team_id = team_repository::create_team(auth.user_id(), auth.org_id(), team.clone());
 
     Ok(map_team_to_response(team_id, team))
 }
 
 pub fn get_team(caller: &Principal, req: GetTeamRequest) -> ApiResult<GetTeamResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let team = team_repository::get_team(team_id)
-        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
-    organization_repository::assert_user_in_org(user_id, team.org_id)?;
+    let (team, _auth) = require_team_access(caller, team_id, OrgPermissions::EMPTY)?;
 
     Ok(map_team_to_response(team_id, team))
 }
 
 pub fn update_team(caller: &Principal, req: UpdateTeamRequest) -> ApiResult<UpdateTeamResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let existing = team_repository::get_team(team_id)
-        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
-    organization_repository::assert_user_in_org(user_id, existing.org_id)?;
+    let (existing, _auth) = require_team_access(caller, team_id, OrgPermissions::TEAM_MANAGE)?;
     let name = TeamName::try_from(req.name)?;
 
     let team = Team {
@@ -85,12 +78,9 @@ pub fn update_team(caller: &Principal, req: UpdateTeamRequest) -> ApiResult<Upda
 
 pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult<DeleteTeamResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let team = team_repository::get_team(team_id)
-        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
-    organization_repository::assert_user_in_org(user_id, team.org_id)?;
+    let (_team, auth) = require_team_access(caller, team_id, OrgPermissions::TEAM_MANAGE)?;
 
-    if !team_repository::has_at_least_n_org_teams(team.org_id, 2) {
+    if !team_repository::has_at_least_n_org_teams(auth.org_id(), 2) {
         return Err(ApiError::client_error(
             "Cannot delete the last team in an organization.".to_string(),
         ));
@@ -102,8 +92,10 @@ pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult<Dele
         ));
     }
 
+    assert_org_admin_populated_after_removing_team(auth.org_id(), team_id)?;
+
     project_repository::remove_team_project_links(team_id);
-    team_repository::delete_team(team_id, team.org_id)?;
+    team_repository::delete_team(team_id, auth.org_id())?;
 
     Ok(DeleteTeamResponse {})
 }
@@ -113,10 +105,7 @@ pub fn list_team_users(
     req: ListTeamUsersRequest,
 ) -> ApiResult<ListTeamUsersResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
-    let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let team = team_repository::get_team(team_id)
-        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
-    organization_repository::assert_user_in_org(caller_user_id, team.org_id)?;
+    let (_team, _auth) = require_team_access(caller, team_id, OrgPermissions::EMPTY)?;
 
     let users = team_repository::list_team_user_ids(team_id)
         .into_iter()
@@ -132,11 +121,8 @@ pub fn add_user_to_team(
 ) -> ApiResult<AddUserToTeamResponse> {
     let team_id = Uuid::try_from(req.team_id.as_str())?;
     let target_user_id = Uuid::try_from(req.user_id.as_str())?;
-    let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    let team = team_repository::get_team(team_id)
-        .ok_or_else(|| ApiError::client_error(format!("Team with id {team_id} does not exist.")))?;
-    organization_repository::assert_user_in_org(caller_user_id, team.org_id)?;
-    organization_repository::assert_user_in_org(target_user_id, team.org_id)?;
+    let (_team, auth) = require_team_access(caller, team_id, OrgPermissions::MEMBER_MANAGE)?;
+    auth.assert_member(target_user_id)?;
 
     if team_repository::is_user_in_team(target_user_id, team_id) {
         return Ok(AddUserToTeamResponse {});

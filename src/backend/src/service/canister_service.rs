@@ -5,13 +5,14 @@ use crate::{
     },
     data::{
         canister_repository, organization_repository, project_repository, team_repository,
-        user_profile_repository, Canister,
+        user_profile_repository, Canister, ProjectPermissions,
     },
     dto::{
         self, CanisterState, ListMyCanistersRequest, ListMyCanistersResponse,
         ListUserCanistersRequest, ListUserCanistersResponse,
     },
     mapping::{map_canister_info, map_canister_response},
+    service::access_control_service::ProjectAuth,
 };
 use candid::Principal;
 use canister_utils::{is_destination_invalid, ApiError, ApiResult, Uuid, MAX_CALLS_PER_BATCH};
@@ -28,11 +29,9 @@ pub async fn list_my_canisters(
     caller: Principal,
     request: ListMyCanistersRequest,
 ) -> ApiResult<ListMyCanistersResponse> {
-    let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
     let project_id = request.project_id.as_str().try_into()?;
-    let team_ids = team_repository::list_user_team_ids(user_id);
-    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
-    list_canisters_by_project_internal(project_id).await
+    let auth = ProjectAuth::require(&caller, project_id, ProjectPermissions::EMPTY)?;
+    list_canisters_by_project_internal(auth.project_id()).await
 }
 
 pub async fn list_user_canisters(
@@ -115,15 +114,12 @@ fn classify_canister_status_error(err: CallError) -> CanisterState {
 }
 
 pub async fn remove_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
-    let user_id = user_profile_repository::assert_user_id_by_principal(&caller)?;
-
     let project_id = canister_repository::get_canister_project_id(canister_id)
         .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
 
-    let team_ids = team_repository::list_user_team_ids(user_id);
-    project_repository::assert_any_team_has_project(&user_id, &team_ids, project_id)?;
+    let auth = ProjectAuth::require(&caller, project_id, ProjectPermissions::CANISTER_MANAGE)?;
 
-    let canister = canister_repository::get_canister_in_project(project_id, canister_id)
+    let canister = canister_repository::get_canister_in_project(auth.project_id(), canister_id)
         .ok_or_else(|| {
             ApiError::client_error(format!(
                 "Canister {canister_id} not found in user's project."
@@ -132,7 +128,7 @@ pub async fn remove_my_canister(caller: Principal, canister_id: Uuid) -> ApiResu
 
     match fetch_canister_state(canister.principal).await {
         CanisterState::Deleted => {
-            canister_repository::remove_canister(project_id, canister_id);
+            canister_repository::remove_canister(auth.project_id(), canister_id);
             Ok(())
         }
         CanisterState::Accessible(_) | CanisterState::Inaccessible => {

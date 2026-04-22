@@ -2,7 +2,7 @@ use crate::{
     constants::{INVITE_TTL_NS, MAX_PENDING_INVITES_PER_ORG},
     data::{
         self, invite_repository, organization_repository, user_profile_repository, InviteStatus,
-        OrgInvite,
+        OrgInvite, OrgPermissions,
     },
     dto::{
         AcceptOrgInviteRequest, AcceptOrgInviteResponse, CreateOrgInviteRequest,
@@ -11,6 +11,7 @@ use crate::{
         RevokeOrgInviteRequest, RevokeOrgInviteResponse,
     },
     mapping::{map_invite_target_to_data, map_invite_to_dto},
+    service::access_control_service::OrgAuth,
     validation::Email,
 };
 use candid::Principal;
@@ -19,17 +20,14 @@ use canister_utils::{ApiError, ApiResult, Uuid};
 // Creates an org invite. Intentionally does not leak whether the target
 // (email / user_id / principal) refers to an existing user, so that
 // sending an invite cannot be used to enumerate app accounts.
-//
-// TODO: any org member can invite. Restrict to org owner/admin once
-// roles exist.
 pub fn create_org_invite(
     caller: &Principal,
     req: CreateOrgInviteRequest,
     now_ns: u64,
 ) -> ApiResult<CreateOrgInviteResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
-    let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    organization_repository::assert_user_in_org(caller_user_id, org_id)?;
+    let auth = OrgAuth::require(caller, org_id, OrgPermissions::MEMBER_MANAGE)?;
+    let caller_user_id = auth.user_id();
 
     let target = map_invite_target_to_data(req.target)
         .map_err(ApiError::client_error)
@@ -47,7 +45,7 @@ pub fn create_org_invite(
         data::InviteTarget::Email(_) => None,
     };
     if let Some(target_user_id) = already_member_user_id {
-        if organization_repository::assert_user_in_org(target_user_id, org_id).is_ok() {
+        if organization_repository::is_user_in_org(target_user_id, org_id) {
             return Err(ApiError::client_error(
                 "User is already a member of this organization.".to_string(),
             ));
@@ -87,21 +85,20 @@ pub fn list_org_invites(
     now_ns: u64,
 ) -> ApiResult<ListOrgInvitesResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
-    let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    organization_repository::assert_user_in_org(caller_user_id, org_id)?;
+    let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
-    let org_name = organization_repository::get_org(org_id)
+    let org_name = organization_repository::get_org(auth.org_id())
         .map(|o| o.name)
         .unwrap_or_default();
 
     // Only show invites the caller created, to avoid leaking invitee
-    // emails/principals to other org members. Once an org permission
-    // model exists, this should gate on an "invite manage" permission
-    // so admins can see all org invites.
-    let invites = invite_repository::list_org_invites_by_creator(org_id, caller_user_id, now_ns)
-        .into_iter()
-        .map(|(id, inv)| map_invite_to_dto(id, inv, org_name.clone()))
-        .collect();
+    // emails/principals to other org members. A MEMBER_MANAGE-gated
+    // "see all org invites" variant is deferred to a follow-up PR.
+    let invites =
+        invite_repository::list_org_invites_by_creator(auth.org_id(), auth.user_id(), now_ns)
+            .into_iter()
+            .map(|(id, inv)| map_invite_to_dto(id, inv, org_name.clone()))
+            .collect();
 
     Ok(invites)
 }
@@ -111,18 +108,18 @@ pub fn revoke_org_invite(
     req: RevokeOrgInviteRequest,
 ) -> ApiResult<RevokeOrgInviteResponse> {
     let invite_id = Uuid::try_from(req.invite_id.as_str())?;
-    let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
 
     let mut invite = invite_repository::get_invite(invite_id).ok_or_else(|| {
         ApiError::client_error(format!("Invite with id {invite_id} does not exist."))
     })?;
-    organization_repository::assert_user_in_org(caller_user_id, invite.org_id)?;
+    let auth = OrgAuth::require(caller, invite.org_id, OrgPermissions::EMPTY)?;
 
-    // Only the inviter can revoke. Once org admin roles exist, admins
-    // should be allowed too.
-    if invite.created_by != caller_user_id {
+    // The inviter can always revoke their own invite. Other org members
+    // need MEMBER_MANAGE to revoke invites they did not create.
+    if invite.created_by != auth.user_id() && !auth.perms().contains(OrgPermissions::MEMBER_MANAGE)
+    {
         return Err(ApiError::unauthorized(
-            "Only the inviter can revoke this invite.".to_string(),
+            "Only the inviter or a member manager can revoke this invite.".to_string(),
         ));
     }
 
@@ -201,7 +198,7 @@ pub fn accept_org_invite(
     // Adding the user to the org is idempotent: if they are already a
     // member (e.g. double-accept race), we still mark the invite as
     // Accepted.
-    if organization_repository::assert_user_in_org(caller_user_id, invite.org_id).is_err() {
+    if !organization_repository::is_user_in_org(caller_user_id, invite.org_id) {
         organization_repository::add_user_to_org(caller_user_id, invite.org_id);
     }
 

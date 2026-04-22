@@ -1,7 +1,8 @@
 use crate::{
     data::{
         approval_policy_repository, organization_repository, project_repository, team_repository,
-        user_profile_repository, ApprovalPolicy, OperationType, Organization, PolicyType,
+        user_profile_repository, ApprovalPolicy, OperationType, OrgPermissions, Organization,
+        PolicyType,
     },
     dto::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
@@ -13,6 +14,7 @@ use crate::{
         map_list_my_organizations_response, map_list_org_users_response,
         map_organization_to_response,
     },
+    service::access_control_service::OrgAuth,
     validation::OrgName,
 };
 use candid::Principal;
@@ -32,8 +34,7 @@ pub fn list_org_users(
     req: ListOrgUsersRequest,
 ) -> ApiResult<ListOrgUsersResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    organization_repository::assert_user_in_org(user_id, org_id)?;
+    OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
     let users = organization_repository::list_org_users(org_id)
         .into_iter()
@@ -84,57 +85,48 @@ pub fn get_organization(
     req: GetOrganizationRequest,
 ) -> ApiResult<GetOrganizationResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    organization_repository::assert_user_in_org(user_id, org_id)?;
+    let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
     let org =
-        organization_repository::get_org(org_id).expect("org must exist after assert_user_in_org");
+        organization_repository::get_org(auth.org_id()).expect("org must exist after OrgAuth");
 
-    Ok(map_organization_to_response(org_id, org))
+    Ok(map_organization_to_response(auth.org_id(), org))
 }
 
-// TODO: any org member can update. Restrict to org owner/admin once
-// roles or ownership tracking exists.
 pub fn update_organization(
     caller: &Principal,
     req: UpdateOrganizationRequest,
 ) -> ApiResult<UpdateOrganizationResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    organization_repository::assert_user_in_org(user_id, org_id)?;
+    let auth = OrgAuth::require(caller, org_id, OrgPermissions::ORG_ADMIN)?;
     let name = OrgName::try_from(req.name)?;
 
     let org = Organization {
         name: name.into_inner(),
     };
-    organization_repository::update_org(org_id, org.clone())?;
+    organization_repository::update_org(auth.org_id(), org.clone())?;
 
-    Ok(map_organization_to_response(org_id, org))
+    Ok(map_organization_to_response(auth.org_id(), org))
 }
 
-// TODO: any org member can delete. Restrict to org owner/admin once
-// roles or ownership tracking exists.
-//
-// Deleting an org requires all projects to be removed first.
-// Since create_organization always creates a default project, this
-// means "delete project" must be implemented before org deletion is
-// usable. Once delete_project exists, it must also clean up approval
-// policies and proposals for that project to avoid orphaned data.
+// Deleting an org requires all projects to be removed first. Since
+// create_organization always creates a default project, the user must first
+// delete the default project (which itself requires PROJECT_ADMIN on the
+// project) before delete_organization can succeed.
 pub fn delete_organization(
     caller: &Principal,
     req: DeleteOrganizationRequest,
 ) -> ApiResult<DeleteOrganizationResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
-    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    organization_repository::assert_user_in_org(user_id, org_id)?;
+    let auth = OrgAuth::require(caller, org_id, OrgPermissions::ORG_ADMIN)?;
 
-    if !organization_repository::has_at_least_n_user_orgs(user_id, 2) {
+    if !organization_repository::has_at_least_n_user_orgs(auth.user_id(), 2) {
         return Err(ApiError::client_error(
             "Cannot delete your last organization.".to_string(),
         ));
     }
 
-    if project_repository::org_has_projects(org_id) {
+    if project_repository::org_has_projects(auth.org_id()) {
         return Err(ApiError::client_error(
             "Cannot delete an organization that still has projects. Remove all projects first."
                 .to_string(),
@@ -143,8 +135,8 @@ pub fn delete_organization(
 
     // Safe to delete: no projects remain, so no canisters, approval
     // policies, or proposals are linked to this org.
-    team_repository::delete_org_teams(org_id);
-    organization_repository::delete_org(org_id)?;
+    team_repository::delete_org_teams(auth.org_id());
+    organization_repository::delete_org(auth.org_id())?;
 
     Ok(DeleteOrganizationResponse {})
 }
