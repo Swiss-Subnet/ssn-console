@@ -5,6 +5,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ssn/cycles-monitor-api": "workspace:*"
+    "@ssn/cycles-monitor-api": "workspace:*",
+    "@ssn/test-utils": "workspace:*"
   }
 }

@@ -5,9 +5,12 @@ import {
 } from '@dfinity/pic';
 import type { Principal } from '@icp-sdk/core/principal';
 import { idlFactory, type _SERVICE, type UserProfile } from '@ssn/backend-api';
-import { extractOkResponse } from './error';
-import { anonymousIdentity, controllerIdentity } from './identity';
 import type { Identity } from '@icp-sdk/core/agent';
+import {
+  anonymousIdentity,
+  controllerIdentity,
+  extractOkResponse,
+} from '@ssn/test-utils';
 
 export class UserDriver {
   private readonly actor: Actor<_SERVICE>;

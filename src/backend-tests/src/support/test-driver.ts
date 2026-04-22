@@ -2,16 +2,18 @@ import { type Actor, type CanisterFixture, PocketIc } from '@dfinity/pic';
 import { inject } from 'vitest';
 import {
   type _SERVICE as BackendService,
-  idlFactory,
   type Project,
 } from '@ssn/backend-api';
 import { resolve } from 'node:path';
 import { Principal } from '@icp-sdk/core/principal';
-import { controllerIdentity } from './identity';
 import { ProposalDriver } from './proposal-driver';
-import { extractOkResponse } from './error';
 import * as crypto from 'node:crypto';
 import { UserDriver } from './user-driver';
+import {
+  BaseTestDriver,
+  extractOkResponse,
+  setupBackendCanister,
+} from '@ssn/test-utils';
 
 export const BACKEND_WASM_PATH = resolve(
   __dirname,
@@ -33,7 +35,7 @@ export const PUBLIC_KEY = publicKey
   .trim();
 export const PRIVATE_KEY = privateKey;
 
-export class TestDriver {
+export class TestDriver extends BaseTestDriver {
   public readonly proposals: ProposalDriver;
   public readonly users: UserDriver;
 
@@ -46,9 +48,10 @@ export class TestDriver {
   }
 
   private constructor(
-    public readonly pic: PocketIc,
+    pic: PocketIc,
     private readonly fixture: CanisterFixture<BackendService>,
   ) {
+    super(pic);
     this.proposals = new ProposalDriver(pic, fixture.canisterId);
     this.users = new UserDriver(pic, fixture.canisterId);
   }
@@ -56,38 +59,16 @@ export class TestDriver {
   public static async create(initialDate = new Date()): Promise<TestDriver> {
     const pic = await PocketIc.create(inject('PIC_URL'));
     await pic.setTime(initialDate);
-    const fixture = await this.setupBackendCanister(pic);
+    const fixture = await setupBackendCanister(pic, [
+      { name: 'PUBLIC_KEY', value: PUBLIC_KEY },
+      { name: 'OFFCHAIN_SERVICE_URL', value: 'http://localhost:3000' },
+    ]);
 
     return new TestDriver(pic, fixture);
   }
 
-  private static async setupBackendCanister(
-    pic: PocketIc,
-  ): Promise<CanisterFixture<BackendService>> {
-    return await pic.setupCanister<BackendService>({
-      idlFactory,
-      wasm: BACKEND_WASM_PATH,
-      sender: controllerIdentity.getPrincipal(),
-      environmentVariables: [
-        { name: 'PUBLIC_KEY', value: PUBLIC_KEY },
-        { name: 'OFFCHAIN_SERVICE_URL', value: 'http://localhost:3000' },
-      ],
-    });
-  }
-
   public async tearDown(): Promise<void> {
     await this.pic.tearDown();
-  }
-
-  public async setEnvironmentVariable(
-    name: string,
-    value: string,
-  ): Promise<void> {
-    await this.pic.updateCanisterSettings({
-      canisterId: this.canisterId,
-      environmentVariables: [{ name, value }],
-      sender: controllerIdentity.getPrincipal(),
-    });
   }
 
   public async getDefaultProject(): Promise<Project> {

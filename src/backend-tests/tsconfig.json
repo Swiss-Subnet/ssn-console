@@ -1,7 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "types": ["bun", "vitest"]
+    "types": ["bun", "vitest"],
+    "composite": true
   },
   "include": ["src/**/*.ts", "global-setup.ts", "types.d.ts"],
   "exclude": [".turbo", "node_modules"]

@@ -16,6 +16,7 @@ COPY /src/frontend/package.json ./src/frontend/package.json
 COPY /src/management-canister/package.json ./src/management-canister/package.json
 COPY /src/offchain-service/package.json ./src/offchain-service/package.json
 COPY /src/scripts/package.json ./src/scripts/package.json
+COPY /src/test-utils/package.json ./src/test-utils/package.json
 
 RUN bun i --frozen-lockfile
 

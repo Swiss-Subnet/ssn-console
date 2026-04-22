@@ -7,7 +7,7 @@ import {
   type Proposal,
   type ProposalOperation,
 } from '@ssn/backend-api';
-import { extractOkResponse } from './error';
+import { extractOkResponse } from '@ssn/test-utils';
 
 export class ProposalDriver {
   private readonly actor: Actor<_SERVICE>;

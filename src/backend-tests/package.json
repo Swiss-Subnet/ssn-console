@@ -5,6 +5,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ssn/backend-api": "workspace:*"
+    "@ssn/backend-api": "workspace:*",
+    "@ssn/test-utils": "workspace:*"
   }
 }

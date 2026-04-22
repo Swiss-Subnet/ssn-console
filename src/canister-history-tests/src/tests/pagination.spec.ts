@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestDriver } from '../support';
+import type { Principal } from '@icp-sdk/core/principal';
 import {
   controllerIdentity,
   extractOkResponse,
   minutesToMilliseconds,
-  TestDriver,
-} from '../support';
-import type { Principal } from '@icp-sdk/core/principal';
+} from '@ssn/test-utils';
 
 describe('Pagination', () => {
   let driver: TestDriver;

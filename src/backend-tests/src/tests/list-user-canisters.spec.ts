@@ -1,15 +1,17 @@
 import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import {
-  anonymousIdentity,
-  controllerIdentity,
-  extractErrResponse,
-  extractOkResponse,
   TestDriver,
   unauthenticatedError,
   unauthorizedError,
 } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 import { Principal } from '@icp-sdk/core/principal';
+import {
+  anonymousIdentity,
+  controllerIdentity,
+  extractErrResponse,
+  extractOkResponse,
+} from '@ssn/test-utils';
 
 describe('list_user_canisters', () => {
   let driver: TestDriver;

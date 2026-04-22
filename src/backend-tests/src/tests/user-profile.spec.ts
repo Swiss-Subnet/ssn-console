@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  anonymousIdentity,
-  controllerIdentity,
-  extractOkResponse,
   noProfileError,
   TestDriver,
   unauthenticatedError,
   unauthorizedError,
 } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
+import {
+  anonymousIdentity,
+  controllerIdentity,
+  extractOkResponse,
+} from '@ssn/test-utils';
 
 describe('User Profile', () => {
   let driver: TestDriver;
