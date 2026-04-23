@@ -78,6 +78,21 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      setIsActionLoading(true);
+      await managementCanisterApi.deleteCanister({
+        canisterId: canister.principal,
+      });
+      await onStatusChange?.();
+      showSuccessToast('Canister deleted successfully');
+    } catch (err) {
+      showErrorToast('Failed to delete canister', err);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
   return (
     <Card size="sm">
       <CardHeader>
@@ -88,14 +103,24 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
         {info && (
           <CardAction className="flex items-center gap-2">
             {info.status === CanisterStatus.Stopped && (
-              <LoadingButton
-                variant="outline"
-                size="xs"
-                onClick={handleStart}
-                isLoading={isActionLoading}
-              >
-                Start
-              </LoadingButton>
+              <>
+                <LoadingButton
+                  variant="outline"
+                  size="xs"
+                  onClick={handleStart}
+                  isLoading={isActionLoading}
+                >
+                  Start
+                </LoadingButton>
+                <LoadingButton
+                  variant="outline"
+                  size="xs"
+                  onClick={handleDelete}
+                  isLoading={isActionLoading}
+                >
+                  Delete
+                </LoadingButton>
+              </>
             )}
             {info.status === CanisterStatus.Running && (
               <LoadingButton
@@ -110,6 +135,11 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
             <Badge variant={statusBadgeVariant(info.status)}>
               {info.status}
             </Badge>
+          </CardAction>
+        )}
+        {canister.state.availability === CanisterAvailability.Deleted && (
+          <CardAction className="flex items-center gap-2">
+            <Badge variant="destructive">Deleted</Badge>
           </CardAction>
         )}
       </CardHeader>

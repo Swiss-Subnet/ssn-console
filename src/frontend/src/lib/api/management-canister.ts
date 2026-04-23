@@ -4,11 +4,13 @@ import {
   mapUpdateSettingsRequest,
   mapStartCanisterRequest,
   mapStopCanisterRequest,
+  mapDeleteCanisterRequest,
   type CanisterStatusRequest,
   type CanisterStatusResponse,
   type UpdateSettingsRequest,
   type StartCanisterRequest,
   type StopCanisterRequest,
+  type DeleteCanisterRequest,
 } from '@/lib/api-models';
 import { type ActorSubclass } from '@icp-sdk/core/agent';
 import type { _SERVICE } from '@ssn/management-canister';
@@ -48,6 +50,14 @@ export class ManagementCanisterApi {
     const apiReq = mapStopCanisterRequest(req);
 
     await this.actor.stop_canister.withOptions({
+      effectiveCanisterId: apiReq.canister_id,
+    })(apiReq);
+  }
+
+  public async deleteCanister(req: DeleteCanisterRequest): Promise<void> {
+    const apiReq = mapDeleteCanisterRequest(req);
+
+    await this.actor.delete_canister.withOptions({
       effectiveCanisterId: apiReq.canister_id,
     })(apiReq);
   }
