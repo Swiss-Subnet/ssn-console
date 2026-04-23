@@ -103,24 +103,24 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
         {info && (
           <CardAction className="flex items-center gap-2">
             {info.status === CanisterStatus.Stopped && (
-              <LoadingButton
-                variant="outline"
-                size="xs"
-                onClick={handleStart}
-                isLoading={isActionLoading}
-              >
-                Start
-              </LoadingButton>
-            )}
-            {info.status === CanisterStatus.Stopped && (
-              <LoadingButton
-                variant="outline"
-                size="xs"
-                onClick={handleDelete}
-                isLoading={isActionLoading}
-              >
-                Delete
-              </LoadingButton>
+              <>
+                <LoadingButton
+                  variant="outline"
+                  size="xs"
+                  onClick={handleStart}
+                  isLoading={isActionLoading}
+                >
+                  Start
+                </LoadingButton>
+                <LoadingButton
+                  variant="outline"
+                  size="xs"
+                  onClick={handleDelete}
+                  isLoading={isActionLoading}
+                >
+                  Delete
+                </LoadingButton>
+              </>
             )}
             {info.status === CanisterStatus.Running && (
               <LoadingButton
