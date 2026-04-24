@@ -10,6 +10,14 @@ pub struct CreateProposalRequest {
 pub type CreateProposalResponse = Proposal;
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct VoteProposalRequest {
+    pub proposal_id: String,
+    pub vote: Vote,
+}
+
+pub type VoteProposalResponse = Proposal;
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct Proposal {
     pub id: String,
     pub project_id: String,

@@ -213,6 +213,39 @@ impl ProjectAuth {
     }
 }
 
+// Collect the set of principals that currently hold a given permission on a
+// project, by walking all teams linked to the project, keeping those whose
+// team-project permissions include `needed`, and unioning the principals
+// registered against each member user. Used when snapshotting approvers onto
+// a proposal at the moment it transitions to PendingApproval.
+pub fn list_project_principals_with_permission(
+    project_id: Uuid,
+    needed: ProjectPermissions,
+) -> Vec<Principal> {
+    let mut principals = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    for team_id in project_repository::list_project_team_ids(project_id) {
+        let Some(perms) = project_repository::get_project_team_permissions(project_id, team_id)
+        else {
+            continue;
+        };
+        if !perms.contains(needed) {
+            continue;
+        }
+
+        for user_id in team_repository::list_team_user_ids(team_id) {
+            for principal in user_profile_repository::get_principals_by_user_id(user_id) {
+                if seen.insert(principal) {
+                    principals.push(principal);
+                }
+            }
+        }
+    }
+
+    principals
+}
+
 // Resolve a team id and enforce that the caller has org-level access to it
 // with the required permissions. Returns the team together with the
 // resulting `OrgAuth` (useful when the caller needs both the team record
