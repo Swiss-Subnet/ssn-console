@@ -18,3 +18,4 @@ pub(super) const CANISTER_INFO_MEMORY_ID: MemoryId = MemoryId::new(2);
 pub(super) const CANISTER_CHANGE_MEMORY_ID: MemoryId = MemoryId::new(3);
 pub(super) const CANISTER_ID_TIMESTAMP_CHANGE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(4);
 pub(super) const ORIGIN_TIMESTAMP_CHANGE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(5);
+pub(super) const FAILED_CANISTER_MAPPINGS_MEMORY_ID: MemoryId = MemoryId::new(6);

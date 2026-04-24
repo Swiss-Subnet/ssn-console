@@ -1,0 +1,30 @@
+name: Update canister history env vars
+description: Update canister history env vars
+
+inputs:
+  network:
+    description: The ICP network to update the canister env vars on
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Update canister history env vars
+      shell: bash
+      run: |
+        CANISTER_ID=$(dfx canister id canister-history --network ${{ inputs.network }})
+        BACKEND_ID=$(dfx canister id backend --network ${{ inputs.network }})
+
+        dfx canister call aaaaa-aa update_settings "(
+          record {
+            canister_id = principal \"$CANISTER_ID\";
+            settings = record {
+              environment_variables = opt vec {
+                record {
+                  name = \"BACKEND_ID\";
+                  value = \"$BACKEND_ID\";
+                };
+              };
+            };
+          }
+        )" --network ${{ inputs.network }}

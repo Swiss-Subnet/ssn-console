@@ -10,6 +10,7 @@ mod memory_manager;
 mod model;
 mod repository;
 mod service;
+mod env;
 
 use canister_utils::ApiResultDto;
 use dto::*;

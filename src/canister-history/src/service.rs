@@ -3,16 +3,18 @@ use crate::constants::{
     MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
 };
 use crate::dto::{
-    ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterIdsRequest,
-    ListSubnetCanisterIdsResponse, ListSubnetCanisterRangesResponse, PaginationMetaResponse,
-    UpdateSubnetCanisterRangesRequest,
+    AddChildCanistersRequest, ListCanisterChangesRequest, ListCanisterChangesResponse,
+    ListSubnetCanisterIdsRequest, ListSubnetCanisterIdsResponse, ListSubnetCanisterRangesResponse,
+    PaginationMetaResponse, ParentChildMapping, UpdateSubnetCanisterRangesRequest,
 };
+use crate::env::get_backend_id;
 use crate::mapping::{map_canister_change_response, map_management_canister_change_response};
-use crate::model::CanisterChangeInfo;
+use crate::model::{CanisterChangeDetails, CanisterChangeInfo, CanisterChangeOrigin};
 use crate::repository;
 use candid::Principal;
 use canister_utils::{
-    is_destination_invalid, ApiError, ApiResult, CanisterId, CanisterIdRange, MAX_CALLS_PER_BATCH,
+    is_destination_invalid, ApiError, ApiResult, ApiResultDto, CanisterId, CanisterIdRange,
+    MAX_CALLS_PER_BATCH,
 };
 use futures::future::join_all;
 use ic_cdk::{
@@ -172,6 +174,7 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
         ic_cdk::println!("Warning: Missed {missed_events} events due to truncation");
     }
 
+    let mut new_canister_mappings = Vec::new();
     for (i, change_record) in canister_info.recent_changes.into_iter().enumerate() {
         let current_index = start_index + i as u64;
 
@@ -179,6 +182,22 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
         if current_index >= stored_canister_info.total_num_changes {
             let canister_change =
                 map_management_canister_change_response(canister_id, change_record);
+
+            // Track newly created canisters
+            if let Some(CanisterChangeDetails::Creation { .. }) = &canister_change.details {
+                // it's not possible for users to create canisters
+                if let CanisterChangeOrigin::FromCanister {
+                    canister_id: parent_id,
+                    ..
+                } = &canister_change.origin
+                {
+                    new_canister_mappings.push(ParentChildMapping {
+                        child_canister_id: canister_change.canister_id,
+                        parent_canister_id: *parent_id,
+                    });
+                }
+            }
+
             repository::insert_change(canister_change);
             stored_canister_info.stored_num_changes += 1;
         }
@@ -186,6 +205,38 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
 
     stored_canister_info.total_num_changes = canister_info.total_num_changes;
     repository::upsert_canister_change_info(canister_id, stored_canister_info);
+
+    if !new_canister_mappings.is_empty() {
+        ic_cdk::futures::spawn(async move {
+            let call_res = Call::unbounded_wait(get_backend_id(), "add_child_canisters")
+                .with_arg(&AddChildCanistersRequest {
+                    parent_child_mappings: new_canister_mappings.clone(),
+                })
+                .await;
+
+            match call_res {
+                Err(err) => {
+                    ic_cdk::println!("Failed to call backend add_child_canisters: {err}");
+                    repository::add_failed_canister_mappings(new_canister_mappings);
+                }
+                Ok(call) => match call.candid::<ApiResultDto>() {
+                    Err(err) => {
+                        ic_cdk::println!(
+                            "Failed to decode response from backend add_child_canisters: {err}"
+                        );
+                        repository::add_failed_canister_mappings(new_canister_mappings);
+                    }
+                    Ok(ApiResultDto::Err(err)) => {
+                        ic_cdk::println!("Backend add_child_canisters returned an error: {err:?}");
+                        repository::add_failed_canister_mappings(new_canister_mappings);
+                    }
+                    Ok(ApiResultDto::Ok(())) => {
+                        // success - nothing to do
+                    }
+                },
+            }
+        });
+    }
 
     Ok(())
 }
