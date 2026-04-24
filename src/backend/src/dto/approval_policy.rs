@@ -12,8 +12,29 @@ pub struct ListProjectApprovalPoliciesResponse {
 }
 
 #[derive(Debug, Clone, Serialize, CandidType, Deserialize)]
+pub struct UpsertApprovalPolicyRequest {
+    pub project_id: String,
+    pub operation_type: OperationType,
+    pub policy_type: PolicyType,
+}
+
+pub type UpsertApprovalPolicyResponse = ApprovalPolicy;
+
+#[derive(Debug, Clone, Serialize, CandidType, Deserialize)]
 pub struct ApprovalPolicy {
     pub id: String,
-    pub operation_type: String,
-    pub policy_type: String,
+    pub operation_type: OperationType,
+    pub policy_type: PolicyType,
+}
+
+#[derive(Debug, Clone, Serialize, CandidType, Deserialize, PartialEq, Eq)]
+pub enum OperationType {
+    CreateCanister {},
+    AddCanisterController {},
+}
+
+#[derive(Debug, Clone, Serialize, CandidType, Deserialize, PartialEq, Eq)]
+pub enum PolicyType {
+    AutoApprove {},
+    FixedQuorum { threshold: u32 },
 }

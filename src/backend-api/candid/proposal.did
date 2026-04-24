@@ -10,6 +10,16 @@ type CreateProposalResponse = variant {
   Err : ApiError;
 };
 
+type VoteProposalRequest = record {
+  proposal_id : text;
+  vote : Vote;
+};
+
+type VoteProposalResponse = variant {
+  Ok : Proposal;
+  Err : ApiError;
+};
+
 type Proposal = record {
   id : text;
   project_id : text;
@@ -52,4 +62,5 @@ type ProposalOperation = variant {
 
 service : {
   create_proposal : (CreateProposalRequest) -> (CreateProposalResponse);
+  vote_proposal : (VoteProposalRequest) -> (VoteProposalResponse);
 };

@@ -31,7 +31,6 @@ pub fn get_proposal(proposal_id: &Uuid) -> Option<Proposal> {
     with_state(|s| s.proposals.get(proposal_id))
 }
 
-#[allow(dead_code)]
 pub fn set_proposal_pending_approval(
     proposal_id: Uuid,
     threshold: u32,
