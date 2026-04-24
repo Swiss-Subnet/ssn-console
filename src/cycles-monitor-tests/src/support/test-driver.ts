@@ -30,6 +30,7 @@ export class TestDriver extends BaseTestDriver {
   public get cyclesMonitorCanisterId(): Principal {
     return this.cyclesMonitorFixture.canisterId;
   }
+
   public get canisterHistoryActor(): Actor<CanisterHistoryService> {
     return this.canisterHistoryFixture.actor;
   }
@@ -50,16 +51,18 @@ export class TestDriver extends BaseTestDriver {
     const pic = await PocketIc.create(inject('PIC_URL'));
     await pic.setTime(initialDate);
     const canisterHistoryFixture = await setupCanisterHistoryCanister(pic);
-    const cyclesMonitorFixture = await setupCyclesMonitorCanister(pic, [
-      {
-        name: 'CANISTER_HISTORY_ID',
-        value: canisterHistoryFixture.canisterId.toString(),
-      },
-      {
-        name: 'PUBLIC_KEY',
-        value: PUBLIC_KEY,
-      },
-    ]);
+    const cyclesMonitorFixture = await setupCyclesMonitorCanister(pic, {
+      environmentVariables: [
+        {
+          name: 'CANISTER_HISTORY_ID',
+          value: canisterHistoryFixture.canisterId.toString(),
+        },
+        {
+          name: 'PUBLIC_KEY',
+          value: PUBLIC_KEY,
+        },
+      ],
+    });
 
     return new TestDriver(pic, cyclesMonitorFixture, canisterHistoryFixture);
   }

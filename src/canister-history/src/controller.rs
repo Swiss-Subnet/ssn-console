@@ -6,7 +6,7 @@ use crate::{
         TriggerSyncCanisterHistoriesResponse, UpdateSubnetCanisterRangesRequest,
         UpdateSubnetCanisterRangesResponse,
     },
-    service,
+    env, service,
 };
 use canister_utils::{assert_controller, ApiError, ApiResultDto, CanisterId};
 use ic_cdk::{api::msg_caller, *};
@@ -26,6 +26,7 @@ fn init() {
 
 #[post_upgrade]
 fn post_upgrade() {
+    env::init_backend_id();
     setup_timer();
 }
 

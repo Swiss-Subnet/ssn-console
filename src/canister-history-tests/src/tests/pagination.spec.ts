@@ -22,7 +22,7 @@ describe('Pagination', () => {
     let canisterId: Principal;
 
     beforeEach(async () => {
-      driver.actor.setIdentity(controllerIdentity);
+      driver.canisterHistoryActor.setIdentity(controllerIdentity);
 
       await driver.setSubnetCanisterRanges();
 
@@ -36,7 +36,7 @@ describe('Pagination', () => {
     });
 
     it('should return 1 item per page', async () => {
-      const res = await driver.actor.list_canister_changes({
+      const res = await driver.canisterHistoryActor.list_canister_changes({
         canister_id: canisterId,
         limit: [1n],
         page: [0n],
@@ -51,7 +51,7 @@ describe('Pagination', () => {
     });
 
     it('should return multiple items per page', async () => {
-      const res = await driver.actor.list_canister_changes({
+      const res = await driver.canisterHistoryActor.list_canister_changes({
         canister_id: canisterId,
         limit: [2n],
         page: [1n],
@@ -66,7 +66,7 @@ describe('Pagination', () => {
     });
 
     it('should return all items on a single page', async () => {
-      const res = await driver.actor.list_canister_changes({
+      const res = await driver.canisterHistoryActor.list_canister_changes({
         canister_id: canisterId,
         limit: [10n],
         page: [0n],
@@ -81,7 +81,7 @@ describe('Pagination', () => {
     });
 
     it('should set a minimum page', async () => {
-      const res = await driver.actor.list_canister_changes({
+      const res = await driver.canisterHistoryActor.list_canister_changes({
         canister_id: canisterId,
         limit: [1n],
         page: [0n],
@@ -92,7 +92,7 @@ describe('Pagination', () => {
     });
 
     it('should set a maximum page', async () => {
-      const res = await driver.actor.list_canister_changes({
+      const res = await driver.canisterHistoryActor.list_canister_changes({
         canister_id: canisterId,
         limit: [1n],
         page: [10_000n],
@@ -103,7 +103,7 @@ describe('Pagination', () => {
     });
 
     it('should set a minimum limit', async () => {
-      const res = await driver.actor.list_canister_changes({
+      const res = await driver.canisterHistoryActor.list_canister_changes({
         canister_id: canisterId,
         limit: [0n],
         page: [1n],
@@ -114,7 +114,7 @@ describe('Pagination', () => {
     });
 
     it('should set a maximum limit', async () => {
-      const res = await driver.actor.list_canister_changes({
+      const res = await driver.canisterHistoryActor.list_canister_changes({
         canister_id: canisterId,
         limit: [10_000n],
         page: [1n],
@@ -125,28 +125,32 @@ describe('Pagination', () => {
     });
 
     it('should handle pagination with reverse ordering', async () => {
-      const defaultRes = await driver.actor.list_canister_changes({
-        canister_id: canisterId,
-        limit: [],
-        page: [],
-        reverse: [false],
-      });
+      const defaultRes =
+        await driver.canisterHistoryActor.list_canister_changes({
+          canister_id: canisterId,
+          limit: [],
+          page: [],
+          reverse: [false],
+        });
       const defaultOkRes = extractOkResponse(defaultRes);
 
-      const normalRes = await driver.actor.list_canister_changes({
-        canister_id: canisterId,
-        limit: [],
-        page: [],
-        reverse: [false],
-      });
+      const normalRes = await driver.canisterHistoryActor.list_canister_changes(
+        {
+          canister_id: canisterId,
+          limit: [],
+          page: [],
+          reverse: [false],
+        },
+      );
       const normalOkRes = extractOkResponse(normalRes);
 
-      const reverseRes = await driver.actor.list_canister_changes({
-        canister_id: canisterId,
-        limit: [],
-        page: [],
-        reverse: [true],
-      });
+      const reverseRes =
+        await driver.canisterHistoryActor.list_canister_changes({
+          canister_id: canisterId,
+          limit: [],
+          page: [],
+          reverse: [true],
+        });
       const reverseOkRes = extractOkResponse(reverseRes);
 
       expect(defaultOkRes.changes).toHaveLength(6);

@@ -1,11 +1,16 @@
 use crate::{
+    dto::ParentChildMapping,
     memory::{
         init_canister_changes, init_canister_id_timestamp_change_index, init_canister_infos,
-        init_origin_timestamp_change_index, init_subnet_canister_range_info, CanisterChangeMemory,
-        CanisterIdTimestampChangeIndexMemory, CanisterInfoMemory, OriginTimestampChangeIndexMemory,
-        SubnetCanisterRangeInfoMemory,
+        init_failed_canister_mappings, init_origin_timestamp_change_index,
+        init_subnet_canister_range_info, CanisterChangeMemory,
+        CanisterIdTimestampChangeIndexMemory, CanisterInfoMemory, FailedCanisterMappingsMemory,
+        OriginTimestampChangeIndexMemory, SubnetCanisterRangeInfoMemory,
     },
-    model::{CanisterChange, CanisterChangeInfo, CanisterChangeOrigin, SubnetCanisterRangeInfo},
+    model::{
+        CanisterChange, CanisterChangeInfo, CanisterChangeOrigin, FailedCanisterMapping,
+        SubnetCanisterRangeInfo,
+    },
 };
 use candid::Principal;
 use canister_utils::{CanisterId, Uuid};
@@ -138,12 +143,27 @@ pub fn upsert_canister_change_info(canister_id: Principal, canister_info: Canist
     mutate_state(|s| s.canister_infos.insert(canister_id, canister_info));
 }
 
+pub fn add_failed_canister_mappings(new_mappings: Vec<ParentChildMapping>) {
+    mutate_state(|s| {
+        for mapping in new_mappings {
+            s.failed_canister_mappings.insert(
+                Uuid::new(),
+                FailedCanisterMapping {
+                    parent_canister_id: mapping.parent_canister_id,
+                    child_canister_id: mapping.child_canister_id,
+                },
+            );
+        }
+    });
+}
+
 struct CanisterHistoryState {
     subnet_canister_range_info: SubnetCanisterRangeInfoMemory,
     canister_infos: CanisterInfoMemory,
     canister_changes: CanisterChangeMemory,
     canister_id_timestamp_change_index: CanisterIdTimestampChangeIndexMemory,
     origin_timestamp_change_index: OriginTimestampChangeIndexMemory,
+    failed_canister_mappings: FailedCanisterMappingsMemory,
 }
 
 impl Default for CanisterHistoryState {
@@ -154,6 +174,7 @@ impl Default for CanisterHistoryState {
             canister_changes: init_canister_changes(),
             canister_id_timestamp_change_index: init_canister_id_timestamp_change_index(),
             origin_timestamp_change_index: init_origin_timestamp_change_index(),
+            failed_canister_mappings: init_failed_canister_mappings(),
         }
     }
 }

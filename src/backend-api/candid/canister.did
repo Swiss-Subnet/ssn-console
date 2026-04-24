@@ -142,10 +142,25 @@ type ListUserCanistersResponse = variant {
   Err : ApiError;
 };
 
+type ParentChildMapping = record {
+  child_canister_id : principal;
+  parent_canister_id : principal;
+};
+
+type AddChildCanistersRequest = record {
+  parent_child_mappings : vec ParentChildMapping;
+};
+
+type TrackChildCanistersResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
 service : {
   list_my_canisters : (ListMyCanistersRequest) -> (ListMyCanistersResponse);
   list_user_canisters : (ListUserCanistersRequest) -> (ListUserCanistersResponse);
   remove_my_canister : (RemoveMyCanisterRequest) -> (RemoveMyCanisterResponse);
   update_my_canister_name : (UpdateMyCanisterNameRequest) -> (UpdateMyCanisterNameResponse);
   list_all_canisters : (ListAllCanistersRequest) -> (ListAllCanistersResponse) query;
+  add_child_canisters : (AddChildCanistersRequest) -> (TrackChildCanistersResponse);
 };

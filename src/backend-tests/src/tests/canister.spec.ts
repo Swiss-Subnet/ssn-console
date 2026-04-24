@@ -7,6 +7,7 @@ import {
   projectNotFoundOrNoAccessError,
   TestDriver,
   unauthenticatedError,
+  canisterHistoryIdentity,
 } from '../support';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Principal } from '@icp-sdk/core/principal';
@@ -764,6 +765,181 @@ describe('Canisters', () => {
         canister_id: record.id,
       });
       expect(removeRes).toHaveProperty('Err');
+    });
+  });
+
+  describe('add_child_canisters', () => {
+    it('should return an error for an anonymous user', async () => {
+      driver.actor.setIdentity(anonymousIdentity);
+      const res = await driver.actor.add_child_canisters({
+        parent_child_mappings: [],
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ Unauthorized: {} }],
+          message:
+            'Only the canister-history canister is allowed to call this endpoint',
+        },
+      });
+    });
+
+    it('should return an error for a regular authenticated user', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const res = await driver.actor.add_child_canisters({
+        parent_child_mappings: [],
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ Unauthorized: {} }],
+          message:
+            'Only the canister-history canister is allowed to call this endpoint',
+        },
+      });
+    });
+
+    it('should successfully add a child canister when the parent is known', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
+      const canisters = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      expect(canisters).toHaveLength(1);
+      const parentPrincipal = Principal.fromText(canisters[0]!.principal_id);
+
+      // Act as the canister-history canister
+      driver.actor.setIdentity(canisterHistoryIdentity);
+      const childPrincipal = Principal.fromUint8Array(
+        new Uint8Array([50, 51, 52]),
+      );
+
+      const res = await driver.actor.add_child_canisters({
+        parent_child_mappings: [
+          {
+            parent_canister_id: parentPrincipal,
+            child_canister_id: childPrincipal,
+          },
+        ],
+      });
+      extractOkResponse(res);
+
+      // Verify the child was added to the same project
+      driver.actor.setIdentity(aliceIdentity);
+      const updatedCanisters = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      expect(updatedCanisters).toHaveLength(2);
+      expect(updatedCanisters.map(c => c.principal_id)).toContain(
+        childPrincipal.toText(),
+      );
+    });
+
+    it('should handle orphaned canisters correctly', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
+      const canisters = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      const rootPrincipal = Principal.fromText(canisters[0]!.principal_id);
+      const childPrincipal = Principal.fromUint8Array(
+        new Uint8Array(29).fill(60),
+      );
+      const grandchildPrincipal = Principal.fromUint8Array(
+        new Uint8Array(29).fill(70),
+      );
+
+      // Act as the canister-history canister
+      driver.actor.setIdentity(canisterHistoryIdentity);
+
+      // 1. Map grandchild to child (child is currently unknown -> orphan)
+      await driver.actor.add_child_canisters({
+        parent_child_mappings: [
+          {
+            parent_canister_id: childPrincipal,
+            child_canister_id: grandchildPrincipal,
+          },
+        ],
+      });
+
+      // Verify nothing is added to the project yet
+      driver.actor.setIdentity(aliceIdentity);
+      expect(
+        extractOkResponse(
+          await driver.actor.list_my_canisters({ project_id: project.id }),
+        ),
+      ).toHaveLength(1);
+
+      // 2. Map child to root (resolves both child and grandchild)
+      driver.actor.setIdentity(canisterHistoryIdentity);
+      await driver.actor.add_child_canisters({
+        parent_child_mappings: [
+          {
+            parent_canister_id: rootPrincipal,
+            child_canister_id: childPrincipal,
+          },
+        ],
+      });
+
+      // Verify both were added to the project
+      driver.actor.setIdentity(aliceIdentity);
+      const finalCanisters = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      expect(finalCanisters).toHaveLength(3);
+      const principals = finalCanisters.map(c => c.principal_id);
+      expect(principals).toContain(rootPrincipal.toText());
+      expect(principals).toContain(childPrincipal.toText());
+      expect(principals).toContain(grandchildPrincipal.toText());
+    });
+
+    it('should be idempotent and ignore duplicate mappings', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
+      const canisters = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      const parentPrincipal = Principal.fromText(canisters[0]!.principal_id);
+      const childPrincipal = Principal.fromUint8Array(
+        new Uint8Array([80, 81, 82]),
+      );
+
+      driver.actor.setIdentity(canisterHistoryIdentity);
+
+      // First call
+      await driver.actor.add_child_canisters({
+        parent_child_mappings: [
+          {
+            parent_canister_id: parentPrincipal,
+            child_canister_id: childPrincipal,
+          },
+        ],
+      });
+
+      // Second identical call
+      const res = await driver.actor.add_child_canisters({
+        parent_child_mappings: [
+          {
+            parent_canister_id: parentPrincipal,
+            child_canister_id: childPrincipal,
+          },
+        ],
+      });
+      extractOkResponse(res);
+
+      driver.actor.setIdentity(aliceIdentity);
+      const finalCanisters = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      expect(finalCanisters).toHaveLength(2); // Still just 1 child
     });
   });
 

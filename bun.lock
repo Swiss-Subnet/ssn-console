@@ -40,6 +40,7 @@
     "src/canister-history-tests": {
       "name": "canister-history-tests",
       "dependencies": {
+        "@ssn/backend-api": "workspace:*",
         "@ssn/canister-history-api": "workspace:*",
         "@ssn/management-canister": "workspace:*",
         "@ssn/test-utils": "workspace:*",

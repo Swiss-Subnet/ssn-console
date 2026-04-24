@@ -29,22 +29,24 @@ describe('Access control', () => {
 
   describe('update_subnet_canister_ranges', () => {
     it('should throw an error for anonymous principals', async () => {
-      driver.actor.setIdentity(anonymousIdentity);
+      driver.canisterHistoryActor.setIdentity(anonymousIdentity);
 
-      const updateResult = await driver.actor.update_subnet_canister_ranges({
-        canister_ranges: [],
-      });
+      const updateResult =
+        await driver.canisterHistoryActor.update_subnet_canister_ranges({
+          canister_ranges: [],
+        });
 
       expect(updateResult).toEqual(unauthenticatedError);
     });
 
     it('should throw an error for non-controller principals', async () => {
       const identity = generateRandomIdentity();
-      driver.actor.setIdentity(identity);
+      driver.canisterHistoryActor.setIdentity(identity);
 
-      const updateResult = await driver.actor.update_subnet_canister_ranges({
-        canister_ranges: [],
-      });
+      const updateResult =
+        await driver.canisterHistoryActor.update_subnet_canister_ranges({
+          canister_ranges: [],
+        });
 
       expect(updateResult).toEqual(unauthorizedError);
     });
