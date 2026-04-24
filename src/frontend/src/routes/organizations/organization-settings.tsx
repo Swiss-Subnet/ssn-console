@@ -1,6 +1,5 @@
 import { LoadingButton } from '@/components/loading-button';
 import { Container } from '@/components/layout/container';
-import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -133,14 +132,7 @@ const OrganizationSettings: FC = () => {
 
   return (
     <Container>
-      <Breadcrumbs
-        items={[
-          { label: 'Home', to: '/canisters' },
-          { label: organization.name },
-        ]}
-      />
-
-      <div className="mt-6 space-y-6">
+      <div className="space-y-6">
         <Card className="mx-auto max-w-2xl">
           <CardHeader>
             <CardTitle>Organization Settings</CardTitle>

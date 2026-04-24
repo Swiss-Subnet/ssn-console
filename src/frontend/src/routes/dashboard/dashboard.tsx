@@ -1,4 +1,3 @@
-import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Container } from '@/components/layout/container';
 import { H1 } from '@/components/typography/h1';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -86,11 +85,7 @@ const Dashboard: FC = () => {
 
   return (
     <Container>
-      <Breadcrumbs
-        items={[{ label: 'Home', to: '/canisters' }, { label: 'Dashboard' }]}
-      />
-
-      <H1 className="mt-3">Dashboard</H1>
+      <H1>Dashboard</H1>
 
       <Alert className="mt-6">
         <Sparkles />

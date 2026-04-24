@@ -2,14 +2,50 @@ import { Container } from '@/components/layout/container';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
-import { Plus } from 'lucide-react';
+import { ChevronRight, Plus, Users } from 'lucide-react';
 import { useEffect, useState, type FC } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { isNil } from '@/lib/nil';
 import { selectOrgMap } from '@/lib/store';
-import type { OrgTeam } from '@/lib/api-models';
+import type { OrgPermissions, OrgTeam } from '@/lib/api-models';
+
+const PERMISSION_CHIPS: { key: keyof OrgPermissions; label: string }[] = [
+  { key: 'memberManage', label: 'Members' },
+  { key: 'teamManage', label: 'Teams' },
+  { key: 'projectCreate', label: 'Projects' },
+  { key: 'billingManage', label: 'Billing' },
+];
+
+const TeamPermissionChips: FC<{ permissions: OrgPermissions }> = ({
+  permissions,
+}) => {
+  if (permissions.orgAdmin) {
+    return <Badge variant="default">Admin</Badge>;
+  }
+
+  const granted = PERMISSION_CHIPS.filter(({ key }) => permissions[key]);
+
+  if (granted.length === 0) {
+    return (
+      <Badge variant="outline" className="text-muted-foreground">
+        No permissions
+      </Badge>
+    );
+  }
+
+  return (
+    <>
+      {granted.map(({ key, label }) => (
+        <Badge key={key} variant="secondary">
+          {label}
+        </Badge>
+      ))}
+    </>
+  );
+};
 
 const TeamList: FC = () => {
   const { orgId } = useParams();
@@ -52,7 +88,6 @@ const TeamList: FC = () => {
     <Container>
       <Breadcrumbs
         items={[
-          { label: 'Home', to: '/canisters' },
           {
             label: organization.name,
             to: `/organizations/${orgId}/settings`,
@@ -61,7 +96,7 @@ const TeamList: FC = () => {
         ]}
       />
 
-      <div className="mx-auto mt-6 max-w-md space-y-6">
+      <div className="mx-auto mt-6 max-w-2xl space-y-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Teams in {organization.name}</CardTitle>
@@ -81,20 +116,40 @@ const TeamList: FC = () => {
             {isLoading ? (
               <p className="text-muted-foreground text-sm">Loading...</p>
             ) : teams.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No teams found.</p>
+              <div className="flex flex-col items-center gap-3 py-6">
+                <p className="text-muted-foreground text-sm">No teams yet.</p>
+                {canManageTeams && (
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      navigate(`/organizations/${orgId}/teams/new`)
+                    }
+                  >
+                    <Plus className="mr-1 size-3.5" />
+                    Create your first team
+                  </Button>
+                )}
+              </div>
             ) : (
               <ul className="divide-y">
                 {teams.map(team => (
                   <li key={team.id}>
                     <button
-                      className="hover:bg-muted w-full px-2 py-3 text-left text-sm transition-colors"
+                      className="hover:bg-muted flex w-full items-center gap-3 px-2 py-3 text-left transition-colors"
                       onClick={() =>
                         navigate(
                           `/organizations/${orgId}/teams/${team.id}/settings`,
                         )
                       }
                     >
-                      {team.name}
+                      <Users className="text-muted-foreground size-4 shrink-0" />
+                      <span className="flex-1 truncate text-sm font-medium">
+                        {team.name}
+                      </span>
+                      <div className="flex flex-wrap justify-end gap-1">
+                        <TeamPermissionChips permissions={team.permissions} />
+                      </div>
+                      <ChevronRight className="text-muted-foreground size-4 shrink-0" />
                     </button>
                   </li>
                 ))}

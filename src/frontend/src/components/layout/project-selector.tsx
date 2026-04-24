@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -21,13 +20,7 @@ import {
   selectProjectMap,
   useAppStore,
 } from '@/lib/store';
-import {
-  Building2,
-  ChevronsUpDown,
-  FolderOpen,
-  Plus,
-  Settings,
-} from 'lucide-react';
+import { ChevronsUpDown, FolderOpen, Plus, Settings } from 'lucide-react';
 import { useMemo, type FC } from 'react';
 import { NavLink, useParams } from 'react-router';
 
@@ -52,7 +45,7 @@ export const ProjectSelector: FC = () => {
       return null;
     }
 
-    return orgMap.get(activeProject?.orgId);
+    return orgMap.get(activeProject.orgId);
   }, [activeProject, orgMap]);
 
   const activeOrgProjects = useMemo(() => {
@@ -67,7 +60,7 @@ export const ProjectSelector: FC = () => {
     return activeOrgWithProjects?.projects ?? [];
   }, [activeOrganization, orgsWithProjects]);
 
-  if (orgsWithProjects.length === 0) {
+  if (isNil(activeProject) || isNil(activeOrganization)) {
     return null;
   }
 
@@ -76,132 +69,73 @@ export const ProjectSelector: FC = () => {
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
-            <Building2 className="size-4" />
+            <FolderOpen className="size-4" />
 
             <div className="flex flex-1 flex-col">
-              <span className="truncate text-sm font-medium">
-                {activeOrganization?.name}
-              </span>
+              <span className="truncate text-sm">{activeProject.name}</span>
             </div>
 
             <ChevronsUpDown className="ml-auto size-3.5" />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent side={isMobile ? 'bottom' : 'right'}>
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
+            {activeOrgProjects.length > 1 && (
+              <>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Switch Project</DropdownMenuLabel>
 
-              {orgsWithProjects.map(org => {
-                const isActive = org.id === activeOrganization?.id;
+                  {activeOrgProjects.map(project => {
+                    const isActive = project.id === activeProject.id;
 
-                return (
-                  <DropdownMenuItem
-                    key={org.id}
-                    className="p-2"
-                    disabled={isActive}
-                    {...(!isActive && {
-                      render: (
-                        <NavLink
-                          to={`/projects/${org.projects[0]?.id}/canisters`}
-                        />
-                      ),
-                    })}
-                  >
-                    <Building2 className="size-3.5" />
-                    {org.name}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuGroup>
+                    return (
+                      <DropdownMenuItem
+                        key={project.id}
+                        className="p-2"
+                        disabled={isActive}
+                        {...(!isActive && {
+                          render: (
+                            <NavLink to={`/projects/${project.id}/canisters`} />
+                          ),
+                        })}
+                      >
+                        <FolderOpen className="size-3.5" />
+                        {project.name}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuGroup>
 
-            <DropdownMenuSeparator />
+                <DropdownMenuSeparator />
+              </>
+            )}
 
             <DropdownMenuGroup>
               <DropdownMenuItem
                 className="p-2"
-                render={<NavLink to="/organizations/new" />}
+                render={
+                  <NavLink
+                    to={`/organizations/${activeOrganization.id}/projects/new`}
+                  />
+                }
               >
                 <Plus className="size-3.5" />
-                Create Organization
+                Create Project
               </DropdownMenuItem>
 
-              {activeOrganization && (
-                <DropdownMenuItem
-                  className="p-2"
-                  render={
-                    <NavLink
-                      to={`/organizations/${activeOrganization.id}/settings`}
-                    />
-                  }
-                >
-                  <Settings className="size-3.5" />
-                  Settings
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem
+                className="p-2"
+                render={
+                  <NavLink
+                    to={`/organizations/${activeOrganization.id}/projects/${activeProject.id}/settings`}
+                  />
+                }
+              >
+                <Settings className="size-3.5" />
+                Project Settings
+              </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
-      </SidebarMenuItem>
-
-      <SidebarMenuItem>
-        {activeOrgProjects.length > 1 ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<SidebarMenuButton />}>
-              <FolderOpen className="size-4" />
-
-              <div className="flex flex-1 flex-col">
-                <span className="truncate text-sm">{activeProject?.name}</span>
-              </div>
-
-              <ChevronsUpDown className="ml-auto size-3.5" />
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent side={isMobile ? 'bottom' : 'right'}>
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Projects</DropdownMenuLabel>
-
-                {activeOrgProjects.map(project => (
-                  <DropdownMenuItem
-                    key={project.id}
-                    className="p-2"
-                    render={
-                      <NavLink to={`/projects/${project.id}/canisters`} />
-                    }
-                  >
-                    {project.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          activeProject && (
-            <SidebarMenuButton
-              render={
-                <NavLink to={`/projects/${activeProject.id}/canisters`} />
-              }
-            >
-              <FolderOpen className="size-4" />
-
-              <div className="flex flex-1 flex-col">
-                <span className="truncate text-sm">{activeProject.name}</span>
-              </div>
-            </SidebarMenuButton>
-          )
-        )}
-
-        {activeProject && activeOrganization && (
-          <SidebarMenuAction
-            render={
-              <NavLink
-                to={`/organizations/${activeOrganization.id}/projects/${activeProject.id}/settings`}
-                aria-label="Project settings"
-              />
-            }
-          >
-            <Settings className="size-3.5" />
-          </SidebarMenuAction>
-        )}
       </SidebarMenuItem>
     </SidebarMenu>
   );
