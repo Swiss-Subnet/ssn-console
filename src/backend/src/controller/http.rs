@@ -1,5 +1,4 @@
 use crate::env;
-use canister_utils::load_runtime_env;
 use ic_asset_certification::{Asset, AssetConfig, AssetEncoding, AssetFallbackConfig, AssetRouter};
 use ic_cdk::{
     api::{certified_data_set, data_certificate},
@@ -132,14 +131,13 @@ fn serve_asset(req: &HttpRequest) -> HttpResponse<'static> {
         ) {
             response
         } else {
-            ic_cdk::trap("Failed to serve asset");
+            ic_cdk::trap("Failed to init_offchain_service_urlserve asset");
         }
     })
 }
 
 fn get_asset_headers(additional_headers: Vec<HeaderField>) -> Vec<HeaderField> {
-    let offchain_service_url =
-        load_runtime_env("OFFCHAIN_SERVICE_URL").expect("OFFCHAIN_SERVICE_URL env var is required");
+    let offchain_service_url = env::get_offchain_service_url();
 
     let mut connect_src = vec!["'self'", &offchain_service_url];
     if env::is_local() {

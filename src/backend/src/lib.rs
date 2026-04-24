@@ -25,6 +25,9 @@ fn export_candid() -> String {
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
+    env::init_offchain_service_url();
+    env::init_public_key();
+
     controller::http::init();
     data::team_repository::migrate_org_team_permissions();
     data::project_repository::migrate_project_team_permissions();

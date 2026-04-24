@@ -9,6 +9,7 @@ use crate::{
         ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
         VerifyEmailRequest,
     },
+    env,
     jwt::{extract_ed25519_public_key_from_pem, verify_jwt},
     mapping::{
         map_create_my_user_profile_response, map_get_my_user_profile_response,
@@ -16,7 +17,7 @@ use crate::{
     },
 };
 use candid::Principal;
-use canister_utils::{load_runtime_env, ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult, Uuid};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -117,7 +118,7 @@ pub fn get_user_stats() -> GetUserStatsResponse {
 }
 
 pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> ApiResult {
-    let pub_key_str = load_runtime_env("PUBLIC_KEY")?;
+    let pub_key_str = env::get_public_key();
 
     let pub_key_bytes = extract_ed25519_public_key_from_pem(&pub_key_str)
         .map_err(|e| ApiError::internal_error(format!("Failed to parse public key: {}", e)))?;
