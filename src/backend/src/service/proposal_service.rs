@@ -1,11 +1,15 @@
 use crate::{
     data::{
         approval_policy_repository, proposal_repository, proposal_repository::VoteOutcome,
-        OperationType, PolicyType, ProjectPermissions, Proposal, ProposalOperation, Vote,
+        OperationType, PolicyType, ProjectPermissions, Proposal, ProposalOperation,
     },
-    dto::{CreateProposalRequest, CreateProposalResponse},
-    mapping::{map_create_proposal_request, map_create_proposal_response},
-    service::{access_control_service::ProjectAuth, canister_service},
+    dto::{
+        CreateProposalRequest, CreateProposalResponse, VoteProposalRequest, VoteProposalResponse,
+    },
+    mapping::{
+        map_create_proposal_request, map_create_proposal_response, map_vote_proposal_request,
+    },
+    service::{access_control_service, access_control_service::ProjectAuth, canister_service},
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
@@ -43,6 +47,27 @@ async fn process_proposal(project_id: Uuid, proposal_id: Uuid, proposal: Proposa
         PolicyType::AutoApprove => {
             execute_operation(project_id, proposal_id, proposal.operation).await
         }
+        PolicyType::FixedQuorum { threshold } => {
+            if threshold < 1 {
+                return Err(ApiError::client_error(format!(
+                    "FixedQuorum policy on project {project_id} has invalid threshold 0."
+                )));
+            }
+
+            let approvers = access_control_service::list_project_principals_with_permission(
+                project_id,
+                ProjectPermissions::PROPOSAL_APPROVE,
+            );
+
+            if (approvers.len() as u32) < threshold {
+                return Err(ApiError::client_error(format!(
+                    "FixedQuorum policy requires {threshold} approvers but project {project_id} only has {}.",
+                    approvers.len()
+                )));
+            }
+
+            proposal_repository::set_proposal_pending_approval(proposal_id, threshold, approvers)
+        }
     }
 }
 
@@ -74,12 +99,12 @@ async fn execute_operation(
     }
 }
 
-#[allow(dead_code)]
 pub async fn vote_proposal(
     caller: &Principal,
-    proposal_id: Uuid,
-    vote: Vote,
-) -> ApiResult<Proposal> {
+    req: VoteProposalRequest,
+) -> ApiResult<VoteProposalResponse> {
+    let (proposal_id, vote) = map_vote_proposal_request(req)?;
+
     let proposal = proposal_repository::get_proposal(&proposal_id)
         .ok_or_else(|| ApiError::client_error(format!("Proposal {proposal_id} does not exist.")))?;
 
@@ -95,9 +120,11 @@ pub async fn vote_proposal(
         execute_operation(proposal.project_id, proposal_id, proposal.operation.clone()).await?;
     }
 
-    proposal_repository::get_proposal(&proposal_id).ok_or_else(|| {
+    let updated = proposal_repository::get_proposal(&proposal_id).ok_or_else(|| {
         ApiError::internal_error(format!(
             "Could not find proposal {proposal_id} after voting"
         ))
-    })
+    })?;
+
+    Ok(map_create_proposal_response(proposal_id, updated))
 }

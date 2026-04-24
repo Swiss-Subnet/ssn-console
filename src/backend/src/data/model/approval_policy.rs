@@ -19,6 +19,7 @@ impl Default for ApprovalPolicy {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum PolicyType {
     AutoApprove,
+    FixedQuorum { threshold: u32 },
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord)]
