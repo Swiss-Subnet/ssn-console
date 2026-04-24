@@ -48,6 +48,7 @@ describe('Canisters', () => {
   async function expectCanister(canister: Canister): Promise<void> {
     expect(canister).toEqual({
       id: expect.any(String),
+      name: [],
       state: {
         Accessible: {
           cycles: 0n,
