@@ -20,10 +20,29 @@ pub struct Proposal {
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub enum ProposalStatus {
     Open {},
+    PendingApproval {
+        threshold: u32,
+        approvers: Vec<Principal>,
+        votes: Vec<ProposalVote>,
+    },
     Rejected {},
     Executing {},
     Executed {},
-    Failed { message: String },
+    Failed {
+        message: String,
+    },
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ProposalVote {
+    pub voter: Principal,
+    pub vote: Vote,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub enum Vote {
+    Approve {},
+    Reject {},
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

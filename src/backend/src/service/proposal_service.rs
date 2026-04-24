@@ -1,7 +1,7 @@
 use crate::{
     data::{
-        approval_policy_repository, proposal_repository, OperationType, PolicyType,
-        ProjectPermissions, Proposal, ProposalOperation,
+        approval_policy_repository, proposal_repository, proposal_repository::VoteOutcome,
+        OperationType, PolicyType, ProjectPermissions, Proposal, ProposalOperation, Vote,
     },
     dto::{CreateProposalRequest, CreateProposalResponse},
     mapping::{map_create_proposal_request, map_create_proposal_response},
@@ -32,57 +32,72 @@ pub async fn create_proposal(
 }
 
 async fn process_proposal(project_id: Uuid, proposal_id: Uuid, proposal: Proposal) -> ApiResult {
-    match proposal.operation {
-        ProposalOperation::CreateCanister => {
-            let approval_policy =
-                approval_policy_repository::get_project_approval_policy_by_operation_type(
-                    project_id,
-                    OperationType::CreateCanister,
-                )
-                .unwrap_or_default();
+    let approval_policy =
+        approval_policy_repository::get_project_approval_policy_by_operation_type(
+            project_id,
+            operation_type_of(&proposal.operation),
+        )
+        .unwrap_or_default();
 
-            match approval_policy.policy_type {
-                PolicyType::AutoApprove => {
-                    proposal_repository::set_proposal_executing(proposal_id)?;
-                    match canister_service::create_my_canister(project_id).await {
-                        Ok(_) => {
-                            proposal_repository::set_proposal_executed(proposal_id)?;
-                        }
-                        Err(err) => {
-                            proposal_repository::set_proposal_failed(proposal_id, err)?;
-                        }
-                    }
-                }
-            }
+    match approval_policy.policy_type {
+        PolicyType::AutoApprove => {
+            execute_operation(project_id, proposal_id, proposal.operation).await
         }
+    }
+}
+
+fn operation_type_of(operation: &ProposalOperation) -> OperationType {
+    match operation {
+        ProposalOperation::CreateCanister => OperationType::CreateCanister,
+        ProposalOperation::AddCanisterController { .. } => OperationType::AddCanisterController,
+    }
+}
+
+async fn execute_operation(
+    project_id: Uuid,
+    proposal_id: Uuid,
+    operation: ProposalOperation,
+) -> ApiResult {
+    proposal_repository::set_proposal_executing(proposal_id)?;
+
+    let result = match operation {
+        ProposalOperation::CreateCanister => canister_service::create_my_canister(project_id).await,
         ProposalOperation::AddCanisterController {
             canister_id,
             controller_id,
-        } => {
-            let approval_policy =
-                approval_policy_repository::get_project_approval_policy_by_operation_type(
-                    project_id,
-                    OperationType::AddCanisterController,
-                )
-                .unwrap_or_default();
+        } => canister_service::add_canister_controller(canister_id, controller_id).await,
+    };
 
-            match approval_policy.policy_type {
-                PolicyType::AutoApprove => {
-                    proposal_repository::set_proposal_executing(proposal_id)?;
-                    match canister_service::add_canister_controller(canister_id, controller_id)
-                        .await
-                    {
-                        Ok(()) => {
-                            proposal_repository::set_proposal_executed(proposal_id)?;
-                        }
-                        Err(err) => {
-                            proposal_repository::set_proposal_failed(proposal_id, err)?;
-                        }
-                    }
-                }
-            }
-        }
+    match result {
+        Ok(()) => proposal_repository::set_proposal_executed(proposal_id),
+        Err(err) => proposal_repository::set_proposal_failed(proposal_id, err),
+    }
+}
+
+#[allow(dead_code)]
+pub async fn vote_proposal(
+    caller: &Principal,
+    proposal_id: Uuid,
+    vote: Vote,
+) -> ApiResult<Proposal> {
+    let proposal = proposal_repository::get_proposal(&proposal_id)
+        .ok_or_else(|| ApiError::client_error(format!("Proposal {proposal_id} does not exist.")))?;
+
+    ProjectAuth::require(
+        caller,
+        proposal.project_id,
+        ProjectPermissions::PROPOSAL_APPROVE,
+    )?;
+
+    let outcome = proposal_repository::record_proposal_vote(proposal_id, *caller, vote)?;
+
+    if let VoteOutcome::ReachedApproval = outcome {
+        execute_operation(proposal.project_id, proposal_id, proposal.operation.clone()).await?;
     }
 
-    Ok(())
+    proposal_repository::get_proposal(&proposal_id).ok_or_else(|| {
+        ApiError::internal_error(format!(
+            "Could not find proposal {proposal_id} after voting"
+        ))
+    })
 }

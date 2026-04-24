@@ -1,8 +1,18 @@
 use crate::{
     data,
-    dto::{CreateProposalRequest, CreateProposalResponse, ProposalOperation, ProposalStatus},
+    dto::{
+        CreateProposalRequest, CreateProposalResponse, ProposalOperation, ProposalStatus,
+        ProposalVote, Vote,
+    },
 };
 use canister_utils::{ApiError, ApiResult, Uuid};
+
+fn map_vote(vote: data::Vote) -> Vote {
+    match vote {
+        data::Vote::Approve => Vote::Approve {},
+        data::Vote::Reject => Vote::Reject {},
+    }
+}
 
 pub fn map_create_proposal_request(
     req: CreateProposalRequest,
@@ -44,6 +54,21 @@ pub fn map_create_proposal_response(
         project_id: proposal.project_id.to_string(),
         status: match proposal.status {
             data::ProposalStatus::Open => Some(ProposalStatus::Open {}),
+            data::ProposalStatus::PendingApproval {
+                threshold,
+                approvers,
+                votes,
+            } => Some(ProposalStatus::PendingApproval {
+                threshold,
+                approvers,
+                votes: votes
+                    .into_iter()
+                    .map(|(voter, vote)| ProposalVote {
+                        voter,
+                        vote: map_vote(vote),
+                    })
+                    .collect(),
+            }),
             data::ProposalStatus::Rejected => Some(ProposalStatus::Rejected {}),
             data::ProposalStatus::Executing => Some(ProposalStatus::Executing {}),
             data::ProposalStatus::Executed => Some(ProposalStatus::Executed {}),
