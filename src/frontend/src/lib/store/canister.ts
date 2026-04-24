@@ -98,6 +98,13 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
     await canisterApi.removeCanister(canisterRecordId);
     await refreshCanisters(projectId);
   },
+
+  async updateCanisterName(canisterRecordId, projectId, name) {
+    const { canisterApi, refreshCanisters } = get();
+
+    await canisterApi.updateCanisterName(canisterRecordId, name);
+    await refreshCanisters(projectId);
+  },
 });
 
 function selectCanisterMap(state: AppSlice): Map<string, Canister[]> | null {

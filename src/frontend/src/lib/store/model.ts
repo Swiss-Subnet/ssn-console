@@ -114,6 +114,11 @@ export type CanistersSlice = {
     canisterRecordId: string,
     projectId: string,
   ) => Promise<void>;
+  updateCanisterName: (
+    canisterRecordId: string,
+    projectId: string,
+    name: string | null,
+  ) => Promise<void>;
 };
 
 export type TrustedPartnersSlice = {

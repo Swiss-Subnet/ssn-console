@@ -9,9 +9,12 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { LoadingButton } from '@/components/loading-button';
 import {
   CanisterAvailability,
   CanisterStatus,
+  type Canister,
   type CanisterChange,
   type CanisterInfo,
 } from '@/lib/api-models';
@@ -24,6 +27,7 @@ import {
 import { isNil } from '@/lib/nil';
 import { useRequireProjectId, useRequireCanisterId } from '@/lib/params';
 import { selectOrgMap, selectProjectMap, useAppStore } from '@/lib/store';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { AddControllerForm } from '@/routes/canisters/add-controller-form';
 import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-canister-controller-cta';
 import { DeletedCanisterCta } from '@/routes/canisters/deleted-canister-cta';
@@ -68,6 +72,84 @@ const SectionCard: FC<SectionCardProps> = ({ title, children, footer }) => (
     {footer && <CardFooter>{footer}</CardFooter>}
   </Card>
 );
+
+type RenameCanisterCardProps = { canister: Canister; projectId: string };
+
+const RenameCanisterCard: FC<RenameCanisterCardProps> = ({
+  canister,
+  projectId,
+}) => {
+  const updateCanisterName = useAppStore(s => s.updateCanisterName);
+  const [draft, setDraft] = useState(canister.name ?? '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
+  useEffect(() => {
+    setDraft(canister.name ?? '');
+  }, [canister.name]);
+
+  const trimmed = draft.trim();
+  const hasChanges = trimmed !== (canister.name ?? '');
+  const canSave = hasChanges && trimmed.length > 0;
+
+  async function onSave(): Promise<void> {
+    if (!canSave) return;
+    setIsSaving(true);
+    try {
+      await updateCanisterName(canister.id, projectId, trimmed);
+      showSuccessToast('Canister name updated');
+    } catch (err) {
+      showErrorToast('Failed to update canister name', err);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function onClear(): Promise<void> {
+    setIsClearing(true);
+    try {
+      await updateCanisterName(canister.id, projectId, null);
+      showSuccessToast('Canister name cleared');
+    } catch (err) {
+      showErrorToast('Failed to clear canister name', err);
+    } finally {
+      setIsClearing(false);
+    }
+  }
+
+  return (
+    <SectionCard title="Name">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          value={draft}
+          placeholder="Unnamed canister"
+          maxLength={100}
+          onChange={e => setDraft(e.target.value)}
+          disabled={isSaving || isClearing}
+        />
+        <div className="flex gap-2">
+          <LoadingButton
+            isLoading={isSaving}
+            disabled={!canSave || isClearing}
+            onClick={onSave}
+          >
+            Save
+          </LoadingButton>
+          {canister.name !== null && (
+            <LoadingButton
+              variant="ghost"
+              isLoading={isClearing}
+              disabled={isSaving}
+              onClick={onClear}
+            >
+              Clear
+            </LoadingButton>
+          )}
+        </div>
+      </div>
+    </SectionCard>
+  );
+};
 
 type CanisterInfoSectionsProps = {
   canisterPrincipal: string;
@@ -355,9 +437,11 @@ const CanisterDetail: FC = () => {
 
   const isLoading = isCanistersLoading || !isCanistersInitialized;
 
-  const canisterLabel = canister
-    ? `${canister.principal.slice(0, 5)}...${canister.principal.slice(-3)}`
-    : 'Canister';
+  const canisterLabel =
+    canister?.name ??
+    (canister
+      ? `${canister.principal.slice(0, 5)}...${canister.principal.slice(-3)}`
+      : 'Canister');
 
   return (
     <>
@@ -380,7 +464,7 @@ const CanisterDetail: FC = () => {
       />
 
       <div className="mt-3 flex items-center justify-between gap-2">
-        <H1>Canister</H1>
+        <H1 className="truncate">{canister?.name ?? 'Canister'}</H1>
         <Button
           variant="ghost"
           size="icon-sm"
@@ -417,6 +501,8 @@ const CanisterDetail: FC = () => {
               <Badge variant="destructive">Deleted</Badge>
             )}
           </div>
+
+          <RenameCanisterCard canister={canister} projectId={projectId} />
 
           {canister.state.availability === CanisterAvailability.Accessible ? (
             <CanisterInfoSections

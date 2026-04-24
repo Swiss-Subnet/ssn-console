@@ -33,6 +33,7 @@ export type CanisterState =
 export type Canister = {
   id: string;
   principal: string;
+  name: string | null;
   state: CanisterState;
 };
 
@@ -98,6 +99,7 @@ export function mapCanisterResponse(res: ApiCanister): Canister {
   return {
     id: res.id,
     principal: res.principal_id,
+    name: fromCandidOpt(res.name),
     state: mapCanisterState(res.state),
   };
 }
