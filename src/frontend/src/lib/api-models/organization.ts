@@ -1,4 +1,8 @@
 import { mapOkResponse } from '@/lib/api-models/error';
+import {
+  mapOrgPermissions,
+  type OrgPermissions,
+} from '@/lib/api-models/permissions';
 import type {
   ListMyOrganizationsResponse as ApiListMyOrganizationsResponse,
   CreateOrganizationRequest as ApiCreateOrganizationRequest,
@@ -18,6 +22,7 @@ import type {
 export type Organization = {
   id: string;
   name: string;
+  yourPermissions: OrgPermissions;
 };
 
 export type ListMyOrganizationsResponse = {
@@ -49,6 +54,7 @@ function mapOrganizationResponse(res: ApiOrganization): Organization {
   return {
     id: res.id,
     name: res.name,
+    yourPermissions: mapOrgPermissions(res.your_permissions),
   };
 }
 
@@ -117,6 +123,8 @@ export type OrgUser = {
   id: string;
   email: string | null;
   emailVerified: boolean;
+  teams: { id: string; name: string }[];
+  isOrgAdmin: boolean;
 };
 
 export type ListOrgUsersRequest = {
@@ -128,6 +136,8 @@ function mapOrgUserResponse(user: ApiOrgUser): OrgUser {
     id: user.id,
     email: user.email[0] ?? null,
     emailVerified: user.email_verified,
+    teams: user.teams.map(t => ({ id: t.id, name: t.name })),
+    isOrgAdmin: user.is_org_admin,
   };
 }
 

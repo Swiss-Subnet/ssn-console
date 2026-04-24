@@ -1,6 +1,7 @@
 import {
   mapListTeamsResponse,
   mapListOrgTeamsRequest,
+  mapListOrgTeamsResponse,
   mapCreateTeamRequest,
   mapCreateTeamResponse,
   mapGetTeamRequest,
@@ -13,8 +14,11 @@ import {
   mapAddUserToTeamResponse,
   mapListTeamUsersRequest,
   mapListTeamUsersResponse,
+  mapUpdateTeamOrgPermissionsRequest,
+  mapUpdateTeamOrgPermissionsResponse,
   type ListTeamsResponse,
   type ListOrgTeamsRequest,
+  type ListOrgTeamsResponse,
   type CreateTeamRequest,
   type TeamResponse,
   type GetTeamRequest,
@@ -23,6 +27,8 @@ import {
   type AddUserToTeamRequest,
   type ListTeamUsersRequest,
   type TeamUser,
+  type UpdateTeamOrgPermissionsRequest,
+  type OrgTeamResponse,
 } from '@/lib/api-models';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import type { _SERVICE } from '@ssn/backend-api';
@@ -37,9 +43,9 @@ export class TeamApi {
 
   public async listOrgTeams(
     req: ListOrgTeamsRequest,
-  ): Promise<ListTeamsResponse> {
+  ): Promise<ListOrgTeamsResponse> {
     const res = await this.actor.list_org_teams(mapListOrgTeamsRequest(req));
-    return mapListTeamsResponse(res);
+    return mapListOrgTeamsResponse(res);
   }
 
   public async createTeam(req: CreateTeamRequest): Promise<TeamResponse> {
@@ -70,5 +76,14 @@ export class TeamApi {
   public async listTeamUsers(req: ListTeamUsersRequest): Promise<TeamUser[]> {
     const res = await this.actor.list_team_users(mapListTeamUsersRequest(req));
     return mapListTeamUsersResponse(res);
+  }
+
+  public async updateTeamOrgPermissions(
+    req: UpdateTeamOrgPermissionsRequest,
+  ): Promise<OrgTeamResponse> {
+    const res = await this.actor.update_team_org_permissions(
+      mapUpdateTeamOrgPermissionsRequest(req),
+    );
+    return mapUpdateTeamOrgPermissionsResponse(res);
   }
 }

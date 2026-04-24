@@ -67,9 +67,32 @@ pub fn is_team_in_project(team_id: Uuid, project_id: Uuid) -> bool {
     })
 }
 
-#[allow(dead_code)]
 pub fn get_project_team_permissions(project_id: Uuid, team_id: Uuid) -> Option<ProjectPermissions> {
     with_state(|s| s.project_team_permissions_index.get(&(project_id, team_id)))
+}
+
+// Overwrite the project permissions granted to `team_id` on `project_id`.
+// No-op if the link is absent. Unlike the org equivalent, projects currently
+// have no "must retain an admin" invariant — `remove_team_from_project`
+// already guards against leaving a project team-less, but there is no
+// PROJECT_ADMIN counterpart to ORG_ADMIN.
+pub fn set_project_team_permissions(
+    project_id: Uuid,
+    team_id: Uuid,
+    permissions: ProjectPermissions,
+) {
+    mutate_state(|s| {
+        if s.project_team_permissions_index
+            .get(&(project_id, team_id))
+            .is_none()
+        {
+            return;
+        }
+        s.project_team_permissions_index
+            .insert((project_id, team_id), permissions);
+        s.team_project_permissions_index
+            .insert((team_id, project_id), permissions);
+    });
 }
 
 // Union ProjectPermissions of every team in `team_ids` that is linked to

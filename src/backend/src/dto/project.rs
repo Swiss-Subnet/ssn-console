@@ -1,3 +1,4 @@
+use super::ProjectPermissions;
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -24,6 +25,10 @@ pub struct Project {
     pub id: String,
     pub org_id: String,
     pub name: String,
+    // Union of project permissions held by the caller across every team
+    // they belong to that is linked to this project. Used by clients to
+    // gate UI without a follow-up request.
+    pub your_permissions: ProjectPermissions,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

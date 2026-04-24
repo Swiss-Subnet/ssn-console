@@ -1,6 +1,10 @@
 import { LoadingButton } from '@/components/loading-button';
 import { Container } from '@/components/layout/container';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import {
+  PermissionsEditor,
+  orgPermissionFields,
+} from '@/components/permissions-editor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -13,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAppStore, selectOrgMap, selectTeamMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
-import type { OrgUser, TeamUser } from '@/lib/api-models';
+import type { OrgTeam, OrgUser, TeamUser } from '@/lib/api-models';
 import {
   Table,
   TableBody,
@@ -44,8 +48,15 @@ type FormData = z.infer<typeof formSchema>;
 const TeamSettings: FC = () => {
   const { orgId, teamId } = useParams();
   const navigate = useNavigate();
-  const { updateTeam, deleteTeam, loadOrgUsers, loadTeamUsers, addUserToTeam } =
-    useAppStore();
+  const {
+    updateTeam,
+    deleteTeam,
+    loadOrgUsers,
+    loadOrgTeams,
+    loadTeamUsers,
+    addUserToTeam,
+    updateTeamOrgPermissions,
+  } = useAppStore();
   const teamMap = useAppStore(selectTeamMap);
   const orgMap = useAppStore(selectOrgMap);
 
@@ -59,6 +70,9 @@ const TeamSettings: FC = () => {
     [orgId, orgMap],
   );
 
+  const canTeamManage = organization?.yourPermissions.teamManage ?? false;
+  const canMemberManage = organization?.yourPermissions.memberManage ?? false;
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: '' },
@@ -66,6 +80,7 @@ const TeamSettings: FC = () => {
 
   const [orgMembers, setOrgMembers] = useState<OrgUser[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamUser[]>([]);
+  const [orgTeam, setOrgTeam] = useState<OrgTeam | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -88,6 +103,16 @@ const TeamSettings: FC = () => {
     }
   }, [teamId, loadTeamUsers]);
 
+  const refreshOrgTeam = useCallback(async () => {
+    if (!orgId || !teamId) return;
+    try {
+      const teams = await loadOrgTeams(orgId);
+      setOrgTeam(teams.find(t => t.id === teamId) ?? null);
+    } catch (err) {
+      showErrorToast('Failed to load team permissions', err);
+    }
+  }, [orgId, teamId, loadOrgTeams]);
+
   const teamMemberIds = useMemo(
     () => new Set(teamMembers.map(m => m.id)),
     [teamMembers],
@@ -106,7 +131,8 @@ const TeamSettings: FC = () => {
   useEffect(() => {
     refreshOrgMembers();
     refreshTeamMembers();
-  }, [refreshOrgMembers, refreshTeamMembers]);
+    refreshOrgTeam();
+  }, [refreshOrgMembers, refreshTeamMembers, refreshOrgTeam]);
 
   if (isNil(orgId) || isNil(teamId) || isNil(team)) {
     return (
@@ -138,6 +164,14 @@ const TeamSettings: FC = () => {
     } finally {
       setIsAdding(false);
     }
+  }
+
+  async function onSavePermissions(
+    permissions: OrgTeam['permissions'],
+  ): Promise<void> {
+    const updated = await updateTeamOrgPermissions(teamId!, permissions);
+    setOrgTeam(updated);
+    showSuccessToast('Permissions updated');
   }
 
   async function onDelete(): Promise<void> {
@@ -187,7 +221,7 @@ const TeamSettings: FC = () => {
                       <FormLabel>Team Name</FormLabel>
 
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} disabled={!canTeamManage} />
                       </FormControl>
 
                       <FormMessage />
@@ -199,7 +233,7 @@ const TeamSettings: FC = () => {
                   type="submit"
                   className="w-full"
                   isLoading={form.formState.isSubmitting}
-                  disabled={!form.formState.isDirty}
+                  disabled={!form.formState.isDirty || !canTeamManage}
                 >
                   Save Changes
                 </LoadingButton>
@@ -207,6 +241,28 @@ const TeamSettings: FC = () => {
             </Form>
           </CardContent>
         </Card>
+
+        {orgTeam && (
+          <Card className="mx-auto max-w-md">
+            <CardHeader>
+              <CardTitle>Organization Permissions</CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Permissions this team grants on the organization.
+              </p>
+
+              <PermissionsEditor
+                value={orgTeam.permissions}
+                fields={orgPermissionFields}
+                disabled={!canTeamManage}
+                errorToastTitle="Failed to update permissions"
+                onSave={onSavePermissions}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="mx-auto max-w-md">
           <CardHeader>
@@ -248,64 +304,70 @@ const TeamSettings: FC = () => {
               </Table>
             )}
 
-            <Separator />
+            {canMemberManage && (
+              <>
+                <Separator />
 
-            <div className="space-y-3">
-              <p className="text-muted-foreground text-sm">
-                Add an existing organization member to this team.
+                <div className="space-y-3">
+                  <p className="text-muted-foreground text-sm">
+                    Add an existing organization member to this team.
+                  </p>
+
+                  {addableOrgMembers.length === 0 ? (
+                    <p className="text-muted-foreground text-sm italic">
+                      All organization members are already on this team.
+                    </p>
+                  ) : (
+                    <>
+                      <select
+                        className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
+                        value={selectedUserId}
+                        onChange={e => setSelectedUserId(e.target.value)}
+                      >
+                        <option value="">Select a member...</option>
+                        {addableOrgMembers.map(m => (
+                          <option key={m.id} value={m.id}>
+                            {m.email ?? m.id}
+                          </option>
+                        ))}
+                      </select>
+
+                      <LoadingButton
+                        isLoading={isAdding}
+                        disabled={!selectedUserId}
+                        onClick={onAddMember}
+                      >
+                        Add to Team
+                      </LoadingButton>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {canTeamManage && (
+          <Card className="mx-auto max-w-md">
+            <CardHeader>
+              <CardTitle>Danger Zone</CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Delete this team. All projects must be removed first.
               </p>
 
-              {addableOrgMembers.length === 0 ? (
-                <p className="text-muted-foreground text-sm italic">
-                  All organization members are already on this team.
-                </p>
-              ) : (
-                <>
-                  <select
-                    className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-                    value={selectedUserId}
-                    onChange={e => setSelectedUserId(e.target.value)}
-                  >
-                    <option value="">Select a member...</option>
-                    {addableOrgMembers.map(m => (
-                      <option key={m.id} value={m.id}>
-                        {m.email ?? m.id}
-                      </option>
-                    ))}
-                  </select>
-
-                  <LoadingButton
-                    isLoading={isAdding}
-                    disabled={!selectedUserId}
-                    onClick={onAddMember}
-                  >
-                    Add to Team
-                  </LoadingButton>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mx-auto max-w-md">
-          <CardHeader>
-            <CardTitle>Danger Zone</CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Delete this team. All projects must be removed first.
-            </p>
-
-            <LoadingButton
-              variant="destructive"
-              isLoading={isDeleting}
-              onClick={onDelete}
-            >
-              Delete Team
-            </LoadingButton>
-          </CardContent>
-        </Card>
+              <LoadingButton
+                variant="destructive"
+                isLoading={isDeleting}
+                onClick={onDelete}
+              >
+                Delete Team
+              </LoadingButton>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </Container>
   );

@@ -66,6 +66,14 @@ export const createTeamsSlice: AppStateCreator<TeamsSlice> = (set, get) => ({
   async loadTeamUsers(teamId: string) {
     return get().teamApi.listTeamUsers({ teamId });
   },
+
+  async updateTeamOrgPermissions(teamId, permissions) {
+    const res = await get().teamApi.updateTeamOrgPermissions({
+      teamId,
+      permissions,
+    });
+    return res.team;
+  },
 });
 
 function selectTeams(state: AppSlice): Team[] {

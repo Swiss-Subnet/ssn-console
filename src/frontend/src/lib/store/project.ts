@@ -78,6 +78,15 @@ export const createProjectsSlice: AppStateCreator<ProjectsSlice> = (
   async removeTeamFromProject(projectId: string, teamId: string) {
     await get().projectApi.removeTeamFromProject({ projectId, teamId });
   },
+
+  async updateTeamProjectPermissions(projectId, teamId, permissions) {
+    const res = await get().projectApi.updateTeamProjectPermissions({
+      projectId,
+      teamId,
+      permissions,
+    });
+    return res.team;
+  },
 });
 
 function selectProjects(state: AppSlice): Project[] {

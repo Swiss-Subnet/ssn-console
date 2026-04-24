@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  allProjectPermissions,
+  emptyProjectPermissions,
   noOrgError,
   noProfileError,
   noProjectTeamLinkError,
@@ -87,6 +89,7 @@ describe('Projects', () => {
             id: expect.any(String),
             org_id: org.id,
             name: 'Default Project',
+            your_permissions: allProjectPermissions,
           },
         ],
       });
@@ -205,6 +208,7 @@ describe('Projects', () => {
           id: expect.any(String),
           org_id: aliceOrg!.id,
           name: projectName,
+          your_permissions: allProjectPermissions,
         },
       });
     });
@@ -272,6 +276,7 @@ describe('Projects', () => {
         id: created.id,
         org_id: org.id,
         name: projectName,
+        your_permissions: allProjectPermissions,
       });
     });
   });
@@ -345,6 +350,7 @@ describe('Projects', () => {
         id: project.id,
         org_id: org.id,
         name: 'Renamed',
+        your_permissions: allProjectPermissions,
       });
     });
   });
@@ -470,8 +476,13 @@ describe('Projects', () => {
         project_id: defaultProject.id,
       });
       const teams = extractOkResponse(res);
-      expect(teams).toHaveLength(1);
-      expect(teams[0]!.id).toBe(defaultTeam!.id);
+      expect(teams).toEqual([
+        {
+          id: defaultTeam!.id,
+          name: defaultTeam!.name,
+          permissions: allProjectPermissions,
+        },
+      ]);
     });
   });
 
@@ -762,6 +773,80 @@ describe('Projects', () => {
       });
       expect(removeTeamRes).toEqual(
         noProjectTeamLinkError(bob.profile.id, defaultProject.id),
+      );
+    });
+  });
+
+  describe('update_team_project_permissions', () => {
+    it('should return an error for an anonymous user', async () => {
+      driver.actor.setIdentity(anonymousIdentity);
+      const res = await driver.actor.update_team_project_permissions({
+        project_id: fakeOrgId,
+        team_id: fakeOrgId,
+        permissions: emptyProjectPermissions,
+      });
+      expect(res).toEqual(unauthenticatedError);
+    });
+
+    it('should return an error for a non-existent project', async () => {
+      await setupUser();
+      const res = await driver.actor.update_team_project_permissions({
+        project_id: fakeOrgId,
+        team_id: fakeOrgId,
+        permissions: allProjectPermissions,
+      });
+      expect(res).toEqual(projectNotFoundOrNoAccessError(fakeOrgId));
+    });
+
+    it('should return an error when the team is not linked to the project', async () => {
+      const { org } = await setupUser();
+      const defaultProject = await driver.getDefaultProject();
+
+      // Second team is in the org but not linked to defaultProject.
+      const secondRes = await driver.actor.create_team({
+        org_id: org.id,
+        name: 'Second',
+      });
+      const { team: secondTeam } = extractOkResponse(secondRes);
+
+      const res = await driver.actor.update_team_project_permissions({
+        project_id: defaultProject.id,
+        team_id: secondTeam.id,
+        permissions: allProjectPermissions,
+      });
+      expect(res).toEqual(teamNotFoundOrNoAccessError(secondTeam.id));
+    });
+
+    it('should update and return the new permissions', async () => {
+      const { org } = await setupUser();
+      const defaultProject = await driver.getDefaultProject();
+      const teamsRes = await driver.actor.list_org_teams({ org_id: org.id });
+      const [defaultTeam] = extractOkResponse(teamsRes);
+
+      const newPerms = {
+        ...emptyProjectPermissions,
+        canister_read: true,
+        canister_operate: true,
+      };
+      const res = await driver.actor.update_team_project_permissions({
+        project_id: defaultProject.id,
+        team_id: defaultTeam!.id,
+        permissions: newPerms,
+      });
+      expect(extractOkResponse(res)).toEqual({
+        team: {
+          id: defaultTeam!.id,
+          name: defaultTeam!.name,
+          permissions: newPerms,
+        },
+      });
+
+      const listRes = await driver.actor.list_project_teams({
+        project_id: defaultProject.id,
+      });
+      const teams = extractOkResponse(listRes);
+      expect(teams.find(t => t.id === defaultTeam!.id)?.permissions).toEqual(
+        newPerms,
       );
     });
   });

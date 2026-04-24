@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -187,6 +188,19 @@ export const ProjectSelector: FC = () => {
               </div>
             </SidebarMenuButton>
           )
+        )}
+
+        {activeProject && activeOrganization && (
+          <SidebarMenuAction
+            render={
+              <NavLink
+                to={`/organizations/${activeOrganization.id}/projects/${activeProject.id}/settings`}
+                aria-label="Project settings"
+              />
+            }
+          >
+            <Settings className="size-3.5" />
+          </SidebarMenuAction>
         )}
       </SidebarMenuItem>
     </SidebarMenu>

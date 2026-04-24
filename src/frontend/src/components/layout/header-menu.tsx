@@ -18,7 +18,6 @@ import {
   LogOutIcon,
   MailIcon,
   ScrollTextIcon,
-  ServerIcon,
 } from 'lucide-react';
 import { useMemo, type FC } from 'react';
 import { NavLink } from 'react-router';
@@ -78,16 +77,6 @@ export const HeaderMenu: FC = () => {
             >
               Admin
               <CogIcon />
-            </DropdownMenuItem>
-          )}
-
-          {isActive && (
-            <DropdownMenuItem
-              className="justify-between"
-              render={<NavLink to="/canisters" />}
-            >
-              Canisters
-              <ServerIcon />
             </DropdownMenuItem>
           )}
 

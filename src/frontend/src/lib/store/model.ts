@@ -3,6 +3,10 @@ import type {
   CreateTrustedPartnerRequest,
   CreateOrgInviteRequest,
   OrgInvite,
+  OrgPermissions,
+  OrgTeam,
+  ProjectPermissions,
+  ProjectTeam,
   TrustedPartner,
   UserProfile,
   UserStatus,
@@ -145,9 +149,14 @@ export type ProjectsSlice = {
   createProject: (orgId: string, name: string) => Promise<Project>;
   updateProject: (projectId: string, name: string) => Promise<Project>;
   deleteProject: (projectId: string) => Promise<void>;
-  loadProjectTeams: (projectId: string) => Promise<Team[]>;
+  loadProjectTeams: (projectId: string) => Promise<ProjectTeam[]>;
   addTeamToProject: (projectId: string, teamId: string) => Promise<void>;
   removeTeamFromProject: (projectId: string, teamId: string) => Promise<void>;
+  updateTeamProjectPermissions: (
+    projectId: string,
+    teamId: string,
+    permissions: ProjectPermissions,
+  ) => Promise<ProjectTeam>;
 };
 
 export type OrganizationsSlice = {
@@ -184,7 +193,7 @@ export type TeamsSlice = {
 
   initializeTeams: () => Promise<void>;
   clearTeams: () => void;
-  loadOrgTeams: (orgId: string) => Promise<Team[]>;
+  loadOrgTeams: (orgId: string) => Promise<OrgTeam[]>;
   createTeam: (orgId: string, name: string) => Promise<Team>;
   updateTeam: (teamId: string, name: string) => Promise<Team>;
   deleteTeam: (teamId: string) => Promise<void>;
@@ -192,6 +201,10 @@ export type TeamsSlice = {
   loadTeamUsers: (
     teamId: string,
   ) => Promise<import('@/lib/api-models').TeamUser[]>;
+  updateTeamOrgPermissions: (
+    teamId: string,
+    permissions: OrgPermissions,
+  ) => Promise<OrgTeam>;
 };
 
 export type AppSlice = AuthSlice &

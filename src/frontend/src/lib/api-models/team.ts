@@ -1,7 +1,16 @@
 import { mapOkResponse } from '@/lib/api-models/error';
+import {
+  mapOrgPermissions,
+  mapOrgPermissionsToApi,
+  mapProjectPermissions,
+  type OrgPermissions,
+  type ProjectPermissions,
+} from '@/lib/api-models/permissions';
 import type {
   ListTeamsResponse as ApiListTeamsResponse,
   ListOrgTeamsRequest as ApiListOrgTeamsRequest,
+  ListOrgTeamsResponse as ApiListOrgTeamsResponse,
+  ListProjectTeamsResponse as ApiListProjectTeamsResponse,
   CreateTeamRequest as ApiCreateTeamRequest,
   CreateTeamResponse as ApiCreateTeamResponse,
   GetTeamRequest as ApiGetTeamRequest,
@@ -15,7 +24,11 @@ import type {
   ListTeamUsersRequest as ApiListTeamUsersRequest,
   ListTeamUsersResponse as ApiListTeamUsersResponse,
   Team as ApiTeam,
+  OrgTeam as ApiOrgTeam,
+  ProjectTeam as ApiProjectTeam,
   TeamUser as ApiTeamUser,
+  UpdateTeamOrgPermissionsRequest as ApiUpdateTeamOrgPermissionsRequest,
+  UpdateTeamOrgPermissionsResponse as ApiUpdateTeamOrgPermissionsResponse,
 } from '@ssn/backend-api';
 
 export type Team = {
@@ -23,8 +36,28 @@ export type Team = {
   name: string;
 };
 
+export type OrgTeam = {
+  id: string;
+  name: string;
+  permissions: OrgPermissions;
+};
+
+export type ProjectTeam = {
+  id: string;
+  name: string;
+  permissions: ProjectPermissions;
+};
+
 export type ListTeamsResponse = {
   teams: Team[];
+};
+
+export type ListOrgTeamsResponse = {
+  teams: OrgTeam[];
+};
+
+export type ListProjectTeamsResponse = {
+  teams: ProjectTeam[];
 };
 
 export type ListOrgTeamsRequest = {
@@ -58,10 +91,35 @@ export type AddUserToTeamRequest = {
   userId: string;
 };
 
+export type UpdateTeamOrgPermissionsRequest = {
+  teamId: string;
+  permissions: OrgPermissions;
+};
+
+export type OrgTeamResponse = {
+  team: OrgTeam;
+};
+
 function mapTeamResponse(res: ApiTeam): Team {
   return {
     id: res.id,
     name: res.name,
+  };
+}
+
+export function mapOrgTeamResponse(res: ApiOrgTeam): OrgTeam {
+  return {
+    id: res.id,
+    name: res.name,
+    permissions: mapOrgPermissions(res.permissions),
+  };
+}
+
+export function mapProjectTeamResponse(res: ApiProjectTeam): ProjectTeam {
+  return {
+    id: res.id,
+    name: res.name,
+    permissions: mapProjectPermissions(res.permissions),
   };
 }
 
@@ -71,6 +129,24 @@ export function mapListTeamsResponse(
   const okRes = mapOkResponse(res);
   return {
     teams: okRes.map(mapTeamResponse),
+  };
+}
+
+export function mapListOrgTeamsResponse(
+  res: ApiListOrgTeamsResponse,
+): ListOrgTeamsResponse {
+  const okRes = mapOkResponse(res);
+  return {
+    teams: okRes.map(mapOrgTeamResponse),
+  };
+}
+
+export function mapListProjectTeamsResponse(
+  res: ApiListProjectTeamsResponse,
+): ListProjectTeamsResponse {
+  const okRes = mapOkResponse(res);
+  return {
+    teams: okRes.map(mapProjectTeamResponse),
   };
 }
 
@@ -133,6 +209,22 @@ export function mapAddUserToTeamRequest(
 
 export function mapAddUserToTeamResponse(res: ApiAddUserToTeamResponse): void {
   mapOkResponse(res);
+}
+
+export function mapUpdateTeamOrgPermissionsRequest(
+  req: UpdateTeamOrgPermissionsRequest,
+): ApiUpdateTeamOrgPermissionsRequest {
+  return {
+    team_id: req.teamId,
+    permissions: mapOrgPermissionsToApi(req.permissions),
+  };
+}
+
+export function mapUpdateTeamOrgPermissionsResponse(
+  res: ApiUpdateTeamOrgPermissionsResponse,
+): OrgTeamResponse {
+  const okRes = mapOkResponse(res);
+  return { team: mapOrgTeamResponse(okRes.team) };
 }
 
 export type TeamUser = {

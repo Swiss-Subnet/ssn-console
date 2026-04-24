@@ -4,6 +4,7 @@ export * from './error';
 export * from './invite';
 export * from './management-canister';
 export * from './organization';
+export * from './permissions';
 export * from './project';
 export * from './team';
 export * from './terms-and-conditions';

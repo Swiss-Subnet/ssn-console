@@ -8,11 +8,13 @@ import { useNavigate } from 'react-router';
 interface OrganizationProjectsProps {
   orgId: string;
   projects: Project[];
+  canCreateProject: boolean;
 }
 
 export const OrganizationProjects: FC<OrganizationProjectsProps> = ({
   orgId,
   projects,
+  canCreateProject,
 }) => {
   const navigate = useNavigate();
 
@@ -24,7 +26,7 @@ export const OrganizationProjects: FC<OrganizationProjectsProps> = ({
 
       <CardContent className="space-y-4">
         <p className="text-muted-foreground text-sm">
-          Manage the projects in this organization.
+          Projects in this organization.
         </p>
 
         {projects.length === 0 ? (
@@ -52,13 +54,15 @@ export const OrganizationProjects: FC<OrganizationProjectsProps> = ({
           </ul>
         )}
 
-        <Button
-          variant="outline"
-          onClick={() => navigate(`/organizations/${orgId}/projects`)}
-        >
-          <FolderKanban className="mr-1 size-3.5" />
-          Manage Projects
-        </Button>
+        {canCreateProject && (
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/organizations/${orgId}/projects`)}
+          >
+            <FolderKanban className="mr-1 size-3.5" />
+            Manage Projects
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

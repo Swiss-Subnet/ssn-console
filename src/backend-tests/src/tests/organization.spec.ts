@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  allOrgPermissions,
   noOrgError,
   noProfileError,
   TestDriver,
@@ -46,6 +47,7 @@ describe('Organizations', () => {
       expect(orgs[0]).toEqual({
         id: expect.any(String),
         name: 'Default Organization',
+        your_permissions: allOrgPermissions,
       });
     });
   });
@@ -125,6 +127,7 @@ describe('Organizations', () => {
         organization: {
           id: expect.any(String),
           name: orgName,
+          your_permissions: allOrgPermissions,
         },
       });
     });
@@ -248,7 +251,11 @@ describe('Organizations', () => {
         name: updatedName,
       });
       expect(extractOkResponse(res)).toEqual({
-        organization: { id: org!.id, name: updatedName },
+        organization: {
+          id: org!.id,
+          name: updatedName,
+          your_permissions: allOrgPermissions,
+        },
       });
     });
   });

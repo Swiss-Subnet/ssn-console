@@ -3,10 +3,14 @@ use crate::{
     dto::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
         DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
-        ListOrgTeamsRequest, ListTeamUsersRequest, ListTeamUsersResponse, ListTeamsResponse,
+        ListOrgTeamsRequest, ListOrgTeamsResponse, ListTeamUsersRequest, ListTeamUsersResponse,
+        ListTeamsResponse, UpdateTeamOrgPermissionsRequest, UpdateTeamOrgPermissionsResponse,
         UpdateTeamRequest, UpdateTeamResponse,
     },
-    mapping::{map_list_team_users_response, map_list_teams_response, map_team_to_response},
+    mapping::{
+        map_list_org_teams_response, map_list_team_users_response, map_list_teams_response,
+        map_org_permissions_from_dto, map_org_team, map_team_to_response,
+    },
     service::access_control_service::{
         assert_org_admin_populated_after_removing_team, require_team_access, OrgAuth,
     },
@@ -27,12 +31,12 @@ pub fn list_my_teams(caller: Principal) -> ApiResult<ListTeamsResponse> {
 pub fn list_org_teams(
     caller: &Principal,
     req: ListOrgTeamsRequest,
-) -> ApiResult<ListTeamsResponse> {
+) -> ApiResult<ListOrgTeamsResponse> {
     let org_id = Uuid::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
-    let teams = team_repository::list_org_teams(auth.org_id());
-    Ok(map_list_teams_response(teams))
+    let teams = team_repository::list_org_teams_with_permissions(auth.org_id());
+    Ok(map_list_org_teams_response(teams))
 }
 
 pub fn create_team(caller: &Principal, req: CreateTeamRequest) -> ApiResult<CreateTeamResponse> {
@@ -131,4 +135,29 @@ pub fn add_user_to_team(
     team_repository::add_user_to_team(target_user_id, team_id);
 
     Ok(AddUserToTeamResponse {})
+}
+
+// Overwrite the org permissions granted to a team. Requires ORG_ADMIN on
+// the team's parent org. If the new permissions omit ORG_ADMIN, enforce the
+// org-wide invariant that at least one other team retains ORG_ADMIN and
+// has a member — otherwise the org would become unadministrable on the
+// next request. This mirrors the pre-mutation check in delete_team.
+pub fn update_team_org_permissions(
+    caller: &Principal,
+    req: UpdateTeamOrgPermissionsRequest,
+) -> ApiResult<UpdateTeamOrgPermissionsResponse> {
+    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let (team, auth) = require_team_access(caller, team_id, OrgPermissions::ORG_ADMIN)?;
+
+    let new_perms = map_org_permissions_from_dto(req.permissions);
+
+    if !new_perms.contains(OrgPermissions::ORG_ADMIN) {
+        assert_org_admin_populated_after_removing_team(auth.org_id(), team_id)?;
+    }
+
+    team_repository::set_org_team_permissions(auth.org_id(), team_id, new_perms);
+
+    Ok(UpdateTeamOrgPermissionsResponse {
+        team: map_org_team(team_id, team, new_perms),
+    })
 }

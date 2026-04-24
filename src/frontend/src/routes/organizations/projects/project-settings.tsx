@@ -1,5 +1,9 @@
 import { LoadingButton } from '@/components/loading-button';
 import { Container } from '@/components/layout/container';
+import {
+  PermissionsEditor,
+  projectPermissionFields,
+} from '@/components/permissions-editor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -13,15 +17,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppStore, selectProjectMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
-import type { Team } from '@/lib/api-models';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import type {
+  OrgTeam,
+  ProjectPermissions,
+  ProjectTeam,
+} from '@/lib/api-models';
 import { Separator } from '@/components/ui/separator';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, X } from 'lucide-react';
@@ -51,6 +51,7 @@ const ProjectSettings: FC = () => {
     loadProjectTeams,
     addTeamToProject,
     removeTeamFromProject,
+    updateTeamProjectPermissions,
   } = useAppStore();
   const projectMap = useAppStore(selectProjectMap);
 
@@ -64,8 +65,8 @@ const ProjectSettings: FC = () => {
     defaultValues: { name: '' },
   });
 
-  const [orgTeams, setOrgTeams] = useState<Team[]>([]);
-  const [projectTeams, setProjectTeams] = useState<Team[]>([]);
+  const [orgTeams, setOrgTeams] = useState<OrgTeam[]>([]);
+  const [projectTeams, setProjectTeams] = useState<ProjectTeam[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
   const [removingTeamId, setRemovingTeamId] = useState<string | null>(null);
@@ -117,6 +118,9 @@ const ProjectSettings: FC = () => {
     );
   }
 
+  const canEditSettings = project.yourPermissions.projectSettings;
+  const canProjectAdmin = project.yourPermissions.projectAdmin;
+
   async function onSubmit(formData: FormData): Promise<void> {
     try {
       await updateProject(projectId!, formData.name);
@@ -139,6 +143,19 @@ const ProjectSettings: FC = () => {
     } finally {
       setIsAdding(false);
     }
+  }
+
+  async function onSaveTeamPermissions(
+    teamId: string,
+    permissions: ProjectPermissions,
+  ): Promise<void> {
+    const updated = await updateTeamProjectPermissions(
+      projectId!,
+      teamId,
+      permissions,
+    );
+    setProjectTeams(prev => prev.map(t => (t.id === teamId ? updated : t)));
+    showSuccessToast('Permissions updated');
   }
 
   async function onRemoveTeam(teamId: string): Promise<void> {
@@ -202,7 +219,7 @@ const ProjectSettings: FC = () => {
                       <FormLabel>Project Name</FormLabel>
 
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} disabled={!canEditSettings} />
                       </FormControl>
 
                       <FormMessage />
@@ -214,7 +231,7 @@ const ProjectSettings: FC = () => {
                   type="submit"
                   className="w-full"
                   isLoading={form.formState.isSubmitting}
-                  disabled={!form.formState.isDirty}
+                  disabled={!form.formState.isDirty || !canEditSettings}
                 >
                   Save Changes
                 </LoadingButton>
@@ -234,18 +251,13 @@ const ProjectSettings: FC = () => {
                 No teams attached yet.
               </p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Team</TableHead>
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {projectTeams.map(t => (
-                    <TableRow key={t.id}>
-                      <TableCell>{t.name}</TableCell>
-                      <TableCell>
+              <div className="space-y-6">
+                {projectTeams.map((t, idx) => (
+                  <div key={t.id} className="space-y-4">
+                    {idx > 0 && <Separator />}
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{t.name}</p>
+                      {canProjectAdmin && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -255,71 +267,84 @@ const ProjectSettings: FC = () => {
                         >
                           <X className="size-3.5" />
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      )}
+                    </div>
+                    <PermissionsEditor
+                      value={t.permissions}
+                      fields={projectPermissionFields}
+                      disabled={!canProjectAdmin}
+                      errorToastTitle="Failed to update permissions"
+                      onSave={next => onSaveTeamPermissions(t.id, next)}
+                    />
+                  </div>
+                ))}
+              </div>
             )}
 
-            <Separator />
+            {canProjectAdmin && (
+              <>
+                <Separator />
 
-            <div className="space-y-3">
-              <p className="text-muted-foreground text-sm">
-                Attach an existing team to this project.
+                <div className="space-y-3">
+                  <p className="text-muted-foreground text-sm">
+                    Attach an existing team to this project.
+                  </p>
+
+                  {addableOrgTeams.length === 0 ? (
+                    <p className="text-muted-foreground text-sm italic">
+                      All teams in this organization are already attached.
+                    </p>
+                  ) : (
+                    <>
+                      <select
+                        className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
+                        value={selectedTeamId}
+                        onChange={e => setSelectedTeamId(e.target.value)}
+                      >
+                        <option value="">Select a team...</option>
+                        {addableOrgTeams.map(t => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <LoadingButton
+                        isLoading={isAdding}
+                        disabled={!selectedTeamId}
+                        onClick={onAddTeam}
+                      >
+                        Add Team
+                      </LoadingButton>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {canProjectAdmin && (
+          <Card className="mx-auto max-w-md">
+            <CardHeader>
+              <CardTitle>Danger Zone</CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Delete this project. All canisters must be removed first.
               </p>
 
-              {addableOrgTeams.length === 0 ? (
-                <p className="text-muted-foreground text-sm italic">
-                  All teams in this organization are already attached.
-                </p>
-              ) : (
-                <>
-                  <select
-                    className="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
-                    value={selectedTeamId}
-                    onChange={e => setSelectedTeamId(e.target.value)}
-                  >
-                    <option value="">Select a team...</option>
-                    {addableOrgTeams.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <LoadingButton
-                    isLoading={isAdding}
-                    disabled={!selectedTeamId}
-                    onClick={onAddTeam}
-                  >
-                    Add Team
-                  </LoadingButton>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mx-auto max-w-md">
-          <CardHeader>
-            <CardTitle>Danger Zone</CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Delete this project. All canisters must be removed first.
-            </p>
-
-            <LoadingButton
-              variant="destructive"
-              isLoading={isDeleting}
-              onClick={onDelete}
-            >
-              Delete Project
-            </LoadingButton>
-          </CardContent>
-        </Card>
+              <LoadingButton
+                variant="destructive"
+                isLoading={isDeleting}
+                onClick={onDelete}
+              >
+                Delete Project
+              </LoadingButton>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </Container>
   );
