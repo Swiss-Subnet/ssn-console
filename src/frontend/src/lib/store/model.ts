@@ -1,7 +1,12 @@
 import type {
   ApprovalPolicy,
   Canister,
+  GetUserProfilesByPrincipalsResponse,
+  ListProjectProposalsRequest,
+  ListProjectProposalsResponse,
+  Proposal,
   ProposalOutcome,
+  Vote,
   CreateTrustedPartnerRequest,
   CreateOrgInviteRequest,
   OrgInvite,
@@ -25,6 +30,7 @@ import type {
   ApprovalPolicyApi,
   CanisterApi,
   CanisterHistoryApi,
+  ProposalApi,
   TrustedPartnerApi,
   UserProfileApi,
   ManagementCanisterApi,
@@ -68,6 +74,7 @@ export type ApiSlice = {
   teamApi: TeamApi;
   inviteApi: InviteApi;
   approvalPolicyApi: ApprovalPolicyApi;
+  proposalApi: ProposalApi;
 
   setAgentIdentity: (identity: Identity) => void;
 };
@@ -77,6 +84,19 @@ export type ApprovalPoliciesSlice = {
   upsertApprovalPolicy: (
     req: UpsertApprovalPolicyRequest,
   ) => Promise<ApprovalPolicy>;
+};
+
+export type ProposalsSlice = {
+  listProjectProposals: (
+    req: ListProjectProposalsRequest,
+  ) => Promise<ListProjectProposalsResponse>;
+  getProposal: (proposalId: string) => Promise<Proposal>;
+  voteProposal: (proposalId: string, vote: Vote) => Promise<Proposal>;
+  cancelProposal: (proposalId: string) => Promise<Proposal>;
+  getUserProfilesByPrincipals: (
+    projectId: string,
+    principals: string[],
+  ) => Promise<GetUserProfilesByPrincipalsResponse>;
 };
 
 export type UserProfileSlice = {
@@ -235,6 +255,7 @@ export type AppSlice = AuthSlice &
   OrganizationsSlice &
   TeamsSlice &
   InvitesSlice &
-  ApprovalPoliciesSlice;
+  ApprovalPoliciesSlice &
+  ProposalsSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;

@@ -2,6 +2,7 @@ export * from './api';
 export * from './app';
 export * from './approval-policy';
 export * from './auth';
+export * from './proposal';
 export * from './invite';
 export * from './model';
 export * from './organization';
