@@ -1,5 +1,6 @@
 export * from './api';
 export * from './app';
+export * from './approval-policy';
 export * from './auth';
 export * from './invite';
 export * from './model';

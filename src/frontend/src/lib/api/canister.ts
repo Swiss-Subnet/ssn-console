@@ -2,29 +2,18 @@ import {
   mapListMyCanistersResponse,
   mapListUserCanistersResponse,
   mapOkResponse,
+  readProposalOutcome,
   type ListMyCanistersRequest,
   type ListMyCanistersResponse,
   type ListUserCanistersRequest,
   type ListUserCanistersResponse,
+  type ProposalOutcome,
 } from '@/lib/api-models';
 import { isNil } from '@/lib/nil';
 import { toCandidOpt } from '@/lib/utils';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import { Principal } from '@icp-sdk/core/principal';
-import type { _SERVICE, Proposal } from '@ssn/backend-api';
-
-function assertProposalExecuted(proposal: Proposal): void {
-  const [status] = proposal.status;
-  if (isNil(status)) {
-    throw new Error('Proposal returned without a status');
-  }
-  if ('Failed' in status) {
-    throw new Error(status.Failed.message);
-  }
-  if ('Rejected' in status) {
-    throw new Error('Proposal was rejected');
-  }
-}
+import type { _SERVICE } from '@ssn/backend-api';
 
 export class CanisterApi {
   constructor(private readonly actor: ActorSubclass<_SERVICE>) {}
@@ -45,7 +34,7 @@ export class CanisterApi {
     return mapListUserCanistersResponse(res);
   }
 
-  public async createCanister(projectId: string): Promise<void> {
+  public async createCanister(projectId: string): Promise<ProposalOutcome> {
     const createRes = await this.actor.create_proposal({
       project_id: projectId,
       operation: [
@@ -54,7 +43,7 @@ export class CanisterApi {
         },
       ],
     });
-    assertProposalExecuted(mapOkResponse(createRes));
+    return readProposalOutcome(mapOkResponse(createRes));
   }
 
   public async removeCanister(canisterId: string): Promise<void> {
@@ -78,7 +67,7 @@ export class CanisterApi {
   public async addCanisterController(
     canisterId: string,
     controllerId: string,
-  ): Promise<void> {
+  ): Promise<ProposalOutcome> {
     const res = await this.actor.list_my_projects({});
     const [project] = mapOkResponse(res).projects;
     if (isNil(project)) {
@@ -96,6 +85,6 @@ export class CanisterApi {
         },
       ],
     });
-    assertProposalExecuted(mapOkResponse(createRes));
+    return readProposalOutcome(mapOkResponse(createRes));
   }
 }
