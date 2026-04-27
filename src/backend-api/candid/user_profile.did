@@ -5,6 +5,27 @@ type ListUserProfilesResponse = variant {
   Err : ApiError;
 };
 
+type GetUserProfilesByPrincipalsRequest = record {
+  project_id : text;
+  principals : vec principal;
+};
+
+type GetUserProfilesByPrincipalsResponse = variant {
+  Ok : vec UserProfileByPrincipal;
+  Err : ApiError;
+};
+
+type UserProfileByPrincipal = record {
+  subject_principal : principal;
+  profile : opt UserProfileBrief;
+};
+
+type UserProfileBrief = record {
+  id : text;
+  email : opt text;
+  email_verified : bool;
+};
+
 type GetMyUserProfileResponse = variant {
   Ok : opt UserProfile;
   Err : ApiError;
@@ -67,6 +88,7 @@ type VerifyEmailResponse = variant {
 
 service : {
   list_user_profiles : () -> (ListUserProfilesResponse) query;
+  get_user_profiles_by_principals : (GetUserProfilesByPrincipalsRequest) -> (GetUserProfilesByPrincipalsResponse) query;
   update_user_profile : (UpdateUserProfileRequest) -> (UpdateUserProfileResponse);
   get_user_stats : () -> (GetUserStatsResponse) query;
 
