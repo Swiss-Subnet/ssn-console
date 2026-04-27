@@ -1,10 +1,10 @@
 use crate::{
     dto::{
-        CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
-        ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
-        VerifyEmailRequest,
+        CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
+        GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListUserProfilesResponse,
+        UpdateMyUserProfileRequest, UpdateUserProfileRequest, VerifyEmailRequest,
     },
-    service::user_profile_service,
+    service::{access_control_service, user_profile_service},
 };
 use canister_utils::{assert_authenticated, assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
@@ -17,6 +17,18 @@ fn list_user_profiles() -> ApiResultDto<ListUserProfilesResponse> {
     }
 
     ApiResultDto::Ok(user_profile_service::list_user_profiles())
+}
+
+#[query]
+fn get_user_profiles_by_principals(
+    request: GetUserProfilesByPrincipalsRequest,
+) -> ApiResultDto<GetUserProfilesByPrincipalsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = access_control_service::assert_has_platform_access(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    user_profile_service::get_user_profiles_by_principals(&caller, request).into()
 }
 
 #[update]

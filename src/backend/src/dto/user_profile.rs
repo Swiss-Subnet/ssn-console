@@ -1,7 +1,28 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::Deserialize;
 
 pub type ListUserProfilesResponse = Vec<UserProfile>;
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct GetUserProfilesByPrincipalsRequest {
+    pub project_id: String,
+    pub principals: Vec<Principal>,
+}
+
+pub type GetUserProfilesByPrincipalsResponse = Vec<UserProfileByPrincipal>;
+
+#[derive(Debug, Clone, CandidType)]
+pub struct UserProfileByPrincipal {
+    pub subject_principal: Principal,
+    pub profile: Option<UserProfileBrief>,
+}
+
+#[derive(Debug, Clone, CandidType)]
+pub struct UserProfileBrief {
+    pub id: String,
+    pub email: Option<String>,
+    pub email_verified: bool,
+}
 
 pub type GetMyUserProfileResponse = Option<UserProfile>;
 
