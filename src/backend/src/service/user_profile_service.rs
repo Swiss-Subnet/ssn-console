@@ -43,10 +43,11 @@ pub fn get_user_profiles_by_principals(
         .principals
         .into_iter()
         .map(|principal| {
-            let found = user_profile_repository::get_user_profile_by_principal(&principal)
-                .filter(|(user_id, _)| {
+            let found = user_profile_repository::get_user_profile_by_principal(&principal).filter(
+                |(user_id, _)| {
                     ProjectAuth::for_user(*user_id, project_id, ProjectPermissions::EMPTY).is_ok()
-                });
+                },
+            );
             (principal, found)
         })
         .collect();

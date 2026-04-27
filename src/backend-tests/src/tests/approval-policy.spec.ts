@@ -661,9 +661,7 @@ describe('Proposal queries and lifecycle', () => {
       expect(lookups.length).toBe(3);
 
       const findBy = (principal: Principal) =>
-        lookups.find(
-          (l) => l.subject_principal.toText() === principal.toText(),
-        );
+        lookups.find(l => l.subject_principal.toText() === principal.toText());
 
       const bobLookup = findBy(bob.identity.getPrincipal());
       expect(bobLookup?.profile[0]?.id).toBe(bob.profile.id);

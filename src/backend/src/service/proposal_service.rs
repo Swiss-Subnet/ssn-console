@@ -48,10 +48,7 @@ pub async fn create_proposal(
     Ok(map_proposal_response(proposal_id, proposal))
 }
 
-pub fn get_proposal(
-    caller: &Principal,
-    req: GetProposalRequest,
-) -> ApiResult<GetProposalResponse> {
+pub fn get_proposal(caller: &Principal, req: GetProposalRequest) -> ApiResult<GetProposalResponse> {
     let proposal_id = Uuid::try_from(req.proposal_id.as_str())?;
 
     let proposal = proposal_repository::get_proposal(&proposal_id)
@@ -74,10 +71,7 @@ pub fn list_project_proposals(
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
 
     let after = req.after.as_deref().map(Uuid::try_from).transpose()?;
-    let limit = req
-        .limit
-        .unwrap_or(DEFAULT_PAGE_SIZE)
-        .min(MAX_PAGE_SIZE) as usize;
+    let limit = req.limit.unwrap_or(DEFAULT_PAGE_SIZE).min(MAX_PAGE_SIZE) as usize;
 
     let scanned = proposal_repository::list_project_proposals(auth.project_id(), after, limit);
 
@@ -91,11 +85,7 @@ pub fn list_project_proposals(
     let proposals = match req.status_filter.as_ref() {
         Some(filters) => scanned
             .into_iter()
-            .filter(|(_, p)| {
-                filters
-                    .iter()
-                    .any(|f| proposal_matches_status_filter(p, f))
-            })
+            .filter(|(_, p)| filters.iter().any(|f| proposal_matches_status_filter(p, f)))
             .collect(),
         None => scanned,
     };
