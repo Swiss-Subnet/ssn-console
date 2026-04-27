@@ -69,11 +69,26 @@ pub fn proposal_matches_status_filter(
                 data::ProposalStatus::PendingApproval { .. },
                 ProposalStatusFilter::PendingApproval {}
             )
-            | (data::ProposalStatus::Rejected, ProposalStatusFilter::Rejected {})
-            | (data::ProposalStatus::Cancelled, ProposalStatusFilter::Cancelled {})
-            | (data::ProposalStatus::Executing, ProposalStatusFilter::Executing {})
-            | (data::ProposalStatus::Executed, ProposalStatusFilter::Executed {})
-            | (data::ProposalStatus::Failed(_), ProposalStatusFilter::Failed {})
+            | (
+                data::ProposalStatus::Rejected,
+                ProposalStatusFilter::Rejected {}
+            )
+            | (
+                data::ProposalStatus::Cancelled,
+                ProposalStatusFilter::Cancelled {}
+            )
+            | (
+                data::ProposalStatus::Executing,
+                ProposalStatusFilter::Executing {}
+            )
+            | (
+                data::ProposalStatus::Executed,
+                ProposalStatusFilter::Executed {}
+            )
+            | (
+                data::ProposalStatus::Failed(_),
+                ProposalStatusFilter::Failed {}
+            )
     )
 }
 
