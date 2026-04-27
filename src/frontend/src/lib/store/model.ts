@@ -1,5 +1,7 @@
 import type {
+  ApprovalPolicy,
   Canister,
+  ProposalOutcome,
   CreateTrustedPartnerRequest,
   CreateOrgInviteRequest,
   OrgInvite,
@@ -8,6 +10,7 @@ import type {
   ProjectPermissions,
   ProjectTeam,
   TrustedPartner,
+  UpsertApprovalPolicyRequest,
   UserProfile,
   UserStatus,
   GetUserStatsResponse,
@@ -19,6 +22,7 @@ import type {
   Team,
 } from '@/lib/api-models';
 import type {
+  ApprovalPolicyApi,
   CanisterApi,
   CanisterHistoryApi,
   TrustedPartnerApi,
@@ -63,8 +67,16 @@ export type ApiSlice = {
   organizationApi: OrganizationApi;
   teamApi: TeamApi;
   inviteApi: InviteApi;
+  approvalPolicyApi: ApprovalPolicyApi;
 
   setAgentIdentity: (identity: Identity) => void;
+};
+
+export type ApprovalPoliciesSlice = {
+  loadProjectApprovalPolicies: (projectId: string) => Promise<ApprovalPolicy[]>;
+  upsertApprovalPolicy: (
+    req: UpsertApprovalPolicyRequest,
+  ) => Promise<ApprovalPolicy>;
 };
 
 export type UserProfileSlice = {
@@ -100,7 +112,7 @@ export type CanistersSlice = {
   initializeCanisters: (projectId: string) => Promise<void>;
   refreshCanisters: (projectId: string) => Promise<void>;
   clearCanisters: () => void;
-  createCanister: (projectId: string) => Promise<void>;
+  createCanister: (projectId: string) => Promise<ProposalOutcome>;
   addMissingController: (
     canisterId: string,
     projectId: string,
@@ -109,7 +121,7 @@ export type CanistersSlice = {
     canisterId: string,
     controllerId: string,
     projectId: string,
-  ) => Promise<void>;
+  ) => Promise<ProposalOutcome>;
   removeCanister: (
     canisterRecordId: string,
     projectId: string,
@@ -222,6 +234,7 @@ export type AppSlice = AuthSlice &
   ProjectsSlice &
   OrganizationsSlice &
   TeamsSlice &
-  InvitesSlice;
+  InvitesSlice &
+  ApprovalPoliciesSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;

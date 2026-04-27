@@ -4,6 +4,7 @@ import {
   SHOULD_FETCH_ROOT_KEY,
 } from '@/env';
 import {
+  ApprovalPolicyApi,
   CanisterApi,
   CanisterHistoryApi,
   TrustedPartnerApi,
@@ -69,6 +70,7 @@ const teamApi = new TeamApi(actor);
 const inviteApi = new InviteApi(actor);
 const canisterHistoryApi = new CanisterHistoryApi(canisterHistoryActor);
 const authApi = new AuthApi(OFFCHAIN_SERVICE_URL);
+const approvalPolicyApi = new ApprovalPolicyApi(actor);
 
 export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
   agent,
@@ -84,6 +86,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
   teamApi,
   inviteApi,
   authApi,
+  approvalPolicyApi,
 
   setAgentIdentity: identity => {
     const { agent } = get();
