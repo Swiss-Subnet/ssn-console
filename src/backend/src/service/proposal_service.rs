@@ -1,15 +1,22 @@
 use crate::{
     data::{
         approval_policy_repository, proposal_repository, proposal_repository::VoteOutcome,
-        OperationType, PolicyType, ProjectPermissions, Proposal, ProposalOperation,
+        OperationType, PolicyType, ProjectPermissions, Proposal, ProposalOperation, ProposalStatus,
     },
     dto::{
-        CreateProposalRequest, CreateProposalResponse, VoteProposalRequest, VoteProposalResponse,
+        CancelProposalRequest, CancelProposalResponse, CreateProposalRequest,
+        CreateProposalResponse, GetProposalRequest, GetProposalResponse,
+        ListProjectProposalsRequest, ListProjectProposalsResponse, VoteProposalRequest,
+        VoteProposalResponse,
     },
     mapping::{
-        map_create_proposal_request, map_create_proposal_response, map_vote_proposal_request,
+        map_create_proposal_request, map_list_project_proposals_response, map_proposal_response,
+        map_vote_proposal_request, proposal_matches_status_filter,
     },
-    service::{access_control_service, access_control_service::ProjectAuth, canister_service},
+    service::{
+        access_control_service, access_control_service::proposal_not_found_or_no_access,
+        access_control_service::ProjectAuth, canister_service,
+    },
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
@@ -18,10 +25,16 @@ pub async fn create_proposal(
     caller: &Principal,
     req: CreateProposalRequest,
 ) -> ApiResult<CreateProposalResponse> {
-    let (project_id, proposal) = map_create_proposal_request(req)?;
+    let (project_id, operation) = map_create_proposal_request(req)?;
 
-    ProjectAuth::require(caller, project_id, ProjectPermissions::PROPOSAL_CREATE)?;
+    let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROPOSAL_CREATE)?;
 
+    let proposal = Proposal {
+        project_id,
+        proposer_id: auth.user_id(),
+        status: ProposalStatus::Open,
+        operation,
+    };
     let proposal_id = proposal_repository::create_proposal(project_id, proposal.clone());
 
     process_proposal(project_id, proposal_id, proposal.clone()).await?;
@@ -32,7 +45,62 @@ pub async fn create_proposal(
         ))
     })?;
 
-    Ok(map_create_proposal_response(proposal_id, proposal))
+    Ok(map_proposal_response(proposal_id, proposal))
+}
+
+pub fn get_proposal(
+    caller: &Principal,
+    req: GetProposalRequest,
+) -> ApiResult<GetProposalResponse> {
+    let proposal_id = Uuid::try_from(req.proposal_id.as_str())?;
+
+    let proposal = proposal_repository::get_proposal(&proposal_id)
+        .ok_or_else(|| proposal_not_found_or_no_access(proposal_id))?;
+
+    ProjectAuth::require(caller, proposal.project_id, ProjectPermissions::EMPTY)
+        .map_err(|_| proposal_not_found_or_no_access(proposal_id))?;
+
+    Ok(map_proposal_response(proposal_id, proposal))
+}
+
+const DEFAULT_PAGE_SIZE: u32 = 50;
+const MAX_PAGE_SIZE: u32 = 500;
+
+pub fn list_project_proposals(
+    caller: &Principal,
+    req: ListProjectProposalsRequest,
+) -> ApiResult<ListProjectProposalsResponse> {
+    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
+
+    let after = req.after.as_deref().map(Uuid::try_from).transpose()?;
+    let limit = req
+        .limit
+        .unwrap_or(DEFAULT_PAGE_SIZE)
+        .min(MAX_PAGE_SIZE) as usize;
+
+    let scanned = proposal_repository::list_project_proposals(auth.project_id(), after, limit);
+
+    // Cursor advances by scan position, not filter-matched position, so a
+    // sparse status filter doesn't force the next page to re-scan ids the
+    // current call already excluded.
+    let next_cursor = (scanned.len() == limit)
+        .then(|| scanned.last().map(|(id, _)| *id))
+        .flatten();
+
+    let proposals = match req.status_filter.as_ref() {
+        Some(filters) => scanned
+            .into_iter()
+            .filter(|(_, p)| {
+                filters
+                    .iter()
+                    .any(|f| proposal_matches_status_filter(p, f))
+            })
+            .collect(),
+        None => scanned,
+    };
+
+    Ok(map_list_project_proposals_response(proposals, next_cursor))
 }
 
 async fn process_proposal(project_id: Uuid, proposal_id: Uuid, proposal: Proposal) -> ApiResult {
@@ -106,13 +174,17 @@ pub async fn vote_proposal(
     let (proposal_id, vote) = map_vote_proposal_request(req)?;
 
     let proposal = proposal_repository::get_proposal(&proposal_id)
-        .ok_or_else(|| ApiError::client_error(format!("Proposal {proposal_id} does not exist.")))?;
+        .ok_or_else(|| proposal_not_found_or_no_access(proposal_id))?;
 
-    ProjectAuth::require(
-        caller,
-        proposal.project_id,
-        ProjectPermissions::PROPOSAL_APPROVE,
-    )?;
+    let auth = ProjectAuth::require(caller, proposal.project_id, ProjectPermissions::EMPTY)
+        .map_err(|_| proposal_not_found_or_no_access(proposal_id))?;
+    if !auth.perms().contains(ProjectPermissions::PROPOSAL_APPROVE) {
+        return Err(ApiError::unauthorized(format!(
+            "User {} lacks proposal_approve on project {}.",
+            auth.user_id(),
+            auth.project_id()
+        )));
+    }
 
     let outcome = proposal_repository::record_proposal_vote(proposal_id, *caller, vote)?;
 
@@ -126,5 +198,36 @@ pub async fn vote_proposal(
         ))
     })?;
 
-    Ok(map_create_proposal_response(proposal_id, updated))
+    Ok(map_proposal_response(proposal_id, updated))
+}
+
+pub fn cancel_proposal(
+    caller: &Principal,
+    req: CancelProposalRequest,
+) -> ApiResult<CancelProposalResponse> {
+    let proposal_id = Uuid::try_from(req.proposal_id.as_str())?;
+
+    let proposal = proposal_repository::get_proposal(&proposal_id)
+        .ok_or_else(|| proposal_not_found_or_no_access(proposal_id))?;
+
+    let auth = ProjectAuth::require(caller, proposal.project_id, ProjectPermissions::EMPTY)
+        .map_err(|_| proposal_not_found_or_no_access(proposal_id))?;
+    if auth.user_id() != proposal.proposer_id
+        && !auth.perms().contains(ProjectPermissions::PROJECT_ADMIN)
+    {
+        return Err(ApiError::unauthorized(format!(
+            "User {} cannot cancel proposal {proposal_id}: must be the proposer or a project admin.",
+            auth.user_id()
+        )));
+    }
+
+    proposal_repository::cancel_proposal(proposal_id)?;
+
+    let updated = proposal_repository::get_proposal(&proposal_id).ok_or_else(|| {
+        ApiError::internal_error(format!(
+            "Could not find proposal {proposal_id} after cancelling"
+        ))
+    })?;
+
+    Ok(map_proposal_response(proposal_id, updated))
 }

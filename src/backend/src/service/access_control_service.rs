@@ -24,6 +24,12 @@ pub fn team_not_found_or_no_access(team_id: Uuid) -> ApiError {
     ))
 }
 
+pub fn proposal_not_found_or_no_access(proposal_id: Uuid) -> ApiError {
+    ApiError::client_error(format!(
+        "Proposal with id {proposal_id} does not exist or you do not have access."
+    ))
+}
+
 pub fn assert_trusted_partner(caller: &Principal) -> ApiResult {
     assert_authenticated(caller)?;
 
@@ -133,16 +139,16 @@ impl OrgAuth {
     }
 }
 
-// Proof that the caller has been resolved to a user, has at least one team
-// linked to `project_id`, and that team (or the union across their teams)
-// holds at least the permissions implied by the construction call. The only
-// way to obtain a `ProjectAuth` is via `require`.
+// Proof that a user has at least one team linked to `project_id`, and that
+// team (or the union across their teams) holds at least the permissions
+// implied by the construction call. Obtain via `require` (resolves the caller
+// principal first) or `for_user` (when the user id is already known, e.g.
+// when validating a peer user's membership).
 //
 // Use `ProjectPermissions::EMPTY` as the `needed` argument for read-only
 // endpoints that require project access but no specific capability.
 #[derive(Debug, Clone, Copy)]
 pub struct ProjectAuth {
-    #[allow(dead_code)]
     user_id: Uuid,
     project_id: Uuid,
     org_id: Uuid,
@@ -156,7 +162,17 @@ impl ProjectAuth {
         needed: ProjectPermissions,
     ) -> ApiResult<Self> {
         let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
+        Self::for_user(user_id, project_id, needed)
+    }
 
+    // Same checks as `require`, but skips the principal-to-user lookup
+    // because the caller has already resolved it. Used when validating that
+    // some other user (not the request caller) belongs to a project.
+    pub fn for_user(
+        user_id: Uuid,
+        project_id: Uuid,
+        needed: ProjectPermissions,
+    ) -> ApiResult<Self> {
         // Collapse "project does not exist" and "caller is not in project's
         // org" into the same generic error. A caller outside the org must
         // not be able to tell whether a project id is real or learn which
@@ -194,7 +210,6 @@ impl ProjectAuth {
         })
     }
 
-    #[allow(dead_code)]
     pub fn user_id(&self) -> Uuid {
         self.user_id
     }
@@ -207,7 +222,6 @@ impl ProjectAuth {
         self.org_id
     }
 
-    #[allow(dead_code)]
     pub fn perms(&self) -> ProjectPermissions {
         self.perms
     }

@@ -7,6 +7,7 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Proposal {
     pub project_id: Uuid,
+    pub proposer_id: Uuid,
     pub status: ProposalStatus,
     pub operation: ProposalOperation,
 }
@@ -20,6 +21,7 @@ pub enum ProposalStatus {
         votes: Vec<(Principal, Vote)>,
     },
     Rejected,
+    Cancelled,
     Executing,
     Executed,
     Failed(String),

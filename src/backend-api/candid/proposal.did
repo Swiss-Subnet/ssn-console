@@ -10,6 +10,37 @@ type CreateProposalResponse = variant {
   Err : ApiError;
 };
 
+type GetProposalRequest = record {
+  proposal_id : text;
+};
+
+type GetProposalResponse = variant {
+  Ok : Proposal;
+  Err : ApiError;
+};
+
+type ListProjectProposalsRequest = record {
+  project_id : text;
+  status_filter : opt vec ProposalStatusFilter;
+  after : opt text;
+  limit : opt nat32;
+};
+
+type ListProjectProposalsResponse = variant {
+  Ok : record { proposals : vec Proposal; next_cursor : opt text };
+  Err : ApiError;
+};
+
+type ProposalStatusFilter = variant {
+  Open : record {};
+  PendingApproval : record {};
+  Rejected : record {};
+  Cancelled : record {};
+  Executing : record {};
+  Executed : record {};
+  Failed : record {};
+};
+
 type VoteProposalRequest = record {
   proposal_id : text;
   vote : Vote;
@@ -20,9 +51,19 @@ type VoteProposalResponse = variant {
   Err : ApiError;
 };
 
+type CancelProposalRequest = record {
+  proposal_id : text;
+};
+
+type CancelProposalResponse = variant {
+  Ok : Proposal;
+  Err : ApiError;
+};
+
 type Proposal = record {
   id : text;
   project_id : text;
+  proposer_id : text;
   status : opt ProposalStatus;
   operation : opt ProposalOperation;
 };
@@ -35,6 +76,7 @@ type ProposalStatus = variant {
     votes : vec ProposalVote;
   };
   Rejected : record {};
+  Cancelled : record {};
   Executing : record {};
   Executed : record {};
   Failed : record {
@@ -62,5 +104,8 @@ type ProposalOperation = variant {
 
 service : {
   create_proposal : (CreateProposalRequest) -> (CreateProposalResponse);
+  get_proposal : (GetProposalRequest) -> (GetProposalResponse) query;
+  list_project_proposals : (ListProjectProposalsRequest) -> (ListProjectProposalsResponse) query;
   vote_proposal : (VoteProposalRequest) -> (VoteProposalResponse);
+  cancel_proposal : (CancelProposalRequest) -> (CancelProposalResponse);
 };

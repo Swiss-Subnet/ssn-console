@@ -7,6 +7,7 @@ import {
   extractOkResponse,
 } from '@ssn/test-utils';
 import type { ApprovalPolicy, Proposal } from '@ssn/backend-api';
+import { Principal } from '@icp-sdk/core/principal';
 
 async function createActivatedUser(driver: TestDriver) {
   const identity = generateRandomIdentity();
@@ -304,8 +305,8 @@ describe('Approval Policy + Proposal Voting', () => {
       });
       expect(carolVote).toEqual({
         Err: {
-          code: [{ Unauthorized: {} }],
-          message: `User with id ${carol.profile.id} does not have access to project with id ${project.id}`,
+          code: [{ ClientError: {} }],
+          message: `Proposal with id ${pending.id} does not exist or you do not have access.`,
         },
       });
     });
@@ -342,6 +343,353 @@ describe('Approval Policy + Proposal Voting', () => {
         Err: {
           code: [{ ClientError: {} }],
           message: `Principal ${alice.identity.getPrincipal()} has already voted on proposal ${pending.id}.`,
+        },
+      });
+    });
+  });
+});
+
+describe('Proposal queries and lifecycle', () => {
+  let driver: TestDriver;
+
+  beforeEach(async () => {
+    driver = await TestDriver.create();
+  });
+
+  afterEach(async () => {
+    await driver.tearDown();
+  });
+
+  describe('proposer_id', () => {
+    it('records the caller as proposer on creation', async () => {
+      const alice = await createActivatedUser(driver);
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+
+      const createRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const proposal = extractOkResponse(createRes);
+      expect(proposal.proposer_id).toBe(alice.profile.id);
+    });
+  });
+
+  describe('get_proposal', () => {
+    it('fetches a proposal for a project member', async () => {
+      const alice = await createActivatedUser(driver);
+      const bob = await createActivatedUser(driver);
+      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+      await driver.actor.upsert_approval_policy({
+        project_id: project.id,
+        operation_type: { CreateCanister: {} },
+        policy_type: { FixedQuorum: { threshold: 2 } },
+      });
+      const createRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const created = extractOkResponse(createRes);
+
+      driver.actor.setIdentity(bob.identity);
+      const getRes = await driver.actor.get_proposal({
+        proposal_id: created.id,
+      });
+      const fetched = extractOkResponse(getRes);
+      expect(fetched.id).toBe(created.id);
+      expect(fetched.project_id).toBe(project.id);
+      expect(fetched.proposer_id).toBe(alice.profile.id);
+      expectStatusTag(fetched, 'PendingApproval');
+    });
+
+    it('returns a generic error for a non-existent proposal id', async () => {
+      const alice = await createActivatedUser(driver);
+      driver.actor.setIdentity(alice.identity);
+
+      const ghost = '00000000-0000-0000-0000-000000000000';
+      const res = await driver.actor.get_proposal({ proposal_id: ghost });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Proposal with id ${ghost} does not exist or you do not have access.`,
+        },
+      });
+    });
+
+    it('hides proposal existence from a caller outside the project org', async () => {
+      const alice = await createActivatedUser(driver);
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+      const createRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const created = extractOkResponse(createRes);
+
+      const stranger = await createActivatedUser(driver);
+      driver.actor.setIdentity(stranger.identity);
+      const res = await driver.actor.get_proposal({ proposal_id: created.id });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Proposal with id ${created.id} does not exist or you do not have access.`,
+        },
+      });
+    });
+  });
+
+  describe('list_project_proposals', () => {
+    it('returns an empty list for a fresh project', async () => {
+      const alice = await createActivatedUser(driver);
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+
+      const res = await driver.actor.list_project_proposals({
+        project_id: project.id,
+        status_filter: [],
+        after: [],
+        limit: [],
+      });
+      const { proposals } = extractOkResponse(res);
+      expect(proposals).toEqual([]);
+    });
+
+    it('lists proposals for the project and filters by status', async () => {
+      const alice = await createActivatedUser(driver);
+      const bob = await createActivatedUser(driver);
+      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+      // First proposal auto-approves and ends in Executed.
+      await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      // Switch the policy to FixedQuorum so the next one stays pending.
+      await driver.actor.upsert_approval_policy({
+        project_id: project.id,
+        operation_type: { CreateCanister: {} },
+        policy_type: { FixedQuorum: { threshold: 2 } },
+      });
+      const pendingRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const pending = extractOkResponse(pendingRes);
+
+      const allRes = await driver.actor.list_project_proposals({
+        project_id: project.id,
+        status_filter: [],
+        after: [],
+        limit: [],
+      });
+      const { proposals: all } = extractOkResponse(allRes);
+      expect(all.length).toBe(2);
+
+      const pendingOnlyRes = await driver.actor.list_project_proposals({
+        project_id: project.id,
+        status_filter: [[{ PendingApproval: {} }]],
+        after: [],
+        limit: [],
+      });
+      const { proposals: pendingOnly } = extractOkResponse(pendingOnlyRes);
+      expect(pendingOnly.length).toBe(1);
+      expect(pendingOnly[0]!.id).toBe(pending.id);
+    });
+
+    it('rejects a caller without project access', async () => {
+      const alice = await createActivatedUser(driver);
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+
+      const stranger = await createActivatedUser(driver);
+      driver.actor.setIdentity(stranger.identity);
+      const res = await driver.actor.list_project_proposals({
+        project_id: project.id,
+        status_filter: [],
+        after: [],
+        limit: [],
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Project with id ${project.id} does not exist or you do not have access.`,
+        },
+      });
+    });
+  });
+
+  describe('cancel_proposal', () => {
+    it('lets the proposer cancel a pending proposal', async () => {
+      const alice = await createActivatedUser(driver);
+      const bob = await createActivatedUser(driver);
+      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+      await driver.actor.upsert_approval_policy({
+        project_id: project.id,
+        operation_type: { CreateCanister: {} },
+        policy_type: { FixedQuorum: { threshold: 2 } },
+      });
+      const createRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const pending = extractOkResponse(createRes);
+
+      const cancelRes = await driver.actor.cancel_proposal({
+        proposal_id: pending.id,
+      });
+      const cancelled = extractOkResponse(cancelRes);
+      expectStatusTag(cancelled, 'Cancelled');
+    });
+
+    it('rejects a vote on a cancelled proposal', async () => {
+      const alice = await createActivatedUser(driver);
+      const bob = await createActivatedUser(driver);
+      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+      await driver.actor.upsert_approval_policy({
+        project_id: project.id,
+        operation_type: { CreateCanister: {} },
+        policy_type: { FixedQuorum: { threshold: 2 } },
+      });
+      const createRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const pending = extractOkResponse(createRes);
+
+      await driver.actor.cancel_proposal({ proposal_id: pending.id });
+
+      driver.actor.setIdentity(bob.identity);
+      const voteRes = await driver.actor.vote_proposal({
+        proposal_id: pending.id,
+        vote: { Approve: {} },
+      });
+      expect(voteRes).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Proposal ${pending.id} is not pending approval.`,
+        },
+      });
+    });
+
+    it('rejects cancelling an executed proposal', async () => {
+      const alice = await createActivatedUser(driver);
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+      // AutoApprove default → goes straight to Executed.
+      const createRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const executed = extractOkResponse(createRes);
+      expectStatusTag(executed, 'Executed');
+
+      const cancelRes = await driver.actor.cancel_proposal({
+        proposal_id: executed.id,
+      });
+      expect(cancelRes).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Proposal ${executed.id} cannot be cancelled in its current state.`,
+        },
+      });
+    });
+
+    it('hides cancellation from a caller outside the project org', async () => {
+      const alice = await createActivatedUser(driver);
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+      await driver.actor.upsert_approval_policy({
+        project_id: project.id,
+        operation_type: { CreateCanister: {} },
+        policy_type: { FixedQuorum: { threshold: 2 } },
+      });
+      const bob = await createActivatedUser(driver);
+      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+      driver.actor.setIdentity(alice.identity);
+      const createRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const pending = extractOkResponse(createRes);
+
+      const stranger = await createActivatedUser(driver);
+      driver.actor.setIdentity(stranger.identity);
+      const res = await driver.actor.cancel_proposal({
+        proposal_id: pending.id,
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Proposal with id ${pending.id} does not exist or you do not have access.`,
+        },
+      });
+    });
+  });
+
+  describe('get_user_profiles_by_principals', () => {
+    it('resolves project members and returns no profile for non-members', async () => {
+      const alice = await createActivatedUser(driver);
+      const bob = await createActivatedUser(driver);
+      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+      const stranger = await createActivatedUser(driver);
+      const ghost = generateRandomIdentity().getPrincipal();
+
+      driver.actor.setIdentity(alice.identity);
+      const res = await driver.actor.get_user_profiles_by_principals({
+        project_id: project.id,
+        principals: [
+          bob.identity.getPrincipal(),
+          stranger.identity.getPrincipal(),
+          ghost,
+        ],
+      });
+      const lookups = extractOkResponse(res);
+      expect(lookups.length).toBe(3);
+
+      const findBy = (principal: Principal) =>
+        lookups.find(
+          (l) => l.subject_principal.toText() === principal.toText(),
+        );
+
+      const bobLookup = findBy(bob.identity.getPrincipal());
+      expect(bobLookup?.profile[0]?.id).toBe(bob.profile.id);
+
+      const strangerLookup = findBy(stranger.identity.getPrincipal());
+      expect(strangerLookup?.profile).toEqual([]);
+
+      const ghostLookup = findBy(ghost);
+      expect(ghostLookup?.profile).toEqual([]);
+    });
+
+    it('rejects a caller without project access', async () => {
+      const alice = await createActivatedUser(driver);
+      driver.actor.setIdentity(alice.identity);
+      const project = await driver.getDefaultProject();
+
+      const stranger = await createActivatedUser(driver);
+      driver.actor.setIdentity(stranger.identity);
+      const res = await driver.actor.get_user_profiles_by_principals({
+        project_id: project.id,
+        principals: [alice.identity.getPrincipal()],
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Project with id ${project.id} does not exist or you do not have access.`,
         },
       });
     });
