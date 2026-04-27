@@ -1,3 +1,4 @@
+import { ApprovalPolicyEditor } from '@/components/approval-policy-editor';
 import { LoadingButton } from '@/components/loading-button';
 import { Container } from '@/components/layout/container';
 import {
@@ -17,10 +18,15 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppStore, selectProjectMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
-import type {
-  OrgTeam,
-  ProjectPermissions,
-  ProjectTeam,
+import {
+  APPROVAL_OPERATION_TYPES,
+  ApprovalOperationType,
+  DEFAULT_APPROVAL_POLICY_TYPE,
+  type ApprovalPolicy,
+  type ApprovalPolicyType,
+  type OrgTeam,
+  type ProjectPermissions,
+  type ProjectTeam,
 } from '@/lib/api-models';
 import { Separator } from '@/components/ui/separator';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -52,6 +58,8 @@ const ProjectSettings: FC = () => {
     addTeamToProject,
     removeTeamFromProject,
     updateTeamProjectPermissions,
+    loadProjectApprovalPolicies,
+    upsertApprovalPolicy,
   } = useAppStore();
   const projectMap = useAppStore(selectProjectMap);
 
@@ -71,6 +79,9 @@ const ProjectSettings: FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [removingTeamId, setRemovingTeamId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [approvalPolicies, setApprovalPolicies] = useState<ApprovalPolicy[]>(
+    [],
+  );
 
   const refreshOrgTeams = useCallback(async () => {
     if (!orgId) return;
@@ -89,6 +100,15 @@ const ProjectSettings: FC = () => {
       showErrorToast('Failed to load project teams', err);
     }
   }, [projectId, loadProjectTeams]);
+
+  const refreshApprovalPolicies = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      setApprovalPolicies(await loadProjectApprovalPolicies(projectId));
+    } catch (err) {
+      showErrorToast('Failed to load approval policies', err);
+    }
+  }, [projectId, loadProjectApprovalPolicies]);
 
   const projectTeamIds = useMemo(
     () => new Set(projectTeams.map(t => t.id)),
@@ -109,6 +129,23 @@ const ProjectSettings: FC = () => {
     refreshOrgTeams();
     refreshProjectTeams();
   }, [refreshOrgTeams, refreshProjectTeams]);
+
+  const canManageApprovalPolicy =
+    !!project?.yourPermissions.approvalPolicyManage;
+
+  useEffect(() => {
+    if (canManageApprovalPolicy) {
+      refreshApprovalPolicies();
+    }
+  }, [canManageApprovalPolicy, refreshApprovalPolicies]);
+
+  const approvalPolicyMap = useMemo(() => {
+    const map = new Map<ApprovalOperationType, ApprovalPolicy>();
+    for (const policy of approvalPolicies) {
+      map.set(policy.operationType, policy);
+    }
+    return map;
+  }, [approvalPolicies]);
 
   if (isNil(orgId) || isNil(projectId) || isNil(project)) {
     return (
@@ -171,6 +208,23 @@ const ProjectSettings: FC = () => {
     }
   }
 
+  async function onSaveApprovalPolicy(
+    operationType: ApprovalOperationType,
+    policyType: ApprovalPolicyType,
+  ): Promise<ApprovalPolicy> {
+    const updated = await upsertApprovalPolicy({
+      projectId: projectId!,
+      operationType,
+      policyType,
+    });
+    setApprovalPolicies(prev => {
+      const others = prev.filter(p => p.operationType !== operationType);
+      return [...others, updated];
+    });
+    showSuccessToast('Approval policy updated');
+    return updated;
+  }
+
   async function onDelete(): Promise<void> {
     setIsDeleting(true);
     try {
@@ -187,7 +241,7 @@ const ProjectSettings: FC = () => {
   return (
     <Container>
       <div className="space-y-6">
-        <div className="mx-auto max-w-md">
+        <div className="mx-auto max-w-2xl">
           <Button
             variant="ghost"
             size="sm"
@@ -200,7 +254,7 @@ const ProjectSettings: FC = () => {
           </Button>
         </div>
 
-        <Card className="mx-auto max-w-md">
+        <Card className="mx-auto max-w-2xl">
           <CardHeader>
             <CardTitle>Project Settings</CardTitle>
           </CardHeader>
@@ -240,7 +294,7 @@ const ProjectSettings: FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="mx-auto max-w-md">
+        <Card className="mx-auto max-w-2xl">
           <CardHeader>
             <CardTitle>Teams</CardTitle>
           </CardHeader>
@@ -324,8 +378,39 @@ const ProjectSettings: FC = () => {
           </CardContent>
         </Card>
 
+        {canManageApprovalPolicy && (
+          <Card className="mx-auto max-w-2xl">
+            <CardHeader>
+              <CardTitle>Approval Policies</CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <p className="text-muted-foreground text-sm">
+                Choose how proposals are approved for each operation. Operations
+                without an explicit policy auto-approve by default.
+              </p>
+
+              {APPROVAL_OPERATION_TYPES.map((op, idx) => {
+                const current =
+                  approvalPolicyMap.get(op)?.policyType ??
+                  DEFAULT_APPROVAL_POLICY_TYPE;
+                return (
+                  <div key={op} className="space-y-4">
+                    {idx > 0 && <Separator />}
+                    <ApprovalPolicyEditor
+                      operationType={op}
+                      value={current}
+                      onSave={next => onSaveApprovalPolicy(op, next)}
+                    />
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
         {canProjectAdmin && (
-          <Card className="mx-auto max-w-md">
+          <Card className="mx-auto max-w-2xl">
             <CardHeader>
               <CardTitle>Danger Zone</CardTitle>
             </CardHeader>

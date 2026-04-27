@@ -20,7 +20,7 @@ import {
   selectProjectMap,
   useAppStore,
 } from '@/lib/store';
-import { ChevronsUpDown, FolderOpen, Plus, Settings } from 'lucide-react';
+import { Box, ChevronsUpDown, FolderOpen, Plus, Settings } from 'lucide-react';
 import { useMemo, type FC } from 'react';
 import { NavLink, useParams } from 'react-router';
 
@@ -79,6 +79,20 @@ export const ProjectSelector: FC = () => {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent side={isMobile ? 'bottom' : 'right'}>
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                className="p-2"
+                render={
+                  <NavLink to={`/projects/${activeProject.id}/canisters`} />
+                }
+              >
+                <Box className="size-3.5" />
+                Open Canisters
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+
+            <DropdownMenuSeparator />
+
             {activeOrgProjects.length > 1 && (
               <>
                 <DropdownMenuGroup>

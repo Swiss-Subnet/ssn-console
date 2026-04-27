@@ -43,9 +43,20 @@ export const AddControllerForm: FC<AddControllerFormProps> = ({
 
   async function onSubmit(formData: FormData): Promise<void> {
     try {
-      await addController(canisterId, formData.principal, projectId);
+      const outcome = await addController(
+        canisterId,
+        formData.principal,
+        projectId,
+      );
       form.reset();
-      showSuccessToast('Controller added successfully!');
+      if (outcome.kind === 'pendingApproval') {
+        showSuccessToast(
+          'Proposal submitted',
+          'Controller will be added once approvers reach the threshold.',
+        );
+      } else {
+        showSuccessToast('Controller added successfully!');
+      }
     } catch (err) {
       showErrorToast('Failed to add controller to canister', err);
     }
