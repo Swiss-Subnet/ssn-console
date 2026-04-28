@@ -6,7 +6,7 @@ use crate::data::{
     ProposalStatus, Vote,
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{now_nanos, ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 use std::ops::Bound::{Excluded, Included};
 
@@ -17,8 +17,11 @@ pub enum VoteOutcome {
     StillPending,
 }
 
-pub fn create_proposal(project_id: Uuid, proposal: Proposal) -> Uuid {
+pub fn create_proposal(project_id: Uuid, mut proposal: Proposal) -> Uuid {
     let proposal_id = Uuid::new();
+    let now = now_nanos();
+    proposal.created_at_nanos = Some(now);
+    proposal.updated_at_nanos = Some(now);
 
     mutate_state(|s| {
         s.proposals.insert(proposal_id, proposal);
@@ -87,6 +90,7 @@ pub fn set_proposal_pending_approval(
             approvers,
             votes: Vec::new(),
         };
+        proposal.updated_at_nanos = Some(now_nanos());
         s.proposals.insert(proposal_id, proposal);
 
         Ok(())
@@ -149,6 +153,7 @@ pub fn record_proposal_vote(
                 votes,
             },
         };
+        proposal.updated_at_nanos = Some(now_nanos());
         s.proposals.insert(proposal_id, proposal);
 
         Ok(outcome)
@@ -173,6 +178,7 @@ pub fn cancel_proposal(proposal_id: Uuid) -> ApiResult {
         }
 
         proposal.status = ProposalStatus::Cancelled;
+        proposal.updated_at_nanos = Some(now_nanos());
         s.proposals.insert(proposal_id, proposal);
 
         Ok(())
@@ -200,6 +206,7 @@ fn set_proposal_status(proposal_id: Uuid, status: ProposalStatus) -> ApiResult {
         })?;
 
         proposal.status = status;
+        proposal.updated_at_nanos = Some(now_nanos());
         s.proposals.insert(proposal_id, proposal);
 
         Ok(())
@@ -250,6 +257,8 @@ mod tests {
                 proposer_id: Uuid::new(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
+                created_at_nanos: None,
+                updated_at_nanos: None,
             },
         );
         set_proposal_pending_approval(proposal_id, threshold, approvers).unwrap();
@@ -367,6 +376,8 @@ mod tests {
                 proposer_id: Uuid::new(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
+                created_at_nanos: None,
+                updated_at_nanos: None,
             },
         );
 

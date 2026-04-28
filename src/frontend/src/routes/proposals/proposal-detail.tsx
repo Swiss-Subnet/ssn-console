@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { H1 } from '@/components/typography/h1';
+import { formatTimestamp } from '@/lib/format';
 import { isNil } from '@/lib/nil';
 import { useRequireProjectId } from '@/lib/params';
 import {
@@ -30,6 +31,20 @@ import { useParams } from 'react-router';
 function shortenPrincipal(p: string): string {
   if (p.length <= 16) return p;
   return `${p.slice(0, 8)}…${p.slice(-6)}`;
+}
+
+// While Open/PendingApproval the proposal is still active, so updated_at is a
+// "last activity" marker. Once it transitions to a terminal status, that same
+// timestamp is when the outcome was reached.
+function updatedAtLabel(status: Proposal['status']): string {
+  if (
+    !status ||
+    status.kind === ProposalStatusKind.Open ||
+    status.kind === ProposalStatusKind.PendingApproval
+  ) {
+    return 'Last activity';
+  }
+  return 'Decided';
 }
 
 function describeOperation(p: Proposal): string {
@@ -224,6 +239,25 @@ const ProposalDetail: FC = () => {
                   <dt className="text-muted-foreground">ID</dt>
                   <dd className="font-mono text-xs">{proposal.id}</dd>
                 </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Created</dt>
+                  <dd className="text-xs">
+                    {proposal.createdAtNanos !== null
+                      ? formatTimestamp(proposal.createdAtNanos)
+                      : '—'}
+                  </dd>
+                </div>
+                {proposal.updatedAtNanos !== null &&
+                  proposal.updatedAtNanos !== proposal.createdAtNanos && (
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">
+                        {updatedAtLabel(status)}
+                      </dt>
+                      <dd className="text-xs">
+                        {formatTimestamp(proposal.updatedAtNanos)}
+                      </dd>
+                    </div>
+                  )}
                 {status?.kind === ProposalStatusKind.Failed && (
                   <div className="flex justify-between gap-4">
                     <dt className="text-muted-foreground">Reason</dt>
