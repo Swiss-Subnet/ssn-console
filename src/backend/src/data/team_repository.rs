@@ -69,11 +69,12 @@ pub fn delete_team(team_id: Uuid, org_id: Uuid) -> ApiResult {
         s.organization_team_permissions_index
             .remove(&(org_id, team_id));
 
-        while let Some((tid, uid)) = s
+        let team_users = s
             .team_user_index
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
-            .next()
-        {
+            .collect::<Vec<_>>();
+
+        for (tid, uid) in team_users {
             s.team_user_index.remove(&(tid, uid));
             s.user_team_index.remove(&(uid, tid));
         }
@@ -87,21 +88,23 @@ pub fn delete_team(team_id: Uuid, org_id: Uuid) -> ApiResult {
 // org has no projects.
 pub fn delete_org_teams(org_id: Uuid) {
     mutate_state(|s| {
-        while let Some((oid, team_id)) = s
+        let org_team_permissions = s
             .organization_team_permissions_index
             .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
             .map(|entry| *entry.key())
-            .next()
-        {
+            .collect::<Vec<_>>();
+
+        for (oid, team_id) in org_team_permissions {
             s.organization_team_permissions_index
                 .remove(&(oid, team_id));
             s.teams.remove(&team_id);
 
-            while let Some((tid, uid)) = s
+            let team_users = s
                 .team_user_index
                 .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
-                .next()
-            {
+                .collect::<Vec<_>>();
+
+            for (tid, uid) in team_users {
                 s.team_user_index.remove(&(tid, uid));
                 s.user_team_index.remove(&(uid, tid));
             }

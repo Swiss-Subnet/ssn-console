@@ -51,6 +51,7 @@
     "src/cycles-monitor-tests": {
       "name": "cycles-monitor-tests",
       "dependencies": {
+        "@ssn/canister-history-api": "workspace:*",
         "@ssn/cycles-monitor-api": "workspace:*",
         "@ssn/test-utils": "workspace:*",
       },

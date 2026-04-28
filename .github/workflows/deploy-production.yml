@@ -37,5 +37,10 @@ jobs:
           public_key: ${{ secrets.PUBLIC_KEY }}
           offchain_service_url: ${{ secrets.OFFCHAIN_SERVICE_URL }}
 
+      - name: Update cycles-monitor env vars
+        uses: ./.github/actions/update-cycles-monitor-env-vars
+        with:
+          network: production
+
       - name: Deploy to production
         run: dfx deploy --network production

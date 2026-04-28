@@ -6,6 +6,12 @@ use ic_cdk::*;
 mod constants;
 mod controller;
 mod dto;
+mod env;
+mod management_canister_mock;
+mod memory;
+mod memory_manager;
+mod model;
+mod repository;
 mod service;
 
 export_service!();

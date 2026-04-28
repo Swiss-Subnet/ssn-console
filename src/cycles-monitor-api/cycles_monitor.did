@@ -1,32 +1,43 @@
 import "../canister-utils/error.did";
 
-type GetCanisterMetricsRequest = record {
-  canister_id : principal;
+type TriggerSyncMetricsRequest = record {};
+
+type TriggerSyncMetricsResponse = variant {
+  Ok : record {
+    message : text;
+  };
+  Err : ApiError;
 };
 
-type CyclesConsumedResponse = record {
+type ListMetricsAfterRequest = record {
+  cursor : opt Cursor;
+};
+
+type CyclesMetricsSnapshotDto = record {
+  timestamp_ns : nat64;
+  canister_id : principal;
   memory : nat;
   compute_allocation : nat;
   ingress_induction : nat;
   instructions : nat;
   request_and_response_transmission : nat;
   uninstall : nat;
-  canister_creation : nat;
   http_outcalls : nat;
   burned_cycles : nat;
 };
 
-type GetCanisterMetricsResponse = record {
-  cycles_consumed : CyclesConsumedResponse;
+type ListMetricsAfterResponse = variant {
+  Ok : record {
+    snapshots : vec CyclesMetricsSnapshotDto;
+    next_cursor : opt Cursor;
+  };
+  Err : ApiError;
 };
 
-type TriggerSyncMetricsRequest = record {};
-
-type TriggerSyncMetricsResponse = record {
-  message : text;
-};
+type Cursor = record { nat64; principal };
 
 service : {
-  get_canister_metrics : (GetCanisterMetricsRequest) -> (variant { Ok : GetCanisterMetricsResponse; Err : ApiError });
-  trigger_sync_metrics : (TriggerSyncMetricsRequest) -> (variant { Ok : TriggerSyncMetricsResponse; Err : ApiError });
+  trigger_sync_metrics : (TriggerSyncMetricsRequest) -> (TriggerSyncMetricsResponse);
+  // we purposefully use an update call here to prevent leaking of canister metrics
+  list_metrics_after : (ListMetricsAfterRequest) -> (ListMetricsAfterResponse);
 };

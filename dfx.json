@@ -51,6 +51,7 @@
     },
     "cycles-monitor": {
       "type": "custom",
+      "dependencies": ["canister-history"],
       "candid": "src/cycles-monitor-api/cycles_monitor.did",
       "wasm": "target/wasm32-unknown-unknown/release/cycles_monitor.wasm",
       "build": [

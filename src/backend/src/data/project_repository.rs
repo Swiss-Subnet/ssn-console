@@ -156,12 +156,13 @@ pub fn delete_project(project_id: Uuid, org_id: Uuid) -> ApiResult {
 
         s.organization_project_index.remove(&(org_id, project_id));
 
-        while let Some((pid, team_id)) = s
+        let project_permissions = s
             .project_team_permissions_index
             .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
             .map(|entry| *entry.key())
-            .next()
-        {
+            .collect::<Vec<_>>();
+
+        for (pid, team_id) in project_permissions {
             s.project_team_permissions_index.remove(&(pid, team_id));
             s.team_project_permissions_index.remove(&(team_id, pid));
         }
@@ -182,12 +183,13 @@ pub fn has_at_least_n_org_projects(org_id: Uuid, n: usize) -> bool {
 
 pub fn remove_team_project_links(team_id: Uuid) {
     mutate_state(|s| {
-        while let Some((tid, pid)) = s
+        let project_permissions = s
             .team_project_permissions_index
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
             .map(|entry| *entry.key())
-            .next()
-        {
+            .collect::<Vec<_>>();
+
+        for (tid, pid) in project_permissions {
             s.team_project_permissions_index.remove(&(tid, pid));
             s.project_team_permissions_index.remove(&(pid, tid));
         }
