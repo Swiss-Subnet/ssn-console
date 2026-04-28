@@ -1,16 +1,18 @@
 use crate::data::{
     memory::{
         get_memory, Memory, CANISTERS_MEMORY_ID, CANISTER_PROJECT_INDEX_MEMORY_ID,
-        PROJECT_CANISTER_INDEX_MEMORY_ID,
+        PRINCIPAL_CANISTER_INDEX_MEMORY_ID, PROJECT_CANISTER_INDEX_MEMORY_ID,
     },
     Canister,
 };
+use candid::Principal;
 use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
 pub type CanisterMemory = BTreeMap<Uuid, Canister, Memory>;
 pub type ProjectCanisterIndexMemory = BTreeSet<(Uuid, Uuid), Memory>;
 pub type CanisterProjectIndexMemory = BTreeMap<Uuid, Uuid, Memory>;
+pub type PrincipalCanisterIndexMemory = BTreeMap<Principal, Uuid, Memory>;
 
 pub fn init_canisters() -> CanisterMemory {
     CanisterMemory::init(get_canisters_memory())
@@ -24,6 +26,10 @@ pub fn init_canister_project_index() -> CanisterProjectIndexMemory {
     CanisterProjectIndexMemory::init(get_canister_project_index_memory())
 }
 
+pub fn init_principal_canister_index() -> PrincipalCanisterIndexMemory {
+    PrincipalCanisterIndexMemory::init(get_principal_canister_index_memory())
+}
+
 fn get_canisters_memory() -> Memory {
     get_memory(CANISTERS_MEMORY_ID)
 }
@@ -34,4 +40,8 @@ fn get_project_canister_index_memory() -> Memory {
 
 fn get_canister_project_index_memory() -> Memory {
     get_memory(CANISTER_PROJECT_INDEX_MEMORY_ID)
+}
+
+fn get_principal_canister_index_memory() -> Memory {
+    get_memory(PRINCIPAL_CANISTER_INDEX_MEMORY_ID)
 }

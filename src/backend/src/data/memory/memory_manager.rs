@@ -63,3 +63,8 @@ pub(super) const INVITE_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(30);
 pub(super) const ORGANIZATION_TEAM_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(31);
 pub(super) const PROJECT_TEAM_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(32);
 pub(super) const TEAM_PROJECT_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(33);
+
+pub(super) const ORPHANED_CANISTER_CHILD_PARENT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(34);
+pub(super) const ORPHANED_CANISTER_PARENT_CHILD_INDEX_MEMORY_ID: MemoryId = MemoryId::new(35);
+
+pub(super) const PRINCIPAL_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(36);

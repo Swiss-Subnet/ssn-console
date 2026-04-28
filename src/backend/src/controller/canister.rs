@@ -1,9 +1,10 @@
 use crate::{
     dto::{
-        ListAllCanistersRequest, ListAllCanistersResponse, ListMyCanistersRequest,
-        ListMyCanistersResponse, ListUserCanistersRequest, ListUserCanistersResponse,
-        RemoveMyCanisterRequest, UpdateMyCanisterNameRequest,
+        AddChildCanistersRequest, AddChildCanistersResponse, ListAllCanistersRequest,
+        ListAllCanistersResponse, ListMyCanistersRequest, ListMyCanistersResponse,
+        ListUserCanistersRequest, ListUserCanistersResponse, RemoveMyCanisterRequest, UpdateMyCanisterNameRequest,
     },
+    env,
     service::canister_service,
 };
 use canister_utils::{assert_authenticated, assert_controller, ApiResultDto, Uuid};
@@ -71,4 +72,17 @@ fn list_all_canisters(request: ListAllCanistersRequest) -> ApiResultDto<ListAllC
     }
 
     canister_service::list_all_canisters(request.limit, request.page).into()
+}
+
+#[update]
+async fn add_child_canisters(
+    request: AddChildCanistersRequest,
+) -> ApiResultDto<AddChildCanistersResponse> {
+    if msg_caller() != env::get_canister_history_id() {
+        return ApiResultDto::Err(canister_utils::ApiError::unauthorized(
+            "Only the canister-history canister is allowed to call this endpoint".to_string(),
+        ));
+    }
+
+    canister_service::add_child_canisters(request).await.into()
 }

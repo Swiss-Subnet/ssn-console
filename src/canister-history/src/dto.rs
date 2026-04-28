@@ -112,3 +112,14 @@ pub struct PaginationMetaResponse {
     pub total_items: u64,
     pub total_pages: u64,
 }
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct AddChildCanistersRequest {
+    pub parent_child_mappings: Vec<ParentChildMapping>,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ParentChildMapping {
+    pub parent_canister_id: Principal,
+    pub child_canister_id: Principal,
+}
