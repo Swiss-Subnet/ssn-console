@@ -2,7 +2,7 @@
   "name": "@ssn/backend-api",
   "private": true,
   "scripts": {
-    "build": "icp-bindgen --did-file ./backend.did --out-dir ./dist --force --actor-disabled"
+    "build": "bun --bun icp-bindgen --did-file ./backend.did --out-dir ./dist --force --actor-disabled"
   },
   "module": "dist/declarations/backend.did.js",
   "types": "dist/declarations/backend.did.d.ts",

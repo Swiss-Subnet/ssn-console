@@ -125,3 +125,13 @@ jobs:
 
       - name: Unit tests
         run: bun turbo -F offchain-service test
+
+  build_canister_otlp_syncer:
+    name: Build Canister OTLP Syncer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build Container image
+        run: docker build -f ./config/canister-otlp-syncer.containerfile -t canister-otlp-syncer .

@@ -1,0 +1,19 @@
+[Container]
+ContainerName=${CANISTER_OTLP_SYNCER_SERVICE_NAME}
+Image=${CANISTER_OTLP_SYNCER_IMAGE_NAMESPACE}/${CANISTER_OTLP_SYNCER_SERVICE_NAME}
+# SecurityLabelType=${CANISTER_OTLP_SYNCER_SERVICE_NAME}.process
+Network=app.network
+
+AutoRemove=true
+
+Environment=CANISTER_ID_CYCLES_MONITOR="${CANISTER_ID_CYCLES_MONITOR}"
+Environment=HTTP_GATEWAY=https://icp-api.io
+
+Environment=GRAFANA_ENVIRONMENT="${GRAFANA_ENVIRONMENT}"
+Environment=OTEL_EXPORTER_OTLP_ENDPOINT="http://host.containers.internal:4318"
+
+[Service]
+Type=oneshot
+
+[Install]
+WantedBy=default.target

@@ -2,7 +2,7 @@
   "name": "@ssn/canister-history-api",
   "private": true,
   "scripts": {
-    "build": "icp-bindgen --did-file ./canister_history.did --out-dir ./dist --force --actor-disabled"
+    "build": "bun --bun icp-bindgen --did-file ./canister_history.did --out-dir ./dist --force --actor-disabled"
   },
   "module": "dist/declarations/canister_history.did.js",
   "types": "dist/declarations/canister_history.did.d.ts",
