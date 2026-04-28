@@ -18,7 +18,7 @@ pub(super) const USER_PROFILE_PRINCIPAL_INDEX_MEMORY_ID: MemoryId = MemoryId::ne
 pub(super) const USER_PROFILE_ID_PRINCIPAL_INDEX_MEMORY_ID: MemoryId = MemoryId::new(2);
 
 pub(super) const CANISTERS_MEMORY_ID: MemoryId = MemoryId::new(3);
-pub(super) const PROJECT_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(4);
+pub(super) const ACTIVE_PROJECT_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(4);
 
 pub(super) const TRUSTED_PARTNERS_MEMORY_ID: MemoryId = MemoryId::new(5);
 pub(super) const TRUSTED_PARTNER_PRINCIPAL_INDEX_MEMORY_ID: MemoryId = MemoryId::new(6);
@@ -63,3 +63,5 @@ pub(super) const INVITE_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(30);
 pub(super) const ORGANIZATION_TEAM_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(31);
 pub(super) const PROJECT_TEAM_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(32);
 pub(super) const TEAM_PROJECT_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(33);
+
+pub(super) const DELETED_PROJECT_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(34);

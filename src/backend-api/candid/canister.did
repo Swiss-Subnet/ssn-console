@@ -46,6 +46,7 @@ type CanisterWithOwner = record {
   principal_id : text;
   user_id : text;
   email : opt text;
+  deleted_at : opt nat64;
 };
 
 type PaginationMetaResponse = record {
@@ -60,6 +61,7 @@ type Canister = record {
   principal_id : text;
   name : opt text;
   state : CanisterState;
+  deleted_at : opt nat64;
 };
 
 type CanisterState = variant {

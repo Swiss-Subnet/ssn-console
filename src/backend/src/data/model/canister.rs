@@ -9,6 +9,8 @@ pub struct Canister {
     pub principal: Principal,
     #[serde(default)]
     pub name: Option<String>,
+    #[serde(default)]
+    pub deleted_at: Option<u64>,
 }
 
 impl Storable for Canister {

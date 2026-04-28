@@ -18,6 +18,7 @@ pub fn map_canister_response(
         principal_id: canister.principal.to_string(),
         name: canister.name.clone(),
         state,
+        deleted_at: canister.deleted_at,
     }
 }
 

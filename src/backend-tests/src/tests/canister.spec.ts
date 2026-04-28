@@ -51,6 +51,7 @@ describe('Canisters', () => {
     expect(canister).toEqual({
       id: expect.any(String),
       name: [],
+      deleted_at: [],
       state: {
         Accessible: {
           cycles: 0n,
@@ -718,7 +719,7 @@ describe('Canisters', () => {
       expect(after[0]!.state).toEqual({ Deleted: null });
     });
 
-    it('remove_my_canister deletes the record for a canister removed on-chain', async () => {
+    it('remove_my_canister hides the record from list_my_canisters when also deleted on-chain', async () => {
       const { projectId, record } = await createAndDeleteCanister();
 
       const removeRes = await driver.actor.remove_my_canister({
@@ -732,7 +733,7 @@ describe('Canisters', () => {
       expect(after).toEqual([]);
     });
 
-    it('remove_my_canister rejects canisters that still exist on-chain', async () => {
+    it('remove_my_canister soft-deletes canisters that still exist on-chain', async () => {
       const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
@@ -745,12 +746,12 @@ describe('Canisters', () => {
       const removeRes = await driver.actor.remove_my_canister({
         canister_id: record!.id,
       });
-      expect(removeRes).toHaveProperty('Err');
+      extractOkResponse(removeRes);
 
       const after = extractOkResponse(
         await driver.actor.list_my_canisters({ project_id: project.id }),
       );
-      expect(after).toHaveLength(1);
+      expect(after).toEqual([]);
     });
 
     it('remove_my_canister rejects callers who do not own the canister', async () => {
@@ -763,6 +764,98 @@ describe('Canisters', () => {
         canister_id: record.id,
       });
       expect(removeRes).toHaveProperty('Err');
+    });
+  });
+
+  describe('soft-deleted canisters', () => {
+    it('remove_my_canister sets deleted_at and hides from list_my_canisters', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
+      const [record] = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      expect(record!.deleted_at).toEqual([]);
+
+      extractOkResponse(
+        await driver.actor.remove_my_canister({ canister_id: record!.id }),
+      );
+
+      const after = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      expect(after).toEqual([]);
+    });
+
+    it('list_user_canisters surfaces soft-deleted canisters with deleted_at populated', async () => {
+      const [aliceIdentity, aliceProfile] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
+      const [record] = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      extractOkResponse(
+        await driver.actor.remove_my_canister({ canister_id: record!.id }),
+      );
+
+      driver.actor.setIdentity(controllerIdentity);
+      const { canisters } = extractOkResponse(
+        await driver.actor.list_user_canisters({ user_id: aliceProfile.id }),
+      );
+
+      expect(canisters).toHaveLength(1);
+      expect(canisters[0]!.id).toBe(record!.id);
+      expect(canisters[0]!.deleted_at).toHaveLength(1);
+      expect(canisters[0]!.deleted_at[0]).toEqual(expect.any(BigInt));
+    });
+
+    it('list_all_canisters surfaces soft-deleted canisters with deleted_at populated', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
+      const [record] = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      extractOkResponse(
+        await driver.actor.remove_my_canister({ canister_id: record!.id }),
+      );
+
+      driver.actor.setIdentity(controllerIdentity);
+      const { canisters, meta } = extractOkResponse(
+        await driver.actor.list_all_canisters({ limit: [10n], page: [1n] }),
+      );
+
+      expect(meta.total_items).toBe(1n);
+      expect(canisters).toHaveLength(1);
+      expect(canisters[0]!.id).toBe(record!.id);
+      expect(canisters[0]!.deleted_at).toHaveLength(1);
+      expect(canisters[0]!.deleted_at[0]).toEqual(expect.any(BigInt));
+    });
+
+    it('remove_my_canister errors when called twice on the same canister', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
+      const [record] = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+
+      extractOkResponse(
+        await driver.actor.remove_my_canister({ canister_id: record!.id }),
+      );
+
+      const second = await driver.actor.remove_my_canister({
+        canister_id: record!.id,
+      });
+      expect(second).toHaveProperty('Err');
     });
   });
 });

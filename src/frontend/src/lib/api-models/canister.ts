@@ -35,6 +35,7 @@ export type Canister = {
   principal: string;
   name: string | null;
   state: CanisterState;
+  deletedAt: bigint | null;
 };
 
 export type CanisterInfo = {
@@ -101,6 +102,7 @@ export function mapCanisterResponse(res: ApiCanister): Canister {
     principal: res.principal_id,
     name: fromCandidOpt(res.name),
     state: mapCanisterState(res.state),
+    deletedAt: fromCandidOpt(res.deleted_at),
   };
 }
 
