@@ -1,7 +1,9 @@
 {
   "name": "offchain-service",
+  "type": "module",
   "private": true,
   "scripts": {
+    "build": "bun --bun ./build.ts",
     "start": "bun run --env-file=../../.env.local --watch src/index.ts",
     "start:test": "bun run --env-file=../../.env.test --watch src/index.ts",
     "test": "bun test"
