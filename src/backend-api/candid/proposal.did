@@ -19,12 +19,27 @@ type Proposal = record {
 
 type ProposalStatus = variant {
   Open : record {};
+  PendingApproval : record {
+    threshold : nat32;
+    approvers : vec principal;
+    votes : vec ProposalVote;
+  };
   Rejected : record {};
   Executing : record {};
   Executed : record {};
   Failed : record {
     message : text;
   };
+};
+
+type ProposalVote = record {
+  voter : principal;
+  vote : Vote;
+};
+
+type Vote = variant {
+  Approve : record {};
+  Reject : record {};
 };
 
 type ProposalOperation = variant {
