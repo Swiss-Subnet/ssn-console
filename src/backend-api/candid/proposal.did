@@ -66,6 +66,8 @@ type Proposal = record {
   proposer_id : text;
   status : opt ProposalStatus;
   operation : opt ProposalOperation;
+  created_at_nanos : opt nat64;
+  updated_at_nanos : opt nat64;
 };
 
 type ProposalStatus = variant {

@@ -91,6 +91,9 @@ export type Proposal = {
   proposerId: string;
   status: ProposalStatus | null;
   operation: ProposalOperation | null;
+  // Nanoseconds. `null` for proposals created before timestamps were added.
+  createdAtNanos: bigint | null;
+  updatedAtNanos: bigint | null;
 };
 
 export const PROPOSAL_OPEN_FILTER: ProposalStatusKind[] = [
@@ -200,6 +203,8 @@ export function mapProposalResponse(res: ApiProposal): Proposal {
     proposerId: res.proposer_id,
     status: statusOpt ? mapProposalStatus(statusOpt) : null,
     operation: operationOpt ? mapProposalOperation(operationOpt) : null,
+    createdAtNanos: fromCandidOpt(res.created_at_nanos),
+    updatedAtNanos: fromCandidOpt(res.updated_at_nanos),
   };
 }
 
