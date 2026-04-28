@@ -67,6 +67,13 @@ export const createCanistersSlice: AppStateCreator<CanistersSlice> = (
     await refreshCanisters(projectId);
   },
 
+  async linkCanister(projectId, canisterPrincipal, name) {
+    const { canisterApi, refreshCanisters } = get();
+
+    await canisterApi.linkCanister(projectId, canisterPrincipal, name);
+    await refreshCanisters(projectId);
+  },
+
   async addMissingController(canisterId, projectId) {
     const { managementCanisterApi, refreshCanisters } = get();
 

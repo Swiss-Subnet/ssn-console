@@ -25,6 +25,7 @@ pub enum PolicyType {
 #[repr(u8)]
 pub enum OperationType {
     CreateCanister = 0,
+    LinkCanister = 1,
     Noop = 254,
     AddCanisterController = 255,
 }
@@ -83,6 +84,7 @@ impl Storable for OperationType {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         match bytes.first() {
             Some(0) => OperationType::CreateCanister,
+            Some(1) => OperationType::LinkCanister,
             Some(255) => OperationType::AddCanisterController,
             _ => OperationType::Noop,
         }

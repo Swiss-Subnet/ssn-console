@@ -3,7 +3,9 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { selectOrgMap, selectProjectMap, useAppStore } from '@/lib/store';
 import { CanisterGrid } from '@/routes/canisters/canister-grid';
 import { CreateCanisterButton } from '@/routes/canisters/create-canister-button';
-import { useEffect, useMemo, type FC } from 'react';
+import { LinkCanisterButton } from '@/routes/canisters/link-canister-button';
+import { LinkCanisterForm } from '@/routes/canisters/link-canister-form';
+import { useEffect, useMemo, useState, type FC } from 'react';
 import { CanisterSkeleton } from '@/routes/canisters/canister-skeleton';
 import { isNil } from '@/lib/nil';
 import { useRequireProjectId } from '@/lib/params';
@@ -13,6 +15,7 @@ const Canisters: FC = () => {
   const projectMap = useAppStore(selectProjectMap);
   const orgMap = useAppStore(selectOrgMap);
   const projectId = useRequireProjectId();
+  const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
 
   useEffect(() => {
     initializeCanisters(projectId);
@@ -60,7 +63,21 @@ const Canisters: FC = () => {
         <>
           <CanisterGrid className="mt-8" canisters={projectCanisters} />
           {project?.yourPermissions.canisterManage && (
-            <CreateCanisterButton className="mt-4" />
+            <div className="mt-4 flex flex-col gap-3">
+              <div className="flex flex-wrap gap-2">
+                {!isLinkFormOpen && <CreateCanisterButton />}
+                <LinkCanisterButton
+                  isOpen={isLinkFormOpen}
+                  onToggle={() => setIsLinkFormOpen(o => !o)}
+                />
+              </div>
+              {isLinkFormOpen && (
+                <LinkCanisterForm
+                  className="mt-2 max-w-2xl"
+                  onLinked={() => setIsLinkFormOpen(false)}
+                />
+              )}
+            </div>
           )}
         </>
       )}

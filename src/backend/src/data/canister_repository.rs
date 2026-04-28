@@ -5,6 +5,7 @@ use crate::data::{
     },
     Canister,
 };
+use candid::Principal;
 use canister_utils::Uuid;
 use std::cell::RefCell;
 
@@ -63,6 +64,16 @@ pub fn get_canister_count() -> u64 {
 
 pub fn get_canister_project_id(canister_id: Uuid) -> Option<Uuid> {
     with_state(|s| s.canister_project_index.get(&canister_id))
+}
+
+pub fn find_canister_id_by_principal(principal: Principal) -> Option<Uuid> {
+    with_state(|s| {
+        s.canisters
+            .iter()
+            .map(|val| val.into_pair())
+            .find(|(_, canister)| canister.principal == principal)
+            .map(|(canister_id, _)| canister_id)
+    })
 }
 
 pub fn get_canister_in_project(project_id: Uuid, canister_id: Uuid) -> Option<Canister> {

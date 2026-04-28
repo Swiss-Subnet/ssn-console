@@ -21,3 +21,9 @@ pub const INVITE_TTL_NS: u64 = 7 * 24 * 60 * 60 * 1_000_000_000;
 // Maximum number of pending (non-expired) invites a single org may have.
 // Bounds per-org storage and prevents invite spam.
 pub const MAX_PENDING_INVITES_PER_ORG: usize = 10;
+
+// Principal of the Swiss subnet. Linked canisters are expected to reside here,
+// but the link flow does not yet enforce this — see TODO in
+// canister_service::link_my_canister.
+#[allow(dead_code)]
+pub const SWISS_SUBNET_ID: &str = "3zsyy-cnoqf-tvlun-ymf55-tkpca-ox7uw-kfxoh-7khwq-2gz43-wafem-lqe";

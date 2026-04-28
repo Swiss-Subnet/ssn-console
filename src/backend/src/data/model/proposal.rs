@@ -23,6 +23,10 @@ pub enum ProposalStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProposalOperation {
     CreateCanister,
+    LinkCanister {
+        canister_id: Principal,
+        name: Option<String>,
+    },
     AddCanisterController {
         canister_id: Principal,
         controller_id: Principal,

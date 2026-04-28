@@ -1,6 +1,7 @@
 use crate::{
     data,
     dto::{CreateProposalRequest, CreateProposalResponse, ProposalOperation, ProposalStatus},
+    validation::CanisterName,
 };
 use canister_utils::{ApiError, ApiResult, Uuid};
 
@@ -17,6 +18,16 @@ pub fn map_create_proposal_request(
             operation: match req.operation {
                 Some(ProposalOperation::CreateCanister {}) => {
                     data::ProposalOperation::CreateCanister
+                }
+                Some(ProposalOperation::LinkCanister { canister_id, name }) => {
+                    let validated_name = match name {
+                        None => None,
+                        Some(raw) => Some(CanisterName::try_from(raw)?.into_inner()),
+                    };
+                    data::ProposalOperation::LinkCanister {
+                        canister_id,
+                        name: validated_name,
+                    }
                 }
                 Some(ProposalOperation::AddCanisterController {
                     canister_id,
@@ -51,6 +62,9 @@ pub fn map_create_proposal_response(
         },
         operation: match proposal.operation {
             data::ProposalOperation::CreateCanister => Some(ProposalOperation::CreateCanister {}),
+            data::ProposalOperation::LinkCanister { canister_id, name } => {
+                Some(ProposalOperation::LinkCanister { canister_id, name })
+            }
             data::ProposalOperation::AddCanisterController {
                 canister_id,
                 controller_id,

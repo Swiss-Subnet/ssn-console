@@ -227,6 +227,53 @@ pub async fn create_my_canister(project_id: Uuid) -> Result<(), String> {
     Ok(())
 }
 
+pub async fn link_my_canister(
+    caller: Principal,
+    project_id: Uuid,
+    canister_principal: Principal,
+    name: Option<String>,
+) -> Result<(), String> {
+    if canister_repository::find_canister_id_by_principal(canister_principal).is_some() {
+        return Err(format!(
+            "Canister {canister_principal} is already linked to a project"
+        ));
+    }
+
+    let canister_status =
+        management_canister::canister_status(&CanisterStatusArgs { canister_id: canister_principal })
+            .await
+            .map_err(|err| {
+                format!("Failed to get canister_status for {canister_principal}: {err}. The backend canister must be a controller of the canister you are linking.")
+            })?;
+
+    let controllers = &canister_status.settings.controllers;
+    if !controllers.contains(&canister_self()) {
+        return Err(format!(
+            "Backend canister is not a controller of {canister_principal}"
+        ));
+    }
+    if !controllers.contains(&caller) {
+        return Err(format!(
+            "Caller {caller} is not a controller of {canister_principal}"
+        ));
+    }
+
+    // TODO: verify the canister resides on the Swiss subnet by calling the NNS
+    // Registry's `get_subnet_for_canister` and comparing against SWISS_SUBNET_ID.
+    // Skipped for now — pic-js test envs don't ship the NNS Registry, and
+    // wiring a stub registry + runtime-configurable principal is its own change.
+    // The frontend warns the user that subnet membership is currently their
+    // responsibility.
+
+    let canister = Canister {
+        principal: canister_principal,
+        name,
+    };
+    canister_repository::create_canister(project_id, canister);
+
+    Ok(())
+}
+
 pub async fn add_canister_controller(
     canister_id: Principal,
     controller_id: Principal,
