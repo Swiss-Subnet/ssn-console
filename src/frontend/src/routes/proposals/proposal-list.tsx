@@ -18,6 +18,7 @@ import {
   type ProposalStatusKind,
 } from '@/lib/api-models';
 import { cn } from '@/lib/utils';
+import { formatTimestamp } from '@/lib/format';
 import { isNil } from '@/lib/nil';
 import { useRequireProjectId } from '@/lib/params';
 import { selectOrgMap, selectProjectMap, useAppStore } from '@/lib/store';
@@ -166,6 +167,7 @@ const ProposalList: FC = () => {
               <TableHead>Status</TableHead>
               <TableHead>Operation</TableHead>
               <TableHead>Proposer</TableHead>
+              <TableHead>Created</TableHead>
               <TableHead>ID</TableHead>
             </TableRow>
           </TableHeader>
@@ -173,7 +175,7 @@ const ProposalList: FC = () => {
             {isLoading && proposals.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="text-muted-foreground py-8 text-center text-sm"
                 >
                   Loading proposals…
@@ -182,7 +184,7 @@ const ProposalList: FC = () => {
             ) : proposals.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="text-muted-foreground py-8 text-center text-sm"
                 >
                   No proposals to show.
@@ -201,6 +203,11 @@ const ProposalList: FC = () => {
                   <TableCell>{proposalOperationLabel(p.operation)}</TableCell>
                   <TableCell className="font-mono text-xs">
                     {shorten(p.proposerId)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">
+                    {p.createdAtNanos !== null
+                      ? formatTimestamp(p.createdAtNanos)
+                      : '—'}
                   </TableCell>
                   <TableCell className="font-mono text-xs">
                     {shorten(p.id)}

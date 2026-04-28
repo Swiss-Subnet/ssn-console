@@ -97,6 +97,8 @@ pub fn map_proposal_response(proposal_id: Uuid, proposal: data::Proposal) -> Pro
         id: proposal_id.to_string(),
         project_id: proposal.project_id.to_string(),
         proposer_id: proposal.proposer_id.to_string(),
+        created_at_nanos: proposal.created_at_nanos,
+        updated_at_nanos: proposal.updated_at_nanos,
         status: match proposal.status {
             data::ProposalStatus::Open => Some(ProposalStatus::Open {}),
             data::ProposalStatus::PendingApproval {

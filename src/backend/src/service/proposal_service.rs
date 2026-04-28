@@ -34,6 +34,9 @@ pub async fn create_proposal(
         proposer_id: auth.user_id(),
         status: ProposalStatus::Open,
         operation,
+        // Stamped by the repository on insert/mutation.
+        created_at_nanos: None,
+        updated_at_nanos: None,
     };
     let proposal_id = proposal_repository::create_proposal(project_id, proposal.clone());
 

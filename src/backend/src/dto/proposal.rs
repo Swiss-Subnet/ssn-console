@@ -63,6 +63,8 @@ pub struct Proposal {
     pub proposer_id: String,
     pub status: Option<ProposalStatus>,
     pub operation: Option<ProposalOperation>,
+    pub created_at_nanos: Option<u64>,
+    pub updated_at_nanos: Option<u64>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
