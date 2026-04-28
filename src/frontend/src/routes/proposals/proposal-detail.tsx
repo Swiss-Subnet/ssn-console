@@ -104,8 +104,12 @@ const ProposalDetail: FC = () => {
       return;
     }
     const principals = new Set<string>();
-    proposal.status.approvers.forEach(p => principals.add(p));
-    proposal.status.votes.forEach(v => principals.add(v.voter));
+    proposal.status.approvers.forEach(p => {
+      if (!profileMap.has(p)) principals.add(p);
+    });
+    proposal.status.votes.forEach(v => {
+      if (!profileMap.has(v.voter)) principals.add(v.voter);
+    });
     if (principals.size === 0) return;
 
     getUserProfilesByPrincipals(projectId, [...principals])
@@ -117,7 +121,7 @@ const ProposalDetail: FC = () => {
         });
       })
       .catch(err => showErrorToast('Failed to resolve voter profiles', err));
-  }, [proposal, projectId, getUserProfilesByPrincipals]);
+  }, [proposal, projectId, getUserProfilesByPrincipals, profileMap]);
 
   if (isNil(proposalId)) {
     return <p className="text-muted-foreground">Missing proposal id.</p>;
@@ -133,7 +137,9 @@ const ProposalDetail: FC = () => {
     !status.votes.some(v => v.voter === myPrincipal);
 
   const isProposer = !!profile && proposal?.proposerId === profile.id;
-  const canCancel = isProposer && isProposalActionable(status);
+  const isProjectAdmin = !!project?.yourPermissions.projectAdmin;
+  const canCancel =
+    (isProposer || isProjectAdmin) && isProposalActionable(status);
 
   async function onVote(vote: Vote): Promise<void> {
     if (!proposalId) return;
@@ -235,7 +241,7 @@ const ProposalDetail: FC = () => {
                       <LoadingButton
                         size="sm"
                         isLoading={pendingVote === Vote.Approve}
-                        disabled={pendingVote !== null}
+                        disabled={pendingVote !== null || isCancelling}
                         onClick={() => onVote(Vote.Approve)}
                       >
                         Approve
@@ -244,7 +250,7 @@ const ProposalDetail: FC = () => {
                         size="sm"
                         variant="outline"
                         isLoading={pendingVote === Vote.Reject}
-                        disabled={pendingVote !== null}
+                        disabled={pendingVote !== null || isCancelling}
                         onClick={() => onVote(Vote.Reject)}
                       >
                         Reject
@@ -256,6 +262,7 @@ const ProposalDetail: FC = () => {
                       size="sm"
                       variant="destructive"
                       isLoading={isCancelling}
+                      disabled={isCancelling || pendingVote !== null}
                       onClick={onCancel}
                     >
                       Cancel proposal
@@ -275,6 +282,12 @@ const ProposalDetail: FC = () => {
                     {status.votes.filter(v => v.vote === Vote.Approve).length}
                     {' / '}
                     {status.threshold}
+                  </span>
+                  <span className="text-muted-foreground ml-3 text-sm font-normal">
+                    Rejections{' '}
+                    {status.votes.filter(v => v.vote === Vote.Reject).length}
+                    {' / '}
+                    {Math.max(status.approvers.length - status.threshold, 0)}
                   </span>
                 </CardTitle>
               </CardHeader>

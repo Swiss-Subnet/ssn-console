@@ -74,6 +74,8 @@ const ProposalList: FC = () => {
 
   const loadFirstPage = useCallback(async () => {
     setIsLoading(true);
+    setProposals([]);
+    setNextCursor(null);
     try {
       const res = await listProjectProposals({
         projectId,
