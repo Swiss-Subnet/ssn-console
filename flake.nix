@@ -71,6 +71,7 @@
             pkgs.bun
             pkgs.nodejs_22
             pkgs.openssl
+            pkgs.just
           ];
 
           shellHook = ''
@@ -81,6 +82,7 @@
               echo "  Node:  $(node --version)"
               echo "  dfx:   $(dfx --version)"
               echo "  SSL:   $(openssl version)"
+              echo "  Just:  $(just --version)"
             fi
           '';
         };
