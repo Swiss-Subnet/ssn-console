@@ -36,6 +36,7 @@ pub struct CanisterWithOwner {
     pub principal_id: String,
     pub user_id: String,
     pub email: Option<String>,
+    pub deleted_at: Option<u64>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
@@ -52,6 +53,7 @@ pub struct Canister {
     pub principal_id: String,
     pub name: Option<String>,
     pub state: CanisterState,
+    pub deleted_at: Option<u64>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

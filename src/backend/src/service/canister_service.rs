@@ -19,7 +19,7 @@ use candid::Principal;
 use canister_utils::{is_destination_invalid, ApiError, ApiResult, Uuid, MAX_CALLS_PER_BATCH};
 use futures::future::join_all;
 use ic_cdk::{
-    api::canister_self,
+    api::{canister_self, time},
     call::Error as CallError,
     management_canister::{
         self, CanisterSettings, CanisterStatusArgs, CreateCanisterArgs, UpdateSettingsArgs,
@@ -32,7 +32,9 @@ pub async fn list_my_canisters(
 ) -> ApiResult<ListMyCanistersResponse> {
     let project_id = request.project_id.as_str().try_into()?;
     let auth = ProjectAuth::require(&caller, project_id, ProjectPermissions::EMPTY)?;
-    list_canisters_by_project_internal(auth.project_id()).await
+    let project_canisters =
+        canister_repository::list_active_canisters_by_project(auth.project_id());
+    Ok(fetch_canisters_with_state(project_canisters).await)
 }
 
 pub async fn list_user_canisters(
@@ -51,14 +53,17 @@ pub async fn list_user_canisters(
 
     let mut canisters = vec![];
     for project_id in project_ids {
-        canisters.extend(list_canisters_by_project_internal(project_id).await?);
+        let project_canisters =
+            canister_repository::list_canisters_by_project_including_deleted(project_id);
+        canisters.extend(fetch_canisters_with_state(project_canisters).await);
     }
 
     Ok(ListUserCanistersResponse { canisters })
 }
 
-async fn list_canisters_by_project_internal(project_id: Uuid) -> ApiResult<Vec<dto::Canister>> {
-    let project_canisters = canister_repository::list_canisters_by_project(project_id);
+async fn fetch_canisters_with_state(
+    project_canisters: Vec<(Uuid, Canister)>,
+) -> Vec<dto::Canister> {
     let mut canisters = vec![];
 
     for chunk in project_canisters.chunks(MAX_CALLS_PER_BATCH) {
@@ -70,7 +75,7 @@ async fn list_canisters_by_project_internal(project_id: Uuid) -> ApiResult<Vec<d
         canisters.extend(join_all(canister_futures).await);
     }
 
-    Ok(canisters)
+    canisters
 }
 
 async fn fetch_canister_state(canister_id: Principal) -> CanisterState {
@@ -135,31 +140,21 @@ pub fn update_my_canister_name(
     Ok(())
 }
 
-pub async fn remove_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
+pub fn remove_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
     let project_id = canister_repository::get_canister_project_id(canister_id)
         .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
 
     let auth = ProjectAuth::require(&caller, project_id, ProjectPermissions::CANISTER_MANAGE)?;
 
-    let canister = canister_repository::get_canister_in_project(auth.project_id(), canister_id)
-        .ok_or_else(|| {
+    canister_repository::soft_delete_canister(auth.project_id(), canister_id, time()).ok_or_else(
+        || {
             ApiError::client_error(format!(
-                "Canister {canister_id} not found in user's project."
+                "Canister {canister_id} is not active in user's project (already removed?)."
             ))
-        })?;
+        },
+    )?;
 
-    match fetch_canister_state(canister.principal).await {
-        CanisterState::Deleted => {
-            canister_repository::remove_canister(auth.project_id(), canister_id);
-            Ok(())
-        }
-        CanisterState::Accessible(_) | CanisterState::Inaccessible => {
-            Err(ApiError::client_error(format!(
-                "Canister {} still exists on the network and cannot be removed from the dashboard.",
-                canister.principal
-            )))
-        }
-    }
+    Ok(())
 }
 
 pub fn list_all_canisters(
@@ -190,6 +185,7 @@ pub fn list_all_canisters(
                     principal_id: canister.principal.to_text(),
                     user_id: org_owner_id.to_string(),
                     email: org_owner.email,
+                    deleted_at: canister.deleted_at,
                 })
         })
         .collect::<Vec<_>>();
@@ -221,6 +217,7 @@ pub async fn create_my_canister(project_id: Uuid) -> Result<(), String> {
     let canister = Canister {
         principal: result.canister_id,
         name: None,
+        deleted_at: None,
     };
     canister_repository::create_canister(project_id, canister.clone());
 
