@@ -765,4 +765,191 @@ describe('Canisters', () => {
       expect(removeRes).toHaveProperty('Err');
     });
   });
+
+  describe('link_canister', () => {
+    it('should return an error for an anonymous user', async () => {
+      driver.actor.setIdentity(anonymousIdentity);
+
+      const res = await driver.actor.create_proposal({
+        project_id: projectId,
+        operation: [{ LinkCanister: { canister_id: canisterId, name: [] } }],
+      });
+      expect(res).toEqual(unauthenticatedError);
+    });
+
+    it('should return an error for a user without a profile', async () => {
+      const aliceIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(aliceIdentity);
+
+      const res = await driver.actor.create_proposal({
+        project_id: projectId,
+        operation: [{ LinkCanister: { canister_id: canisterId, name: [] } }],
+      });
+      expect(res).toEqual(noProfileError(aliceIdentity.getPrincipal()));
+    });
+
+    it('should return an error for a project the user does not have access to', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+
+      const bobIdentity = generateRandomIdentity();
+      driver.actor.setIdentity(bobIdentity);
+      await driver.actor.create_my_user_profile();
+      const bobProject = await driver.getDefaultProject();
+
+      driver.actor.setIdentity(aliceIdentity);
+      const res = await driver.actor.create_proposal({
+        project_id: bobProject.id,
+        operation: [{ LinkCanister: { canister_id: canisterId, name: [] } }],
+      });
+      expect(res).toEqual(projectNotFoundOrNoAccessError(bobProject.id));
+    });
+
+    it('should return an error for a project that does not exist', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+
+      const res = await driver.actor.create_proposal({
+        project_id: projectId,
+        operation: [{ LinkCanister: { canister_id: canisterId, name: [] } }],
+      });
+      expect(res).toEqual(projectNotFoundOrNoAccessError(projectId));
+    });
+
+    it('should fail when the canister does not exist on-chain', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+
+      const proposal = await driver.proposals.createProposal(
+        aliceIdentity,
+        project.id,
+        { LinkCanister: { canister_id: canisterId, name: [] } },
+      );
+
+      const [status] = proposal.status;
+      if (!status || !('Failed' in status)) {
+        throw new Error('Expected a failed proposal');
+      }
+      expect(status.Failed.message).toContain(
+        `Failed to get canister_status for ${canisterId}`,
+      );
+    });
+
+    it('should fail when the backend canister is not a controller', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+
+      // Backend is not in the controllers list, so canister_status will reject.
+      const externalCanisterId = await driver.pic.createCanister({
+        controllers: [aliceIdentity.getPrincipal()],
+      });
+
+      const proposal = await driver.proposals.createProposal(
+        aliceIdentity,
+        project.id,
+        {
+          LinkCanister: { canister_id: externalCanisterId, name: [] },
+        },
+      );
+
+      const [status] = proposal.status;
+      if (!status || !('Failed' in status)) {
+        throw new Error('Expected a failed proposal');
+      }
+      expect(status.Failed.message).toContain('Failed to get canister_status');
+      expect(status.Failed.message).toContain(
+        'The backend canister must be a controller',
+      );
+    });
+
+    it('should fail when the caller is not a controller of the canister', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+
+      // Backend is a controller but Alice is not.
+      const externalCanisterId = await driver.pic.createCanister({
+        controllers: [driver.canisterId],
+      });
+
+      const proposal = await driver.proposals.createProposal(
+        aliceIdentity,
+        project.id,
+        {
+          LinkCanister: { canister_id: externalCanisterId, name: [] },
+        },
+      );
+
+      const [status] = proposal.status;
+      if (!status || !('Failed' in status)) {
+        throw new Error('Expected a failed proposal');
+      }
+      expect(status.Failed.message).toContain(
+        `Caller ${aliceIdentity.getPrincipal()} is not a controller of ${externalCanisterId}`,
+      );
+    });
+
+    it('should fail when the canister is already linked', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+
+      const externalCanisterId = await driver.pic.createCanister({
+        controllers: [driver.canisterId, aliceIdentity.getPrincipal()],
+      });
+
+      await driver.proposals.createProposal(aliceIdentity, project.id, {
+        LinkCanister: { canister_id: externalCanisterId, name: [] },
+      });
+
+      const proposal = await driver.proposals.createProposal(
+        aliceIdentity,
+        project.id,
+        {
+          LinkCanister: { canister_id: externalCanisterId, name: [] },
+        },
+      );
+
+      const [status] = proposal.status;
+      if (!status || !('Failed' in status)) {
+        throw new Error('Expected a failed proposal');
+      }
+      expect(status.Failed.message).toContain(
+        `Canister ${externalCanisterId} is already linked to a project`,
+      );
+    });
+
+    it('should link an existing canister with backend and caller as controllers', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+
+      const externalCanisterId = await driver.pic.createCanister({
+        controllers: [driver.canisterId, aliceIdentity.getPrincipal()],
+      });
+
+      const proposal = await driver.proposals.createProposal(
+        aliceIdentity,
+        project.id,
+        {
+          LinkCanister: {
+            canister_id: externalCanisterId,
+            name: ['My Linked Canister'],
+          },
+        },
+      );
+
+      const [status] = proposal.status;
+      expect(status && 'Executed' in status).toBe(true);
+
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
+      const [canister] = extractOkResponse(canisterRes);
+      expect(canister).toBeDefined();
+      expect(canister!.principal_id).toBe(externalCanisterId.toText());
+      expect(canister!.name).toEqual(['My Linked Canister']);
+    });
+  });
 });

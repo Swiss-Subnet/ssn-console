@@ -29,6 +29,10 @@ type ProposalStatus = variant {
 
 type ProposalOperation = variant {
   CreateCanister : record {};
+  LinkCanister : record {
+    canister_id : principal;
+    name : opt text;
+  };
   AddCanisterController : record {
     canister_id : principal;
     controller_id : principal;

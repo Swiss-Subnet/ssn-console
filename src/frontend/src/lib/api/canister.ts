@@ -57,6 +57,25 @@ export class CanisterApi {
     assertProposalExecuted(mapOkResponse(createRes));
   }
 
+  public async linkCanister(
+    projectId: string,
+    canisterPrincipal: string,
+    name: string | null,
+  ): Promise<void> {
+    const createRes = await this.actor.create_proposal({
+      project_id: projectId,
+      operation: [
+        {
+          LinkCanister: {
+            canister_id: Principal.from(canisterPrincipal),
+            name: toCandidOpt(name),
+          },
+        },
+      ],
+    });
+    assertProposalExecuted(mapOkResponse(createRes));
+  }
+
   public async removeCanister(canisterId: string): Promise<void> {
     const res = await this.actor.remove_my_canister({
       canister_id: canisterId,

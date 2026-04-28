@@ -38,7 +38,7 @@ export class ProposalDriver {
     });
   }
 
-  private async createProposal(
+  public async createProposal(
     identity: Identity,
     projectId: string,
     operation: ProposalOperation,

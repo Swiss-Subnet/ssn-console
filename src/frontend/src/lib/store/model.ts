@@ -101,6 +101,11 @@ export type CanistersSlice = {
   refreshCanisters: (projectId: string) => Promise<void>;
   clearCanisters: () => void;
   createCanister: (projectId: string) => Promise<void>;
+  linkCanister: (
+    projectId: string,
+    canisterPrincipal: string,
+    name: string | null,
+  ) => Promise<void>;
   addMissingController: (
     canisterId: string,
     projectId: string,
