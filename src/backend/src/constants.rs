@@ -21,3 +21,11 @@ pub const INVITE_TTL_NS: u64 = 7 * 24 * 60 * 60 * 1_000_000_000;
 // Maximum number of pending (non-expired) invites a single org may have.
 // Bounds per-org storage and prevents invite spam.
 pub const MAX_PENDING_INVITES_PER_ORG: usize = 10;
+
+// Default canister-count quota for the Free billing tier. Applied lazily:
+// orgs with no persisted plan are treated as Free at this limit.
+pub const MAX_FREE_CANISTERS: u32 = 3;
+
+// Default canister-count quota for the Pro billing tier. Concrete number
+// is a placeholder until pricing is finalised.
+pub const MAX_PRO_CANISTERS: u32 = 50;

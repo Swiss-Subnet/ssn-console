@@ -65,3 +65,5 @@ pub(super) const PROJECT_TEAM_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::
 pub(super) const TEAM_PROJECT_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(33);
 
 pub(super) const DELETED_PROJECT_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(34);
+
+pub(super) const ORGANIZATION_BILLING_PLAN_MEMORY_ID: MemoryId = MemoryId::new(35);

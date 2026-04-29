@@ -2,6 +2,7 @@ mod memory_manager;
 use memory_manager::*;
 
 mod approval_policy_memory;
+mod billing_plan_memory;
 mod canister_memory;
 mod invite_memory;
 mod organization_memory;
@@ -14,6 +15,7 @@ mod trusted_partner_memory;
 mod user_profile_memory;
 
 pub(super) use approval_policy_memory::*;
+pub(super) use billing_plan_memory::*;
 pub(super) use canister_memory::*;
 pub(super) use invite_memory::*;
 pub(super) use organization_memory::*;

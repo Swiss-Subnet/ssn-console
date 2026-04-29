@@ -1,8 +1,8 @@
 use crate::{
     data::{
-        self, approval_policy_repository, organization_repository, project_repository,
-        team_repository, user_profile_repository, ApprovalPolicy, OperationType, OrgPermissions,
-        Organization, PolicyType,
+        self, approval_policy_repository, organization_billing_plan_repository,
+        organization_repository, project_repository, team_repository, user_profile_repository,
+        ApprovalPolicy, OperationType, OrgPermissions, Organization, PolicyType,
     },
     dto::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
@@ -194,6 +194,10 @@ pub fn delete_organization(
     // policies, or proposals are linked to this org.
     team_repository::delete_org_teams(auth.org_id());
     organization_repository::delete_org(auth.org_id())?;
+    // Idempotent: orgs that never had a persisted plan (lazy-default
+    // case) leave no row to remove; this just guards against a stale
+    // plan record outliving its org.
+    organization_billing_plan_repository::delete_plan(auth.org_id());
 
     Ok(DeleteOrganizationResponse {})
 }
