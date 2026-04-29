@@ -11,6 +11,11 @@ check:
     cargo check -p backend
     bun --bun tsc --build
 
+# Verify the exported candid interface still matches src/backend-api/backend.did.
+# Fast feedback loop while iterating on .did files.
+check-candid:
+    cargo test -p backend --lib tests::check_candid_interface
+
 # Build the backend wasm and stage it for backend-tests
 build-backend:
     cargo build --target wasm32-unknown-unknown --release -p backend --locked

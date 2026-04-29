@@ -1,7 +1,7 @@
 use crate::data::{
     organization_repository, project_repository, team_repository, terms_and_conditions_repository,
     trusted_partner_repository, user_profile_repository, OrgPermissions, Project,
-    ProjectPermissions, Team, UserStatus,
+    ProjectPermissions, StaffPermissions, Team, UserProfile, UserStatus,
 };
 use candid::Principal;
 use canister_utils::{assert_authenticated, ApiError, ApiResult, Uuid};
@@ -31,6 +31,47 @@ pub fn assert_trusted_partner(caller: &Principal) -> ApiResult {
         return Err(ApiError::unauthorized(
             "Only trusted partners can perform this action.".to_string(),
         ));
+    }
+
+    Ok(())
+}
+
+// Gate for cross-org operations performed by the business team. Distinct
+// from per-org `OrgAuth` (membership-scoped) and from `assert_controller`
+// (dev/ops). Defaults to denial: anonymous principals, callers without a
+// profile, inactive accounts, profiles with `staff_permissions: None`,
+// and profiles whose granted bits do not cover `needed` all return
+// Err(unauthorized). Canister controllers are auto-allowed because they
+// already hold strictly greater authority over the canister state; this
+// matches `assert_has_platform_access`.
+pub fn assert_staff_perm(caller: &Principal, needed: StaffPermissions) -> ApiResult {
+    assert_authenticated(caller)?;
+
+    if is_controller(caller) {
+        return Ok(());
+    }
+
+    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
+    let profile = user_profile_repository::get_user_profile_by_user_id(&user_id)
+        .ok_or_else(|| ApiError::unauthorized("User profile not found.".to_string()))?;
+    check_profile_staff_perm(&profile, needed)
+}
+
+// Pure predicate extracted so the failure-mode matrix is unit-testable
+// without spinning up the canister state. Callers must perform
+// authentication and profile lookup before invoking.
+fn check_profile_staff_perm(profile: &UserProfile, needed: StaffPermissions) -> ApiResult {
+    if profile.status != UserStatus::Active {
+        return Err(ApiError::unauthorized(
+            "Inactive users cannot perform staff actions.".to_string(),
+        ));
+    }
+
+    let perms = profile.staff_permissions.unwrap_or(StaffPermissions::EMPTY);
+    if !perms.contains(needed) {
+        return Err(ApiError::unauthorized(format!(
+            "Caller lacks required staff permissions: {needed}"
+        )));
     }
 
     Ok(())
@@ -254,4 +295,62 @@ pub fn assert_org_admin_populated_after_removing_team(org_id: Uuid, team_id: Uui
         )));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn profile_with(status: UserStatus, perms: Option<StaffPermissions>) -> UserProfile {
+        UserProfile {
+            email: None,
+            email_verified: false,
+            status,
+            staff_permissions: perms,
+        }
+    }
+
+    #[test]
+    fn inactive_user_with_full_perms_is_denied() {
+        let profile = profile_with(UserStatus::Inactive, Some(StaffPermissions::ALL));
+        assert!(
+            check_profile_staff_perm(&profile, StaffPermissions::READ_ALL_ORGS).is_err(),
+            "inactive accounts must lose staff authority immediately",
+        );
+    }
+
+    #[test]
+    fn active_user_without_staff_role_is_denied() {
+        let profile = profile_with(UserStatus::Active, None);
+        assert!(check_profile_staff_perm(&profile, StaffPermissions::READ_ALL_ORGS).is_err());
+    }
+
+    #[test]
+    fn active_user_with_empty_staff_perms_is_denied() {
+        let profile = profile_with(UserStatus::Active, Some(StaffPermissions::EMPTY));
+        assert!(check_profile_staff_perm(&profile, StaffPermissions::READ_ALL_ORGS).is_err());
+    }
+
+    #[test]
+    fn active_user_missing_required_flag_is_denied() {
+        let profile = profile_with(UserStatus::Active, Some(StaffPermissions::SUPPORT));
+        assert!(
+            check_profile_staff_perm(&profile, StaffPermissions::WRITE_BILLING).is_err(),
+            "Support tier must not grant billing writes",
+        );
+    }
+
+    #[test]
+    fn active_user_with_required_flag_is_allowed() {
+        let profile = profile_with(UserStatus::Active, Some(StaffPermissions::OPERATOR));
+        check_profile_staff_perm(&profile, StaffPermissions::WRITE_BILLING)
+            .expect("Operator includes WRITE_BILLING");
+    }
+
+    #[test]
+    fn active_user_with_superset_perms_is_allowed() {
+        let profile = profile_with(UserStatus::Active, Some(StaffPermissions::ALL));
+        check_profile_staff_perm(&profile, StaffPermissions::READ_ALL_ORGS)
+            .expect("ALL must cover READ_ALL_ORGS");
+    }
 }

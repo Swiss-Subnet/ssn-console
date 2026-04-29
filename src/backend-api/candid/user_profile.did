@@ -20,7 +20,7 @@ type UpdateMyUserProfileRequest = record {
 };
 
 type UpdateMyUserProfileResponse = variant {
-  Ok : reserved;
+  Ok;
   Err : ApiError;
 };
 
@@ -30,7 +30,7 @@ type UpdateUserProfileRequest = record {
 };
 
 type UpdateUserProfileResponse = variant {
-  Ok : reserved;
+  Ok;
   Err : ApiError;
 };
 
@@ -61,7 +61,7 @@ type VerifyEmailRequest = record {
 };
 
 type VerifyEmailResponse = variant {
-  Ok : reserved;
+  Ok;
   Err : ApiError;
 };
 
