@@ -14,10 +14,21 @@ pub struct Proposal {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProposalStatus {
     Open,
+    PendingApproval {
+        threshold: u32,
+        approvers: Vec<Principal>,
+        votes: Vec<(Principal, Vote)>,
+    },
     Rejected,
     Executing,
     Executed,
     Failed(String),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Vote {
+    Approve,
+    Reject,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
