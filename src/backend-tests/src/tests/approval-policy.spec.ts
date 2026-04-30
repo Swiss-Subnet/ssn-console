@@ -1,61 +1,7 @@
-import { generateRandomIdentity } from '@dfinity/pic';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestDriver } from '../support';
-import {
-  anonymousIdentity,
-  controllerIdentity,
-  extractOkResponse,
-} from '@ssn/test-utils';
+import { anonymousIdentity, extractOkResponse } from '@ssn/test-utils';
 import type { ApprovalPolicy, Proposal } from '@ssn/backend-api';
-
-async function createActivatedUser(driver: TestDriver) {
-  const identity = generateRandomIdentity();
-  driver.actor.setIdentity(identity);
-  const profileRes = await driver.actor.create_my_user_profile();
-  const profile = extractOkResponse(profileRes);
-  const orgsRes = await driver.actor.list_my_organizations();
-  const [org] = extractOkResponse(orgsRes);
-  if (!org) {
-    throw new Error('Expected default organization after signup');
-  }
-
-  driver.actor.setIdentity(controllerIdentity);
-  await driver.actor.update_user_profile({
-    user_id: profile.id,
-    status: [{ Active: null }],
-  });
-
-  driver.actor.setIdentity(identity);
-  return { identity, profile, org };
-}
-
-async function inviteUserIntoOrgAndDefaultTeam(
-  driver: TestDriver,
-  host: Awaited<ReturnType<typeof createActivatedUser>>,
-  guest: Awaited<ReturnType<typeof createActivatedUser>>,
-) {
-  driver.actor.setIdentity(host.identity);
-  const teamsRes = await driver.actor.list_org_teams({ org_id: host.org.id });
-  const [defaultTeam] = extractOkResponse(teamsRes);
-  if (!defaultTeam) {
-    throw new Error('Expected default team after signup');
-  }
-
-  const inviteRes = await driver.actor.create_org_invite({
-    org_id: host.org.id,
-    target: { UserId: guest.profile.id },
-  });
-  const { invite } = extractOkResponse(inviteRes);
-
-  driver.actor.setIdentity(guest.identity);
-  await driver.actor.accept_org_invite({ invite_id: invite.id });
-
-  driver.actor.setIdentity(host.identity);
-  await driver.actor.add_user_to_team({
-    team_id: defaultTeam.id,
-    user_id: guest.profile.id,
-  });
-}
 
 async function expectPendingApproval(
   proposal: Proposal,
@@ -94,10 +40,10 @@ describe('Approval Policy + Proposal Voting', () => {
 
   describe('upsert_approval_policy', () => {
     it('should reject FixedQuorum with threshold 0', async () => {
-      const alice = await createActivatedUser(driver);
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
 
-      driver.actor.setIdentity(alice.identity);
       const res = await driver.actor.upsert_approval_policy({
         project_id: project.id,
         operation_type: { CreateCanister: {} },
@@ -128,10 +74,10 @@ describe('Approval Policy + Proposal Voting', () => {
     });
 
     it('should persist FixedQuorum and surface it via list_project_approval_policies', async () => {
-      const alice = await createActivatedUser(driver);
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
 
-      driver.actor.setIdentity(alice.identity);
       const upsertRes = await driver.actor.upsert_approval_policy({
         project_id: project.id,
         operation_type: { CreateCanister: {} },
@@ -156,11 +102,13 @@ describe('Approval Policy + Proposal Voting', () => {
 
   describe('FixedQuorum end-to-end', () => {
     it('should drive a proposal through approvals to Executed', async () => {
-      const alice = await createActivatedUser(driver);
-      const bob = await createActivatedUser(driver);
-      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+      const alice = await driver.users.createUser();
+      const bob = await driver.users.createUser();
+      await driver.users.inviteIntoOrgAndDefaultTeam(alice, bob);
 
-      driver.actor.setIdentity(alice.identity);
+      const [aliceIdentity] = alice;
+      const [bobIdentity] = bob;
+      driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
 
       await driver.actor.upsert_approval_policy({
@@ -180,7 +128,7 @@ describe('Approval Policy + Proposal Voting', () => {
         voteCount: 0,
       });
 
-      driver.actor.setIdentity(alice.identity);
+      driver.actor.setIdentity(aliceIdentity);
       const aliceVote = await driver.actor.vote_proposal({
         proposal_id: pending.id,
         vote: { Approve: {} },
@@ -192,7 +140,7 @@ describe('Approval Policy + Proposal Voting', () => {
         voteCount: 1,
       });
 
-      driver.actor.setIdentity(bob.identity);
+      driver.actor.setIdentity(bobIdentity);
       const bobVote = await driver.actor.vote_proposal({
         proposal_id: pending.id,
         vote: { Approve: {} },
@@ -202,11 +150,13 @@ describe('Approval Policy + Proposal Voting', () => {
     });
 
     it('should flip to Rejected once the threshold becomes unreachable', async () => {
-      const alice = await createActivatedUser(driver);
-      const bob = await createActivatedUser(driver);
-      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+      const alice = await driver.users.createUser();
+      const bob = await driver.users.createUser();
+      await driver.users.inviteIntoOrgAndDefaultTeam(alice, bob);
 
-      driver.actor.setIdentity(alice.identity);
+      const [aliceIdentity] = alice;
+      const [bobIdentity] = bob;
+      driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
       await driver.actor.upsert_approval_policy({
         project_id: project.id,
@@ -222,7 +172,7 @@ describe('Approval Policy + Proposal Voting', () => {
 
       // With 2 approvers and threshold 2, any single reject makes the
       // threshold unreachable (rejections > N - threshold = 0).
-      driver.actor.setIdentity(alice.identity);
+      driver.actor.setIdentity(aliceIdentity);
       const aliceVote = await driver.actor.vote_proposal({
         proposal_id: pending.id,
         vote: { Reject: {} },
@@ -232,7 +182,7 @@ describe('Approval Policy + Proposal Voting', () => {
 
       // A subsequent vote from Bob must be rejected — proposal is no longer
       // in PendingApproval.
-      driver.actor.setIdentity(bob.identity);
+      driver.actor.setIdentity(bobIdentity);
       const bobVote = await driver.actor.vote_proposal({
         proposal_id: pending.id,
         vote: { Reject: {} },
@@ -246,10 +196,10 @@ describe('Approval Policy + Proposal Voting', () => {
     });
 
     it('should reject proposal creation when FixedQuorum requires more approvers than exist', async () => {
-      const alice = await createActivatedUser(driver);
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
 
-      driver.actor.setIdentity(alice.identity);
       await driver.actor.upsert_approval_policy({
         project_id: project.id,
         operation_type: { CreateCanister: {} },
@@ -269,11 +219,12 @@ describe('Approval Policy + Proposal Voting', () => {
     });
 
     it('should reject a vote from a principal without PROPOSAL_APPROVE on the project', async () => {
-      const alice = await createActivatedUser(driver);
-      const bob = await createActivatedUser(driver);
-      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+      const alice = await driver.users.createUser();
+      const bob = await driver.users.createUser();
+      await driver.users.inviteIntoOrgAndDefaultTeam(alice, bob);
 
-      driver.actor.setIdentity(alice.identity);
+      const [aliceIdentity, , aliceOrg] = alice;
+      driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
       await driver.actor.upsert_approval_policy({
         project_id: project.id,
@@ -288,14 +239,14 @@ describe('Approval Policy + Proposal Voting', () => {
       const pending = extractOkResponse(createRes);
 
       // Carol is in Alice's org but on a team with no project link.
-      const carol = await createActivatedUser(driver);
-      driver.actor.setIdentity(alice.identity);
+      const [carolIdentity, carolProfile] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
       const inviteRes = await driver.actor.create_org_invite({
-        org_id: alice.org.id,
-        target: { UserId: carol.profile.id },
+        org_id: aliceOrg.id,
+        target: { UserId: carolProfile.id },
       });
       const { invite } = extractOkResponse(inviteRes);
-      driver.actor.setIdentity(carol.identity);
+      driver.actor.setIdentity(carolIdentity);
       await driver.actor.accept_org_invite({ invite_id: invite.id });
 
       const carolVote = await driver.actor.vote_proposal({
@@ -305,17 +256,18 @@ describe('Approval Policy + Proposal Voting', () => {
       expect(carolVote).toEqual({
         Err: {
           code: [{ Unauthorized: {} }],
-          message: `User with id ${carol.profile.id} does not have access to project with id ${project.id}`,
+          message: `User with id ${carolProfile.id} does not have access to project with id ${project.id}`,
         },
       });
     });
 
     it('should reject a duplicate vote from the same approver', async () => {
-      const alice = await createActivatedUser(driver);
-      const bob = await createActivatedUser(driver);
-      await inviteUserIntoOrgAndDefaultTeam(driver, alice, bob);
+      const alice = await driver.users.createUser();
+      const bob = await driver.users.createUser();
+      await driver.users.inviteIntoOrgAndDefaultTeam(alice, bob);
 
-      driver.actor.setIdentity(alice.identity);
+      const [aliceIdentity] = alice;
+      driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
       await driver.actor.upsert_approval_policy({
         project_id: project.id,
@@ -329,7 +281,7 @@ describe('Approval Policy + Proposal Voting', () => {
       });
       const pending = extractOkResponse(createRes);
 
-      driver.actor.setIdentity(alice.identity);
+      driver.actor.setIdentity(aliceIdentity);
       await driver.actor.vote_proposal({
         proposal_id: pending.id,
         vote: { Approve: {} },
@@ -341,7 +293,7 @@ describe('Approval Policy + Proposal Voting', () => {
       expect(second).toEqual({
         Err: {
           code: [{ ClientError: {} }],
-          message: `Principal ${alice.identity.getPrincipal()} has already voted on proposal ${pending.id}.`,
+          message: `Principal ${aliceIdentity.getPrincipal()} has already voted on proposal ${pending.id}.`,
         },
       });
     });
