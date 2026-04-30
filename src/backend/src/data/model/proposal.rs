@@ -10,6 +10,13 @@ pub struct Proposal {
     pub proposer_id: Uuid,
     pub status: ProposalStatus,
     pub operation: ProposalOperation,
+    // `Option` so proposals serialized before timestamps were introduced still
+    // deserialize cleanly post-upgrade. `None` means the data predates the
+    // field; the FE renders that as "—".
+    #[serde(default)]
+    pub created_at_nanos: Option<u64>,
+    #[serde(default)]
+    pub updated_at_nanos: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

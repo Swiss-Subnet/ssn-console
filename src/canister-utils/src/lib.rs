@@ -7,6 +7,7 @@ mod env;
 mod error;
 mod principal;
 mod rand;
+mod time;
 mod timer;
 mod uuid;
 
@@ -19,4 +20,5 @@ pub use env::*;
 pub use error::*;
 pub use principal::*;
 pub use rand::*;
+pub use time::*;
 pub use uuid::*;
