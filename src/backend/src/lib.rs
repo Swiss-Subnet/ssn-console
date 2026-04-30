@@ -39,12 +39,23 @@ mod tests {
     use candid_parser::utils::{service_compatible, CandidSource};
     use std::path::Path;
 
+    // Bidirectional subtype check: each side must implement at least the
+    // other's interface. Catches drift in both directions — adding a
+    // canister method without updating the .did, *and* removing a .did
+    // entry the canister still exposes. Stricter than a single
+    // `service_compatible` call (which would silently allow new
+    // canister-side methods), but more tolerant than `service_equal`,
+    // which compares type-alias names and trips on structurally
+    // equivalent variants like `DeleteTeamResponse` vs
+    // `RevokeStaffPermissionsResponse`.
     #[test]
     fn check_candid_interface() {
-        service_compatible(
-            CandidSource::Text(&__export_service()),
-            CandidSource::File(Path::new("../backend-api/backend.did")),
-        )
-        .unwrap();
+        let exported = __export_service();
+        let did_path = Path::new("../backend-api/backend.did");
+
+        service_compatible(CandidSource::Text(&exported), CandidSource::File(did_path))
+            .expect("canister export must implement everything declared in backend.did");
+        service_compatible(CandidSource::File(did_path), CandidSource::Text(&exported))
+            .expect("backend.did must declare every method the canister exports");
     }
 }

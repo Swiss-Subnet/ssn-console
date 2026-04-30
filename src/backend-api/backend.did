@@ -6,6 +6,7 @@ import service "./candid/invite.did";
 import service "./candid/organization.did";
 import service "./candid/project.did";
 import service "./candid/proposal.did";
+import service "./candid/staff_permissions.did";
 import service "./candid/team.did";
 import service "./candid/terms_and_conditions.did";
 import service "./candid/trusted_partner.did";

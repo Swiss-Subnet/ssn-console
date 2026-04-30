@@ -1,0 +1,38 @@
+import "../../canister-utils/error.did";
+
+type StaffPermissions = record {
+  read_all_orgs : bool;
+  write_billing : bool;
+};
+
+type GrantStaffPermissionsRequest = record {
+  user_id : text;
+  permissions : StaffPermissions;
+};
+
+type GrantStaffPermissionsResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type RevokeStaffPermissionsRequest = record {
+  user_id : text;
+};
+
+type RevokeStaffPermissionsResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type GetMyStaffPermissionsRequest = record {};
+
+type GetMyStaffPermissionsResponse = variant {
+  Ok : opt StaffPermissions;
+  Err : ApiError;
+};
+
+service : {
+  get_my_staff_permissions : (GetMyStaffPermissionsRequest) -> (GetMyStaffPermissionsResponse) query;
+  grant_staff_permissions : (GrantStaffPermissionsRequest) -> (GrantStaffPermissionsResponse);
+  revoke_staff_permissions : (RevokeStaffPermissionsRequest) -> (RevokeStaffPermissionsResponse);
+};

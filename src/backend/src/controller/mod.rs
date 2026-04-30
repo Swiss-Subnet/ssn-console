@@ -6,6 +6,7 @@ mod invite;
 mod organization;
 mod project;
 mod proposal;
+mod staff_permissions;
 mod team;
 mod terms_and_conditions;
 mod trusted_partner;
