@@ -1,4 +1,5 @@
 use crate::{
+    constants::{DEFAULT_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT, MIN_PAGINATION_LIMIT},
     data::{
         approval_policy_repository, proposal_repository, proposal_repository::VoteOutcome,
         OperationType, PolicyType, ProjectPermissions, Proposal, ProposalOperation, ProposalStatus,
@@ -60,9 +61,6 @@ pub fn get_proposal(caller: &Principal, req: GetProposalRequest) -> ApiResult<Ge
     Ok(map_proposal_response(proposal_id, proposal))
 }
 
-const DEFAULT_PAGE_SIZE: u32 = 50;
-const MAX_PAGE_SIZE: u32 = 500;
-
 pub fn list_project_proposals(
     caller: &Principal,
     req: ListProjectProposalsRequest,
@@ -71,24 +69,25 @@ pub fn list_project_proposals(
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
 
     let after = req.after.as_deref().map(Uuid::try_from).transpose()?;
-    let limit = req.limit.unwrap_or(DEFAULT_PAGE_SIZE).min(MAX_PAGE_SIZE) as usize;
+    let limit = req
+        .limit
+        .unwrap_or(DEFAULT_PAGINATION_LIMIT)
+        .clamp(MIN_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT) as usize;
 
-    let scanned = proposal_repository::list_project_proposals(auth.project_id(), after, limit);
+    let status_filter = req.status_filter.as_ref();
+    let proposals =
+        proposal_repository::list_project_proposals(auth.project_id(), after, limit, |proposal| {
+            match status_filter {
+                Some(filters) => filters
+                    .iter()
+                    .any(|f| proposal_matches_status_filter(proposal, f)),
+                None => true,
+            }
+        });
 
-    // Cursor advances by scan position, not filter-matched position, so a
-    // sparse status filter doesn't force the next page to re-scan ids the
-    // current call already excluded.
-    let next_cursor = (scanned.len() == limit)
-        .then(|| scanned.last().map(|(id, _)| *id))
+    let next_cursor = (proposals.len() == limit)
+        .then(|| proposals.last().map(|(id, _)| *id))
         .flatten();
-
-    let proposals = match req.status_filter.as_ref() {
-        Some(filters) => scanned
-            .into_iter()
-            .filter(|(_, p)| filters.iter().any(|f| proposal_matches_status_filter(p, f)))
-            .collect(),
-        None => scanned,
-    };
 
     Ok(map_list_project_proposals_response(proposals, next_cursor))
 }

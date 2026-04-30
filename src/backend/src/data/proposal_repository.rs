@@ -8,6 +8,7 @@ use crate::data::{
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
+use std::ops::Bound::{Excluded, Included};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VoteOutcome {
@@ -31,26 +32,34 @@ pub fn get_proposal(proposal_id: &Uuid) -> Option<Proposal> {
     with_state(|s| s.proposals.get(proposal_id))
 }
 
-// Scan up to `limit` proposals for `project_id`, starting strictly after the
-// `after` cursor (or from the beginning when None). Bounded scan keeps query
-// instructions O(limit) regardless of total project proposal count.
-pub fn list_project_proposals(
+// Scan proposals for `project_id` starting strictly after the `after` cursor
+// (or from the beginning when None), keep those matching `filter`, and return
+// up to `limit` matches. Filtering happens before `take` so a sparse filter
+// still fills the page; the cursor advances by matched id, not scan position.
+pub fn list_project_proposals<F>(
     project_id: Uuid,
     after: Option<Uuid>,
     limit: usize,
-) -> Vec<(Uuid, Proposal)> {
+    filter: F,
+) -> Vec<(Uuid, Proposal)>
+where
+    F: Fn(&Proposal) -> bool,
+{
     with_state(|s| {
-        let start = (project_id, after.unwrap_or(Uuid::MIN));
-        let end = (project_id, Uuid::MAX);
+        let start = match after {
+            Some(cursor) => Excluded((project_id, cursor)),
+            None => Included((project_id, Uuid::MIN)),
+        };
+        let end = Included((project_id, Uuid::MAX));
         s.project_proposals_index
-            .range(start..=end)
-            .skip(usize::from(after.is_some()))
-            .take(limit)
+            .range((start, end))
             .filter_map(|(_, proposal_id)| {
                 s.proposals
                     .get(&proposal_id)
                     .map(|proposal| (proposal_id, proposal))
             })
+            .filter(|(_, proposal)| filter(proposal))
+            .take(limit)
             .collect()
     })
 }

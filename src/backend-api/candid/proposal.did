@@ -23,7 +23,7 @@ type ListProjectProposalsRequest = record {
   project_id : text;
   status_filter : opt vec ProposalStatusFilter;
   after : opt text;
-  limit : opt nat32;
+  limit : opt nat64;
 };
 
 type ListProjectProposalsResponse = variant {

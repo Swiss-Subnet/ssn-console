@@ -50,7 +50,7 @@ export class UserDriver {
     return [identity, profile, org];
   }
 
-  public async inviteIntoOrgAndDefaultTeam(
+  public async inviteIntoOrg(
     host: ActivatedUser,
     guest: ActivatedUser,
   ): Promise<void> {
@@ -58,12 +58,6 @@ export class UserDriver {
     const [guestIdentity, guestProfile] = guest;
 
     this.actor.setIdentity(hostIdentity);
-    const teamsRes = await this.actor.list_org_teams({ org_id: hostOrg.id });
-    const [defaultTeam] = extractOkResponse(teamsRes);
-    if (!defaultTeam) {
-      throw new Error('Expected default team after signup');
-    }
-
     const inviteRes = await this.actor.create_org_invite({
       org_id: hostOrg.id,
       target: { UserId: guestProfile.id },
@@ -73,7 +67,25 @@ export class UserDriver {
     this.actor.setIdentity(guestIdentity);
     await this.actor.accept_org_invite({ invite_id: invite.id });
 
+    this.actor.setIdentity(anonymousIdentity);
+  }
+
+  public async inviteIntoOrgAndDefaultTeam(
+    host: ActivatedUser,
+    guest: ActivatedUser,
+  ): Promise<void> {
+    await this.inviteIntoOrg(host, guest);
+
+    const [hostIdentity, , hostOrg] = host;
+    const [, guestProfile] = guest;
+
     this.actor.setIdentity(hostIdentity);
+    const teamsRes = await this.actor.list_org_teams({ org_id: hostOrg.id });
+    const [defaultTeam] = extractOkResponse(teamsRes);
+    if (!defaultTeam) {
+      throw new Error('Expected default team after signup');
+    }
+
     await this.actor.add_user_to_team({
       team_id: defaultTeam.id,
       user_id: guestProfile.id,

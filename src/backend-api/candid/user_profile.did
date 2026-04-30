@@ -11,7 +11,7 @@ type GetUserProfilesByPrincipalsRequest = record {
 };
 
 type GetUserProfilesByPrincipalsResponse = variant {
-  Ok : vec UserProfileByPrincipal;
+  Ok : record { profiles : vec UserProfileByPrincipal };
   Err : ApiError;
 };
 

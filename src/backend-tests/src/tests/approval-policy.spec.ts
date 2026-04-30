@@ -225,7 +225,7 @@ describe('Approval Policy + Proposal Voting', () => {
       const bob = await driver.users.createUser();
       await driver.users.inviteIntoOrgAndDefaultTeam(alice, bob);
 
-      const [aliceIdentity, , aliceOrg] = alice;
+      const [aliceIdentity] = alice;
       driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
       await driver.actor.upsert_approval_policy({
@@ -241,16 +241,11 @@ describe('Approval Policy + Proposal Voting', () => {
       const pending = extractOkResponse(createRes);
 
       // Carol is in Alice's org but on a team with no project link.
-      const [carolIdentity, carolProfile] = await driver.users.createUser();
-      driver.actor.setIdentity(aliceIdentity);
-      const inviteRes = await driver.actor.create_org_invite({
-        org_id: aliceOrg.id,
-        target: { UserId: carolProfile.id },
-      });
-      const { invite } = extractOkResponse(inviteRes);
-      driver.actor.setIdentity(carolIdentity);
-      await driver.actor.accept_org_invite({ invite_id: invite.id });
+      const carol = await driver.users.createUser();
+      await driver.users.inviteIntoOrg(alice, carol);
 
+      const [carolIdentity] = carol;
+      driver.actor.setIdentity(carolIdentity);
       const carolVote = await driver.actor.vote_proposal({
         proposal_id: pending.id,
         vote: { Approve: {} },
@@ -477,6 +472,31 @@ describe('Proposal queries and lifecycle', () => {
         },
       });
     });
+
+    it('rejects a caller in the org but not on the project', async () => {
+      const alice = await driver.users.createUser();
+      const [aliceIdentity] = alice;
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+
+      const carol = await driver.users.createUser();
+      await driver.users.inviteIntoOrg(alice, carol);
+
+      const [carolIdentity, carolProfile] = carol;
+      driver.actor.setIdentity(carolIdentity);
+      const res = await driver.actor.list_project_proposals({
+        project_id: project.id,
+        status_filter: [],
+        after: [],
+        limit: [],
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ Unauthorized: {} }],
+          message: `User with id ${carolProfile.id} does not have access to project with id ${project.id}`,
+        },
+      });
+    });
   });
 
   describe('cancel_proposal', () => {
@@ -595,6 +615,40 @@ describe('Proposal queries and lifecycle', () => {
         },
       });
     });
+
+    it('hides cancellation from a caller in the org but not on the project', async () => {
+      const alice = await driver.users.createUser();
+      const [aliceIdentity] = alice;
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+      await driver.actor.upsert_approval_policy({
+        project_id: project.id,
+        operation_type: { CreateCanister: {} },
+        policy_type: { FixedQuorum: { threshold: 2 } },
+      });
+      const bob = await driver.users.createUser();
+      await driver.users.inviteIntoOrgAndDefaultTeam(alice, bob);
+      driver.actor.setIdentity(aliceIdentity);
+      const createRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const pending = extractOkResponse(createRes);
+
+      const carol = await driver.users.createUser();
+      await driver.users.inviteIntoOrg(alice, carol);
+      const [carolIdentity] = carol;
+      driver.actor.setIdentity(carolIdentity);
+      const res = await driver.actor.cancel_proposal({
+        proposal_id: pending.id,
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ ClientError: {} }],
+          message: `Proposal with id ${pending.id} does not exist or you do not have access.`,
+        },
+      });
+    });
   });
 
   describe('get_user_profiles_by_principals', () => {
@@ -619,7 +673,7 @@ describe('Proposal queries and lifecycle', () => {
           ghost,
         ],
       });
-      const lookups = extractOkResponse(res);
+      const { profiles: lookups } = extractOkResponse(res);
       expect(lookups.length).toBe(3);
 
       const findBy = (principal: Principal) =>
@@ -650,6 +704,29 @@ describe('Proposal queries and lifecycle', () => {
         Err: {
           code: [{ ClientError: {} }],
           message: `Project with id ${project.id} does not exist or you do not have access.`,
+        },
+      });
+    });
+
+    it('rejects a caller in the org but not on the project', async () => {
+      const alice = await driver.users.createUser();
+      const [aliceIdentity] = alice;
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+
+      const carol = await driver.users.createUser();
+      await driver.users.inviteIntoOrg(alice, carol);
+
+      const [carolIdentity, carolProfile] = carol;
+      driver.actor.setIdentity(carolIdentity);
+      const res = await driver.actor.get_user_profiles_by_principals({
+        project_id: project.id,
+        principals: [aliceIdentity.getPrincipal()],
+      });
+      expect(res).toEqual({
+        Err: {
+          code: [{ Unauthorized: {} }],
+          message: `User with id ${carolProfile.id} does not have access to project with id ${project.id}`,
         },
       });
     });

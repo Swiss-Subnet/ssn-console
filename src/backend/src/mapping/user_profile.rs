@@ -65,17 +65,19 @@ pub fn map_user_status_response(status: data::UserStatus) -> UserStatus {
 pub fn map_get_user_profiles_by_principals_response(
     lookups: Vec<(Principal, Option<(Uuid, data::UserProfile)>)>,
 ) -> GetUserProfilesByPrincipalsResponse {
-    lookups
-        .into_iter()
-        .map(|(subject_principal, found)| UserProfileByPrincipal {
-            subject_principal,
-            profile: found.map(|(id, profile)| UserProfileBrief {
-                id: id.to_string(),
-                email: profile.email,
-                email_verified: profile.email_verified,
-            }),
-        })
-        .collect()
+    GetUserProfilesByPrincipalsResponse {
+        profiles: lookups
+            .into_iter()
+            .map(|(subject_principal, found)| UserProfileByPrincipal {
+                subject_principal,
+                profile: found.map(|(id, profile)| UserProfileBrief {
+                    id: id.to_string(),
+                    email: profile.email,
+                    email_verified: profile.email_verified,
+                }),
+            })
+            .collect(),
+    }
 }
 
 pub fn map_get_user_stats_response(stats: UserStatsData) -> GetUserStatsResponse {

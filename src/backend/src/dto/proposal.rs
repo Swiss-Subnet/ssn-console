@@ -21,7 +21,7 @@ pub struct ListProjectProposalsRequest {
     pub project_id: String,
     pub status_filter: Option<Vec<ProposalStatusFilter>>,
     pub after: Option<String>,
-    pub limit: Option<u32>,
+    pub limit: Option<u64>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

@@ -9,7 +9,10 @@ pub struct GetUserProfilesByPrincipalsRequest {
     pub principals: Vec<Principal>,
 }
 
-pub type GetUserProfilesByPrincipalsResponse = Vec<UserProfileByPrincipal>;
+#[derive(Debug, Clone, CandidType)]
+pub struct GetUserProfilesByPrincipalsResponse {
+    pub profiles: Vec<UserProfileByPrincipal>,
+}
 
 #[derive(Debug, Clone, CandidType)]
 pub struct UserProfileByPrincipal {
