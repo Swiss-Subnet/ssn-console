@@ -1,20 +1,22 @@
 use crate::{
     data::{
         approval_policy_repository, organization_repository, project_repository, team_repository,
-        user_profile_repository, ApprovalPolicy, OperationType, PolicyType, UserProfile,
-        UserStatus,
+        user_profile_repository, ApprovalPolicy, OperationType, PolicyType, ProjectPermissions,
+        UserProfile, UserStatus,
     },
     dto::{
-        CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserStatsResponse,
-        ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
-        VerifyEmailRequest,
+        CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
+        GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListUserProfilesResponse,
+        UpdateMyUserProfileRequest, UpdateUserProfileRequest, VerifyEmailRequest,
     },
     env,
     jwt::{extract_ed25519_public_key_from_pem, verify_jwt},
     mapping::{
         map_create_my_user_profile_response, map_get_my_user_profile_response,
-        map_get_user_stats_response, map_list_user_profiles_response, map_user_status_request,
+        map_get_user_profiles_by_principals_response, map_get_user_stats_response,
+        map_list_user_profiles_response, map_user_status_request,
     },
+    service::access_control_service::ProjectAuth,
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
@@ -29,6 +31,28 @@ struct Claims {
 
 pub fn list_user_profiles() -> ListUserProfilesResponse {
     map_list_user_profiles_response(user_profile_repository::list_user_profiles())
+}
+
+pub fn get_user_profiles_by_principals(
+    caller: &Principal,
+    req: GetUserProfilesByPrincipalsRequest,
+) -> ApiResult<GetUserProfilesByPrincipalsResponse> {
+    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
+
+    let lookups = req
+        .principals
+        .into_iter()
+        .map(|principal| {
+            let found = user_profile_repository::get_user_profile_by_principal(&principal).filter(
+                |(user_id, _)| {
+                    ProjectAuth::for_user(*user_id, project_id, ProjectPermissions::EMPTY).is_ok()
+                },
+            );
+            (principal, found)
+        })
+        .collect();
+    Ok(map_get_user_profiles_by_principals_response(lookups))
 }
 
 pub fn update_user_profile(req: UpdateUserProfileRequest) -> ApiResult {

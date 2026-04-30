@@ -8,6 +8,7 @@ use crate::data::{
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
+use std::ops::Bound::{Excluded, Included};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VoteOutcome {
@@ -29,6 +30,38 @@ pub fn create_proposal(project_id: Uuid, proposal: Proposal) -> Uuid {
 
 pub fn get_proposal(proposal_id: &Uuid) -> Option<Proposal> {
     with_state(|s| s.proposals.get(proposal_id))
+}
+
+// Scan proposals for `project_id` starting strictly after the `after` cursor
+// (or from the beginning when None), keep those matching `filter`, and return
+// up to `limit` matches. Filtering happens before `take` so a sparse filter
+// still fills the page; the cursor advances by matched id, not scan position.
+pub fn list_project_proposals<F>(
+    project_id: Uuid,
+    after: Option<Uuid>,
+    limit: usize,
+    filter: F,
+) -> Vec<(Uuid, Proposal)>
+where
+    F: Fn(&Proposal) -> bool,
+{
+    with_state(|s| {
+        let start = match after {
+            Some(cursor) => Excluded((project_id, cursor)),
+            None => Included((project_id, Uuid::MIN)),
+        };
+        let end = Included((project_id, Uuid::MAX));
+        s.project_proposals_index
+            .range((start, end))
+            .filter_map(|(_, proposal_id)| {
+                s.proposals
+                    .get(&proposal_id)
+                    .map(|proposal| (proposal_id, proposal))
+            })
+            .filter(|(_, proposal)| filter(proposal))
+            .take(limit)
+            .collect()
+    })
 }
 
 pub fn set_proposal_pending_approval(
@@ -122,6 +155,30 @@ pub fn record_proposal_vote(
     })
 }
 
+pub fn cancel_proposal(proposal_id: Uuid) -> ApiResult {
+    mutate_state(|s| {
+        let mut proposal = s.proposals.get(&proposal_id).ok_or_else(|| {
+            ApiError::client_error(format!(
+                "Failed to cancel proposal {proposal_id}, proposal does not exist."
+            ))
+        })?;
+
+        if !matches!(
+            proposal.status,
+            ProposalStatus::Open | ProposalStatus::PendingApproval { .. }
+        ) {
+            return Err(ApiError::client_error(format!(
+                "Proposal {proposal_id} cannot be cancelled in its current state."
+            )));
+        }
+
+        proposal.status = ProposalStatus::Cancelled;
+        s.proposals.insert(proposal_id, proposal);
+
+        Ok(())
+    })
+}
+
 pub fn set_proposal_executing(proposal_id: Uuid) -> ApiResult {
     set_proposal_status(proposal_id, ProposalStatus::Executing)
 }
@@ -190,6 +247,7 @@ mod tests {
             project_id,
             Proposal {
                 project_id,
+                proposer_id: Uuid::new(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
             },
@@ -306,6 +364,7 @@ mod tests {
             project_id,
             Proposal {
                 project_id,
+                proposer_id: Uuid::new(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
             },
