@@ -201,7 +201,7 @@ const TeamSettings: FC = () => {
       />
 
       <div className="mt-6 space-y-6">
-        <Card className="mx-auto max-w-md">
+        <Card className="mx-auto max-w-2xl">
           <CardHeader>
             <CardTitle>Team Settings</CardTitle>
           </CardHeader>
@@ -242,7 +242,7 @@ const TeamSettings: FC = () => {
         </Card>
 
         {orgTeam && (
-          <Card className="mx-auto max-w-md">
+          <Card className="mx-auto max-w-2xl">
             <CardHeader>
               <CardTitle>Organization Permissions</CardTitle>
             </CardHeader>
@@ -263,7 +263,7 @@ const TeamSettings: FC = () => {
           </Card>
         )}
 
-        <Card className="mx-auto max-w-md">
+        <Card className="mx-auto max-w-2xl">
           <CardHeader>
             <CardTitle>Members</CardTitle>
           </CardHeader>
@@ -347,7 +347,7 @@ const TeamSettings: FC = () => {
         </Card>
 
         {canTeamManage && (
-          <Card className="mx-auto max-w-md">
+          <Card className="mx-auto max-w-2xl">
             <CardHeader>
               <CardTitle>Danger Zone</CardTitle>
             </CardHeader>

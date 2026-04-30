@@ -1,3 +1,4 @@
+export * from './approval-policy';
 export * from './canister';
 export * from './canister-history';
 export * from './error';
@@ -6,6 +7,7 @@ export * from './management-canister';
 export * from './organization';
 export * from './permissions';
 export * from './project';
+export * from './proposal';
 export * from './team';
 export * from './terms-and-conditions';
 export * from './trusted-partner';

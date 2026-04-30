@@ -1,3 +1,4 @@
+export * from './approval-policy';
 export * from './canister';
 export * from './canister-history';
 export * from './invite';

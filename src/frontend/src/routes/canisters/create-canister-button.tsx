@@ -1,7 +1,7 @@
 import { LoadingButton } from '@/components/loading-button';
 import { useRequireProjectId } from '@/lib/params';
 import { useAppStore } from '@/lib/store';
-import { showErrorToast } from '@/lib/toast';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { useState, type FC } from 'react';
 
 export type CreateCanisterButtonProps = {
@@ -18,7 +18,13 @@ export const CreateCanisterButton: FC<CreateCanisterButtonProps> = ({
   async function onCreateCanisterClicked(): Promise<void> {
     setIsCreating(true);
     try {
-      await createCanister(projectId);
+      const outcome = await createCanister(projectId);
+      if (outcome.kind === 'pendingApproval') {
+        showSuccessToast(
+          'Proposal submitted',
+          'Canister will be created once approvers reach the threshold.',
+        );
+      }
     } catch (err) {
       showErrorToast('Failed to create canister', err);
     } finally {

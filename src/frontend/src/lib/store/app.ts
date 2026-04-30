@@ -1,4 +1,5 @@
 import { createApiSlice } from '@/lib/store/api';
+import { createApprovalPoliciesSlice } from '@/lib/store/approval-policy';
 import { createAuthSlice } from '@/lib/store/auth';
 import { createCanistersSlice } from '@/lib/store/canister';
 import { createInvitesSlice } from '@/lib/store/invite';
@@ -24,4 +25,5 @@ export const useAppStore = create<AppSlice>()((...a) => ({
   ...createOrganizationsSlice(...a),
   ...createTeamsSlice(...a),
   ...createInvitesSlice(...a),
+  ...createApprovalPoliciesSlice(...a),
 }));
