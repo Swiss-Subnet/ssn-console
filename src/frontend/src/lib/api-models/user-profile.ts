@@ -165,7 +165,7 @@ export function mapGetUserProfilesByPrincipalsRequest(
 export function mapGetUserProfilesByPrincipalsResponse(
   res: ApiGetUserProfilesByPrincipalsResponse,
 ): GetUserProfilesByPrincipalsResponse {
-  return mapOkResponse(res).map(entry => ({
+  return mapOkResponse(res).profiles.map(entry => ({
     principal: entry.subject_principal.toText(),
     profile: mapUserProfileBriefOpt(entry.profile),
   }));

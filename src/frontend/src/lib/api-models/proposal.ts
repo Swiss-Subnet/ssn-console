@@ -140,7 +140,7 @@ export function mapListProjectProposalsRequest(
       ? [req.statusFilter.map(mapProposalStatusFilterToApi)]
       : [],
     after: toCandidOpt(req.after),
-    limit: toCandidOpt(req.limit),
+    limit: toCandidOpt(req.limit !== null ? BigInt(req.limit) : null),
   };
 }
 
