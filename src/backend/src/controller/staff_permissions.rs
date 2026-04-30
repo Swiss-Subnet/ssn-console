@@ -1,7 +1,8 @@
 use crate::{
     dto::{
-        GetMyStaffPermissionsResponse, GrantStaffPermissionsRequest, GrantStaffPermissionsResponse,
-        RevokeStaffPermissionsRequest, RevokeStaffPermissionsResponse,
+        GetMyStaffPermissionsRequest, GetMyStaffPermissionsResponse, GrantStaffPermissionsRequest,
+        GrantStaffPermissionsResponse, RevokeStaffPermissionsRequest,
+        RevokeStaffPermissionsResponse,
     },
     service::staff_permissions_service,
 };
@@ -13,9 +14,11 @@ use ic_cdk::{api::msg_caller, *};
 // it never reveals information about other users; non-staff callers get
 // None back, which is not sensitive.
 #[query]
-fn get_my_staff_permissions() -> GetMyStaffPermissionsResponse {
+fn get_my_staff_permissions(
+    _req: GetMyStaffPermissionsRequest,
+) -> ApiResultDto<GetMyStaffPermissionsResponse> {
     let caller = msg_caller();
-    staff_permissions_service::get_my_staff_permissions(&caller)
+    ApiResultDto::Ok(staff_permissions_service::get_my_staff_permissions(&caller))
 }
 
 // Replace a user's staff permission bitmask. Controller-gated: only the

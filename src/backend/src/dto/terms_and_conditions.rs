@@ -19,10 +19,16 @@ pub struct CreateTermsAndConditionsRequest {
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct CreateTermsAndConditionsResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct UpsertTermsAndConditionsDecisionRequest {
     pub terms_and_conditions_id: String,
     pub decision_type: TermsAndConditionsDecisionType,
 }
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct UpsertTermsAndConditionsDecisionResponse {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub enum TermsAndConditionsDecisionType {

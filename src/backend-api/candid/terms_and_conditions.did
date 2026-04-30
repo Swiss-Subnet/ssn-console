@@ -19,7 +19,7 @@ type CreateTermsAndConditionsRequest = record {
 };
 
 type CreateTermsAndConditionsResponse = variant {
-  Ok;
+  Ok : record {};
   Err : ApiError;
 };
 
@@ -29,7 +29,7 @@ type UpsertTermsAndConditionsDecisionRequest = record {
 };
 
 type UpsertTermsAndConditionsDecisionResponse = variant {
-  Ok;
+  Ok : record {};
   Err : ApiError;
 };
 

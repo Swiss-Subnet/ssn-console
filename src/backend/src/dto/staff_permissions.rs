@@ -30,6 +30,9 @@ pub struct RevokeStaffPermissionsRequest {
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct RevokeStaffPermissionsResponse {}
 
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct GetMyStaffPermissionsRequest {}
+
 // Self-introspection. None means the caller is not staff. Never returns
 // information about other users' staff status; admin-side listings live
 // behind a separate, controller-gated surface (not shipped in this PR).
