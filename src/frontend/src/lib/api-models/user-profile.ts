@@ -1,8 +1,10 @@
 import { mapOkResponse } from '@/lib/api-models/error';
 import { isNotNil } from '@/lib/nil';
 import { fromCandidOpt, toCandidOpt } from '@/lib/utils';
+import { Principal } from '@icp-sdk/core/principal';
 import type {
   UserProfile as ApiUserProfile,
+  UserProfileBrief as ApiUserProfileBrief,
   UserStatus as ApiUserStatus,
   ListUserProfilesResponse as ApiListUserProfilesResponse,
   GetMyUserProfileResponse as ApiGetMyUserProfileResponse,
@@ -10,6 +12,8 @@ import type {
   UpdateMyUserProfileRequest as ApiUpdateMyUserProfileRequest,
   UpdateUserProfileRequest as ApiUpdateUserProfileRequest,
   GetUserStatsResponse as ApiGetUserStatsResponse,
+  GetUserProfilesByPrincipalsRequest as ApiGetUserProfilesByPrincipalsRequest,
+  GetUserProfilesByPrincipalsResponse as ApiGetUserProfilesByPrincipalsResponse,
 } from '@ssn/backend-api';
 
 export type ListUserProfilesResponse = UserProfile[];
@@ -129,4 +133,53 @@ export function mapUserStatsResponse(
     active: Number(okRes.active),
     inactive: Number(okRes.inactive),
   };
+}
+
+export type UserProfileBrief = {
+  id: string;
+  email: string | null;
+  emailVerified: boolean;
+};
+
+export type GetUserProfilesByPrincipalsRequest = {
+  projectId: string;
+  principals: string[];
+};
+
+export type UserProfileByPrincipal = {
+  principal: string;
+  profile: UserProfileBrief | null;
+};
+
+export type GetUserProfilesByPrincipalsResponse = UserProfileByPrincipal[];
+
+export function mapGetUserProfilesByPrincipalsRequest(
+  req: GetUserProfilesByPrincipalsRequest,
+): ApiGetUserProfilesByPrincipalsRequest {
+  return {
+    project_id: req.projectId,
+    principals: req.principals.map(p => Principal.fromText(p)),
+  };
+}
+
+export function mapGetUserProfilesByPrincipalsResponse(
+  res: ApiGetUserProfilesByPrincipalsResponse,
+): GetUserProfilesByPrincipalsResponse {
+  return mapOkResponse(res).profiles.map(entry => ({
+    principal: entry.subject_principal.toText(),
+    profile: mapUserProfileBriefOpt(entry.profile),
+  }));
+}
+
+function mapUserProfileBriefOpt(
+  opt: [] | [ApiUserProfileBrief],
+): UserProfileBrief | null {
+  const brief = fromCandidOpt(opt);
+  return brief
+    ? {
+        id: brief.id,
+        email: fromCandidOpt(brief.email),
+        emailVerified: brief.email_verified,
+      }
+    : null;
 }

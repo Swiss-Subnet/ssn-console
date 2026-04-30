@@ -17,6 +17,7 @@ import {
 } from '@/components/form';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { useRequireProjectId } from '@/lib/params';
+import { useNavigate } from 'react-router';
 
 export type AddControllerFormProps = {
   canisterId: string;
@@ -35,6 +36,7 @@ export const AddControllerForm: FC<AddControllerFormProps> = ({
 }) => {
   const { addController } = useAppStore();
   const projectId = useRequireProjectId();
+  const navigate = useNavigate();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -52,8 +54,9 @@ export const AddControllerForm: FC<AddControllerFormProps> = ({
       if (outcome.kind === 'pendingApproval') {
         showSuccessToast(
           'Proposal submitted',
-          'Controller will be added once approvers reach the threshold.',
+          'Awaiting approvals before the controller is added.',
         );
+        navigate(`/projects/${projectId}/proposals/${outcome.proposalId}`);
       } else {
         showSuccessToast('Controller added successfully!');
       }

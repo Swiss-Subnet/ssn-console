@@ -1,12 +1,16 @@
 import {
   mapCreateMyUserProfileResponse,
   mapGetMyUserProfileResponse,
+  mapGetUserProfilesByPrincipalsRequest,
+  mapGetUserProfilesByPrincipalsResponse,
   mapListUserProfilesResponse,
   mapUpdateMyUserProfileRequest,
   mapUpdateUserProfileRequest,
   mapUserStatsResponse,
   type CreateMyUserProfileResponse,
   type GetMyUserProfileResponse,
+  type GetUserProfilesByPrincipalsRequest,
+  type GetUserProfilesByPrincipalsResponse,
   type ListUserProfilesResponse,
   type UpdateMyUserProfileRequest,
   type UpdateUserProfileRequest,
@@ -73,5 +77,14 @@ export class UserProfileApi {
   public async verifyMyEmail(token: string): Promise<void> {
     const res = await this.actor.verify_my_email({ token });
     mapOkResponse(res);
+  }
+
+  public async getUserProfilesByPrincipals(
+    req: GetUserProfilesByPrincipalsRequest,
+  ): Promise<GetUserProfilesByPrincipalsResponse> {
+    const res = await this.actor.get_user_profiles_by_principals(
+      mapGetUserProfilesByPrincipalsRequest(req),
+    );
+    return mapGetUserProfilesByPrincipalsResponse(res);
   }
 }
