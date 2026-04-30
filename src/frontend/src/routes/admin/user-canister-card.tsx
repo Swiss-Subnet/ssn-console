@@ -3,7 +3,7 @@ import {
   CanisterStatus,
   type Canister,
 } from '@/lib/api-models';
-import { formatBytes, formatCycles } from '@/lib/format';
+import { formatBytes, formatCycles, formatTimestamp } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { LoadingButton } from '@/components/loading-button';
 import { useAppStore } from '@/lib/store';
@@ -141,6 +141,11 @@ export const UserCanisterCard: FC<UserCanisterCardProps> = ({
           <CardAction className="flex items-center gap-2">
             <Badge variant="destructive">Deleted</Badge>
           </CardAction>
+        )}
+        {canister.deletedAt !== null && (
+          <CardDescription className="text-destructive">
+            Removed by user on {formatTimestamp(canister.deletedAt)}
+          </CardDescription>
         )}
       </CardHeader>
 

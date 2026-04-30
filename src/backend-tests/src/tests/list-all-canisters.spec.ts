@@ -159,6 +159,7 @@ describe('list_all_canisters', () => {
           user_id: aliceProfile.id,
           email: [aliceEmail],
           principal_id: canister.principal_id,
+          deleted_at: [],
         });
       }
 
@@ -168,6 +169,7 @@ describe('list_all_canisters', () => {
           user_id: bobProfile.id,
           email: [bobEmail],
           principal_id: canister.principal_id,
+          deleted_at: [],
         });
       }
     });

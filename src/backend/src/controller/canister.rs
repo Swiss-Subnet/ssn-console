@@ -6,15 +6,15 @@ use crate::{
     },
     service::canister_service,
 };
-use canister_utils::{assert_authenticated, assert_controller, ApiResultDto, Uuid};
+use canister_utils::{assert_authenticated, assert_controller, ApiResult, ApiResultDto, Uuid};
 use ic_cdk::{api::msg_caller, *};
 
-async fn remove_my_canister_inner(
+fn remove_my_canister_inner(
     caller: candid::Principal,
     request: RemoveMyCanisterRequest,
-) -> canister_utils::ApiResult<()> {
+) -> ApiResult<()> {
     let canister_id = Uuid::try_from(request.canister_id.as_str())?;
-    canister_service::remove_my_canister(caller, canister_id).await
+    canister_service::remove_my_canister(caller, canister_id)
 }
 
 #[update]
@@ -44,13 +44,13 @@ async fn list_user_canisters(
 }
 
 #[update]
-async fn remove_my_canister(request: RemoveMyCanisterRequest) -> ApiResultDto<()> {
+fn remove_my_canister(request: RemoveMyCanisterRequest) -> ApiResultDto<()> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
     }
 
-    remove_my_canister_inner(caller, request).await.into()
+    remove_my_canister_inner(caller, request).into()
 }
 
 #[update]

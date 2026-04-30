@@ -1,7 +1,8 @@
 use crate::data::{
     memory::{
-        init_canister_project_index, init_canisters, init_project_canister_index, CanisterMemory,
-        CanisterProjectIndexMemory, ProjectCanisterIndexMemory,
+        init_active_project_canister_index, init_canister_project_index, init_canisters,
+        init_deleted_project_canister_index, ActiveProjectCanisterIndexMemory, CanisterMemory,
+        CanisterProjectIndexMemory, DeletedProjectCanisterIndexMemory,
     },
     Canister,
 };
@@ -10,16 +11,38 @@ use std::cell::RefCell;
 
 pub fn project_has_canisters(project_id: Uuid) -> bool {
     with_state(|s| {
-        s.project_canister_index
-            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+        let range = (project_id, Uuid::MIN)..=(project_id, Uuid::MAX);
+        s.active_project_canister_index
+            .range(range.clone())
             .any(|_| true)
+            || s.deleted_project_canister_index.range(range).any(|_| true)
     })
 }
 
-pub fn list_canisters_by_project(project_id: Uuid) -> Vec<(Uuid, Canister)> {
+pub fn list_active_canisters_by_project(project_id: Uuid) -> Vec<(Uuid, Canister)> {
     with_state(|s| {
-        s.project_canister_index
+        s.active_project_canister_index
             .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .filter_map(|(_, canister_id)| {
+                s.canisters
+                    .get(&canister_id)
+                    .map(|canister| (canister_id, canister))
+            })
+            .collect()
+    })
+}
+
+pub fn list_canisters_by_project_including_deleted(project_id: Uuid) -> Vec<(Uuid, Canister)> {
+    with_state(|s| {
+        let active = s
+            .active_project_canister_index
+            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX));
+        let deleted = s
+            .deleted_project_canister_index
+            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX));
+
+        active
+            .chain(deleted)
             .filter_map(|(_, canister_id)| {
                 s.canisters
                     .get(&canister_id)
@@ -50,7 +73,8 @@ pub fn create_canister(project_id: Uuid, canister: Canister) -> Uuid {
 
     mutate_state(|s| {
         s.canisters.insert(canister_id, canister);
-        s.project_canister_index.insert((project_id, canister_id));
+        s.active_project_canister_index
+            .insert((project_id, canister_id));
         s.canister_project_index.insert(canister_id, project_id);
     });
 
@@ -65,24 +89,30 @@ pub fn get_canister_project_id(canister_id: Uuid) -> Option<Uuid> {
     with_state(|s| s.canister_project_index.get(&canister_id))
 }
 
-pub fn get_canister_in_project(project_id: Uuid, canister_id: Uuid) -> Option<Canister> {
-    with_state(|s| {
-        if s.project_canister_index
+pub fn soft_delete_canister(
+    project_id: Uuid,
+    canister_id: Uuid,
+    deleted_at: u64,
+) -> Option<Canister> {
+    mutate_state(|s| {
+        if !s
+            .active_project_canister_index
             .contains(&(project_id, canister_id))
         {
-            s.canisters.get(&canister_id)
-        } else {
-            None
+            return None;
         }
-    })
-}
 
-pub fn remove_canister(project_id: Uuid, canister_id: Uuid) {
-    mutate_state(|s| {
-        s.canisters.remove(&canister_id);
-        s.project_canister_index.remove(&(project_id, canister_id));
-        s.canister_project_index.remove(&canister_id);
-    });
+        let mut canister = s.canisters.get(&canister_id)?;
+        canister.deleted_at = Some(deleted_at);
+        s.canisters.insert(canister_id, canister.clone());
+
+        s.active_project_canister_index
+            .remove(&(project_id, canister_id));
+        s.deleted_project_canister_index
+            .insert((project_id, canister_id));
+
+        Some(canister)
+    })
 }
 
 pub fn update_canister_name(canister_id: Uuid, name: Option<String>) -> Option<Canister> {
@@ -96,7 +126,8 @@ pub fn update_canister_name(canister_id: Uuid, name: Option<String>) -> Option<C
 
 struct CanisterState {
     canisters: CanisterMemory,
-    project_canister_index: ProjectCanisterIndexMemory,
+    active_project_canister_index: ActiveProjectCanisterIndexMemory,
+    deleted_project_canister_index: DeletedProjectCanisterIndexMemory,
     canister_project_index: CanisterProjectIndexMemory,
 }
 
@@ -104,7 +135,8 @@ impl Default for CanisterState {
     fn default() -> Self {
         Self {
             canisters: init_canisters(),
-            project_canister_index: init_project_canister_index(),
+            active_project_canister_index: init_active_project_canister_index(),
+            deleted_project_canister_index: init_deleted_project_canister_index(),
             canister_project_index: init_canister_project_index(),
         }
     }
