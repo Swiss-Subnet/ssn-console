@@ -853,11 +853,24 @@ describe('Canisters', () => {
       const grandchildPrincipal = Principal.fromUint8Array(
         new Uint8Array(29).fill(70),
       );
+      const greatGrandchildPrincipal = Principal.fromUint8Array(
+        new Uint8Array(29).fill(80),
+      );
 
       // Act as the canister-history canister
       driver.actor.setIdentity(canisterHistoryIdentity);
 
-      // 1. Map grandchild to child (child is currently unknown -> orphan)
+      // 1. Map great-grandchild to grandchild (grandchild is currently unknown -> orphan)
+      await driver.actor.add_child_canisters({
+        parent_child_mappings: [
+          {
+            parent_canister_id: grandchildPrincipal,
+            child_canister_id: greatGrandchildPrincipal,
+          },
+        ],
+      });
+
+      // 2. Map grandchild to child (child is currently unknown -> orphan)
       await driver.actor.add_child_canisters({
         parent_child_mappings: [
           {
@@ -875,7 +888,7 @@ describe('Canisters', () => {
         ),
       ).toHaveLength(1);
 
-      // 2. Map child to root (resolves both child and grandchild)
+      // 3. Map child to root (resolves child, grandchild, and great-grandchild)
       driver.actor.setIdentity(canisterHistoryIdentity);
       await driver.actor.add_child_canisters({
         parent_child_mappings: [
@@ -886,16 +899,17 @@ describe('Canisters', () => {
         ],
       });
 
-      // Verify both were added to the project
+      // Verify all were added to the project
       driver.actor.setIdentity(aliceIdentity);
       const finalCanisters = extractOkResponse(
         await driver.actor.list_my_canisters({ project_id: project.id }),
       );
-      expect(finalCanisters).toHaveLength(3);
+      expect(finalCanisters).toHaveLength(4);
       const principals = finalCanisters.map(c => c.principal_id);
       expect(principals).toContain(rootPrincipal.toText());
       expect(principals).toContain(childPrincipal.toText());
       expect(principals).toContain(grandchildPrincipal.toText());
+      expect(principals).toContain(greatGrandchildPrincipal.toText());
     });
 
     it('should be idempotent and ignore duplicate mappings', async () => {

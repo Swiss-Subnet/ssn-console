@@ -4,8 +4,7 @@ use crate::{
         MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
     },
     data::{
-        canister_repository, organization_repository,
-        orphaned_canister_repository::{self, list_children_by_parent, remove_orphaned_canister},
+        canister_repository, organization_repository, orphaned_canister_repository,
         project_repository, team_repository, user_profile_repository, Canister, ProjectPermissions,
     },
     dto::{
@@ -287,18 +286,22 @@ pub async fn add_child_canisters(
                 },
             );
 
-            // add any grand children that came in before this canister and was
+            // add any grand children that came in before this canister and were
             // erronously registered as orphans
-            for grand_child_principal in list_children_by_parent(child_principal) {
-                canister_repository::create_canister(
-                    project_id,
-                    Canister {
-                        name: None,
-                        principal: grand_child_principal,
-                        deleted_at: None,
-                    },
-                );
-                remove_orphaned_canister(grand_child_principal, child_principal);
+            let mut stack = vec![child_principal];
+            while let Some(parent) = stack.pop() {
+                for child in orphaned_canister_repository::list_children_by_parent(parent) {
+                    canister_repository::create_canister(
+                        project_id,
+                        Canister {
+                            name: None,
+                            principal: child,
+                            deleted_at: None,
+                        },
+                    );
+                    orphaned_canister_repository::remove_orphaned_canister(child, parent);
+                    stack.push(child);
+                }
             }
         } else {
             orphaned_canister_repository::create_orphaned_canister(
