@@ -2,7 +2,7 @@ use crate::{
     data,
     dto::{
         CreateProposalRequest, CreateProposalResponse, ProposalOperation, ProposalStatus,
-        ProposalVote, Vote,
+        ProposalVote, Vote, VoteProposalRequest,
     },
 };
 use canister_utils::{ApiError, ApiResult, Uuid};
@@ -12,6 +12,15 @@ fn map_vote(vote: data::Vote) -> Vote {
         data::Vote::Approve => Vote::Approve {},
         data::Vote::Reject => Vote::Reject {},
     }
+}
+
+pub fn map_vote_proposal_request(req: VoteProposalRequest) -> ApiResult<(Uuid, data::Vote)> {
+    let proposal_id = Uuid::try_from(req.proposal_id.as_str())?;
+    let vote = match req.vote {
+        Vote::Approve {} => data::Vote::Approve,
+        Vote::Reject {} => data::Vote::Reject,
+    };
+    Ok((proposal_id, vote))
 }
 
 pub fn map_create_proposal_request(

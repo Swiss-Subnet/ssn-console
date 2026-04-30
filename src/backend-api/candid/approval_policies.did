@@ -11,12 +11,34 @@ type ListProjectApprovalPoliciesRequest = record {
   project_id : text;
 };
 
+type UpsertApprovalPolicyRequest = record {
+  project_id : text;
+  operation_type : OperationType;
+  policy_type : PolicyType;
+};
+
+type UpsertApprovalPolicyResponse = variant {
+  Ok : ApprovalPolicy;
+  Err : ApiError;
+};
+
 type ApprovalPolicy = record {
   id : text;
-  operation_type : text;
-  policy_type : text;
+  operation_type : OperationType;
+  policy_type : PolicyType;
+};
+
+type OperationType = variant {
+  CreateCanister : record {};
+  AddCanisterController : record {};
+};
+
+type PolicyType = variant {
+  AutoApprove : record {};
+  FixedQuorum : record { threshold : nat32 };
 };
 
 service : {
   list_project_approval_policies : (ListProjectApprovalPoliciesRequest) -> (ListProjectApprovalPoliciesResponse) query;
+  upsert_approval_policy : (UpsertApprovalPolicyRequest) -> (UpsertApprovalPolicyResponse);
 };

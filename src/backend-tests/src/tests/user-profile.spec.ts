@@ -295,13 +295,13 @@ describe('User Profile', () => {
       expect(approvalPolicies.approval_policies).toHaveLength(2);
       expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
-        operation_type: 'CreateCanister',
-        policy_type: 'AutoApprove',
+        operation_type: { CreateCanister: {} },
+        policy_type: { AutoApprove: {} },
       });
       expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
-        operation_type: 'AddCanisterController',
-        policy_type: 'AutoApprove',
+        operation_type: { AddCanisterController: {} },
+        policy_type: { AutoApprove: {} },
       });
     });
 
@@ -357,13 +357,13 @@ describe('User Profile', () => {
       expect(approvalPolicies.approval_policies).toHaveLength(2);
       expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
-        operation_type: 'CreateCanister',
-        policy_type: 'AutoApprove',
+        operation_type: { CreateCanister: {} },
+        policy_type: { AutoApprove: {} },
       });
       expect(approvalPolicies.approval_policies).toContainEqual({
         id: expect.any(String),
-        operation_type: 'AddCanisterController',
-        policy_type: 'AutoApprove',
+        operation_type: { AddCanisterController: {} },
+        policy_type: { AutoApprove: {} },
       });
     });
 
