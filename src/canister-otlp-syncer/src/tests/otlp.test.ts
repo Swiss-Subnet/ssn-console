@@ -1,13 +1,4 @@
-import { describe, it, expect, mock } from 'bun:test';
-
-mock.module('../env', () => ({
-  env: {
-    METRICS_ENDPOINT: 'http://localhost:4318/v1/metrics',
-    CANISTER_ID_CYCLES_MONITOR: 'aaaaa-aa',
-    HTTP_GATEWAY: 'http://localhost:4943',
-  },
-}));
-
+import { describe, it, expect } from 'bun:test';
 import { toHrTime } from '../otlp';
 
 describe('otlp', () => {

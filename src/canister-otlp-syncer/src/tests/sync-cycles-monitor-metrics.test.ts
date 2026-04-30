@@ -1,4 +1,12 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
+import {
+  describe,
+  it,
+  expect,
+  mock,
+  beforeEach,
+  afterEach,
+  setSystemTime,
+} from 'bun:test';
 import { HttpAgent } from '@icp-sdk/core/agent';
 
 const mockPushMetrics = mock().mockResolvedValue(undefined);
@@ -21,10 +29,12 @@ mock.module('@icp-sdk/core/agent', () => {
   };
 });
 
+import { Principal } from '@icp-sdk/core/principal';
 import { syncCyclesMonitorMetrics } from '../sync-cycles-monitor-metrics';
 
 describe('sync-cycles-monitor-metrics', () => {
   beforeEach(() => {
+    setSystemTime(new Date('2024-01-01T12:00:00Z'));
     mockPushMetrics.mockClear();
     mockPushMetrics.mockResolvedValue(undefined);
     mockListMetricsAfter.mockClear();
@@ -79,6 +89,22 @@ describe('sync-cycles-monitor-metrics', () => {
     const mockAgent = {} as HttpAgent;
     await syncCyclesMonitorMetrics(mockAgent);
 
+    expect(mockListMetricsAfter).toHaveBeenCalledTimes(2);
+
+    // Check initial cursor
+    const expectedOneHourAgoNs =
+      BigInt(new Date('2024-01-01T11:00:00Z').getTime()) * 1_000_000n;
+    expect(mockListMetricsAfter).toHaveBeenNthCalledWith(1, {
+      cursor: [
+        [expectedOneHourAgoNs, Principal.fromUint8Array(new Uint8Array(29))],
+      ],
+    });
+
+    // Check pagination cursor
+    expect(mockListMetricsAfter).toHaveBeenNthCalledWith(2, {
+      cursor: [{ timestamp_ns: 1000n, canister_id: 'aaaaa-aa' }],
+    });
+
     expect(mockPushMetrics).toHaveBeenCalledTimes(2);
 
     const passedPayload = mockPushMetrics.mock.calls[0]?.[0];
@@ -102,6 +128,14 @@ describe('sync-cycles-monitor-metrics', () => {
 
     const mockAgent = {} as HttpAgent;
     await syncCyclesMonitorMetrics(mockAgent);
+
+    const expectedOneHourAgoNs =
+      BigInt(new Date('2024-01-01T11:00:00Z').getTime()) * 1_000_000n;
+    expect(mockListMetricsAfter).toHaveBeenCalledWith({
+      cursor: [
+        [expectedOneHourAgoNs, Principal.fromUint8Array(new Uint8Array(29))],
+      ],
+    });
 
     expect(mockPushMetrics).not.toHaveBeenCalled();
   });

@@ -22,6 +22,7 @@ import {
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
 } from '@opentelemetry/semantic-conventions';
 import { env } from './env';
+import { Principal } from '@icp-sdk/core/principal';
 
 export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
   const actor = Actor.createActor<_SERVICE>(idlFactory, {
@@ -33,7 +34,11 @@ export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
     '🚀 Fetching canister cycles metrics batches from the cycles monitor canister...',
   );
 
-  let cursor: Cursor | null = null;
+  const oneHourAgoMs = Date.now() - 60 * 60 * 1_000;
+  const oneHourAgoNs = BigInt(oneHourAgoMs) * 1_000_000n;
+  const minPrincipal = Principal.fromUint8Array(new Uint8Array(29));
+
+  let cursor: Cursor = [oneHourAgoNs, minPrincipal];
   let totalPushed = 0;
 
   while (true) {
