@@ -9,6 +9,7 @@ mod staff_permissions;
 mod team;
 mod terms_and_conditions;
 mod trusted_partner;
+pub mod usage;
 mod user_profile;
 
 pub use approval_policy::*;
@@ -22,4 +23,5 @@ pub use staff_permissions::*;
 pub use team::*;
 pub use terms_and_conditions::*;
 pub use trusted_partner::*;
+pub use user_profile::*;
 pub use user_profile::*;

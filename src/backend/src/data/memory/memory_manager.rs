@@ -71,3 +71,5 @@ pub(super) const ORGANIZATION_BILLING_PLAN_MEMORY_ID: MemoryId = MemoryId::new(3
 pub(super) const ORPHANED_CANISTER_CHILD_PARENT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(36);
 pub(super) const ORPHANED_CANISTER_PARENT_CHILD_INDEX_MEMORY_ID: MemoryId = MemoryId::new(37);
 pub(super) const PRINCIPAL_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(38);
+
+pub(super) const CANISTER_USAGE_MEMORY_ID: MemoryId = MemoryId::new(39);
