@@ -13,4 +13,5 @@ pub mod proposal_repository;
 pub mod team_repository;
 pub mod terms_and_conditions_repository;
 pub mod trusted_partner_repository;
+pub mod usage_repository;
 pub mod user_profile_repository;

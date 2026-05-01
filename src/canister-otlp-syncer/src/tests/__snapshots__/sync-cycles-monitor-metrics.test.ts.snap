@@ -53,15 +53,30 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
         },
         {
           "aggregationTemporality": 1,
-          "dataPointType": 2,
-          "dataPoints": [],
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
           "descriptor": {
             "description": "Canister memory in bytes",
             "name": "ic_canister_memory_bytes",
-            "unit": "By",
+            "unit": "byte-seconds",
             "valueType": 0,
           },
-          "isMonotonic": false,
+          "isMonotonic": true,
         },
         {
           "aggregationTemporality": 1,
@@ -92,15 +107,30 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
         },
         {
           "aggregationTemporality": 1,
-          "dataPointType": 2,
-          "dataPoints": [],
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
           "descriptor": {
             "description": "Canister compute allocation percentage",
             "name": "ic_canister_compute_allocation_percent",
-            "unit": "%",
+            "unit": "percent-seconds",
             "valueType": 0,
           },
-          "isMonotonic": false,
+          "isMonotonic": true,
         },
         {
           "aggregationTemporality": 1,
@@ -151,7 +181,7 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
           "descriptor": {
             "description": "Total bytes of ingress induction including the base price represented as bytes",
             "name": "ic_canister_ingress_induction_bytes_total",
-            "unit": "By",
+            "unit": "bytes",
             "valueType": 0,
           },
           "isMonotonic": true,
@@ -205,7 +235,7 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
           "descriptor": {
             "description": "Total compute time in seconds (2b instructions = 1s)",
             "name": "ic_canister_compute_time_seconds_total",
-            "unit": "s",
+            "unit": "seconds",
             "valueType": 0,
           },
           "isMonotonic": true,
@@ -259,7 +289,7 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
           "descriptor": {
             "description": "Total bytes of request and response transmission including the base price represented as bytes",
             "name": "ic_canister_transmission_bytes_total",
-            "unit": "By",
+            "unit": "bytes",
             "valueType": 0,
           },
           "isMonotonic": true,
@@ -313,7 +343,7 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
           "descriptor": {
             "description": "Total uninstalls",
             "name": "ic_canister_uninstalls_total",
-            "unit": "{uninstalls}",
+            "unit": "count",
             "valueType": 0,
           },
           "isMonotonic": true,
@@ -423,6 +453,20 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
               ],
               "value": 1270000,
             },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 2540000,
+            },
           ],
           "descriptor": {
             "description": "Cumulative cycles burned for memory",
@@ -434,7 +478,7 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
         },
         {
           "aggregationTemporality": 1,
-          "dataPointType": 2,
+          "dataPointType": 3,
           "dataPoints": [
             {
               "attributes": {
@@ -446,18 +490,32 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
               ],
               "startTime": [
                 0,
-                1000000000000,
+                0,
               ],
-              "value": 2147483648,
+              "value": 10737418240,
+            },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 21474836480,
             },
           ],
           "descriptor": {
             "description": "Canister memory in bytes",
             "name": "ic_canister_memory_bytes",
-            "unit": "By",
+            "unit": "byte-seconds",
             "valueType": 0,
           },
-          "isMonotonic": false,
+          "isMonotonic": true,
         },
         {
           "aggregationTemporality": 1,
@@ -477,6 +535,20 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
               ],
               "value": 2500000000,
             },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 5000000000,
+            },
           ],
           "descriptor": {
             "description": "Cumulative cycles burned for compute allocation",
@@ -488,7 +560,7 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
         },
         {
           "aggregationTemporality": 1,
-          "dataPointType": 2,
+          "dataPointType": 3,
           "dataPoints": [
             {
               "attributes": {
@@ -500,18 +572,32 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
               ],
               "startTime": [
                 0,
-                1000000000000,
+                0,
               ],
-              "value": 50,
+              "value": 250,
+            },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 500,
             },
           ],
           "descriptor": {
             "description": "Canister compute allocation percentage",
             "name": "ic_canister_compute_allocation_percent",
-            "unit": "%",
+            "unit": "percent-seconds",
             "valueType": 0,
           },
-          "isMonotonic": false,
+          "isMonotonic": true,
         },
         {
           "aggregationTemporality": 1,
@@ -530,6 +616,20 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
                 0,
               ],
               "value": 10000000,
+            },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 20000000,
             },
           ],
           "descriptor": {
@@ -558,11 +658,25 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
               ],
               "value": 5000,
             },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 10000,
+            },
           ],
           "descriptor": {
             "description": "Total bytes of ingress induction including the base price represented as bytes",
             "name": "ic_canister_ingress_induction_bytes_total",
-            "unit": "By",
+            "unit": "bytes",
             "valueType": 0,
           },
           "isMonotonic": true,
@@ -584,6 +698,20 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
                 0,
               ],
               "value": 30000000000,
+            },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 60000000000,
             },
           ],
           "descriptor": {
@@ -612,11 +740,25 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
               ],
               "value": 15,
             },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 30,
+            },
           ],
           "descriptor": {
             "description": "Total compute time in seconds (2b instructions = 1s)",
             "name": "ic_canister_compute_time_seconds_total",
-            "unit": "s",
+            "unit": "seconds",
             "valueType": 0,
           },
           "isMonotonic": true,
@@ -638,6 +780,20 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
                 0,
               ],
               "value": 10000000,
+            },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 20000000,
             },
           ],
           "descriptor": {
@@ -666,11 +822,25 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
               ],
               "value": 10000,
             },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 20000,
+            },
           ],
           "descriptor": {
             "description": "Total bytes of request and response transmission including the base price represented as bytes",
             "name": "ic_canister_transmission_bytes_total",
-            "unit": "By",
+            "unit": "bytes",
             "valueType": 0,
           },
           "isMonotonic": true,
@@ -692,6 +862,20 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
                 0,
               ],
               "value": 50000000,
+            },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 100000000,
             },
           ],
           "descriptor": {
@@ -720,11 +904,25 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
               ],
               "value": 10,
             },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 20,
+            },
           ],
           "descriptor": {
             "description": "Total uninstalls",
             "name": "ic_canister_uninstalls_total",
-            "unit": "{uninstalls}",
+            "unit": "count",
             "valueType": 0,
           },
           "isMonotonic": true,
@@ -746,6 +944,20 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
                 0,
               ],
               "value": 10400000,
+            },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 20800000,
             },
           ],
           "descriptor": {
@@ -773,6 +985,20 @@ exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are r
                 0,
               ],
               "value": 1000000000000,
+            },
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1010000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 2000000000000,
             },
           ],
           "descriptor": {
