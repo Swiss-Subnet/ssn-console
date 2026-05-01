@@ -46,40 +46,50 @@ describe('sync-cycles-monitor-metrics', () => {
   });
 
   it('syncs metrics properly when snapshots are returned', async () => {
+    const time1 = 1_000_000_000_000n; // 1000 seconds
+    const time2 = 1_005_000_000_000n; // 1005 seconds, delta = 5 seconds
+
     mockListMetricsAfter
       .mockResolvedValueOnce({
         Ok: {
           snapshots: [
             {
-              timestamp_ns: 1000n,
+              timestamp_ns: time1,
               canister_id: 'aaaaa-aa',
-              memory: 100n,
-              compute_allocation: 101n,
-              ingress_induction: 102n,
-              instructions: 103n,
-              request_and_response_transmission: 104n,
-              uninstall: 105n,
-              http_outcalls: 106n,
-              burned_cycles: 107n,
+              memory: 0n,
+              compute_allocation: 0n,
+              ingress_induction: 0n,
+              instructions: 0n,
+              request_and_response_transmission: 0n,
+              uninstall: 0n,
+              http_outcalls: 0n,
+              burned_cycles: 0n,
             },
           ],
-          next_cursor: [{ timestamp_ns: 1000n, canister_id: 'aaaaa-aa' }],
+          next_cursor: [{ timestamp_ns: time1, canister_id: 'aaaaa-aa' }],
         },
       })
       .mockResolvedValueOnce({
         Ok: {
           snapshots: [
             {
-              timestamp_ns: 1001n,
+              timestamp_ns: time2,
               canister_id: 'aaaaa-aa',
-              memory: 200n,
-              compute_allocation: 201n,
-              ingress_induction: 202n,
-              instructions: 203n,
-              request_and_response_transmission: 204n,
-              uninstall: 205n,
-              http_outcalls: 206n,
-              burned_cycles: 207n,
+              // delta: 1,270,000 cycles / (5s * 127k) = 2 GB
+              memory: 1_270_000n,
+              // delta: 2.5B cycles / (5s * 10M) = 50%
+              compute_allocation: 2_500_000_000n,
+              // total: 10M / 2000 = 5000 bytes
+              ingress_induction: 10_000_000n,
+              instructions: 0n,
+              // total: 10M / 1000 = 10000 bytes
+              request_and_response_transmission: 10_000_000n,
+              // total: 50M / 5M = 10 uninstalls
+              uninstall: 50_000_000n,
+              // total: 10.4M / 10400 = 1000 bytes
+              http_outcalls: 10_400_000n,
+              // total: 1T / 1T * 1.35 = 1.35 USD
+              burned_cycles: 1_000_000_000_000n,
             },
           ],
           next_cursor: [],
@@ -102,20 +112,40 @@ describe('sync-cycles-monitor-metrics', () => {
 
     // Check pagination cursor
     expect(mockListMetricsAfter).toHaveBeenNthCalledWith(2, {
-      cursor: [{ timestamp_ns: 1000n, canister_id: 'aaaaa-aa' }],
+      cursor: [{ timestamp_ns: time1, canister_id: 'aaaaa-aa' }],
     });
 
     expect(mockPushMetrics).toHaveBeenCalledTimes(2);
 
-    const passedPayload = mockPushMetrics.mock.calls[0]?.[0];
-    expect(passedPayload).toBeDefined();
-    if (!passedPayload) return;
+    // Payload 1 (only base metrics and counters, no gauges since delta relies on prev point)
+    const payload1 = mockPushMetrics.mock.calls[0]?.[0];
+    expect(payload1).toBeDefined();
+    expect(payload1.scopeMetrics?.[0]?.metrics?.length).toBe(13); // 8 base + 5 derived definitions (some have empty dataPoints)
 
-    // Check some structure of the OTLP payload
-    expect(passedPayload.resource).toBeDefined();
-    expect(passedPayload.scopeMetrics).toBeDefined();
-    expect(passedPayload.scopeMetrics?.length).toBe(1);
-    expect(passedPayload.scopeMetrics?.[0]?.metrics?.length).toBe(8); // 8 metrics buckets
+    // Payload 2 (has previous point, so derives gauges as well)
+    const payload2 = mockPushMetrics.mock.calls[1]?.[0];
+    expect(payload2).toBeDefined();
+    const metrics2 = payload2.scopeMetrics?.[0]?.metrics;
+    expect(metrics2).toBeDefined();
+
+    // We expect 8 base + 5 derived = 13 metrics
+    expect(metrics2?.length).toBe(13);
+
+    const getMetricValue = (name: string) => {
+      const metric = metrics2?.find((m: any) => m.descriptor.name === name);
+      return metric?.dataPoints[0]?.value;
+    };
+
+    // Assert specific derived values
+    expect(getMetricValue('ic_canister_memory_bytes')).toBe(
+      2 * 1024 * 1024 * 1024,
+    );
+    expect(getMetricValue('ic_canister_compute_allocation_percent')).toBe(50);
+    expect(getMetricValue('ic_canister_ingress_induction_bytes_total')).toBe(
+      5000,
+    );
+    expect(getMetricValue('ic_canister_transmission_bytes_total')).toBe(10000);
+    expect(getMetricValue('ic_canister_uninstalls_total')).toBe(10);
   });
 
   it('does nothing when no new metrics are returned', async () => {
