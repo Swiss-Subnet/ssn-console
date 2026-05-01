@@ -6,6 +6,7 @@ import {
 } from '@ssn/backend-api';
 import { resolve } from 'node:path';
 import { Principal } from '@icp-sdk/core/principal';
+import { Ed25519KeyIdentity } from '@icp-sdk/core/identity';
 import { ProposalDriver } from './proposal-driver';
 import * as crypto from 'node:crypto';
 import { UserDriver } from './user-driver';
@@ -34,6 +35,9 @@ export const PUBLIC_KEY = publicKey
   .toString()
   .trim();
 export const PRIVATE_KEY = privateKey;
+const secret = privateKey.export({ type: 'pkcs8', format: 'der' });
+const seed = new Uint8Array((secret as Buffer).slice(16));
+export const offchainIdentity = Ed25519KeyIdentity.fromSecretKey(seed);
 
 import { createIdentity } from '@dfinity/pic';
 

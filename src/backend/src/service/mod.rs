@@ -13,4 +13,5 @@ pub mod staff_permissions_service;
 pub mod team_service;
 pub mod terms_and_conditions_service;
 pub mod trusted_partner_service;
+pub mod usage_service;
 pub mod user_profile_service;

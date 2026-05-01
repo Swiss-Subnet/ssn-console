@@ -151,6 +151,9 @@ pub(super) const PRINCIPAL_CANISTER_INDEX_MEMORY_ID: MemoryId = region(38);
 pub(super) const USER_PRINCIPAL_NAME_MEMORY_ID: MemoryId = region(39);
 pub(super) const USER_PROFILE_VERIFIED_EMAIL_INDEX_MEMORY_ID: MemoryId = region(40);
 
+pub(super) const CANISTER_USAGE_MEMORY_ID: MemoryId = MemoryId::new(41);
+pub(super) const PROJECT_USAGE_MEMORY_ID: MemoryId = MemoryId::new(42);
+
 // Returns a size snapshot for every memory id in REGIONS.
 pub fn memory_metrics() -> Vec<MemoryRegionMetric> {
     REGIONS
