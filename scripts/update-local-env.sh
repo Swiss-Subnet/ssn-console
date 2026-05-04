@@ -5,6 +5,28 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+CANISTER_HISTORY_ID=$(dfx canister id canister-history --network local)
+CYCLES_MONITOR_ID=$(dfx canister id cycles-monitor --network local)
+
+echo
+echo "⚙️ Updating cycles-monitor canister env var CANISTER_HISTORY_ID..."
+
+dfx canister call aaaaa-aa update_settings "(
+  record {
+    canister_id = principal \"$CYCLES_MONITOR_ID\";
+    settings = record {
+      environment_variables = opt vec {
+        record {
+          name = \"CANISTER_HISTORY_ID\";
+          value = \"$CANISTER_HISTORY_ID\";
+        };
+      };
+    };
+  }
+)" --network local
+
+echo "✅ cycles-monitor canister env var updated!"
+
 if [ ! -f .env.local ]; then
   echo
   echo "💢 .env.local file not found; skipping PUBLIC_KEY injection"
