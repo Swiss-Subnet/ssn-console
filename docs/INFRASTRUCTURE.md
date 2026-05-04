@@ -36,6 +36,7 @@ Create a `.env.test` and `.env.prod` files with the following variables:
 KEY_FILE="${KEY_FILE}"
 REMOTE_USER="${REMOTE_USER}"
 REMOTE_HOST="${REMOTE_HOST}"
+ELASTIC_IP="${ELASTIC_IP}" # this should only be set for VPSs that have an assigned elastic IP address (i.e. prod)
 CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
 
 PRIVATE_KEY="${PRIVATE_KEY}"
@@ -59,6 +60,28 @@ GRAFANA_HOSTED_LOGS_URL="${GRAFANA_HOSTED_LOGS_URL}"
 GRAFANA_HOSTED_LOGS_ID="${GRAFANA_HOSTED_LOGS_ID}"
 GRAFANA_RW_API_KEY="${GRAFANA_RW_API_KEY}"
 ```
+
+### VPS Setup
+
+VPS are setup on Exoscale.
+
+- Name: `${ENV}-${ZONE}-${NUM}` e.g. `dev-dk-2-1`, `prod-dk-2-1`.
+- Rocky Linux OS (Alma and RHEL would also work).
+- Zone: `CH-DK-2`
+- Standard, tiny server. (1 CPU / 1 GB RAM).
+- Disk size: 50 GB.
+- Assign the appropriate SSH key.
+- Add the HTTP and SSH security groups.
+
+HTTP Security Group ports:
+
+- 80/tcp
+- 443/tcp
+- 443/udp
+
+SSH Security Group ports:
+
+- 22/tcp
 
 ### Test Server
 
@@ -152,6 +175,9 @@ The infrastructure and deployment utilize the following core tools and technolog
 - **Caddy**: Serves as the reverse proxy. It routes traffic to the backend containers and handles automatic TLS certificate provisioning using the Cloudflare DNS challenge.
 - **SELinux**: Enforces strict security boundaries and access controls for the containers through custom `.cil` policies.
 - **Bun & ElysiaJS**: The `offchain-service` is built using the Bun runtime/bundler and the ElysiaJS web framework, compiling into a standalone binary for the container.
+- **Grafana Alloy**: Installed as a system service to collect and forward telemetry data (metrics, logs, and traces).
+- **Fail2ban**: Secures the host against SSH brute-force attacks.
+- **dnf-automatic**: Automatically applies security updates to keep the underlying OS secure.
 
 ## Architecture Diagram
 
@@ -159,21 +185,25 @@ The following diagram illustrates the relationship between the infrastructure co
 
 ```mermaid
 graph TD
-    Client((Client)) -->|HTTPS / 443| Firewalld
+  Client((Client)) -->|HTTPS / 443| Firewalld
 
-    subgraph Server [Host Server]
-        Firewalld[Firewalld] -->|Traffic Routing| Caddy
-        Systemd[Systemd via Quadlets] -->|Manages| Podman[Podman Runtime]
-        SELinux[SELinux Policies] -.->|Enforces Security| Containers
+  subgraph Server [Host Server]
+    Firewalld[Firewalld] --->|Traffic Routing| Caddy
+    Alloy[Grafana Alloy] --->|Collects Telemetry| Containers
+    SELinux[SELinux Policies] --->|Enforces Security| Containers
 
-        subgraph Containers [Podman Network: app.network]
-            Caddy[Caddy Reverse Proxy]
-            OffchainService[Offchain Service]
-        end
+    subgraph Containers [Containers]
+      subgraph CaddyContainer [Caddy Container]
+        Caddy[Caddy Reverse Proxy]
+      end
 
-        Podman -.-> Containers
-        Caddy -->|Proxies Requests| OffchainService
+      subgraph OffchainServiceContainer [Offchain Service Container]
+        OffchainService[Offchain Service]
+      end
     end
+  end
 
-    Caddy -.->|TLS DNS Challenge| Cloudflare[(Cloudflare API)]
+  Caddy -->|Proxies Requests| OffchainService
+  Caddy -.->|TLS DNS Challenge| Cloudflare[(Cloudflare API)]
+  Alloy -.->|Exports Data| GrafanaCloud[(Grafana Cloud)]
 ```
