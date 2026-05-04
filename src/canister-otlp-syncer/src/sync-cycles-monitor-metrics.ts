@@ -125,7 +125,7 @@ type MetricBucket = {
 
 type BaseMetrics = Record<MetricKey, MetricBucket>;
 
-// https://docs.internetcomputer.org/reference/cycles-costs
+// https://docs.internetcomputer.org/references/cycles-costs
 const CYCLES_PER_GB_PER_SECOND = 127_000n;
 const CYCLES_PER_PERCENT_COMPUTE_PER_SECOND = 10_000_000n;
 
@@ -136,6 +136,10 @@ const CYCLES_PER_INGRESS_BYTE = 2_000n;
 // 260_000 is the base price for an xnet message, this is included in the
 // bytes calculation so there is a 260 "byte" base price per xnet message.
 const CYCLES_PER_TRANSMISSION_BYTE = 1_000n;
+
+// The Internet Computer executes about 2 billion instructions per second.
+// At a cost of 1 cycle per instruction, 1 second of compute costs 2,000,000,000 cycles.
+const CYCLES_PER_SECOND_OF_COMPUTE = 2_000_000_000n;
 
 const CYCLES_PER_UNINSTALL = 5_000_000n;
 
@@ -160,8 +164,8 @@ function buildOtlpPayload(
         valueType: ValueType.INT,
         dataPoints: [],
         formula: (deltaCycles, deltaSeconds) =>
-          (deltaCycles / BigInt(deltaSeconds * CYCLES_PER_GB_PER_SECOND)) *
-          BYTES_PER_GB,
+          (deltaCycles * BYTES_PER_GB) /
+          (deltaSeconds * CYCLES_PER_GB_PER_SECOND),
       },
     },
     compute_allocation: {
@@ -175,7 +179,7 @@ function buildOtlpPayload(
         description: 'Canister compute allocation percentage',
         type: DataPointType.GAUGE,
         unit: '%',
-        valueType: ValueType.DOUBLE,
+        valueType: ValueType.INT,
         dataPoints: [],
         formula: (deltaCycles, deltaSeconds) =>
           deltaCycles / (deltaSeconds * CYCLES_PER_PERCENT_COMPUTE_PER_SECOND),
@@ -203,6 +207,15 @@ function buildOtlpPayload(
         name: 'ic_canister_instructions_cycles_total',
         description: 'Cumulative cycles burned for instructions',
         dataPoints: [],
+      },
+      derived: {
+        name: 'ic_canister_compute_time_seconds_total',
+        description: 'Total compute time in seconds (2b instructions = 1s)',
+        type: DataPointType.SUM,
+        unit: 's',
+        valueType: ValueType.INT,
+        dataPoints: [],
+        formula: cycles => cycles / CYCLES_PER_SECOND_OF_COMPUTE,
       },
     },
     request_and_response_transmission: {

@@ -1,0 +1,793 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are returned 1`] = `
+{
+  "resource": ResourceImpl {
+    "_asyncAttributesPending": false,
+    "_memoizedAttributes": undefined,
+    "_rawAttributes": [
+      [
+        "service.namespace",
+        "ssn",
+      ],
+      [
+        "service.name",
+        "canister-otlp-syncer",
+      ],
+      [
+        "deployment.environment",
+        "test",
+      ],
+    ],
+    "_schemaUrl": undefined,
+  },
+  "scopeMetrics": [
+    {
+      "metrics": [
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for memory",
+            "name": "ic_canister_memory_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 2,
+          "dataPoints": [],
+          "descriptor": {
+            "description": "Canister memory in bytes",
+            "name": "ic_canister_memory_bytes",
+            "unit": "By",
+            "valueType": 0,
+          },
+          "isMonotonic": false,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for compute allocation",
+            "name": "ic_canister_compute_allocation_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 2,
+          "dataPoints": [],
+          "descriptor": {
+            "description": "Canister compute allocation percentage",
+            "name": "ic_canister_compute_allocation_percent",
+            "unit": "%",
+            "valueType": 0,
+          },
+          "isMonotonic": false,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for ingress induction",
+            "name": "ic_canister_ingress_induction_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Total bytes of ingress induction including the base price represented as bytes",
+            "name": "ic_canister_ingress_induction_bytes_total",
+            "unit": "By",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for instructions",
+            "name": "ic_canister_instructions_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Total compute time in seconds (2b instructions = 1s)",
+            "name": "ic_canister_compute_time_seconds_total",
+            "unit": "s",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for request and response transmission",
+            "name": "ic_canister_request_response_transmission_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Total bytes of request and response transmission including the base price represented as bytes",
+            "name": "ic_canister_transmission_bytes_total",
+            "unit": "By",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for uninstall",
+            "name": "ic_canister_uninstall_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Total uninstalls",
+            "name": "ic_canister_uninstalls_total",
+            "unit": "{uninstalls}",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for HTTP outcalls",
+            "name": "ic_canister_http_outcalls_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1000000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 0,
+            },
+          ],
+          "descriptor": {
+            "description": "Total cumulative burned cycles",
+            "name": "ic_canister_burned_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+      ],
+      "scope": {
+        "name": "canister-otlp-syncer",
+      },
+    },
+  ],
+}
+`;
+
+exports[`sync-cycles-monitor-metrics syncs metrics properly when snapshots are returned 2`] = `
+{
+  "resource": ResourceImpl {
+    "_asyncAttributesPending": false,
+    "_memoizedAttributes": undefined,
+    "_rawAttributes": [
+      [
+        "service.namespace",
+        "ssn",
+      ],
+      [
+        "service.name",
+        "canister-otlp-syncer",
+      ],
+      [
+        "deployment.environment",
+        "test",
+      ],
+    ],
+    "_schemaUrl": undefined,
+  },
+  "scopeMetrics": [
+    {
+      "metrics": [
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 1270000,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for memory",
+            "name": "ic_canister_memory_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 2,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                1000000000000,
+              ],
+              "value": 2147483648,
+            },
+          ],
+          "descriptor": {
+            "description": "Canister memory in bytes",
+            "name": "ic_canister_memory_bytes",
+            "unit": "By",
+            "valueType": 0,
+          },
+          "isMonotonic": false,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 2500000000,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for compute allocation",
+            "name": "ic_canister_compute_allocation_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 2,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                1000000000000,
+              ],
+              "value": 50,
+            },
+          ],
+          "descriptor": {
+            "description": "Canister compute allocation percentage",
+            "name": "ic_canister_compute_allocation_percent",
+            "unit": "%",
+            "valueType": 0,
+          },
+          "isMonotonic": false,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 10000000,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for ingress induction",
+            "name": "ic_canister_ingress_induction_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 5000,
+            },
+          ],
+          "descriptor": {
+            "description": "Total bytes of ingress induction including the base price represented as bytes",
+            "name": "ic_canister_ingress_induction_bytes_total",
+            "unit": "By",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 30000000000,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for instructions",
+            "name": "ic_canister_instructions_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 15,
+            },
+          ],
+          "descriptor": {
+            "description": "Total compute time in seconds (2b instructions = 1s)",
+            "name": "ic_canister_compute_time_seconds_total",
+            "unit": "s",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 10000000,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for request and response transmission",
+            "name": "ic_canister_request_response_transmission_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 10000,
+            },
+          ],
+          "descriptor": {
+            "description": "Total bytes of request and response transmission including the base price represented as bytes",
+            "name": "ic_canister_transmission_bytes_total",
+            "unit": "By",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 50000000,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for uninstall",
+            "name": "ic_canister_uninstall_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 10,
+            },
+          ],
+          "descriptor": {
+            "description": "Total uninstalls",
+            "name": "ic_canister_uninstalls_total",
+            "unit": "{uninstalls}",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 10400000,
+            },
+          ],
+          "descriptor": {
+            "description": "Cumulative cycles burned for HTTP outcalls",
+            "name": "ic_canister_http_outcalls_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+        {
+          "aggregationTemporality": 1,
+          "dataPointType": 3,
+          "dataPoints": [
+            {
+              "attributes": {
+                "canister_id": "aaaaa-aa",
+              },
+              "endTime": [
+                0,
+                1005000000000,
+              ],
+              "startTime": [
+                0,
+                0,
+              ],
+              "value": 1000000000000,
+            },
+          ],
+          "descriptor": {
+            "description": "Total cumulative burned cycles",
+            "name": "ic_canister_burned_cycles_total",
+            "unit": "cycles",
+            "valueType": 0,
+          },
+          "isMonotonic": true,
+        },
+      ],
+      "scope": {
+        "name": "canister-otlp-syncer",
+      },
+    },
+  ],
+}
+`;
