@@ -43,7 +43,7 @@ const CreateTeam = lazy(
 const TeamSettings = lazy(
   () => import('@/routes/organizations/teams/team-settings'),
 );
-const UserCanisters = lazy(() => import('@/routes/admin/user-canisters'));
+const UserDetail = lazy(() => import('@/routes/admin/user-detail'));
 const ProjectList = lazy(
   () => import('@/routes/organizations/projects/project-list'),
 );
@@ -114,10 +114,7 @@ export const Router: FC = () => (
             />
             <Route path="staff" element={<StaffTab />} />
           </Route>
-          <Route
-            path="admin/users/:userId/canisters"
-            element={<UserCanisters />}
-          />
+          <Route path="admin/users/:userId" element={<UserDetail />} />
         </Route>
       </Route>
     </Routes>
