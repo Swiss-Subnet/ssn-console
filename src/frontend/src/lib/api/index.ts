@@ -6,6 +6,7 @@ export * from './invite';
 export * from './management-canister';
 export * from './organization';
 export * from './project';
+export * from './staff-permissions';
 export * from './team';
 export * from './terms-and-conditions';
 export * from './trusted-partner';

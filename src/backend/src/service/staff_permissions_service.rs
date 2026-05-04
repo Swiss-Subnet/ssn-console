@@ -1,9 +1,10 @@
 use crate::{
     data::{self, user_profile_repository},
     dto::{
-        GetMyStaffPermissionsResponse, GrantStaffPermissionsRequest, RevokeStaffPermissionsRequest,
+        GetMyStaffPermissionsResponse, GrantStaffPermissionsRequest, ListStaffResponse,
+        RevokeStaffPermissionsRequest,
     },
-    mapping::{map_staff_permissions, map_staff_permissions_from_dto},
+    mapping::{map_list_staff_response, map_staff_permissions, map_staff_permissions_from_dto},
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
@@ -57,4 +58,17 @@ pub fn get_my_staff_permissions(caller: &Principal) -> GetMyStaffPermissionsResp
     user_profile_repository::get_user_profile_by_principal(caller)
         .and_then(|(_, profile)| profile.staff_permissions)
         .map(map_staff_permissions)
+}
+
+// Returns every user with non-empty staff_permissions. Caller authorisation
+// lives in the controller layer (controller key required); this service
+// trusts it has been performed. Kept on its own surface, separate from the
+// general user listing, so the staff projection cannot leak through any
+// future relaxation of user-listing auth.
+pub fn list_staff() -> ListStaffResponse {
+    let profiles = user_profile_repository::list_user_profiles()
+        .into_iter()
+        .map(|(id, profile, _principals)| (id, profile))
+        .collect();
+    map_list_staff_response(profiles)
 }

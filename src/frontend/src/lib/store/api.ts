@@ -8,6 +8,7 @@ import {
   CanisterApi,
   CanisterHistoryApi,
   ProposalApi,
+  StaffPermissionsApi,
   TrustedPartnerApi,
   UserProfileApi,
   ManagementCanisterApi,
@@ -64,6 +65,7 @@ const managementCanisterApi = new ManagementCanisterApi(
   managementCanisterActor,
 );
 const trustedPartnerApi = new TrustedPartnerApi(actor);
+const staffPermissionsApi = new StaffPermissionsApi(actor);
 const termsAndConditionsApi = new TermsAndConditionsApi(actor);
 const projectApi = new ProjectApi(actor);
 const organizationApi = new OrganizationApi(actor);
@@ -82,6 +84,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
   canisterHistoryApi,
   managementCanisterApi,
   trustedPartnerApi,
+  staffPermissionsApi,
   termsAndConditionsApi,
   projectApi,
   organizationApi,

@@ -31,8 +31,24 @@ type GetMyStaffPermissionsResponse = variant {
   Err : ApiError;
 };
 
+type ListStaffRequest = record {};
+
+type ListStaffResponse = variant {
+  Ok : vec StaffMember;
+  Err : ApiError;
+};
+
+type StaffMember = record {
+  user_id : text;
+  email : opt text;
+  email_verified : bool;
+  status : UserStatus;
+  permissions : StaffPermissions;
+};
+
 service : {
   get_my_staff_permissions : (GetMyStaffPermissionsRequest) -> (GetMyStaffPermissionsResponse) query;
   grant_staff_permissions : (GrantStaffPermissionsRequest) -> (GrantStaffPermissionsResponse);
   revoke_staff_permissions : (RevokeStaffPermissionsRequest) -> (RevokeStaffPermissionsResponse);
+  list_staff : (ListStaffRequest) -> (ListStaffResponse) query;
 };

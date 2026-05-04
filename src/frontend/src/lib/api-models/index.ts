@@ -8,6 +8,7 @@ export * from './organization';
 export * from './permissions';
 export * from './project';
 export * from './proposal';
+export * from './staff-permissions';
 export * from './team';
 export * from './terms-and-conditions';
 export * from './trusted-partner';
