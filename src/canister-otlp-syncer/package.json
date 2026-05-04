@@ -1,0 +1,17 @@
+{
+  "name": "canister-otlp-syncer",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "bun --bun ./build.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@ssn/cycles-monitor-api": "workspace:*",
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/otlp-transformer": "^0.215.0",
+    "@opentelemetry/resources": "^2.7.0",
+    "@opentelemetry/sdk-metrics": "^2.7.0",
+    "@opentelemetry/semantic-conventions": "^1.40.0"
+  }
+}

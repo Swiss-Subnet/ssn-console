@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  offchainIdentity,
   TestDriver,
   unauthenticatedError,
   unauthorizedError,
@@ -98,7 +99,8 @@ describe('Cycles Monitor', () => {
         cursor: [],
       });
 
-      expect(res).toEqual(unauthenticatedError);
+      expect('Err' in res).toBe(true);
+      expect((res as any).Err.code[0]).toHaveProperty('Unauthorized');
     });
 
     it('should reject non-controller calls', async () => {
@@ -108,7 +110,18 @@ describe('Cycles Monitor', () => {
         cursor: [],
       });
 
-      expect(res).toEqual(unauthorizedError);
+      expect('Err' in res).toBe(true);
+      expect((res as any).Err.code[0]).toHaveProperty('Unauthorized');
+    });
+
+    it('should return metrics for public key identity', async () => {
+      driver.cyclesMonitorActor.setIdentity(offchainIdentity);
+      const res = await driver.cyclesMonitorActor.list_metrics_after({
+        cursor: [],
+      });
+
+      const okRes = extractOkResponse(res);
+      expect(Array.isArray(okRes.snapshots)).toBe(true);
     });
 
     it('should return metrics for controller', async () => {

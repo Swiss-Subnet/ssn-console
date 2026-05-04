@@ -10,6 +10,17 @@ import {
   setupCanisterHistoryCanister,
   setupCyclesMonitorCanister,
 } from '@ssn/test-utils';
+import * as crypto from 'node:crypto';
+import { Ed25519KeyIdentity } from '@icp-sdk/core/identity';
+
+const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+export const PUBLIC_KEY = publicKey
+  .export({ type: 'spki', format: 'pem' })
+  .toString()
+  .trim();
+const secret = privateKey.export({ type: 'pkcs8', format: 'der' });
+const seed = new Uint8Array((secret as Buffer).slice(16));
+export const offchainIdentity = Ed25519KeyIdentity.fromSecretKey(seed);
 
 export class TestDriver extends BaseTestDriver {
   public get cyclesMonitorActor(): Actor<CyclesMonitorService> {
@@ -43,6 +54,10 @@ export class TestDriver extends BaseTestDriver {
       {
         name: 'CANISTER_HISTORY_ID',
         value: canisterHistoryFixture.canisterId.toString(),
+      },
+      {
+        name: 'PUBLIC_KEY',
+        value: PUBLIC_KEY,
       },
     ]);
 

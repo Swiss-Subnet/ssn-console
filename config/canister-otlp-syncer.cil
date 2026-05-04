@@ -1,0 +1,3 @@
+(block canister-otlp-syncer
+    (blockinherit container)
+)

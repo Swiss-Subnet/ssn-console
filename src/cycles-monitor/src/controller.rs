@@ -31,6 +31,7 @@ fn post_upgrade() {
 
 fn check_env_vars() {
     env::init_canister_history_id();
+    env::init_public_key();
 }
 
 #[update]
@@ -53,8 +54,15 @@ fn trigger_sync_metrics(
 #[update]
 fn list_metrics_after(req: ListMetricsAfterRequest) -> ApiResultDto<ListMetricsAfterResponse> {
     let caller = msg_caller();
-    if let Err(err) = assert_controller(&caller) {
-        return ApiResultDto::Err(err);
+    let expected_principal = env::get_public_key_principal();
+
+    let is_expected_principal = caller == expected_principal;
+    let is_controller = assert_controller(&caller).is_ok();
+
+    if !is_expected_principal && !is_controller {
+        return ApiResultDto::Err(canister_utils::ApiError::unauthorized(
+            "Unauthorized".to_string(),
+        ));
     }
 
     ApiResultDto::Ok(service::list_metrics_after(req, MAX_SNAPSHOTS_PER_RESPONSE))

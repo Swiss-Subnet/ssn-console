@@ -1,6 +1,11 @@
 FROM docker.io/oven/bun:1 AS build
 
+RUN apt-get update && apt-get install -y curl \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
 WORKDIR /app
+ENV NODE_ENV=production
 
 COPY package.json package.json
 COPY bun.lock bun.lock
@@ -21,25 +26,18 @@ COPY /src/test-utils/package.json ./src/test-utils/package.json
 
 RUN bun i --frozen-lockfile
 
-COPY /src/offchain-service ./src/offchain-service
+COPY turbo.json ./
+COPY /src/cycles-monitor-api ./src/cycles-monitor-api
+COPY /src/canister-utils ./src/canister-utils
+COPY /src/canister-otlp-syncer ./src/canister-otlp-syncer
 
-ENV NODE_ENV=production
-
-RUN bun build \
-  --compile \
-	--minify-whitespace \
-	--minify-syntax \
-	--outfile server \
-	./src/offchain-service/src/index.ts
+RUN bun turbo -F canister-otlp-syncer build
 
 FROM gcr.io/distroless/base
 
 WORKDIR /app
-
-COPY --from=build /app/server server
-
 ENV NODE_ENV=production
 
-CMD ["./server"]
+COPY --from=build /app/src/canister-otlp-syncer/dist/main main
 
-EXPOSE 3000
+CMD ["./main"]
