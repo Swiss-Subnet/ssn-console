@@ -110,6 +110,8 @@ export CANISTER_OTLP_SYNCER_TIMER_PATH="${CONFIG_INPUT_DIR}/canister-otlp-syncer
 
 export REMOTE_CANISTER_OTLP_SYNCER_TAR_PATH="${REMOTE_IMAGE_DIR}/${CANISTER_OTLP_SYNCER_TAR_NAME}"
 export REMOTE_CANISTER_OTLP_SYNCER_TIMER_PATH="${REMOTE_SYSTEMD_DIR}/canister-otlp-syncer.timer"
+export REMOTE_CANISTER_OTLP_SYNCER_DIR="${REMOTE_VOLUME_DIR}/canister-otlp-syncer"
+export REMOTE_CANISTER_OTLP_SYNCER_DATA_DIR="${REMOTE_CANISTER_OTLP_SYNCER_DIR}/data"
 
 # --- Grafana Alloy Variables ---
 
@@ -150,6 +152,10 @@ ssh_run "mkdir -p ${REMOTE_CADDY_CONFIG_DIR}"
 echo
 echo "📂 --- Ensuring the remote Caddy data directory exists. ---"
 ssh_run "mkdir -p ${REMOTE_CADDY_DATA_DIR}"
+
+echo
+echo "📂 --- Ensuring the remote Canister OTLP Syncer data directory exists. ---"
+ssh_run "mkdir -p ${REMOTE_CANISTER_OTLP_SYNCER_DATA_DIR}"
 
 # --- Clean Local Directories ---
 

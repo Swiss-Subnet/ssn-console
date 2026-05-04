@@ -11,6 +11,8 @@ Environment=HTTP_GATEWAY=https://icp-api.io
 Environment=GRAFANA_ENVIRONMENT="${GRAFANA_ENVIRONMENT}"
 Environment=OTEL_EXPORTER_OTLP_ENDPOINT="http://host.containers.internal:4318"
 
+Volume=${REMOTE_CANISTER_OTLP_SYNCER_DATA_DIR}:/data:Z
+
 [Service]
 Type=oneshot
 

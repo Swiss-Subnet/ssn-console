@@ -24,6 +24,8 @@ import {
 import { env } from './env';
 import { Principal } from '@icp-sdk/core/principal';
 
+const TIMESTAMP_FILE = '/data/.last-cycles-monitor-timestamp';
+
 export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
   const actor = Actor.createActor<_SERVICE>(idlFactory, {
     agent,
@@ -34,11 +36,17 @@ export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
     '🚀 Fetching canister cycles metrics batches from the cycles monitor canister...',
   );
 
-  const oneHourAgoMs = Date.now() - 60 * 60 * 1_000;
-  const oneHourAgoNs = BigInt(oneHourAgoMs) * 1_000_000n;
-  const minPrincipal = Principal.fromUint8Array(new Uint8Array(29));
+  let startTimestampNs: bigint;
+  try {
+    const content = await Bun.file(TIMESTAMP_FILE).text();
+    startTimestampNs = BigInt(content.trim());
+  } catch {
+    const oneHourAgoMs = Date.now() - 60 * 60 * 1_000;
+    startTimestampNs = BigInt(oneHourAgoMs) * 1_000_000n;
+  }
 
-  let cursor: Cursor = [oneHourAgoNs, minPrincipal];
+  const minPrincipal = Principal.fromUint8Array(new Uint8Array(29));
+  let cursor: Cursor = [startTimestampNs, minPrincipal];
   let totalPushed = 0;
 
   while (true) {
@@ -67,6 +75,7 @@ export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
       break;
     }
     cursor = nextCursor;
+    await Bun.write(TIMESTAMP_FILE, nextCursor[0].toString());
   }
 
   if (totalPushed === 0) {
