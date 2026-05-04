@@ -1,0 +1,22 @@
+# Mac OSX temporary files
+.DS_Store
+**/.DS_Store
+
+# dfx temporary files
+.dfx
+
+# build output
+target
+node_modules
+dist
+.turbo
+tsconfig.tsbuildinfo
+
+# environment variables
+.env*
+
+# local dev keys
+.local
+
+# deployment temporary files
+tmp

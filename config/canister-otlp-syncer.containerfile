@@ -1,43 +1,53 @@
-FROM docker.io/oven/bun:1 AS build
+## Stage 1: Prune the workspace ##
+
+FROM docker.io/oven/bun:1 AS pruner
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY . .
+RUN TURBO_TELEMETRY_DISABLED=1 && \
+  TURBO_VERSION=$(bun -e "console.log(require('./package.json').devDependencies.turbo)") && \
+  bunx turbo@$TURBO_VERSION prune canister-otlp-syncer --docker
+
+## Stage 2: Install dependencies ##
+
+FROM docker.io/oven/bun:1 AS installer
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=pruner /app/out/json/ .
+
+# install node modules using shared bun cache
+RUN --mount=type=cache,id=bun-cache,target=/root/.bun/install/cache \
+  bun install --frozen-lockfile
+
+## Stage 3: Build the application ##
+
+FROM docker.io/oven/bun:1 AS builder
+
+WORKDIR /app
+ENV NODE_ENV=production
 
 RUN apt-get update && apt-get install -y curl \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
-WORKDIR /app
-ENV NODE_ENV=production
+COPY --from=pruner /app/out/full/ .
+COPY --from=installer /app/ .
+COPY src/canister-utils/error.did ./src/canister-utils/error.did
 
-COPY package.json package.json
-COPY bun.lock bun.lock
+RUN TURBO_TELEMETRY_DISABLED=1 && \
+  bun turbo -F canister-otlp-syncer build
 
-# copy all package.json files to "cache" the `node_modules`
-COPY /src/backend-api/package.json ./src/backend-api/package.json
-COPY /src/backend-tests/package.json ./src/backend-tests/package.json
-COPY /src/canister-history-api/package.json ./src/canister-history-api/package.json
-COPY /src/canister-history-tests/package.json ./src/canister-history-tests/package.json
-COPY /src/canister-otlp-syncer/package.json ./src/canister-otlp-syncer/package.json
-COPY /src/cycles-monitor-api/package.json ./src/cycles-monitor-api/package.json
-COPY /src/cycles-monitor-tests/package.json ./src/cycles-monitor-tests/package.json
-COPY /src/frontend/package.json ./src/frontend/package.json
-COPY /src/management-canister/package.json ./src/management-canister/package.json
-COPY /src/offchain-service/package.json ./src/offchain-service/package.json
-COPY /src/scripts/package.json ./src/scripts/package.json
-COPY /src/test-utils/package.json ./src/test-utils/package.json
-
-RUN bun i --frozen-lockfile
-
-COPY turbo.json ./
-COPY /src/cycles-monitor-api ./src/cycles-monitor-api
-COPY /src/canister-utils ./src/canister-utils
-COPY /src/canister-otlp-syncer ./src/canister-otlp-syncer
-
-RUN bun turbo -F canister-otlp-syncer build
+## Stage 4: Final Image ##
 
 FROM gcr.io/distroless/base
 
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=build /app/src/canister-otlp-syncer/dist/main main
+COPY --from=builder /app .
 
-CMD ["./main"]
+CMD ["./src/canister-otlp-syncer/dist/main"]
