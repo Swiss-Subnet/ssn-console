@@ -10,6 +10,7 @@ export const useRequireAuth = (): void => {
     termsAndConditions,
   } = useAppStore();
   const isActive = useAppStore(selectIsActive);
+  const isAdmin = useAppStore(selectIsAdmin);
   const returnTo = useReturnTo();
 
   useEffect(() => {
@@ -22,7 +23,11 @@ export const useRequireAuth = (): void => {
       return;
     }
 
-    if (isNotNil(termsAndConditions) && !termsAndConditions.hasAccepted) {
+    if (
+      !isAdmin &&
+      isNotNil(termsAndConditions) &&
+      !termsAndConditions.hasAccepted
+    ) {
       returnTo('/terms-and-conditions');
       return;
     }
@@ -31,6 +36,7 @@ export const useRequireAuth = (): void => {
     isTermsAndConditionsInitialized,
     termsAndConditions,
     isActive,
+    isAdmin,
     returnTo,
   ]);
 };
