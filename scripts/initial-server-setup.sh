@@ -80,6 +80,17 @@ echo "🔎 --- Verifying unprivileged port config. ---"
 remote_assert_equals "sysctl -n net.ipv4.ip_unprivileged_port_start" "80"
 echo "✅ --- Unprivileged port config verified! ---"
 
+# --- Networking Configuration ---
+
+if [ -n "${ELASTIC_IP:-}" ]; then
+  echo
+  echo "🌐 --- Configuring Elastic IP loopback on ${REMOTE_HOST}. ---"
+  ssh_run "sudo nmcli connection add type loopback con-name loopback-elastic ifname lo || true"
+  ssh_run "sudo nmcli connection modify loopback-elastic +ipv4.addresses ${ELASTIC_IP}/32"
+  ssh_run "sudo nmcli connection up loopback-elastic"
+  ssh_run "ip addr show lo"
+fi
+
 # --- Firewall Configuration ---
 
 echo
