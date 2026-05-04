@@ -12,6 +12,8 @@ import {
 import { useAppStore } from '@/lib/store';
 import { type FC } from 'react';
 import { TermsAndConditionsForm } from '@/routes/admin/terms-and-conditions-form';
+import { TermsAndConditionsCurrent } from '@/routes/admin/terms-and-conditions-current';
+import { TermsAndConditionsTable } from '@/routes/admin/terms-and-conditions-table';
 import { Container } from '@/components/layout/container';
 
 const Admin: FC = () => {
@@ -53,7 +55,9 @@ const Admin: FC = () => {
       <TrustedPartnerForm className="mt-12" />
 
       <H2 className="mt-10">Terms and Conditions</H2>
-      <TermsAndConditionsForm className="mt-3" />
+      <TermsAndConditionsCurrent className="mt-3" />
+      <TermsAndConditionsTable className="mt-6" />
+      <TermsAndConditionsForm className="mt-6" />
     </Container>
   );
 };

@@ -20,6 +20,7 @@ import type {
   UserStatus,
   GetUserStatsResponse,
   TermsAndConditions,
+  TermsAndConditionsListItem,
   UpsertTermsAndConditionsDecisionRequest,
   CreateTermsAndConditionsRequest,
   Organization,
@@ -165,9 +166,11 @@ export type TrustedPartnersSlice = {
 export type TermsAndConditionsSlice = {
   isTermsAndConditionsInitialized: boolean;
   termsAndConditions: TermsAndConditions | null;
+  termsAndConditionsHistory: TermsAndConditionsListItem[] | null;
 
   initializeTermsAndConditions: () => Promise<void>;
   clearTermsAndConditions: () => void;
+  refreshTermsAndConditionsHistory: () => Promise<void>;
   upsertTermsAndConditionsDecision: (
     req: UpsertTermsAndConditionsDecisionRequest,
   ) => Promise<void>;

@@ -1,8 +1,9 @@
 use crate::{
     data::{self},
     dto::{
-        CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse, TermsAndConditions,
-        TermsAndConditionsDecisionType, UpsertTermsAndConditionsDecisionRequest,
+        CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse,
+        ListTermsAndConditionsResponse, TermsAndConditions, TermsAndConditionsDecisionType,
+        TermsAndConditionsListItem, UpsertTermsAndConditionsDecisionRequest,
     },
 };
 use canister_utils::{ApiResult, Uuid};
@@ -17,6 +18,21 @@ pub fn map_get_latest_terms_and_conditions_response(
         comment: res.comment,
         has_accepted,
     })
+}
+
+pub fn map_list_terms_and_conditions_response(
+    items: Vec<(Uuid, data::TermsAndConditions)>,
+) -> ListTermsAndConditionsResponse {
+    items
+        .into_iter()
+        .map(|(id, t)| TermsAndConditionsListItem {
+            id: id.to_string(),
+            content: t.content,
+            comment: t.comment,
+            created_at: t.created_at,
+            created_by: t.created_by.to_string(),
+        })
+        .collect()
 }
 
 pub fn map_create_terms_and_conditions_decision_request(

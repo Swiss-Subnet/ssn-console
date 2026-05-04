@@ -10,6 +10,18 @@ use crate::data::{
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
+// Returns versions ordered ascending by created_at. The stable BTreeSet iter
+// is forward-only (no DoubleEndedIterator), so callers that want newest-first
+// reverse on their end.
+pub fn list_terms_and_conditions() -> Vec<(Uuid, TermsAndConditions)> {
+    with_state(|s| {
+        s.terms_and_conditions_created_at_index
+            .iter()
+            .filter_map(|(_, id)| s.terms_and_conditions.get(&id).map(|t| (id, t)))
+            .collect()
+    })
+}
+
 pub fn get_latest_terms_and_conditions(user_id: Uuid) -> Option<(Uuid, TermsAndConditions, bool)> {
     let latest_id = get_latest_terms_and_condition_id()?;
 

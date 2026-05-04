@@ -1,10 +1,12 @@
 import {
   mapCreateTermsAndConditionsRequest,
   mapGetLatestTermsAndConditionForUserResponse,
+  mapListTermsAndConditionsResponse,
   mapOkResponse,
   mapUpsertTermsAndConditionsDecisionRequest,
   type CreateTermsAndConditionsRequest,
   type GetLatestTermsAndConditionsResponse,
+  type TermsAndConditionsListItem,
   type UpsertTermsAndConditionsDecisionRequest,
 } from '@/lib/api-models';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
@@ -17,6 +19,12 @@ export class TermsAndConditionsApi {
     const res = await this.actor.get_latest_terms_and_conditions();
 
     return mapGetLatestTermsAndConditionForUserResponse(res);
+  }
+
+  public async listTermsAndConditions(): Promise<TermsAndConditionsListItem[]> {
+    const res = await this.actor.list_terms_and_conditions();
+
+    return mapListTermsAndConditionsResponse(res);
   }
 
   public async upsertTermsAndConditionsDecision(
