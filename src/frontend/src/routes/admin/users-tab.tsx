@@ -1,6 +1,6 @@
 import { UserTable } from '@/routes/admin/user-table';
 import { type FC } from 'react';
 
-const AdminUsers: FC = () => <UserTable />;
+const UsersTab: FC = () => <UserTable />;
 
-export default AdminUsers;
+export default UsersTab;

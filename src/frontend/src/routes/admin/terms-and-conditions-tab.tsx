@@ -3,7 +3,7 @@ import { TermsAndConditionsForm } from '@/routes/admin/terms-and-conditions-form
 import { TermsAndConditionsTable } from '@/routes/admin/terms-and-conditions-table';
 import { type FC } from 'react';
 
-const AdminTermsAndConditions: FC = () => (
+const TermsAndConditionsTab: FC = () => (
   <>
     <TermsAndConditionsCurrent />
     <TermsAndConditionsTable className="mt-6" />
@@ -11,4 +11,4 @@ const AdminTermsAndConditions: FC = () => (
   </>
 );
 
-export default AdminTermsAndConditions;
+export default TermsAndConditionsTab;

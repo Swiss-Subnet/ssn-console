@@ -18,15 +18,15 @@ const RedirectToProjectCanisters = lazy(
   () =>
     import('@/routes/redirect-to-project-canisters/redirect-to-project-canisters'),
 );
-const AdminOverview = lazy(() => import('@/routes/admin/admin-overview'));
-const AdminUsers = lazy(() => import('@/routes/admin/admin-users'));
-const AdminTrustedPartners = lazy(
-  () => import('@/routes/admin/admin-trusted-partners'),
+const OverviewTab = lazy(() => import('@/routes/admin/overview-tab'));
+const UsersTab = lazy(() => import('@/routes/admin/users-tab'));
+const TrustedPartnersTab = lazy(
+  () => import('@/routes/admin/trusted-partners-tab'),
 );
-const AdminTermsAndConditions = lazy(
-  () => import('@/routes/admin/admin-terms-and-conditions'),
+const TermsAndConditionsTab = lazy(
+  () => import('@/routes/admin/terms-and-conditions-tab'),
 );
-const AdminStaff = lazy(() => import('@/routes/admin/admin-staff'));
+const StaffTab = lazy(() => import('@/routes/admin/staff-tab'));
 const Verify = lazy(() => import('@/routes/verify/verify'));
 const Dashboard = lazy(() => import('@/routes/dashboard/dashboard'));
 const Billing = lazy(() => import('@/routes/billing/billing'));
@@ -105,14 +105,14 @@ export const Router: FC = () => (
 
         <Route element={<AdminRoute />}>
           <Route path="admin" element={<AdminLayout />}>
-            <Route index element={<AdminOverview />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="trusted-partners" element={<AdminTrustedPartners />} />
+            <Route index element={<OverviewTab />} />
+            <Route path="users" element={<UsersTab />} />
+            <Route path="trusted-partners" element={<TrustedPartnersTab />} />
             <Route
               path="terms-and-conditions"
-              element={<AdminTermsAndConditions />}
+              element={<TermsAndConditionsTab />}
             />
-            <Route path="staff" element={<AdminStaff />} />
+            <Route path="staff" element={<StaffTab />} />
           </Route>
           <Route
             path="admin/users/:userId/canisters"

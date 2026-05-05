@@ -7,7 +7,7 @@ import {
 import { useAppStore } from '@/lib/store';
 import { type FC } from 'react';
 
-const AdminOverview: FC = () => {
+const OverviewTab: FC = () => {
   const { userStats } = useAppStore();
 
   return (
@@ -38,4 +38,4 @@ const AdminOverview: FC = () => {
   );
 };
 
-export default AdminOverview;
+export default OverviewTab;
