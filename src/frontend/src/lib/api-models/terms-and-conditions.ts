@@ -7,7 +7,6 @@ import type {
   UpsertTermsAndConditionsDecisionRequest as ApiUpsertTermsAndConditionsDecisionRequest,
   CreateTermsAndConditionsRequest as ApiCreateTermsAndConditionsRequest,
 } from '@ssn/backend-api';
-import { micromark } from 'micromark';
 
 export type GetLatestTermsAndConditionsResponse = TermsAndConditions | null;
 
@@ -36,7 +35,7 @@ export function mapTermsAndConditionsResponse(
 ): TermsAndConditions {
   return {
     id: res.id,
-    content: micromark(res.content),
+    content: res.content,
     comment: res.comment,
     createdAt: new Date(Number(res.created_at / 1_000_000n)),
     hasAccepted: res.has_accepted,
@@ -56,7 +55,7 @@ export function mapTermsAndConditionsListItemResponse(
 ): TermsAndConditionsListItem {
   return {
     id: res.id,
-    content: micromark(res.content),
+    content: res.content,
     comment: res.comment,
     createdAt: new Date(Number(res.created_at / 1_000_000n)),
     createdBy: res.created_by,

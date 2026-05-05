@@ -102,7 +102,6 @@ export const TermsAndConditionsForm: FC<TermsAndConditionsFormProps> = ({
                     {isPreviewing ? (
                       <TermsAndConditionsContent
                         value={previewContent}
-                        raw
                         className="border-input min-h-32 rounded-md border p-3"
                       />
                     ) : (
