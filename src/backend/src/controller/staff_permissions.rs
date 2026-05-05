@@ -1,8 +1,8 @@
 use crate::{
     dto::{
         GetMyStaffPermissionsRequest, GetMyStaffPermissionsResponse, GrantStaffPermissionsRequest,
-        GrantStaffPermissionsResponse, RevokeStaffPermissionsRequest,
-        RevokeStaffPermissionsResponse,
+        GrantStaffPermissionsResponse, ListStaffRequest, ListStaffResponse,
+        RevokeStaffPermissionsRequest, RevokeStaffPermissionsResponse,
     },
     service::staff_permissions_service,
 };
@@ -55,4 +55,17 @@ fn revoke_staff_permissions(
     staff_permissions_service::revoke_staff_permissions(req)
         .map(|()| RevokeStaffPermissionsResponse {})
         .into()
+}
+
+// Admin-side projection of every staff user. Controller-gated: the staff
+// roster is sensitive (it lists who has cross-org read or billing-write
+// authority) and is never exposed to non-controllers.
+#[query]
+fn list_staff(_req: ListStaffRequest) -> ApiResultDto<ListStaffResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    ApiResultDto::Ok(staff_permissions_service::list_staff())
 }

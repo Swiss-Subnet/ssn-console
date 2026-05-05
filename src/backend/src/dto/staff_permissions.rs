@@ -1,3 +1,4 @@
+use crate::dto::UserStatus;
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -35,5 +36,22 @@ pub struct GetMyStaffPermissionsRequest {}
 
 // Self-introspection. None means the caller is not staff. Never returns
 // information about other users' staff status; admin-side listings live
-// behind a separate, controller-gated surface (not shipped in this PR).
+// behind a separate, controller-gated surface (`list_staff`).
 pub type GetMyStaffPermissionsResponse = Option<StaffPermissions>;
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListStaffRequest {}
+
+pub type ListStaffResponse = Vec<StaffMember>;
+
+// Admin-side projection of a staff user. Distinct from `UserProfile` so
+// that staff state can never leak through user-listing endpoints whose
+// auth surface may relax in the future. Always controller-gated.
+#[derive(Debug, Clone, CandidType)]
+pub struct StaffMember {
+    pub user_id: String,
+    pub email: Option<String>,
+    pub email_verified: bool,
+    pub status: UserStatus,
+    pub permissions: StaffPermissions,
+}

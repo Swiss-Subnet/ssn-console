@@ -6,6 +6,8 @@ import type {
   ListProjectProposalsResponse,
   Proposal,
   ProposalOutcome,
+  StaffMember,
+  StaffPermissions,
   Vote,
   CreateTrustedPartnerRequest,
   CreateOrgInviteRequest,
@@ -32,6 +34,7 @@ import type {
   CanisterApi,
   CanisterHistoryApi,
   ProposalApi,
+  StaffPermissionsApi,
   TrustedPartnerApi,
   UserProfileApi,
   ManagementCanisterApi,
@@ -69,6 +72,7 @@ export type ApiSlice = {
   authApi: AuthApi;
   managementCanisterApi: ManagementCanisterApi;
   trustedPartnerApi: TrustedPartnerApi;
+  staffPermissionsApi: StaffPermissionsApi;
   termsAndConditionsApi: TermsAndConditionsApi;
   projectApi: ProjectApi;
   organizationApi: OrganizationApi;
@@ -163,6 +167,19 @@ export type TrustedPartnersSlice = {
   createTrustedPartner: (req: CreateTrustedPartnerRequest) => Promise<void>;
 };
 
+export type StaffSlice = {
+  isStaffInitialized: boolean;
+  staff: StaffMember[] | null;
+
+  initializeStaff: () => Promise<void>;
+  clearStaff: () => void;
+  grantStaffPermissions: (
+    userId: string,
+    permissions: StaffPermissions,
+  ) => Promise<void>;
+  revokeStaffPermissions: (userId: string) => Promise<void>;
+};
+
 export type TermsAndConditionsSlice = {
   isTermsAndConditionsInitialized: boolean;
   termsAndConditions: TermsAndConditions | null;
@@ -253,6 +270,7 @@ export type AppSlice = AuthSlice &
   UsersSlice &
   CanistersSlice &
   TrustedPartnersSlice &
+  StaffSlice &
   TermsAndConditionsSlice &
   ProjectsSlice &
   OrganizationsSlice &

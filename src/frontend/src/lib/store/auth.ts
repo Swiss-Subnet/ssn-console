@@ -22,6 +22,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       initializeUserProfile,
       initializeUsers,
       initializeTrustedPartners,
+      initializeStaff,
       initializeTermsAndConditions,
       initializeProjects,
       initializeOrganizations,
@@ -33,6 +34,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
     await Promise.all([
       initializeUsers(),
       initializeTrustedPartners(),
+      initializeStaff(),
       initializeTermsAndConditions(),
       initializeProjects(),
       initializeOrganizations(),
@@ -115,6 +117,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       clearUsers,
       clearCanisters,
       clearTrustedPartners,
+      clearStaff,
       clearTermsAndConditions,
       clearProjects,
       clearOrganizations,
@@ -140,6 +143,7 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
       clearUsers();
       clearCanisters();
       clearTrustedPartners();
+      clearStaff();
       clearTermsAndConditions();
       clearProjects();
       clearOrganizations();

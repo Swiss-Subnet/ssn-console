@@ -1,4 +1,26 @@
-use crate::{data, dto};
+use crate::{
+    data,
+    dto::{self, ListStaffResponse, StaffMember},
+};
+use canister_utils::Uuid;
+
+use super::map_user_status_response;
+
+pub fn map_list_staff_response(profiles: Vec<(Uuid, data::UserProfile)>) -> ListStaffResponse {
+    profiles
+        .into_iter()
+        .filter_map(|(id, profile)| {
+            let perms = profile.staff_permissions?;
+            Some(StaffMember {
+                user_id: id.to_string(),
+                email: profile.email,
+                email_verified: profile.email_verified,
+                status: map_user_status_response(profile.status),
+                permissions: map_staff_permissions(perms),
+            })
+        })
+        .collect()
+}
 
 pub fn map_staff_permissions(perms: data::StaffPermissions) -> dto::StaffPermissions {
     dto::StaffPermissions {
