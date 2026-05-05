@@ -60,11 +60,14 @@ pub fn get_my_staff_permissions(caller: &Principal) -> GetMyStaffPermissionsResp
         .map(map_staff_permissions)
 }
 
-// Returns every user with non-empty staff_permissions. Caller authorisation
-// lives in the controller layer (controller key required); this service
-// trusts it has been performed. Kept on its own surface, separate from the
-// general user listing, so the staff projection cannot leak through any
-// future relaxation of user-listing auth.
+// Returns every user that currently has a staff_permissions record. The
+// service hands all profiles to map_list_staff_response, which drops the
+// ones whose staff_permissions is None, so only actual staff come back.
+//
+// Caller authorisation lives in the controller layer (controller key
+// required); this service trusts it has been performed. Kept on its own
+// surface, separate from the general user listing, so the staff projection
+// cannot leak through any future relaxation of user-listing auth.
 pub fn list_staff() -> ListStaffResponse {
     let profiles = user_profile_repository::list_user_profiles()
         .into_iter()
