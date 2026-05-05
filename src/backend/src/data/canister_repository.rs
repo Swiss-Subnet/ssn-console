@@ -1,11 +1,13 @@
 use crate::data::{
     memory::{
         init_active_project_canister_index, init_canister_project_index, init_canisters,
-        init_deleted_project_canister_index, ActiveProjectCanisterIndexMemory, CanisterMemory,
-        CanisterProjectIndexMemory, DeletedProjectCanisterIndexMemory,
+        init_deleted_project_canister_index, init_principal_canister_index,
+        ActiveProjectCanisterIndexMemory, CanisterMemory, CanisterProjectIndexMemory,
+        DeletedProjectCanisterIndexMemory, PrincipalCanisterIndexMemory,
     },
     Canister,
 };
+use candid::Principal;
 use canister_utils::Uuid;
 use std::cell::RefCell;
 
@@ -72,10 +74,12 @@ pub fn create_canister(project_id: Uuid, canister: Canister) -> Uuid {
     let canister_id = Uuid::new();
 
     mutate_state(|s| {
-        s.canisters.insert(canister_id, canister);
+        s.canisters.insert(canister_id, canister.clone());
         s.active_project_canister_index
             .insert((project_id, canister_id));
         s.canister_project_index.insert(canister_id, project_id);
+        s.principal_canister_index
+            .insert(canister.principal, canister_id);
     });
 
     canister_id
@@ -115,6 +119,19 @@ pub fn soft_delete_canister(
     })
 }
 
+pub fn get_canister_by_principal(principal: Principal) -> Option<Uuid> {
+    with_state(|s| s.principal_canister_index.get(&principal))
+}
+
+pub fn migrate_principal_canister_index() {
+    mutate_state(|s| {
+        for (canister_id, canister) in s.canisters.iter().map(|v| v.into_pair()) {
+            s.principal_canister_index
+                .insert(canister.principal, canister_id);
+        }
+    });
+}
+
 pub fn update_canister_name(canister_id: Uuid, name: Option<String>) -> Option<Canister> {
     mutate_state(|s| {
         let mut canister = s.canisters.get(&canister_id)?;
@@ -129,6 +146,7 @@ struct CanisterState {
     active_project_canister_index: ActiveProjectCanisterIndexMemory,
     deleted_project_canister_index: DeletedProjectCanisterIndexMemory,
     canister_project_index: CanisterProjectIndexMemory,
+    principal_canister_index: PrincipalCanisterIndexMemory,
 }
 
 impl Default for CanisterState {
@@ -138,6 +156,7 @@ impl Default for CanisterState {
             active_project_canister_index: init_active_project_canister_index(),
             deleted_project_canister_index: init_deleted_project_canister_index(),
             canister_project_index: init_canister_project_index(),
+            principal_canister_index: init_principal_canister_index(),
         }
     }
 }

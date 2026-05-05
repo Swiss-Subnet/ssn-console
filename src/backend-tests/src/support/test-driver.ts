@@ -35,6 +35,11 @@ export const PUBLIC_KEY = publicKey
   .trim();
 export const PRIVATE_KEY = privateKey;
 
+import { createIdentity } from '@dfinity/pic';
+
+export const canisterHistoryIdentity = createIdentity('canister-history');
+export const CANISTER_HISTORY_ID = canisterHistoryIdentity.getPrincipal();
+
 export class TestDriver extends BaseTestDriver {
   public readonly proposals: ProposalDriver;
   public readonly users: UserDriver;
@@ -59,10 +64,13 @@ export class TestDriver extends BaseTestDriver {
   public static async create(initialDate = new Date()): Promise<TestDriver> {
     const pic = await PocketIc.create(inject('PIC_URL'));
     await pic.setTime(initialDate);
-    const fixture = await setupBackendCanister(pic, [
-      { name: 'PUBLIC_KEY', value: PUBLIC_KEY },
-      { name: 'OFFCHAIN_SERVICE_URL', value: 'http://localhost:3000' },
-    ]);
+    const fixture = await setupBackendCanister(pic, {
+      environmentVariables: [
+        { name: 'PUBLIC_KEY', value: PUBLIC_KEY },
+        { name: 'OFFCHAIN_SERVICE_URL', value: 'http://localhost:3000' },
+        { name: 'CANISTER_HISTORY_ID', value: CANISTER_HISTORY_ID.toText() },
+      ],
+    });
 
     return new TestDriver(pic, fixture);
   }

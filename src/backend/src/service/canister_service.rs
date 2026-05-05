@@ -4,8 +4,8 @@ use crate::{
         MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
     },
     data::{
-        canister_repository, organization_repository, project_repository, team_repository,
-        user_profile_repository, Canister, ProjectPermissions,
+        canister_repository, organization_repository, orphaned_canister_repository,
+        project_repository, team_repository, user_profile_repository, Canister, ProjectPermissions,
     },
     dto::{
         self, CanisterState, ListMyCanistersRequest, ListMyCanistersResponse,
@@ -254,4 +254,62 @@ pub async fn add_canister_controller(
     .map_err(|err| format!("Failed to set controllers for canister {canister_id}: {err}"))?;
 
     Ok(())
+}
+
+pub async fn add_child_canisters(
+    request: dto::AddChildCanistersRequest,
+) -> ApiResult<dto::AddChildCanistersResponse> {
+    for mapping in request.parent_child_mappings {
+        let child_principal = mapping.child_canister_id;
+        let parent_principal = mapping.parent_canister_id;
+
+        if canister_repository::get_canister_by_principal(child_principal).is_some()
+            || orphaned_canister_repository::get_parent_by_child(child_principal).is_some()
+        {
+            continue;
+        }
+
+        // if the parent principal is equal to the backend canister, meaning
+        // that the canister was created through the UI, then we will have
+        // already found the canister in the canister_repository check above
+        // and won't make it this far
+        let parent_project_id = canister_repository::get_canister_by_principal(parent_principal)
+            .and_then(canister_repository::get_canister_project_id);
+
+        if let Some(project_id) = parent_project_id {
+            canister_repository::create_canister(
+                project_id,
+                Canister {
+                    name: None,
+                    principal: child_principal,
+                    deleted_at: None,
+                },
+            );
+
+            // add any grand children that came in before this canister and were
+            // erronously registered as orphans
+            let mut stack = vec![child_principal];
+            while let Some(parent) = stack.pop() {
+                for child in orphaned_canister_repository::list_children_by_parent(parent) {
+                    canister_repository::create_canister(
+                        project_id,
+                        Canister {
+                            name: None,
+                            principal: child,
+                            deleted_at: None,
+                        },
+                    );
+                    orphaned_canister_repository::remove_orphaned_canister(child, parent);
+                    stack.push(child);
+                }
+            }
+        } else {
+            orphaned_canister_repository::create_orphaned_canister(
+                child_principal,
+                parent_principal,
+            );
+        }
+    }
+
+    Ok(dto::AddChildCanistersResponse {})
 }

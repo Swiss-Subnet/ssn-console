@@ -27,10 +27,12 @@ fn export_candid() -> String {
 fn post_upgrade() {
     env::init_offchain_service_url();
     env::init_public_key();
+    env::init_canister_history_id();
 
     controller::http::init();
     data::team_repository::migrate_org_team_permissions();
     data::project_repository::migrate_project_team_permissions();
+    data::canister_repository::migrate_principal_canister_index();
 }
 
 #[cfg(test)]

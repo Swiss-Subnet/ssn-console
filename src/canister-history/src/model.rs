@@ -50,6 +50,28 @@ impl Storable for CanisterChangeInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FailedCanisterMapping {
+    pub parent_canister_id: Principal,
+    pub child_canister_id: Principal,
+}
+
+impl Storable for FailedCanisterMapping {
+    fn into_bytes(self) -> Vec<u8> {
+        serialize_cbor(&self)
+    }
+
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
+        Cow::Owned(serialize_cbor(&self))
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        deserialize_cbor(&bytes)
+    }
+
+    const BOUND: Bound = Bound::Unbounded;
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CanisterChange {
     pub canister_id: Principal,
     pub timestamp_nanos: u64,

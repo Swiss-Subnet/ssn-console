@@ -67,3 +67,7 @@ pub(super) const TEAM_PROJECT_PERMISSIONS_INDEX_MEMORY_ID: MemoryId = MemoryId::
 pub(super) const DELETED_PROJECT_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(34);
 
 pub(super) const ORGANIZATION_BILLING_PLAN_MEMORY_ID: MemoryId = MemoryId::new(35);
+
+pub(super) const ORPHANED_CANISTER_CHILD_PARENT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(36);
+pub(super) const ORPHANED_CANISTER_PARENT_CHILD_INDEX_MEMORY_ID: MemoryId = MemoryId::new(37);
+pub(super) const PRINCIPAL_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(38);

@@ -4,6 +4,7 @@ use ic_cdk::*;
 mod constants;
 mod controller;
 mod dto;
+mod env;
 mod mapping;
 mod memory;
 mod memory_manager;

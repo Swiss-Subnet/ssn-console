@@ -21,6 +21,7 @@ runs:
       shell: bash
       run: |
         CANISTER_ID=$(dfx canister id backend --network ${{ inputs.network }})
+        CANISTER_HISTORY_ID=$(dfx canister id canister-history --network ${{ inputs.network }})
         FORMATTED_PUBLIC_KEY=$(echo "${{ inputs.public_key }}" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
 
         dfx canister call aaaaa-aa update_settings "(
@@ -35,6 +36,10 @@ runs:
                 record {
                   name = \"OFFCHAIN_SERVICE_URL\";
                   value = \"${{ inputs.offchain_service_url }}\";
+                };
+                record {
+                  name = \"CANISTER_HISTORY_ID\";
+                  value = \"$CANISTER_HISTORY_ID\";
                 };
               };
             };

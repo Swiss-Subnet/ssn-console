@@ -1,11 +1,10 @@
 import type {
   ActorInterface,
   CanisterFixture,
-  EnvironmentVariable,
   PocketIc,
+  SetupCanisterOptions as PicSetupCanisterOptions,
 } from '@dfinity/pic';
 import path from 'node:path';
-import type { IDL } from '@icp-sdk/core/candid';
 import {
   idlFactory as backendIdlFactory,
   type _SERVICE as BackendService,
@@ -20,40 +19,42 @@ import {
 } from '@ssn/cycles-monitor-api';
 import { controllerIdentity } from './identity';
 
+type SetupCanisterOptions = Omit<
+  InnerSetupCanisterOptions,
+  'idlFactory' | 'wasm'
+>;
+
 export async function setupBackendCanister(
   pic: PocketIc,
-  environmentVariables: EnvironmentVariable[] = [],
+  options: SetupCanisterOptions = {},
 ): Promise<CanisterFixture<BackendService>> {
-  return setupCanister<BackendService>(
-    pic,
-    backendIdlFactory,
-    BACKEND_WASM_PATH,
-    environmentVariables,
-  );
+  return setupCanister<BackendService>(pic, {
+    idlFactory: backendIdlFactory,
+    wasm: BACKEND_WASM_PATH,
+    ...options,
+  });
 }
 
 export async function setupCanisterHistoryCanister(
   pic: PocketIc,
-  environmentVariables: EnvironmentVariable[] = [],
+  options: SetupCanisterOptions = {},
 ): Promise<CanisterFixture<CanisterHistoryService>> {
-  return setupCanister<CanisterHistoryService>(
-    pic,
-    canisterHistoryIdlFactory,
-    CANISTER_HISTORY_WASM_PATH,
-    environmentVariables,
-  );
+  return setupCanister<CanisterHistoryService>(pic, {
+    idlFactory: canisterHistoryIdlFactory,
+    wasm: CANISTER_HISTORY_WASM_PATH,
+    ...options,
+  });
 }
 
 export async function setupCyclesMonitorCanister(
   pic: PocketIc,
-  environmentVariables: EnvironmentVariable[] = [],
+  options: SetupCanisterOptions = {},
 ): Promise<CanisterFixture<CyclesMonitorService>> {
-  return setupCanister<CyclesMonitorService>(
-    pic,
-    cyclesMonitorIdlFactory,
-    CYCLES_MONITOR_WASM_PATH,
-    environmentVariables,
-  );
+  return setupCanister<CyclesMonitorService>(pic, {
+    idlFactory: cyclesMonitorIdlFactory,
+    wasm: CYCLES_MONITOR_WASM_PATH,
+    ...options,
+  });
 }
 
 export const BACKEND_WASM_PATH = resolveCanisterWasmPath('backend');
@@ -76,16 +77,13 @@ function resolveCanisterWasmPath(canisterName: string): string {
   );
 }
 
+type InnerSetupCanisterOptions = Omit<PicSetupCanisterOptions, 'sender'>;
 async function setupCanister<T extends ActorInterface<T> = ActorInterface>(
   pic: PocketIc,
-  idlFactory: IDL.InterfaceFactory,
-  wasmPath: string,
-  environmentVariables: EnvironmentVariable[] = [],
+  options: InnerSetupCanisterOptions,
 ): Promise<CanisterFixture<T>> {
   return await pic.setupCanister<T>({
-    idlFactory,
-    wasm: wasmPath,
+    ...options,
     sender: controllerIdentity.getPrincipal(),
-    environmentVariables,
   });
 }

@@ -36,6 +36,7 @@
     },
     "canister-history": {
       "type": "custom",
+      "dependencies": ["backend"],
       "candid": "src/canister-history-api/canister_history.did",
       "wasm": "target/wasm32-unknown-unknown/release/canister_history.wasm",
       "build": [
