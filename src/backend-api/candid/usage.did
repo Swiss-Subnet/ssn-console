@@ -1,0 +1,38 @@
+import "../../canister-utils/error.did";
+
+type CanisterUsage = record {
+  canister_id : principal;
+  month : nat32;
+  memory : nat64;
+  compute_allocation : nat64;
+  ingress_induction : nat64;
+  instructions : nat64;
+  request_and_response_transmission : nat64;
+  uninstall : nat64;
+  http_outcalls : nat64;
+  burned_cycles : nat64;
+};
+
+type UpsertUsageRequest = record {
+  usage : CanisterUsage;
+};
+
+type UpsertUsageResponse = variant {
+  Ok;
+  Err : ApiError;
+};
+
+type GetUsageRequest = record {
+  project_id : text;
+  month : opt nat32;
+};
+
+type GetUsageResponse = variant {
+  Ok : vec CanisterUsage;
+  Err : ApiError;
+};
+
+service : {
+  upsert_usage : (UpsertUsageRequest) -> (UpsertUsageResponse);
+  get_usage : (GetUsageRequest) -> (GetUsageResponse) query;
+}

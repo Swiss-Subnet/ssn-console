@@ -27,6 +27,7 @@ fn export_candid() -> String {
 fn post_upgrade() {
     env::init_offchain_service_url();
     env::init_public_key();
+    env::init_public_key_principal();
     env::init_canister_history_id();
 
     controller::http::init();

@@ -11,6 +11,7 @@ mod team;
 mod terms_and_conditions;
 mod terms_and_conditions_decision;
 mod trusted_partner;
+mod usage;
 mod user_profile;
 mod user_stats;
 
@@ -27,5 +28,6 @@ pub use team::*;
 pub use terms_and_conditions::*;
 pub use terms_and_conditions_decision::*;
 pub use trusted_partner::*;
+pub use usage::*;
 pub use user_profile::*;
 pub use user_stats::*;

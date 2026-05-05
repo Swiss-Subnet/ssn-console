@@ -11,3 +11,4 @@ import service "./candid/team.did";
 import service "./candid/terms_and_conditions.did";
 import service "./candid/trusted_partner.did";
 import service "./candid/user_profile.did";
+import service "./candid/usage.did";

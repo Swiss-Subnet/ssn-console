@@ -13,6 +13,7 @@ mod team_memory;
 mod terms_and_conditions_decision_memory;
 mod terms_and_conditions_memory;
 mod trusted_partner_memory;
+mod usage_memory;
 mod user_profile_memory;
 
 pub(super) use approval_policy_memory::*;
@@ -27,4 +28,5 @@ pub(super) use team_memory::*;
 pub(super) use terms_and_conditions_decision_memory::*;
 pub(super) use terms_and_conditions_memory::*;
 pub(super) use trusted_partner_memory::*;
+pub(super) use usage_memory::*;
 pub(super) use user_profile_memory::*;
