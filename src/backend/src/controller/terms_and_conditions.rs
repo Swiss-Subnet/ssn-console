@@ -1,8 +1,8 @@
 use crate::{
     dto::{
         CreateTermsAndConditionsRequest, CreateTermsAndConditionsResponse,
-        GetLatestTermsAndConditionsResponse, UpsertTermsAndConditionsDecisionRequest,
-        UpsertTermsAndConditionsDecisionResponse,
+        GetLatestTermsAndConditionsResponse, ListTermsAndConditionsResponse,
+        UpsertTermsAndConditionsDecisionRequest, UpsertTermsAndConditionsDecisionResponse,
     },
     service::terms_and_conditions_service,
 };
@@ -17,6 +17,16 @@ fn get_latest_terms_and_conditions() -> ApiResultDto<GetLatestTermsAndConditions
     }
 
     terms_and_conditions_service::get_latest_terms_and_conditions(caller).into()
+}
+
+#[query]
+fn list_terms_and_conditions() -> ApiResultDto<ListTermsAndConditionsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    ApiResultDto::Ok(terms_and_conditions_service::list_terms_and_conditions())
 }
 
 #[update]

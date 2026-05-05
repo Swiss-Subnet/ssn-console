@@ -1,11 +1,12 @@
 import { mapOkResponse } from '@/lib/api-models/error';
 import type {
   TermsAndConditions as ApiTermsAndConditions,
+  TermsAndConditionsListItem as ApiTermsAndConditionsListItem,
   GetLatestTermsAndConditionsResponse as ApiGetLatestTermsAndConditionsResponse,
+  ListTermsAndConditionsResponse as ApiListTermsAndConditionsResponse,
   UpsertTermsAndConditionsDecisionRequest as ApiUpsertTermsAndConditionsDecisionRequest,
   CreateTermsAndConditionsRequest as ApiCreateTermsAndConditionsRequest,
 } from '@ssn/backend-api';
-import { micromark } from 'micromark';
 
 export type GetLatestTermsAndConditionsResponse = TermsAndConditions | null;
 
@@ -34,11 +35,38 @@ export function mapTermsAndConditionsResponse(
 ): TermsAndConditions {
   return {
     id: res.id,
-    content: micromark(res.content),
+    content: res.content,
     comment: res.comment,
     createdAt: new Date(Number(res.created_at / 1_000_000n)),
     hasAccepted: res.has_accepted,
   };
+}
+
+export type TermsAndConditionsListItem = {
+  id: string;
+  content: string;
+  comment: string;
+  createdAt: Date;
+  createdBy: string;
+};
+
+export function mapTermsAndConditionsListItemResponse(
+  res: ApiTermsAndConditionsListItem,
+): TermsAndConditionsListItem {
+  return {
+    id: res.id,
+    content: res.content,
+    comment: res.comment,
+    createdAt: new Date(Number(res.created_at / 1_000_000n)),
+    createdBy: res.created_by,
+  };
+}
+
+export function mapListTermsAndConditionsResponse(
+  res: ApiListTermsAndConditionsResponse,
+): TermsAndConditionsListItem[] {
+  const items = mapOkResponse(res);
+  return items.map(mapTermsAndConditionsListItemResponse).reverse();
 }
 
 export type CreateTermsAndConditionsRequest = {

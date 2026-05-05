@@ -3,6 +3,8 @@ use serde::Deserialize;
 
 pub type GetLatestTermsAndConditionsResponse = Option<TermsAndConditions>;
 
+pub type ListTermsAndConditionsResponse = Vec<TermsAndConditionsListItem>;
+
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct TermsAndConditions {
     pub id: String,
@@ -10,6 +12,15 @@ pub struct TermsAndConditions {
     pub comment: String,
     pub created_at: u64,
     pub has_accepted: bool,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct TermsAndConditionsListItem {
+    pub id: String,
+    pub content: String,
+    pub comment: String,
+    pub created_at: u64,
+    pub created_by: String,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

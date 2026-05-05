@@ -8,11 +8,12 @@ export const createTermsAndConditionsSlice: AppStateCreator<
 > = (set, get) => ({
   isTermsAndConditionsInitialized: false,
   termsAndConditions: null,
+  termsAndConditionsHistory: null,
 
   async initializeTermsAndConditions() {
     const { termsAndConditionsApi, isAuthenticated, profile } = get();
 
-    if (!isAuthenticated || profile?.isAdmin) {
+    if (!isAuthenticated) {
       set({ isTermsAndConditionsInitialized: true });
       return;
     }
@@ -21,13 +22,31 @@ export const createTermsAndConditionsSlice: AppStateCreator<
       const termsAndConditions =
         await termsAndConditionsApi.getLatestTermsAndConditions();
       set({ termsAndConditions });
+
+      if (profile?.isAdmin) {
+        const termsAndConditionsHistory =
+          await termsAndConditionsApi.listTermsAndConditions();
+        set({ termsAndConditionsHistory });
+      }
     } finally {
       set({ isTermsAndConditionsInitialized: true });
     }
   },
 
   clearTermsAndConditions() {
-    set({ termsAndConditions: null });
+    set({ termsAndConditions: null, termsAndConditionsHistory: null });
+  },
+
+  async refreshTermsAndConditionsHistory() {
+    const { termsAndConditionsApi, isAuthenticated, profile } = get();
+
+    if (!isAuthenticated || !profile?.isAdmin) {
+      return;
+    }
+
+    const termsAndConditionsHistory =
+      await termsAndConditionsApi.listTermsAndConditions();
+    set({ termsAndConditionsHistory });
   },
 
   async upsertTermsAndConditionsDecision(req) {
@@ -82,5 +101,11 @@ export const createTermsAndConditionsSlice: AppStateCreator<
     }
 
     await termsAndConditionsApi.createTermsAndConditions(req);
+
+    const [termsAndConditions, termsAndConditionsHistory] = await Promise.all([
+      termsAndConditionsApi.getLatestTermsAndConditions(),
+      termsAndConditionsApi.listTermsAndConditions(),
+    ]);
+    set({ termsAndConditions, termsAndConditionsHistory });
   },
 });

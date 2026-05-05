@@ -7,15 +7,17 @@ import {
   FormMessage,
 } from '@/components/form';
 import { LoadingButton } from '@/components/loading-button';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { FC } from 'react';
+import { useState, type FC } from 'react';
 import { useForm } from 'react-hook-form';
 import z from 'zod';
+import { TermsAndConditionsContent } from '@/routes/admin/terms-and-conditions-content';
 
 export type TermsAndConditionsFormProps = {
   className?: string;
@@ -33,6 +35,8 @@ export const TermsAndConditionsForm: FC<TermsAndConditionsFormProps> = ({
 }) => {
   const { createTermsAndConditions } = useAppStore();
 
+  const [isPreviewing, setIsPreviewing] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,10 +45,13 @@ export const TermsAndConditionsForm: FC<TermsAndConditionsFormProps> = ({
     },
   });
 
+  const previewContent = form.watch('content');
+
   async function onSubmit(formData: FormData): Promise<void> {
     try {
       await createTermsAndConditions(formData);
       form.reset();
+      setIsPreviewing(false);
       showSuccessToast('Terms and conditions created successfully!');
     } catch (err) {
       showErrorToast('Failed to create terms and conditions', err);
@@ -79,12 +86,31 @@ export const TermsAndConditionsForm: FC<TermsAndConditionsFormProps> = ({
               name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <div className="flex flex-row items-center justify-between">
+                    <FormLabel>Content</FormLabel>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsPreviewing(p => !p)}
+                      disabled={!previewContent}
+                    >
+                      {isPreviewing ? 'Edit' : 'Preview'}
+                    </Button>
+                  </div>
                   <FormControl>
-                    <Textarea
-                      placeholder="Enter terms and conditions content"
-                      {...field}
-                    />
+                    {isPreviewing ? (
+                      <TermsAndConditionsContent
+                        value={previewContent}
+                        className="border-input min-h-32 rounded-md border p-3"
+                      />
+                    ) : (
+                      <Textarea
+                        placeholder="Enter terms and conditions content (markdown)"
+                        className="min-h-64"
+                        {...field}
+                      />
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -2,11 +2,11 @@ use crate::{
     data::{terms_and_conditions_repository, user_profile_repository},
     dto::{
         CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse,
-        UpsertTermsAndConditionsDecisionRequest,
+        ListTermsAndConditionsResponse, UpsertTermsAndConditionsDecisionRequest,
     },
     mapping::{
         map_create_terms_and_conditions_decision_request, map_create_terms_and_conditions_request,
-        map_get_latest_terms_and_conditions_response,
+        map_get_latest_terms_and_conditions_response, map_list_terms_and_conditions_response,
     },
 };
 use candid::Principal;
@@ -43,6 +43,11 @@ pub fn upsert_terms_and_conditions_decision(
     let _id = terms_and_conditions_repository::upsert_terms_and_conditions_decision(req)?;
 
     Ok(())
+}
+
+pub fn list_terms_and_conditions() -> ListTermsAndConditionsResponse {
+    let items = terms_and_conditions_repository::list_terms_and_conditions();
+    map_list_terms_and_conditions_response(items)
 }
 
 pub fn create_terms_and_conditions(

@@ -96,7 +96,7 @@ export const HeaderMenu: FC = () => {
             </DropdownMenuItem>
           )}
 
-          {isActive && isNotNil(termsAndConditions) && (
+          {isActive && !isAdmin && isNotNil(termsAndConditions) && (
             <DropdownMenuItem
               className="justify-between"
               render={<NavLink to="/terms-and-conditions" />}

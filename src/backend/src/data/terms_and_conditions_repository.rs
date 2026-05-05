@@ -10,6 +10,18 @@ use crate::data::{
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
+// Returns versions ordered ascending by created_at. ic_stable_structures'
+// BTreeSet iter is forward-only (no DoubleEndedIterator), so callers that
+// want newest-first reverse on their end.
+pub fn list_terms_and_conditions() -> Vec<(Uuid, TermsAndConditions)> {
+    with_state(|s| {
+        s.terms_and_conditions_created_at_index
+            .iter()
+            .filter_map(|(_, id)| s.terms_and_conditions.get(&id).map(|t| (id, t)))
+            .collect()
+    })
+}
+
 pub fn get_latest_terms_and_conditions(user_id: Uuid) -> Option<(Uuid, TermsAndConditions, bool)> {
     let latest_id = get_latest_terms_and_condition_id()?;
 
@@ -128,4 +140,32 @@ fn with_state<R>(f: impl FnOnce(&TermsAndConditionsState) -> R) -> R {
 
 fn mutate_state<R>(f: impl FnOnce(&mut TermsAndConditionsState) -> R) -> R {
     STATE.with(|s| f(&mut s.borrow_mut()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn seed(created_at: u64) -> Uuid {
+        create_terms_and_conditions(TermsAndConditions {
+            content: format!("content-{created_at}"),
+            comment: format!("comment-{created_at}"),
+            created_at,
+            created_by: Uuid::new(),
+        })
+    }
+
+    #[test]
+    fn list_returns_versions_in_ascending_created_at_order() {
+        let middle = seed(200);
+        let oldest = seed(100);
+        let newest = seed(300);
+
+        let ids: Vec<Uuid> = list_terms_and_conditions()
+            .into_iter()
+            .map(|(id, _)| id)
+            .collect();
+
+        assert_eq!(ids, vec![oldest, middle, newest]);
+    }
 }

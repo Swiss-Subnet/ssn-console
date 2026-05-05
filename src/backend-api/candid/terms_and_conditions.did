@@ -5,12 +5,25 @@ type GetLatestTermsAndConditionsResponse = variant {
   Err : ApiError;
 };
 
+type ListTermsAndConditionsResponse = variant {
+  Ok : vec TermsAndConditionsListItem;
+  Err : ApiError;
+};
+
 type TermsAndConditions = record {
   id : text;
   content : text;
   comment : text;
   created_at : nat64;
   has_accepted : bool;
+};
+
+type TermsAndConditionsListItem = record {
+  id : text;
+  content : text;
+  comment : text;
+  created_at : nat64;
+  created_by : text;
 };
 
 type CreateTermsAndConditionsRequest = record {
@@ -40,6 +53,7 @@ type TermsAndConditionsDecisionType = variant {
 
 service : {
   get_latest_terms_and_conditions : () -> (GetLatestTermsAndConditionsResponse) query;
+  list_terms_and_conditions : () -> (ListTermsAndConditionsResponse) query;
   upsert_terms_and_conditions_decision : (UpsertTermsAndConditionsDecisionRequest) -> (UpsertTermsAndConditionsDecisionResponse);
   create_terms_and_conditions : (CreateTermsAndConditionsRequest) -> (CreateTermsAndConditionsResponse);
 };
