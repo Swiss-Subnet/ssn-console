@@ -6,8 +6,18 @@ import {
   beforeEach,
   afterEach,
   setSystemTime,
+  spyOn,
 } from 'bun:test';
 import { HttpAgent } from '@icp-sdk/core/agent';
+
+spyOn(Bun, 'write').mockImplementation(async () => 0);
+spyOn(Bun, 'file').mockImplementation(() => {
+  return {
+    text: async () => {
+      throw new Error('File not found');
+    },
+  } as any;
+});
 
 const mockPushMetrics = mock().mockResolvedValue(undefined);
 mock.module('../otlp', () => ({
@@ -46,40 +56,51 @@ describe('sync-cycles-monitor-metrics', () => {
   });
 
   it('syncs metrics properly when snapshots are returned', async () => {
+    const time1 = 1_000_000_000_000n; // 1000 seconds
+    const time2 = 1_005_000_000_000n; // 1005 seconds, delta = 5 seconds
+
     mockListMetricsAfter
       .mockResolvedValueOnce({
         Ok: {
           snapshots: [
             {
-              timestamp_ns: 1000n,
+              timestamp_ns: time1,
               canister_id: 'aaaaa-aa',
-              memory: 100n,
-              compute_allocation: 101n,
-              ingress_induction: 102n,
-              instructions: 103n,
-              request_and_response_transmission: 104n,
-              uninstall: 105n,
-              http_outcalls: 106n,
-              burned_cycles: 107n,
+              memory: 0n,
+              compute_allocation: 0n,
+              ingress_induction: 0n,
+              instructions: 0n,
+              request_and_response_transmission: 0n,
+              uninstall: 0n,
+              http_outcalls: 0n,
+              burned_cycles: 0n,
             },
           ],
-          next_cursor: [{ timestamp_ns: 1000n, canister_id: 'aaaaa-aa' }],
+          next_cursor: [[time1, Principal.fromText('aaaaa-aa')]],
         },
       })
       .mockResolvedValueOnce({
         Ok: {
           snapshots: [
             {
-              timestamp_ns: 1001n,
+              timestamp_ns: time2,
               canister_id: 'aaaaa-aa',
-              memory: 200n,
-              compute_allocation: 201n,
-              ingress_induction: 202n,
-              instructions: 203n,
-              request_and_response_transmission: 204n,
-              uninstall: 205n,
-              http_outcalls: 206n,
-              burned_cycles: 207n,
+              // delta: 1,270,000 cycles / (5s * 127k) = 2 GB
+              memory: 1_270_000n,
+              // delta: 2.5B cycles / (5s * 10M) = 50%
+              compute_allocation: 2_500_000_000n,
+              // total: 10M / 2000 = 5000 bytes
+              ingress_induction: 10_000_000n,
+              // total: 30B cycles / 2B = 15s
+              instructions: 30_000_000_000n,
+              // total: 10M / 1000 = 10000 bytes
+              request_and_response_transmission: 10_000_000n,
+              // total: 50M / 5M = 10 uninstalls
+              uninstall: 50_000_000n,
+              // total: 10.4M / 10400 = 1000 bytes
+              http_outcalls: 10_400_000n,
+              // total: 1T / 1T * 1.35 = 1.35 USD
+              burned_cycles: 1_000_000_000_000n,
             },
           ],
           next_cursor: [],
@@ -91,7 +112,6 @@ describe('sync-cycles-monitor-metrics', () => {
 
     expect(mockListMetricsAfter).toHaveBeenCalledTimes(2);
 
-    // Check initial cursor
     const expectedOneHourAgoNs =
       BigInt(new Date('2024-01-01T11:00:00Z').getTime()) * 1_000_000n;
     expect(mockListMetricsAfter).toHaveBeenNthCalledWith(1, {
@@ -100,22 +120,17 @@ describe('sync-cycles-monitor-metrics', () => {
       ],
     });
 
-    // Check pagination cursor
     expect(mockListMetricsAfter).toHaveBeenNthCalledWith(2, {
-      cursor: [{ timestamp_ns: 1000n, canister_id: 'aaaaa-aa' }],
+      cursor: [[time1, Principal.fromText('aaaaa-aa')]],
     });
 
     expect(mockPushMetrics).toHaveBeenCalledTimes(2);
 
-    const passedPayload = mockPushMetrics.mock.calls[0]?.[0];
-    expect(passedPayload).toBeDefined();
-    if (!passedPayload) return;
+    const payload1 = mockPushMetrics.mock.calls[0]?.[0];
+    expect(payload1).toMatchSnapshot();
 
-    // Check some structure of the OTLP payload
-    expect(passedPayload.resource).toBeDefined();
-    expect(passedPayload.scopeMetrics).toBeDefined();
-    expect(passedPayload.scopeMetrics?.length).toBe(1);
-    expect(passedPayload.scopeMetrics?.[0]?.metrics?.length).toBe(8); // 8 metrics buckets
+    const payload2 = mockPushMetrics.mock.calls[1]?.[0];
+    expect(payload2).toMatchSnapshot();
   });
 
   it('does nothing when no new metrics are returned', async () => {
