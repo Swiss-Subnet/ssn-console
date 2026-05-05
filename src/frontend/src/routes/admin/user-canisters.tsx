@@ -1,9 +1,10 @@
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Container } from '@/components/layout/container';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { H1 } from '@/components/typography/h1';
 import { useAppStore } from '@/lib/store';
 import { useCallback, useEffect, useState, type FC } from 'react';
-import { useParams, Link } from 'react-router';
+import { useParams } from 'react-router';
 import {
   type ListUserCanistersResponse,
   type Canister,
@@ -40,18 +41,15 @@ const UserCanisters: FC = () => {
 
   return (
     <Container>
-      <div className="flex items-center justify-between">
-        <Link
-          to="/admin"
-          className="text-muted-foreground hover:text-foreground text-xs transition-colors"
-        >
-          &larr; Back to Admin
-        </Link>
-      </div>
+      <Breadcrumbs
+        items={[
+          { label: 'Admin', to: '/admin' },
+          { label: 'Users', to: '/admin/users' },
+          { label: 'Canisters' },
+        ]}
+      />
 
-      <div className="mt-3 flex items-center justify-between">
-        <H1>User Canisters</H1>
-      </div>
+      <H1 className="mt-3">User Canisters</H1>
 
       <div className="mt-8">
         {isLoading ? (

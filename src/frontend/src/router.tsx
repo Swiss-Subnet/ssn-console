@@ -1,3 +1,4 @@
+import { AdminLayout } from '@/components/layout/admin-layout';
 import { AdminRoute } from '@/components/layout/admin-route';
 import { DefaultLayout } from '@/components/layout/default-layout';
 import { ProjectLayout } from '@/components/layout/project-layout';
@@ -17,7 +18,15 @@ const RedirectToProjectCanisters = lazy(
   () =>
     import('@/routes/redirect-to-project-canisters/redirect-to-project-canisters'),
 );
-const Admin = lazy(() => import('@/routes/admin/admin'));
+const OverviewTab = lazy(() => import('@/routes/admin/overview-tab'));
+const UsersTab = lazy(() => import('@/routes/admin/users-tab'));
+const TrustedPartnersTab = lazy(
+  () => import('@/routes/admin/trusted-partners-tab'),
+);
+const TermsAndConditionsTab = lazy(
+  () => import('@/routes/admin/terms-and-conditions-tab'),
+);
+const StaffTab = lazy(() => import('@/routes/admin/staff-tab'));
 const Verify = lazy(() => import('@/routes/verify/verify'));
 const Dashboard = lazy(() => import('@/routes/dashboard/dashboard'));
 const Billing = lazy(() => import('@/routes/billing/billing'));
@@ -95,7 +104,16 @@ export const Router: FC = () => (
         </Route>
 
         <Route element={<AdminRoute />}>
-          <Route path="admin" element={<Admin />} />
+          <Route path="admin" element={<AdminLayout />}>
+            <Route index element={<OverviewTab />} />
+            <Route path="users" element={<UsersTab />} />
+            <Route path="trusted-partners" element={<TrustedPartnersTab />} />
+            <Route
+              path="terms-and-conditions"
+              element={<TermsAndConditionsTab />}
+            />
+            <Route path="staff" element={<StaffTab />} />
+          </Route>
           <Route
             path="admin/users/:userId/canisters"
             element={<UserCanisters />}
