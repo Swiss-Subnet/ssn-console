@@ -57,6 +57,7 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 name = "backend"
 version = "0.1.0"
 dependencies = [
+ "backend-api",
  "base64",
  "candid",
  "candid_parser",
@@ -72,6 +73,14 @@ dependencies = [
  "include_dir",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "backend-api"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
 ]
 
 [[package]]
@@ -234,14 +243,24 @@ dependencies = [
 name = "canister-history"
 version = "0.1.0"
 dependencies = [
+ "backend-api",
  "candid",
  "candid_parser",
+ "canister-history-api",
  "canister-utils",
  "either",
  "futures",
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "serde",
+]
+
+[[package]]
+name = "canister-history-api"
+version = "0.1.0"
+dependencies = [
+ "candid",
  "serde",
 ]
 
@@ -395,6 +414,7 @@ dependencies = [
  "base64",
  "candid",
  "candid_parser",
+ "canister-history-api",
  "canister-utils",
  "futures",
  "ic-cdk",

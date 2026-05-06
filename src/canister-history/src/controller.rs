@@ -1,13 +1,13 @@
 use crate::{
     dto::{
-        ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterIdsRequest,
-        ListSubnetCanisterIdsResponse, ListSubnetCanisterRangesRequest,
+        ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterRangesRequest,
         ListSubnetCanisterRangesResponse, TriggerSyncCanisterHistoriesRequest,
         TriggerSyncCanisterHistoriesResponse, UpdateSubnetCanisterRangesRequest,
         UpdateSubnetCanisterRangesResponse,
     },
     env, service,
 };
+use canister_history_api::{ListSubnetCanisterIdsRequest, ListSubnetCanisterIdsResponse};
 use canister_utils::{assert_controller, ApiError, ApiResultDto, CanisterId};
 use ic_cdk::{api::msg_caller, *};
 
