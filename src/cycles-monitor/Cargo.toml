@@ -16,5 +16,6 @@ ic-stable-structures.workspace = true
 serde.workspace = true
 futures.workspace = true
 
+canister-history-api.workspace = true
 canister-utils.workspace = true
 base64 = "0.22"

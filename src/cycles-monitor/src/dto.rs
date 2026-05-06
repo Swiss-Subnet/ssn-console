@@ -10,14 +10,6 @@ pub struct TriggerSyncMetricsResponse {
 }
 
 #[derive(CandidType, Deserialize, Serialize)]
-pub struct ListSubnetCanisterIdsRequest {}
-
-#[derive(Debug, Clone, CandidType, Deserialize, Serialize)]
-pub struct ListSubnetCanisterIdsResponse {
-    pub canister_id_ranges: Vec<(Principal, Principal)>,
-}
-
-#[derive(CandidType, Deserialize, Serialize)]
 pub struct ListMetricsAfterRequest {
     pub cursor: Option<Cursor>,
 }

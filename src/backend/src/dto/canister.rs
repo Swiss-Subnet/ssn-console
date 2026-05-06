@@ -142,16 +142,3 @@ pub struct EnvironmentVariable {
     pub value: String,
 }
 
-#[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct AddChildCanistersRequest {
-    pub parent_child_mappings: Vec<ParentChildMapping>,
-}
-
-#[derive(candid::CandidType, serde::Deserialize)]
-pub struct AddChildCanistersResponse {}
-
-#[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct ParentChildMapping {
-    pub parent_canister_id: Principal,
-    pub child_canister_id: Principal,
-}

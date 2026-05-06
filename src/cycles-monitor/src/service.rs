@@ -1,11 +1,9 @@
 use crate::{
-    dto::{
-        ListMetricsAfterRequest, ListMetricsAfterResponse, ListSubnetCanisterIdsRequest,
-        ListSubnetCanisterIdsResponse,
-    },
+    dto::{ListMetricsAfterRequest, ListMetricsAfterResponse},
     env, management_canister_mock, repository,
 };
 use candid::Principal;
+use canister_history_api::{ListSubnetCanisterIdsRequest, ListSubnetCanisterIdsResponse};
 use canister_utils::{
     ApiError, ApiResult, ApiResultDto, CanisterId, CanisterIdRange, MAX_CALLS_PER_BATCH,
 };

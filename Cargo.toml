@@ -1,7 +1,9 @@
 [workspace]
 members = [
     "src/backend",
+    "src/backend-api-rs",
     "src/canister-history",
+    "src/canister-history-api-rs",
     "src/canister-utils",
     "src/cycles-monitor"
 ]
@@ -17,4 +19,6 @@ ic-stable-structures = "0.7"
 serde = { version = "1", features = ["derive"] }
 futures = "0.3"
 
+backend-api = { path = "./src/backend-api-rs" }
+canister-history-api = { path = "./src/canister-history-api-rs" }
 canister-utils = { path = "./src/canister-utils" }

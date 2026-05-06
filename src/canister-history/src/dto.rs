@@ -26,14 +26,6 @@ pub struct ListSubnetCanisterRangesResponse {
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct ListSubnetCanisterIdsRequest {}
-
-#[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct ListSubnetCanisterIdsResponse {
-    pub canister_id_ranges: Vec<(Principal, Principal)>,
-}
-
-#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct ListCanisterChangesRequest {
     pub canister_id: Principal,
     pub reverse: Option<bool>,
@@ -113,13 +105,3 @@ pub struct PaginationMetaResponse {
     pub total_pages: u64,
 }
 
-#[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct AddChildCanistersRequest {
-    pub parent_child_mappings: Vec<ParentChildMapping>,
-}
-
-#[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct ParentChildMapping {
-    pub parent_canister_id: Principal,
-    pub child_canister_id: Principal,
-}
