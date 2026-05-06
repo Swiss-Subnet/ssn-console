@@ -34,9 +34,8 @@ mod tests {
         let exported = __export_service();
         let did_path = Path::new("../canister-history-api/canister_history.did");
 
-        service_compatible(CandidSource::Text(&exported), CandidSource::File(did_path)).expect(
-            "canister export must implement everything declared in canister_history.did",
-        );
+        service_compatible(CandidSource::Text(&exported), CandidSource::File(did_path))
+            .expect("canister export must implement everything declared in canister_history.did");
         service_compatible(CandidSource::File(did_path), CandidSource::Text(&exported))
             .expect("canister_history.did must declare every method the canister exports");
     }
