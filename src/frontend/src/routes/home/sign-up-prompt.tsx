@@ -30,20 +30,36 @@ export const SignUpPrompt: FC<SignUpPromptProps> = ({ className }) => {
       <PromptHeader />
 
       <CardContent>
-        <Button
-          size="lg"
-          className="mt-2 w-full"
-          onClick={() => onLoginClicked()}
-          disabled={!isAuthReady}
-        >
-          <WidthLock activeId={isAuthReady ? 'ready' : 'waiting'}>
-            {isAuthReady ? (
-              <span key="ready">Sign Up for the Waitlist</span>
-            ) : (
-              <LoaderIcon className="animate-spin" key="waiting" />
-            )}
-          </WidthLock>
-        </Button>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => onLoginClicked()}
+            disabled={!isAuthReady}
+          >
+            <WidthLock activeId={isAuthReady ? 'ready' : 'waiting'}>
+              {isAuthReady ? (
+                <span key="ready">Log In</span>
+              ) : (
+                <LoaderIcon className="animate-spin" key="waiting" />
+              )}
+            </WidthLock>
+          </Button>
+
+          <Button
+            size="lg"
+            onClick={() => onLoginClicked()}
+            disabled={!isAuthReady}
+          >
+            <WidthLock activeId={isAuthReady ? 'ready' : 'waiting'}>
+              {isAuthReady ? (
+                <span key="ready">Sign Up for the Waitlist</span>
+              ) : (
+                <LoaderIcon className="animate-spin" key="waiting" />
+              )}
+            </WidthLock>
+          </Button>
+        </div>
       </CardContent>
 
       <PromptFooter />

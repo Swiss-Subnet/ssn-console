@@ -6,6 +6,7 @@ export * from './proposal';
 export * from './invite';
 export * from './model';
 export * from './organization';
+export * from './principal-link';
 export * from './project';
 export * from './team';
 export * from './terms-and-conditions';

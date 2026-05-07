@@ -5,6 +5,7 @@ export * from './proposal';
 export * from './invite';
 export * from './management-canister';
 export * from './organization';
+export * from './principal-link';
 export * from './project';
 export * from './staff-permissions';
 export * from './team';

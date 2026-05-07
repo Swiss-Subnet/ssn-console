@@ -4,6 +4,7 @@ mod cycles_ledger;
 pub mod http;
 mod invite;
 mod organization;
+mod principal_link;
 mod project;
 mod proposal;
 mod staff_permissions;

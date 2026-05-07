@@ -1,0 +1,65 @@
+import "../../canister-utils/error.did";
+
+type RegisterLinkCodeRequest = record {
+  code : text;
+};
+
+type RegisterLinkCodeResponse = variant {
+  Ok : record { expires_at_nanos : nat64 };
+  Err : ApiError;
+};
+
+type LinkMyPrincipalRequest = record {
+  code : text;
+};
+
+type LinkMyPrincipalResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type UnlinkMyPrincipalRequest = record {
+  "principal" : principal;
+};
+
+type UnlinkMyPrincipalResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type ListMyLinkedPrincipalsRequest = record {};
+
+type ListMyLinkedPrincipalsResponse = variant {
+  Ok : record { principals : vec principal };
+  Err : ApiError;
+};
+
+type PendingLinkCode = record {
+  code : text;
+  expires_at_nanos : nat64;
+};
+
+type ListMyPendingLinkCodesRequest = record {};
+
+type ListMyPendingLinkCodesResponse = variant {
+  Ok : record { codes : vec PendingLinkCode };
+  Err : ApiError;
+};
+
+type RevokeLinkCodeRequest = record {
+  code : text;
+};
+
+type RevokeLinkCodeResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+service : {
+  register_link_code : (RegisterLinkCodeRequest) -> (RegisterLinkCodeResponse);
+  link_my_principal : (LinkMyPrincipalRequest) -> (LinkMyPrincipalResponse);
+  unlink_my_principal : (UnlinkMyPrincipalRequest) -> (UnlinkMyPrincipalResponse);
+  list_my_linked_principals : (ListMyLinkedPrincipalsRequest) -> (ListMyLinkedPrincipalsResponse) query;
+  list_my_pending_link_codes : (ListMyPendingLinkCodesRequest) -> (ListMyPendingLinkCodesResponse) query;
+  revoke_link_code : (RevokeLinkCodeRequest) -> (RevokeLinkCodeResponse);
+};
