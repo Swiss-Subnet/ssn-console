@@ -1,5 +1,4 @@
 use crate::{
-    dto::ParentChildMapping,
     memory::{
         init_canister_changes, init_canister_id_timestamp_change_index, init_canister_infos,
         init_failed_canister_mappings, init_origin_timestamp_change_index,
@@ -12,6 +11,7 @@ use crate::{
         SubnetCanisterRangeInfo,
     },
 };
+use backend_api::ParentChildMapping;
 use candid::Principal;
 use canister_utils::{CanisterId, Uuid};
 use either::Either;

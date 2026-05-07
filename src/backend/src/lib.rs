@@ -1,3 +1,4 @@
+use backend_api::*;
 use candid::export_service;
 use canister_utils::ApiResultDto;
 use dto::*;
@@ -41,15 +42,7 @@ mod tests {
     use candid_parser::utils::{service_compatible, CandidSource};
     use std::path::Path;
 
-    // Bidirectional subtype check: each side must implement at least the
-    // other's interface. Catches drift in both directions — adding a
-    // canister method without updating the .did, *and* removing a .did
-    // entry the canister still exposes. Stricter than a single
-    // `service_compatible` call (which would silently allow new
-    // canister-side methods), but more tolerant than `service_equal`,
-    // which compares type-alias names and trips on structurally
-    // equivalent variants like `DeleteTeamResponse` vs
-    // `RevokeStaffPermissionsResponse`.
+    // Bidirectional check so drift in either direction fails the build.
     #[test]
     fn check_candid_interface() {
         let exported = __export_service();

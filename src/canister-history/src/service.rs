@@ -3,15 +3,16 @@ use crate::constants::{
     MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
 };
 use crate::dto::{
-    AddChildCanistersRequest, ListCanisterChangesRequest, ListCanisterChangesResponse,
-    ListSubnetCanisterIdsRequest, ListSubnetCanisterIdsResponse, ListSubnetCanisterRangesResponse,
-    PaginationMetaResponse, ParentChildMapping, UpdateSubnetCanisterRangesRequest,
+    ListCanisterChangesRequest, ListCanisterChangesResponse, ListSubnetCanisterRangesResponse,
+    PaginationMetaResponse, UpdateSubnetCanisterRangesRequest,
 };
 use crate::env::get_backend_id;
 use crate::mapping::{map_canister_change_response, map_management_canister_change_response};
 use crate::model::{CanisterChangeDetails, CanisterChangeInfo, CanisterChangeOrigin};
 use crate::repository;
+use backend_api::{AddChildCanistersRequest, AddChildCanistersResponse, ParentChildMapping};
 use candid::Principal;
+use canister_history_api::{ListSubnetCanisterIdsRequest, ListSubnetCanisterIdsResponse};
 use canister_utils::{
     is_destination_invalid, ApiError, ApiResult, ApiResultDto, CanisterId, CanisterIdRange,
     MAX_CALLS_PER_BATCH,
@@ -219,7 +220,7 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
                     ic_cdk::println!("Failed to call backend add_child_canisters: {err}");
                     repository::add_failed_canister_mappings(new_canister_mappings);
                 }
-                Ok(call) => match call.candid::<ApiResultDto>() {
+                Ok(call) => match call.candid::<ApiResultDto<AddChildCanistersResponse>>() {
                     Err(err) => {
                         ic_cdk::println!(
                             "Failed to decode response from backend add_child_canisters: {err}"
@@ -230,7 +231,7 @@ async fn process_canister_changes(canister_id: Principal) -> ApiResult {
                         ic_cdk::println!("Backend add_child_canisters returned an error: {err:?}");
                         repository::add_failed_canister_mappings(new_canister_mappings);
                     }
-                    Ok(ApiResultDto::Ok(())) => {
+                    Ok(ApiResultDto::Ok(_)) => {
                         // success - nothing to do
                     }
                 },

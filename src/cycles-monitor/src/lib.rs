@@ -27,12 +27,15 @@ mod tests {
     use candid_parser::utils::{service_compatible, CandidSource};
     use std::path::Path;
 
+    // Bidirectional check so drift in either direction fails the build.
     #[test]
     fn check_candid_interface() {
-        service_compatible(
-            CandidSource::File(Path::new("../cycles-monitor-api/cycles_monitor.did")),
-            CandidSource::Text(&__export_service()),
-        )
-        .unwrap();
+        let exported = __export_service();
+        let did_path = Path::new("../cycles-monitor-api/cycles_monitor.did");
+
+        service_compatible(CandidSource::Text(&exported), CandidSource::File(did_path))
+            .expect("canister export must implement everything declared in cycles_monitor.did");
+        service_compatible(CandidSource::File(did_path), CandidSource::Text(&exported))
+            .expect("cycles_monitor.did must declare every method the canister exports");
     }
 }
