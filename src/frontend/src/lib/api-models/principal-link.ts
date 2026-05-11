@@ -1,6 +1,12 @@
 import { mapOkResponse } from '@/lib/api-models/error';
 import { Principal } from '@icp-sdk/core/principal';
 import type {
+  AdminLinkPrincipalRequest as ApiAdminLinkPrincipalRequest,
+  AdminLinkPrincipalResponse as ApiAdminLinkPrincipalResponse,
+  AdminListLinkedPrincipalsRequest as ApiAdminListLinkedPrincipalsRequest,
+  AdminListLinkedPrincipalsResponse as ApiAdminListLinkedPrincipalsResponse,
+  AdminUnlinkPrincipalRequest as ApiAdminUnlinkPrincipalRequest,
+  AdminUnlinkPrincipalResponse as ApiAdminUnlinkPrincipalResponse,
   GetMyPendingLinkCodeResponse as ApiGetMyPendingLinkCodeResponse,
   LinkMyPrincipalRequest as ApiLinkMyPrincipalRequest,
   LinkMyPrincipalResponse as ApiLinkMyPrincipalResponse,
@@ -119,4 +125,43 @@ export function mapRevokeMyLinkCodeResponse(
   res: ApiRevokeMyLinkCodeResponse,
 ): void {
   mapOkResponse(res);
+}
+
+export function mapAdminLinkPrincipalRequest(
+  userId: string,
+  principal: string,
+): ApiAdminLinkPrincipalRequest {
+  return { user_id: userId, principal: Principal.fromText(principal) };
+}
+
+export function mapAdminLinkPrincipalResponse(
+  res: ApiAdminLinkPrincipalResponse,
+): void {
+  mapOkResponse(res);
+}
+
+export function mapAdminUnlinkPrincipalRequest(
+  userId: string,
+  principal: string,
+): ApiAdminUnlinkPrincipalRequest {
+  return { user_id: userId, principal: Principal.fromText(principal) };
+}
+
+export function mapAdminUnlinkPrincipalResponse(
+  res: ApiAdminUnlinkPrincipalResponse,
+): void {
+  mapOkResponse(res);
+}
+
+export function mapAdminListLinkedPrincipalsRequest(
+  userId: string,
+): ApiAdminListLinkedPrincipalsRequest {
+  return { user_id: userId };
+}
+
+export function mapAdminListLinkedPrincipalsResponse(
+  res: ApiAdminListLinkedPrincipalsResponse,
+): string[] {
+  const ok = mapOkResponse(res);
+  return ok.principals.map(p => p.toText());
 }

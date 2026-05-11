@@ -17,6 +17,7 @@ import {
 import { useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
 import { UserCanisterCard } from '@/routes/admin/user-canister-card';
+import { UserLinkedPrincipals } from '@/routes/admin/user-linked-principals';
 import { UserStatusBadge } from '@/routes/admin/user-status-badge';
 import { UserStatusToggle } from '@/routes/admin/user-status-toggle';
 import { useCallback, useEffect, useState, type FC } from 'react';
@@ -112,6 +113,21 @@ const UserDetail: FC = () => {
               </div>
             </CardContent>
           </Card>
+
+          <section className="mt-8">
+            <h2 className="text-base font-medium">Linked principals</h2>
+
+            <p className="text-muted-foreground mt-1 text-xs">
+              Every principal that authenticates as this user. Staff with
+              Manage&nbsp;users can link a recovery principal or revoke a
+              compromised one. The user&apos;s last remaining principal cannot
+              be unlinked.
+            </p>
+
+            <div className="mt-3">
+              <UserLinkedPrincipals userId={user.id} />
+            </div>
+          </section>
 
           <section className="mt-8">
             <h2 className="text-base font-medium">Canisters</h2>

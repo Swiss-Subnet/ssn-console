@@ -12,6 +12,7 @@ use serde::Deserialize;
 pub struct StaffPermissions {
     pub read_all_orgs: bool,
     pub write_billing: bool,
+    pub manage_users: bool,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]

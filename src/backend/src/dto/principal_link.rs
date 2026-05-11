@@ -71,3 +71,31 @@ pub struct RevokeMyLinkCodeRequest {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct RevokeMyLinkCodeResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct AdminLinkPrincipalRequest {
+    pub user_id: String,
+    pub principal: Principal,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct AdminLinkPrincipalResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct AdminUnlinkPrincipalRequest {
+    pub user_id: String,
+    pub principal: Principal,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct AdminUnlinkPrincipalResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct AdminListLinkedPrincipalsRequest {
+    pub user_id: String,
+}
+
+#[derive(Debug, Clone, CandidType)]
+pub struct AdminListLinkedPrincipalsResponse {
+    pub principals: Vec<Principal>,
+}

@@ -28,8 +28,9 @@ const formSchema = z
     userId: z.string().min(1, 'User ID is required'),
     readAllOrgs: z.boolean(),
     writeBilling: z.boolean(),
+    manageUsers: z.boolean(),
   })
-  .refine(data => data.readAllOrgs || data.writeBilling, {
+  .refine(data => data.readAllOrgs || data.writeBilling || data.manageUsers, {
     message: 'Select at least one permission',
     path: ['readAllOrgs'],
   });
@@ -40,6 +41,7 @@ type Pending = {
   userId: string;
   readAllOrgs: boolean;
   writeBilling: boolean;
+  manageUsers: boolean;
 };
 
 export const StaffForm: FC<StaffFormProps> = ({ className }) => {
@@ -50,7 +52,12 @@ export const StaffForm: FC<StaffFormProps> = ({ className }) => {
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { userId: '', readAllOrgs: false, writeBilling: false },
+    defaultValues: {
+      userId: '',
+      readAllOrgs: false,
+      writeBilling: false,
+      manageUsers: false,
+    },
   });
 
   function onSubmit(formData: FormData): void {
@@ -58,6 +65,7 @@ export const StaffForm: FC<StaffFormProps> = ({ className }) => {
       userId: formData.userId,
       readAllOrgs: formData.readAllOrgs,
       writeBilling: formData.writeBilling,
+      manageUsers: formData.manageUsers,
     });
     setConfirmInput('');
   }
@@ -69,6 +77,7 @@ export const StaffForm: FC<StaffFormProps> = ({ className }) => {
       await grantStaffPermissions(pending.userId, {
         readAllOrgs: pending.readAllOrgs,
         writeBilling: pending.writeBilling,
+        manageUsers: pending.manageUsers,
       });
       form.reset();
       setPending(null);
@@ -154,6 +163,25 @@ export const StaffForm: FC<StaffFormProps> = ({ className }) => {
                         }
                       >
                         Write billing
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant={
+                          form.watch('manageUsers') ? 'default' : 'outline'
+                        }
+                        size="sm"
+                        onClick={() =>
+                          form.setValue(
+                            'manageUsers',
+                            !form.watch('manageUsers'),
+                            {
+                              shouldValidate: true,
+                            },
+                          )
+                        }
+                      >
+                        Manage users
                       </Button>
                     </div>
 
@@ -268,6 +296,16 @@ const ConfirmPanel: FC<ConfirmPanelProps> = ({
                     {' '}
                     &mdash; can modify any organization&apos;s billing plan
                     (tier, limits, external reference).
+                  </span>
+                </div>
+              )}
+              {pending.manageUsers && (
+                <div>
+                  <span className="font-medium">Manage users</span>
+                  <span className="text-muted-foreground">
+                    {' '}
+                    &mdash; can link or unlink principals on any user account
+                    (recovery and revocation).
                   </span>
                 </div>
               )}

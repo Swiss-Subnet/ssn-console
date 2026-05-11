@@ -6,7 +6,8 @@
 //
 // At most one pending code per user; registering replaces any existing one.
 
-use crate::data::{user_profile_repository, LinkedPrincipal};
+use crate::data::{user_profile_repository, LinkedPrincipal, StaffPermissions};
+use crate::service::access_control_service;
 use crate::validation::validate_optional_principal_name;
 use candid::Principal;
 use canister_utils::{now_nanos, ApiError, ApiResult, Uuid};
@@ -151,6 +152,56 @@ pub fn revoke_my_link_code(caller: &Principal) -> ApiResult {
     })
 }
 
+// Staff-side: attach a principal to an existing user account without going
+// through the device-to-device link-code dance. The escape hatch for users
+// who have lost access to every principal currently on their account, and
+// also the recovery path before email-based recovery exists.
+//
+// Caller must hold `MANAGE_USERS`. The target user_id must already exist;
+// the target principal must be authenticated (anonymous is rejected) and
+// must not be claimed by any other user — that constraint is enforced by
+// the repository, matching the behavior of `link_my_principal`. There is
+// no proof-of-control over `principal` here: the trust comes from the
+// staff role.
+pub fn admin_link_principal_to_user(
+    caller: &Principal,
+    user_id: Uuid,
+    principal: Principal,
+) -> ApiResult {
+    access_control_service::assert_staff_perm(caller, StaffPermissions::MANAGE_USERS)?;
+
+    if principal == Principal::anonymous() {
+        return Err(ApiError::client_error(
+            "Target principal must not be anonymous.".to_string(),
+        ));
+    }
+
+    user_profile_repository::link_principal_to_user(user_id, principal)
+}
+
+// Staff-side: detach a principal from a user account. Mirrors
+// `unlink_my_principal` and inherits the repository's "refuse to remove the
+// user's last principal" guard so a staff action cannot orphan an account.
+pub fn admin_unlink_principal_from_user(
+    caller: &Principal,
+    user_id: Uuid,
+    principal: Principal,
+) -> ApiResult {
+    access_control_service::assert_staff_perm(caller, StaffPermissions::MANAGE_USERS)?;
+    user_profile_repository::unlink_principal_from_user(user_id, principal)
+}
+
+// Staff-side: list the principals linked to a target user. The user-facing
+// `list_my_linked_principals` is self-scoped; this version is for admin UI
+// that needs to render and act on another user's principals.
+pub fn admin_list_linked_principals(
+    caller: &Principal,
+    user_id: Uuid,
+) -> ApiResult<Vec<Principal>> {
+    access_control_service::assert_staff_perm(caller, StaffPermissions::MANAGE_USERS)?;
+    Ok(user_profile_repository::get_principals_by_user_id(user_id))
+}
+
 fn validate_code_format(code: &str) -> ApiResult {
     if code.len() != LINK_CODE_LEN {
         return Err(ApiError::client_error(
@@ -172,7 +223,8 @@ fn validate_code_format(code: &str) -> ApiResult {
 mod tests {
     use super::*;
     use crate::data::user_profile_repository::create_user_profile;
-    use crate::data::UserProfile;
+    use crate::data::{UserProfile, UserStatus};
+    use canister_utils::Uuid;
 
     fn principal(byte: u8) -> Principal {
         let mut bytes = [0u8; 29];
@@ -184,6 +236,26 @@ mod tests {
         let p = principal(byte);
         create_user_profile(p, UserProfile::default());
         p
+    }
+
+    // Active user with the given staff permissions. Returns (principal, user_id)
+    // so tests can use the principal for caller-side checks and the user_id as
+    // the admin-call target.
+    fn fresh_staff_user(byte: u8, perms: StaffPermissions) -> (Principal, Uuid) {
+        let p = principal(byte);
+        let user_id = create_user_profile(
+            p,
+            UserProfile {
+                status: UserStatus::Active,
+                staff_permissions: Some(perms),
+                ..UserProfile::default()
+            },
+        );
+        (p, user_id)
+    }
+
+    fn user_id_of(p: Principal) -> Uuid {
+        user_profile_repository::assert_user_id_by_principal(&p).unwrap()
     }
 
     #[test]
@@ -415,5 +487,118 @@ mod tests {
         let oversized = "a".repeat(65);
         let err = set_my_principal_name(&owner, extra, Some(oversized)).unwrap_err();
         assert!(err.message().contains("64 characters"));
+    }
+
+    #[test]
+    fn admin_link_principal_attaches_to_target_user() {
+        let (staff, _) = fresh_staff_user(70, StaffPermissions::MANAGE_USERS);
+        let target_owner = fresh_user(71);
+        let target_user_id = user_id_of(target_owner);
+        let new_principal = principal(72);
+
+        admin_link_principal_to_user(&staff, target_user_id, new_principal).unwrap();
+
+        let principals = user_profile_repository::get_principals_by_user_id(target_user_id);
+        assert!(principals.contains(&new_principal));
+    }
+
+    #[test]
+    fn admin_link_principal_rejects_caller_without_manage_users() {
+        // Has WRITE_BILLING but not MANAGE_USERS — the permission gate must
+        // discriminate flag-by-flag, not just "is staff at all".
+        let (staff, _) = fresh_staff_user(73, StaffPermissions::WRITE_BILLING);
+        let target_owner = fresh_user(74);
+        let target_user_id = user_id_of(target_owner);
+        let new_principal = principal(75);
+
+        let err = admin_link_principal_to_user(&staff, target_user_id, new_principal).unwrap_err();
+        assert!(err.message().contains("staff permissions"));
+
+        let principals = user_profile_repository::get_principals_by_user_id(target_user_id);
+        assert!(!principals.contains(&new_principal));
+    }
+
+    #[test]
+    fn admin_link_principal_rejects_non_staff_caller() {
+        let stranger = fresh_user(76);
+        let target_owner = fresh_user(77);
+        let target_user_id = user_id_of(target_owner);
+        let new_principal = principal(78);
+
+        let err =
+            admin_link_principal_to_user(&stranger, target_user_id, new_principal).unwrap_err();
+        assert!(!err.message().is_empty());
+
+        let principals = user_profile_repository::get_principals_by_user_id(target_user_id);
+        assert!(!principals.contains(&new_principal));
+    }
+
+    #[test]
+    fn admin_link_principal_rejects_anonymous_target() {
+        let (staff, _) = fresh_staff_user(79, StaffPermissions::MANAGE_USERS);
+        let target_owner = fresh_user(80);
+        let target_user_id = user_id_of(target_owner);
+
+        let err = admin_link_principal_to_user(&staff, target_user_id, Principal::anonymous())
+            .unwrap_err();
+        assert!(err.message().contains("anonymous"));
+    }
+
+    #[test]
+    fn admin_link_principal_rejects_already_claimed_principal() {
+        // Repository-level guard surfaces through the admin path: an admin
+        // cannot silently steal a principal already linked to a different
+        // user.
+        let (staff, _) = fresh_staff_user(81, StaffPermissions::MANAGE_USERS);
+        let other_owner = fresh_user(82);
+        let target_owner = fresh_user(83);
+        let target_user_id = user_id_of(target_owner);
+
+        let err = admin_link_principal_to_user(&staff, target_user_id, other_owner).unwrap_err();
+        assert_eq!(err.message(), "Principal cannot be linked.");
+    }
+
+    #[test]
+    fn admin_unlink_principal_removes_link() {
+        let (staff, _) = fresh_staff_user(84, StaffPermissions::MANAGE_USERS);
+        let target_owner = fresh_user(85);
+        let target_user_id = user_id_of(target_owner);
+        let extra = principal(86);
+        user_profile_repository::link_principal_to_user(target_user_id, extra).unwrap();
+
+        admin_unlink_principal_from_user(&staff, target_user_id, extra).unwrap();
+
+        let principals = user_profile_repository::get_principals_by_user_id(target_user_id);
+        assert!(!principals.contains(&extra));
+        assert!(principals.contains(&target_owner));
+    }
+
+    #[test]
+    fn admin_unlink_principal_refuses_last_principal() {
+        // The repository's "do not orphan an account" guard must apply to
+        // staff actions too; a staff member with MANAGE_USERS can still not
+        // remove a user's only remaining principal.
+        let (staff, _) = fresh_staff_user(87, StaffPermissions::MANAGE_USERS);
+        let target_owner = fresh_user(88);
+        let target_user_id = user_id_of(target_owner);
+
+        let err =
+            admin_unlink_principal_from_user(&staff, target_user_id, target_owner).unwrap_err();
+        assert_eq!(err.message(), "Principal cannot be unlinked.");
+    }
+
+    #[test]
+    fn admin_unlink_principal_rejects_caller_without_manage_users() {
+        let (staff, _) = fresh_staff_user(89, StaffPermissions::READ_ALL_ORGS);
+        let target_owner = fresh_user(90);
+        let target_user_id = user_id_of(target_owner);
+        let extra = principal(91);
+        user_profile_repository::link_principal_to_user(target_user_id, extra).unwrap();
+
+        let err = admin_unlink_principal_from_user(&staff, target_user_id, extra).unwrap_err();
+        assert!(err.message().contains("staff permissions"));
+
+        let principals = user_profile_repository::get_principals_by_user_id(target_user_id);
+        assert!(principals.contains(&extra));
     }
 }

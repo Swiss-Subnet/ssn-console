@@ -17,6 +17,7 @@ import type {
 export type StaffPermissions = {
   readAllOrgs: boolean;
   writeBilling: boolean;
+  manageUsers: boolean;
 };
 
 export type StaffMember = {
@@ -44,6 +45,7 @@ export function mapStaffPermissionsResponse(
   return {
     readAllOrgs: res.read_all_orgs,
     writeBilling: res.write_billing,
+    manageUsers: res.manage_users,
   };
 }
 
@@ -53,6 +55,7 @@ export function mapStaffPermissionsRequest(
   return {
     read_all_orgs: req.readAllOrgs,
     write_billing: req.writeBilling,
+    manage_users: req.manageUsers,
   };
 }
 

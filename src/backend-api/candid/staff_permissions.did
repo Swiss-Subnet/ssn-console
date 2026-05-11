@@ -3,6 +3,7 @@ import "../../canister-utils/error.did";
 type StaffPermissions = record {
   read_all_orgs : bool;
   write_billing : bool;
+  manage_users : bool;
 };
 
 type GrantStaffPermissionsRequest = record {
