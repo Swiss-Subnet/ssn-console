@@ -33,6 +33,18 @@ pub fn is_trusted_partner(principal: &Principal) -> bool {
     get_trusted_partner_id_by_principal(principal).is_some()
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("trusted_partners", s.trusted_partners.len()),
+            (
+                "trusted_partner_principal_index",
+                s.trusted_partner_principal_index.len(),
+            ),
+        ]
+    })
+}
+
 struct TrustedPartnerState {
     trusted_partners: TrustedPartnerMemory,
     trusted_partner_principal_index: TrustedPartnerPrincipalIndexMemory,

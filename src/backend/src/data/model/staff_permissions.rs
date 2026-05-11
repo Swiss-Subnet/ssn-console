@@ -36,6 +36,13 @@ impl StaffPermissions {
     // without involving the user.
     pub const MANAGE_USERS: Self = Self(1 << 2);
 
+    // Read raw canister metrics: stable-memory sizes per region and
+    // counts of stored records. Intended for the off-chain Prometheus
+    // proxy and on-call operators investigating capacity or anomalies.
+    // Read-only and aggregate-only (no per-record contents), so it does
+    // not imply READ_ALL_ORGS.
+    pub const READ_METRICS: Self = Self(1 << 3);
+
     // Bundle: read-only across all orgs. Default grant for L1 support.
     pub const SUPPORT: Self = Self::READ_ALL_ORGS;
 
@@ -50,8 +57,12 @@ impl StaffPermissions {
     // users already granted a bundle do NOT retroactively gain new bits —
     // they were granted a specific u64, and a re-grant is required to
     // include flags added after their original grant.
-    pub const ALL: Self =
-        Self(Self::READ_ALL_ORGS.0 | Self::WRITE_BILLING.0 | Self::MANAGE_USERS.0);
+    pub const ALL: Self = Self(
+        Self::READ_ALL_ORGS.0
+            | Self::WRITE_BILLING.0
+            | Self::MANAGE_USERS.0
+            | Self::READ_METRICS.0,
+    );
 
     pub const fn contains(self, other: Self) -> bool {
         self.0 & other.0 == other.0
@@ -80,6 +91,7 @@ impl fmt::Display for StaffPermissions {
             (StaffPermissions::READ_ALL_ORGS, "READ_ALL_ORGS"),
             (StaffPermissions::WRITE_BILLING, "WRITE_BILLING"),
             (StaffPermissions::MANAGE_USERS, "MANAGE_USERS"),
+            (StaffPermissions::READ_METRICS, "READ_METRICS"),
         ];
 
         let mut first = true;
@@ -104,7 +116,7 @@ mod tests {
     use super::*;
 
     // Bump this when adding or removing a flag (and update ALL accordingly).
-    const STAFF_FLAG_COUNT: u32 = 3;
+    const STAFF_FLAG_COUNT: u32 = 4;
 
     #[test]
     fn all_covers_every_flag() {
@@ -126,6 +138,7 @@ mod tests {
         assert_eq!(StaffPermissions::READ_ALL_ORGS.0, 1 << 0);
         assert_eq!(StaffPermissions::WRITE_BILLING.0, 1 << 1);
         assert_eq!(StaffPermissions::MANAGE_USERS.0, 1 << 2);
+        assert_eq!(StaffPermissions::READ_METRICS.0, 1 << 3);
     }
 
     #[test]
@@ -175,10 +188,15 @@ mod tests {
     // case is covered in user_profile.rs.
     #[test]
     fn unknown_bits_are_preserved_and_ignored_by_contains() {
-        let with_extra = StaffPermissions::from_bits_truncate(0b1111);
+        // Bit 63 is intentionally outside the currently defined flag set so
+        // this test keeps representing "unknown bits" even as new flags are
+        // added. Update only if/when bit 63 itself becomes a real flag.
+        let raw = StaffPermissions::ALL.0 | (1u64 << 63);
+        let with_extra = StaffPermissions::from_bits_truncate(raw);
         assert!(with_extra.contains(StaffPermissions::READ_ALL_ORGS));
         assert!(with_extra.contains(StaffPermissions::WRITE_BILLING));
         assert!(with_extra.contains(StaffPermissions::MANAGE_USERS));
-        assert_eq!(with_extra.bits(), 0b1111);
+        assert!(with_extra.contains(StaffPermissions::READ_METRICS));
+        assert_eq!(with_extra.bits(), raw);
     }
 }

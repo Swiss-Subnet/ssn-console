@@ -36,6 +36,21 @@ pub fn remove_orphaned_canister(child_principal: Principal, parent_principal: Pr
     });
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            (
+                "orphaned_canister_child_parent_index",
+                s.child_to_parent_index.len(),
+            ),
+            (
+                "orphaned_canister_parent_child_index",
+                s.parent_child_index.len(),
+            ),
+        ]
+    })
+}
+
 struct OrphanedCanisterState {
     child_to_parent_index: OrphanedCanisterChildParentIndexMemory,
     parent_child_index: OrphanedCanisterParentChildIndexMemory,

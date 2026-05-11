@@ -18,6 +18,7 @@ export type StaffPermissions = {
   readAllOrgs: boolean;
   writeBilling: boolean;
   manageUsers: boolean;
+  readMetrics: boolean;
 };
 
 export type StaffMember = {
@@ -46,6 +47,7 @@ export function mapStaffPermissionsResponse(
     readAllOrgs: res.read_all_orgs,
     writeBilling: res.write_billing,
     manageUsers: res.manage_users,
+    readMetrics: res.read_metrics,
   };
 }
 
@@ -56,6 +58,7 @@ export function mapStaffPermissionsRequest(
     read_all_orgs: req.readAllOrgs,
     write_billing: req.writeBilling,
     manage_users: req.manageUsers,
+    read_metrics: req.readMetrics,
   };
 }
 

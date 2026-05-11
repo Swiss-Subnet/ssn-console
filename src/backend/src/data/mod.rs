@@ -1,5 +1,6 @@
 mod memory;
 mod model;
+pub use memory::memory_metrics;
 pub use model::*;
 
 pub mod approval_policy_repository;

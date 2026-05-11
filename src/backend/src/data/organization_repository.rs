@@ -113,6 +113,16 @@ pub fn is_user_in_org(user_id: Uuid, org_id: Uuid) -> bool {
     with_state(|s| s.organization_user_index.contains(&(org_id, user_id)))
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("organizations", s.organizations.len()),
+            ("organization_user_index", s.organization_user_index.len()),
+            ("user_organization_index", s.user_organization_index.len()),
+        ]
+    })
+}
+
 struct OrganizationState {
     organizations: OrganizationMemory,
     organization_user_index: OrganizationUserIndexMemory,

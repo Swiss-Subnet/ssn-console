@@ -54,6 +54,18 @@ pub fn upsert_approval_policy(
     })
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("approval_policies", s.approval_policies.len()),
+            (
+                "project_operation_type_approval_policy_index",
+                s.project_operation_type_approval_policy_index.len(),
+            ),
+        ]
+    })
+}
+
 struct ApprovalPolicyState {
     approval_policies: ApprovalPolicyMemory,
     project_operation_type_approval_policy_index: ProjectOperationTypeApprovalPolicyIndexMemory,

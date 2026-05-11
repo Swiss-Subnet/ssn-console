@@ -4,6 +4,7 @@ mod cycles_ledger;
 #[cfg(not(feature = "canbench-rs"))]
 pub mod http;
 mod invite;
+mod metrics;
 mod organization;
 mod principal_link;
 mod project;

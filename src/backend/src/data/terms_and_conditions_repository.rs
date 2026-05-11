@@ -110,6 +110,26 @@ pub fn create_terms_and_conditions(terms_and_conditions: TermsAndConditions) -> 
     id
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("terms_and_conditions", s.terms_and_conditions.len()),
+            (
+                "terms_and_conditions_created_at_index",
+                s.terms_and_conditions_created_at_index.len(),
+            ),
+            (
+                "terms_and_conditions_decisions",
+                s.terms_and_conditions_decisions.len(),
+            ),
+            (
+                "terms_and_conditions_decisions_user_index",
+                s.terms_and_conditions_decisions_user_index.len(),
+            ),
+        ]
+    })
+}
+
 struct TermsAndConditionsState {
     terms_and_conditions: TermsAndConditionsMemory,
     terms_and_conditions_created_at_index: TermsAndConditionsCreatedAtIndexMemory,
