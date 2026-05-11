@@ -28,6 +28,7 @@ import type {
   Organization,
   Project,
   Team,
+  LinkedPrincipal,
   PendingLinkCode,
 } from '@/lib/api-models';
 import type {
@@ -121,7 +122,7 @@ export type UserProfileSlice = {
 };
 
 export type PrincipalLinkSlice = {
-  linkedPrincipals: string[] | null;
+  linkedPrincipals: LinkedPrincipal[] | null;
   pendingLinkCode: PendingLinkCode | null;
 
   loadLinkedPrincipals: () => Promise<void>;
@@ -133,6 +134,7 @@ export type PrincipalLinkSlice = {
   linkMyPrincipal: (code: string) => Promise<void>;
   unlinkMyPrincipal: (principal: string) => Promise<void>;
   revokeMyLinkCode: () => Promise<void>;
+  setMyPrincipalName: (principal: string, name: string | null) => Promise<void>;
 };
 
 export type UsersSlice = {

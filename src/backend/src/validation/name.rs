@@ -4,6 +4,7 @@ const MAX_ORG_NAME_LENGTH: usize = 100;
 const MAX_TEAM_NAME_LENGTH: usize = 100;
 const MAX_PROJECT_NAME_LENGTH: usize = 100;
 const MAX_CANISTER_NAME_LENGTH: usize = 100;
+const MAX_PRINCIPAL_NAME_LENGTH: usize = 64;
 
 fn validate_bounded_name(subject: &str, value: String, max: usize) -> ApiResult<String> {
     let trimmed = value.trim().to_string();
@@ -88,6 +89,23 @@ impl TryFrom<String> for CanisterName {
     }
 }
 
+/// Validates a user-supplied display name for a linked principal.
+/// `None` and empty/whitespace input both mean "clear the name". A non-empty
+/// name is trimmed and length-checked.
+pub fn validate_optional_principal_name(value: Option<String>) -> ApiResult<Option<String>> {
+    let Some(raw) = value else { return Ok(None) };
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Ok(None);
+    }
+    if trimmed.chars().count() > MAX_PRINCIPAL_NAME_LENGTH {
+        return Err(ApiError::client_error(format!(
+            "Principal name cannot exceed {MAX_PRINCIPAL_NAME_LENGTH} characters."
+        )));
+    }
+    Ok(Some(trimmed.to_string()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -165,6 +183,36 @@ mod tests {
     fn canister_name_rejects_too_long() {
         let long = "a".repeat(MAX_CANISTER_NAME_LENGTH + 1);
         let err = CanisterName::try_from(long).unwrap_err();
+        assert!(err.message().contains("cannot exceed"));
+    }
+
+    #[test]
+    fn principal_name_none_passes_through() {
+        assert_eq!(validate_optional_principal_name(None).unwrap(), None);
+    }
+
+    #[test]
+    fn principal_name_trims_and_keeps_non_empty() {
+        let result = validate_optional_principal_name(Some("  My laptop  ".to_string())).unwrap();
+        assert_eq!(result.as_deref(), Some("My laptop"));
+    }
+
+    #[test]
+    fn principal_name_empty_or_whitespace_clears() {
+        assert_eq!(
+            validate_optional_principal_name(Some(String::new())).unwrap(),
+            None
+        );
+        assert_eq!(
+            validate_optional_principal_name(Some("   ".to_string())).unwrap(),
+            None
+        );
+    }
+
+    #[test]
+    fn principal_name_rejects_oversized() {
+        let long = "a".repeat(MAX_PRINCIPAL_NAME_LENGTH + 1);
+        let err = validate_optional_principal_name(Some(long)).unwrap_err();
         assert!(err.message().contains("cannot exceed"));
     }
 }

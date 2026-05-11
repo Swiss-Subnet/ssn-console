@@ -1,9 +1,10 @@
 use crate::{
     dto::{
         GetMyPendingLinkCodeRequest, GetMyPendingLinkCodeResponse, LinkMyPrincipalRequest,
-        LinkMyPrincipalResponse, ListMyLinkedPrincipalsRequest, ListMyLinkedPrincipalsResponse,
-        PendingLinkCodeDto, RegisterLinkCodeRequest, RegisterLinkCodeResponse,
-        RevokeMyLinkCodeRequest, RevokeMyLinkCodeResponse, UnlinkMyPrincipalRequest,
+        LinkMyPrincipalResponse, LinkedPrincipalDto, ListMyLinkedPrincipalsRequest,
+        ListMyLinkedPrincipalsResponse, PendingLinkCodeDto, RegisterLinkCodeRequest,
+        RegisterLinkCodeResponse, RevokeMyLinkCodeRequest, RevokeMyLinkCodeResponse,
+        SetMyPrincipalNameRequest, SetMyPrincipalNameResponse, UnlinkMyPrincipalRequest,
         UnlinkMyPrincipalResponse,
     },
     service::principal_link_service,
@@ -62,7 +63,29 @@ fn list_my_linked_principals(
     }
 
     principal_link_service::list_my_linked_principals(&caller)
-        .map(|principals| ListMyLinkedPrincipalsResponse { principals })
+        .map(|entries| ListMyLinkedPrincipalsResponse {
+            principals: entries
+                .into_iter()
+                .map(|e| LinkedPrincipalDto {
+                    principal: e.principal,
+                    name: e.name,
+                })
+                .collect(),
+        })
+        .into()
+}
+
+#[update]
+fn set_my_principal_name(
+    req: SetMyPrincipalNameRequest,
+) -> ApiResultDto<SetMyPrincipalNameResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    principal_link_service::set_my_principal_name(&caller, req.principal, req.name)
+        .map(|()| SetMyPrincipalNameResponse {})
         .into()
 }
 

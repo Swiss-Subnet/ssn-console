@@ -6,8 +6,11 @@ import {
   mapRegisterLinkCodeRequest,
   mapRegisterLinkCodeResponse,
   mapRevokeMyLinkCodeResponse,
+  mapSetMyPrincipalNameRequest,
+  mapSetMyPrincipalNameResponse,
   mapUnlinkMyPrincipalRequest,
   mapUnlinkMyPrincipalResponse,
+  type LinkedPrincipal,
   type PendingLinkCode,
 } from '@/lib/api-models';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
@@ -40,7 +43,7 @@ export class PrincipalLinkApi {
     mapUnlinkMyPrincipalResponse(res);
   }
 
-  public async listMyLinkedPrincipals(): Promise<string[]> {
+  public async listMyLinkedPrincipals(): Promise<LinkedPrincipal[]> {
     const res = await this.actor.list_my_linked_principals({});
     return mapListMyLinkedPrincipalsResponse(res);
   }
@@ -53,5 +56,15 @@ export class PrincipalLinkApi {
   public async revokeMyLinkCode(): Promise<void> {
     const res = await this.actor.revoke_my_link_code({});
     mapRevokeMyLinkCodeResponse(res);
+  }
+
+  public async setMyPrincipalName(
+    principal: string,
+    name: string | null,
+  ): Promise<void> {
+    const res = await this.actor.set_my_principal_name(
+      mapSetMyPrincipalNameRequest(principal, name),
+    );
+    mapSetMyPrincipalNameResponse(res);
   }
 }

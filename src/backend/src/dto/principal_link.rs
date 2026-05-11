@@ -32,9 +32,24 @@ pub struct UnlinkMyPrincipalResponse {}
 pub struct ListMyLinkedPrincipalsRequest {}
 
 #[derive(Debug, Clone, CandidType)]
-pub struct ListMyLinkedPrincipalsResponse {
-    pub principals: Vec<Principal>,
+pub struct LinkedPrincipalDto {
+    pub principal: Principal,
+    pub name: Option<String>,
 }
+
+#[derive(Debug, Clone, CandidType)]
+pub struct ListMyLinkedPrincipalsResponse {
+    pub principals: Vec<LinkedPrincipalDto>,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct SetMyPrincipalNameRequest {
+    pub principal: Principal,
+    pub name: Option<String>,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct SetMyPrincipalNameResponse {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct GetMyPendingLinkCodeRequest {}

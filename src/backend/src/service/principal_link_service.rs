@@ -6,7 +6,8 @@
 //
 // At most one pending code per user; registering replaces any existing one.
 
-use crate::data::user_profile_repository;
+use crate::data::{user_profile_repository, LinkedPrincipal};
+use crate::validation::validate_optional_principal_name;
 use candid::Principal;
 use canister_utils::{now_nanos, ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
@@ -97,9 +98,22 @@ pub fn unlink_my_principal(caller: &Principal, principal: Principal) -> ApiResul
     user_profile_repository::unlink_principal_from_user(user_id, principal)
 }
 
-pub fn list_my_linked_principals(caller: &Principal) -> ApiResult<Vec<Principal>> {
+pub fn list_my_linked_principals(caller: &Principal) -> ApiResult<Vec<LinkedPrincipal>> {
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
-    Ok(user_profile_repository::get_principals_by_user_id(user_id))
+    Ok(user_profile_repository::get_principals_with_names_by_user_id(user_id))
+}
+
+/// Set or clear the display name for one of the caller's linked principals.
+/// Any of the user's principals may rename any other principal of the same
+/// account; ownership is checked at the repository layer.
+pub fn set_my_principal_name(
+    caller: &Principal,
+    principal: Principal,
+    name: Option<String>,
+) -> ApiResult {
+    let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
+    let validated = validate_optional_principal_name(name)?;
+    user_profile_repository::set_principal_name(user_id, principal, validated)
 }
 
 #[derive(Debug, Clone)]
@@ -254,7 +268,7 @@ mod tests {
         link_my_principal(&new_p, "LINKOK01".to_string()).unwrap();
 
         let listed = list_my_linked_principals(&owner).unwrap();
-        assert!(listed.contains(&new_p));
+        assert!(listed.iter().any(|e| e.principal == new_p));
 
         let err = link_my_principal(&new_p, "LINKOK01".to_string()).unwrap_err();
         assert_eq!(err.message(), "Invalid or expired link code.");
@@ -274,8 +288,8 @@ mod tests {
         // party could deny the legitimate caller by racing first.
         link_my_principal(&target, "BINDONLY".to_string()).unwrap();
         let listed = list_my_linked_principals(&owner).unwrap();
-        assert!(listed.contains(&target));
-        assert!(!listed.contains(&attacker));
+        assert!(listed.iter().any(|e| e.principal == target));
+        assert!(!listed.iter().any(|e| e.principal == attacker));
     }
 
     #[test]
@@ -329,7 +343,77 @@ mod tests {
 
         unlink_my_principal(&owner, extra).unwrap();
         let listed = list_my_linked_principals(&owner).unwrap();
-        assert!(!listed.contains(&extra));
-        assert!(listed.contains(&owner));
+        assert!(!listed.iter().any(|e| e.principal == extra));
+        assert!(listed.iter().any(|e| e.principal == owner));
+    }
+
+    #[test]
+    fn set_my_principal_name_persists_via_listing() {
+        let owner = fresh_user(70);
+        let extra = principal(71);
+        register_link_code(&owner, "NAMEABLE".to_string(), extra).unwrap();
+        link_my_principal(&extra, "NAMEABLE".to_string()).unwrap();
+
+        set_my_principal_name(&owner, extra, Some("  Hardware wallet  ".to_string())).unwrap();
+
+        let listed = list_my_linked_principals(&owner).unwrap();
+        let entry = listed.iter().find(|e| e.principal == extra).unwrap();
+        assert_eq!(entry.name.as_deref(), Some("Hardware wallet"));
+    }
+
+    #[test]
+    fn set_my_principal_name_lets_sibling_principal_rename() {
+        // P1 (caller `owner`) sets a name for P2 (`extra`), then P2 sets a
+        // name for P1. Both must succeed because authorization is by user
+        // account, not by which specific principal is making the call.
+        let owner = fresh_user(80);
+        let extra = principal(81);
+        register_link_code(&owner, "SIBLINGS".to_string(), extra).unwrap();
+        link_my_principal(&extra, "SIBLINGS".to_string()).unwrap();
+
+        set_my_principal_name(&owner, extra, Some("Phone".to_string())).unwrap();
+        set_my_principal_name(&extra, owner, Some("Laptop".to_string())).unwrap();
+
+        let listed = list_my_linked_principals(&owner).unwrap();
+        let owner_entry = listed.iter().find(|e| e.principal == owner).unwrap();
+        let extra_entry = listed.iter().find(|e| e.principal == extra).unwrap();
+        assert_eq!(owner_entry.name.as_deref(), Some("Laptop"));
+        assert_eq!(extra_entry.name.as_deref(), Some("Phone"));
+    }
+
+    #[test]
+    fn set_my_principal_name_rejects_principal_owned_by_other_account() {
+        let owner = fresh_user(90);
+        let stranger = fresh_user(91);
+
+        let err = set_my_principal_name(&owner, stranger, Some("Mine!".to_string())).unwrap_err();
+        assert_eq!(err.message(), "Principal cannot be renamed.");
+    }
+
+    #[test]
+    fn set_my_principal_name_with_empty_string_clears() {
+        let owner = fresh_user(100);
+        let extra = principal(101);
+        register_link_code(&owner, "CLEAR001".to_string(), extra).unwrap();
+        link_my_principal(&extra, "CLEAR001".to_string()).unwrap();
+        set_my_principal_name(&owner, extra, Some("Old".to_string())).unwrap();
+
+        set_my_principal_name(&owner, extra, Some("   ".to_string())).unwrap();
+
+        let listed = list_my_linked_principals(&owner).unwrap();
+        let entry = listed.iter().find(|e| e.principal == extra).unwrap();
+        assert_eq!(entry.name, None);
+    }
+
+    #[test]
+    fn set_my_principal_name_rejects_oversized_name() {
+        let owner = fresh_user(110);
+        let extra = principal(111);
+        register_link_code(&owner, "TOOLONG1".to_string(), extra).unwrap();
+        link_my_principal(&extra, "TOOLONG1".to_string()).unwrap();
+
+        let oversized = "a".repeat(65);
+        let err = set_my_principal_name(&owner, extra, Some(oversized)).unwrap_err();
+        assert!(err.message().contains("64 characters"));
     }
 }

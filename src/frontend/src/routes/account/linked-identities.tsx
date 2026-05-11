@@ -8,9 +8,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { Principal } from '@icp-sdk/core/principal';
-import { ClipboardIcon, RefreshCwIcon, TerminalIcon } from 'lucide-react';
+import {
+  CheckIcon,
+  ClipboardIcon,
+  PencilIcon,
+  RefreshCwIcon,
+  TerminalIcon,
+  XIcon,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
-import type { PendingLinkCode } from '@/lib/api-models';
+import type { LinkedPrincipal, PendingLinkCode } from '@/lib/api-models';
+
+const MAX_PRINCIPAL_NAME_LENGTH = 64;
 
 const LinkedIdentities: FC = () => {
   const {
@@ -22,6 +31,7 @@ const LinkedIdentities: FC = () => {
     createLinkCode,
     unlinkMyPrincipal,
     revokeMyLinkCode,
+    setMyPrincipalName,
   } = useAppStore();
 
   const currentPrincipal = useMemo(
@@ -86,6 +96,7 @@ const LinkedIdentities: FC = () => {
           currentPrincipal={currentPrincipal}
           onUnlink={unlinkMyPrincipal}
           onAfterUnlink={loadLinkedPrincipals}
+          onRename={setMyPrincipalName}
         />
 
         <PendingCodeCard
@@ -103,10 +114,11 @@ const LinkedIdentities: FC = () => {
 };
 
 type CurrentlyLinkedCardProps = {
-  linkedPrincipals: string[] | null;
+  linkedPrincipals: LinkedPrincipal[] | null;
   currentPrincipal: string | null;
   onUnlink: (principal: string) => Promise<void>;
   onAfterUnlink: () => Promise<void>;
+  onRename: (principal: string, name: string | null) => Promise<void>;
 };
 
 const CurrentlyLinkedCard: FC<CurrentlyLinkedCardProps> = ({
@@ -114,6 +126,7 @@ const CurrentlyLinkedCard: FC<CurrentlyLinkedCardProps> = ({
   currentPrincipal,
   onUnlink,
   onAfterUnlink,
+  onRename,
 }) => {
   const [busyPrincipal, setBusyPrincipal] = useState<string | null>(null);
   const [confirmPrincipal, setConfirmPrincipal] = useState<string | null>(null);
@@ -154,37 +167,144 @@ const CurrentlyLinkedCard: FC<CurrentlyLinkedCardProps> = ({
           </p>
         ) : (
           <ul className="divide-y">
-            {linkedPrincipals.map(p => {
-              const isCurrent = p === currentPrincipal;
-              const isConfirming = confirmPrincipal === p;
-              return (
-                <li
-                  key={p}
-                  className="flex items-center justify-between gap-3 py-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-mono text-xs">{p}</p>
-                    {isCurrent && (
-                      <p className="text-muted-foreground mt-0.5 text-xs">
-                        This device
-                      </p>
-                    )}
-                  </div>
-                  <LoadingButton
-                    size="sm"
-                    variant={isConfirming ? 'destructive' : 'outline'}
-                    isLoading={busyPrincipal === p}
-                    onClick={() => handleUnlink(p)}
-                  >
-                    {isConfirming ? 'Click again to confirm' : 'Unlink'}
-                  </LoadingButton>
-                </li>
-              );
-            })}
+            {linkedPrincipals.map(entry => (
+              <LinkedPrincipalRow
+                key={entry.principal}
+                entry={entry}
+                isCurrent={entry.principal === currentPrincipal}
+                isUnlinkBusy={busyPrincipal === entry.principal}
+                isConfirmingUnlink={confirmPrincipal === entry.principal}
+                onUnlink={() => handleUnlink(entry.principal)}
+                onRename={name => onRename(entry.principal, name)}
+              />
+            ))}
           </ul>
         )}
       </CardContent>
     </Card>
+  );
+};
+
+type LinkedPrincipalRowProps = {
+  entry: LinkedPrincipal;
+  isCurrent: boolean;
+  isUnlinkBusy: boolean;
+  isConfirmingUnlink: boolean;
+  onUnlink: () => void;
+  onRename: (name: string | null) => Promise<void>;
+};
+
+const LinkedPrincipalRow: FC<LinkedPrincipalRowProps> = ({
+  entry,
+  isCurrent,
+  isUnlinkBusy,
+  isConfirmingUnlink,
+  onUnlink,
+  onRename,
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(entry.name ?? '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  function startEdit(): void {
+    setDraft(entry.name ?? '');
+    setIsEditing(true);
+  }
+
+  function cancelEdit(): void {
+    setIsEditing(false);
+    setDraft(entry.name ?? '');
+  }
+
+  async function saveEdit(): Promise<void> {
+    const trimmed = draft.trim();
+    const next = trimmed.length === 0 ? null : trimmed;
+    if (next === (entry.name ?? null)) {
+      setIsEditing(false);
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onRename(next);
+      showSuccessToast('Principal name updated');
+      setIsEditing(false);
+    } catch (err) {
+      showErrorToast('Failed to update name', err);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <li className="flex items-start justify-between gap-3 py-3">
+      <div className="min-w-0 flex-1">
+        {isEditing ? (
+          <div className="flex items-center gap-1.5">
+            <Input
+              autoFocus
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') void saveEdit();
+                else if (e.key === 'Escape') cancelEdit();
+              }}
+              maxLength={MAX_PRINCIPAL_NAME_LENGTH}
+              placeholder="Name this principal"
+              disabled={isSaving}
+              className="h-8 text-sm"
+            />
+            <LoadingButton
+              size="icon"
+              variant="ghost"
+              isLoading={isSaving}
+              onClick={() => void saveEdit()}
+              aria-label="Save name"
+            >
+              <CheckIcon />
+            </LoadingButton>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={cancelEdit}
+              disabled={isSaving}
+              aria-label="Cancel"
+            >
+              <XIcon />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            {entry.name !== null ? (
+              <p className="truncate text-sm font-medium">{entry.name}</p>
+            ) : (
+              <p className="text-muted-foreground text-sm italic">Unnamed</p>
+            )}
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={startEdit}
+              aria-label="Rename"
+            >
+              <PencilIcon />
+            </Button>
+          </div>
+        )}
+        <p className="text-muted-foreground mt-0.5 truncate font-mono text-xs">
+          {entry.principal}
+        </p>
+        {isCurrent && (
+          <p className="text-muted-foreground mt-0.5 text-xs">This device</p>
+        )}
+      </div>
+      <LoadingButton
+        size="sm"
+        variant={isConfirmingUnlink ? 'destructive' : 'outline'}
+        isLoading={isUnlinkBusy}
+        onClick={onUnlink}
+      >
+        {isConfirmingUnlink ? 'Click again to confirm' : 'Unlink'}
+      </LoadingButton>
+    </li>
   );
 };
 

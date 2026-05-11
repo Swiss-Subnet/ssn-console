@@ -59,7 +59,7 @@ export const createPrincipalLinkSlice: AppStateCreator<PrincipalLinkSlice> = (
 
     set(state => ({
       linkedPrincipals:
-        state.linkedPrincipals?.filter(p => p !== principal) ?? null,
+        state.linkedPrincipals?.filter(p => p.principal !== principal) ?? null,
     }));
   },
 
@@ -67,5 +67,17 @@ export const createPrincipalLinkSlice: AppStateCreator<PrincipalLinkSlice> = (
     const { principalLinkApi } = get();
     await principalLinkApi.revokeMyLinkCode();
     set({ pendingLinkCode: null });
+  },
+
+  async setMyPrincipalName(principal, name) {
+    const { principalLinkApi } = get();
+    await principalLinkApi.setMyPrincipalName(principal, name);
+
+    set(state => ({
+      linkedPrincipals:
+        state.linkedPrincipals?.map(p =>
+          p.principal === principal ? { ...p, name } : p,
+        ) ?? null,
+    }));
   },
 });
