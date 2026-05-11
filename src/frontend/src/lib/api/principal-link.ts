@@ -19,9 +19,10 @@ export class PrincipalLinkApi {
 
   public async registerLinkCode(
     code: string,
+    targetPrincipal: string,
   ): Promise<{ expiresAtNanos: bigint }> {
     const res = await this.actor.register_link_code(
-      mapRegisterLinkCodeRequest(code),
+      mapRegisterLinkCodeRequest(code, targetPrincipal),
     );
     return mapRegisterLinkCodeResponse(res);
   }

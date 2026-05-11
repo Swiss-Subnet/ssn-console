@@ -28,6 +28,7 @@ thread_local! {
 #[derive(Clone)]
 struct PendingLinkCode {
     user_id: Uuid,
+    target_principal: Principal,
     expires_at_nanos: u64,
 }
 
@@ -36,9 +37,19 @@ pub struct RegisteredLinkCode {
     pub expires_at_nanos: u64,
 }
 
-pub fn register_link_code(caller: &Principal, code: String) -> ApiResult<RegisteredLinkCode> {
+pub fn register_link_code(
+    caller: &Principal,
+    code: String,
+    target_principal: Principal,
+) -> ApiResult<RegisteredLinkCode> {
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     validate_code_format(&code)?;
+
+    if target_principal == Principal::anonymous() {
+        return Err(ApiError::client_error(
+            "Target principal must not be anonymous.".to_string(),
+        ));
+    }
 
     let now = now_nanos();
     let expires_at = now.saturating_add(LINK_CODE_TTL_NANOS);
@@ -63,6 +74,7 @@ pub fn register_link_code(caller: &Principal, code: String) -> ApiResult<Registe
             code,
             PendingLinkCode {
                 user_id,
+                target_principal,
                 expires_at_nanos: expires_at,
             },
         );
@@ -75,6 +87,11 @@ pub fn register_link_code(caller: &Principal, code: String) -> ApiResult<Registe
 pub fn link_my_principal(caller: &Principal, code: String) -> ApiResult {
     let now = now_nanos();
 
+    // The code is pre-bound to a specific target principal at registration
+    // time. Anyone who intercepts the code in transit (HTTP gateways, boundary
+    // nodes, replica logs) cannot use it from a different principal. A
+    // mismatched caller also burns the code, so a single intercepted attempt
+    // cannot race the legitimate device.
     let user_id = PENDING_LINK_CODES.with(|cell| {
         let mut codes = cell.borrow_mut();
         codes.retain(|_, v| v.expires_at_nanos > now);
@@ -82,6 +99,12 @@ pub fn link_my_principal(caller: &Principal, code: String) -> ApiResult {
         let entry = codes
             .remove(&code)
             .ok_or_else(|| ApiError::client_error("Invalid or expired link code.".to_string()))?;
+
+        if entry.target_principal != *caller {
+            return Err(ApiError::client_error(
+                "Invalid or expired link code.".to_string(),
+            ));
+        }
         Ok::<_, ApiError>(entry.user_id)
     })?;
 
@@ -102,6 +125,7 @@ pub fn list_my_linked_principals(caller: &Principal) -> ApiResult<Vec<Principal>
 pub struct PendingLinkCodeEntry {
     pub code: String,
     pub expires_at_nanos: u64,
+    pub target_principal: Principal,
 }
 
 pub fn list_my_pending_link_codes(caller: &Principal) -> ApiResult<Vec<PendingLinkCodeEntry>> {
@@ -118,6 +142,7 @@ pub fn list_my_pending_link_codes(caller: &Principal) -> ApiResult<Vec<PendingLi
             .map(|(code, v)| PendingLinkCodeEntry {
                 code: code.clone(),
                 expires_at_nanos: v.expires_at_nanos,
+                target_principal: v.target_principal,
             })
             .collect();
         out.sort_by_key(|e| e.expires_at_nanos);
@@ -207,43 +232,57 @@ mod tests {
     fn register_link_code_returns_expiry_at_ttl() {
         // now_nanos() is 0 outside wasm, so expiry equals the TTL itself.
         let owner = fresh_user(10);
-        let out = register_link_code(&owner, "REGEXPRY".to_string()).unwrap();
+        let target = principal(110);
+        let out = register_link_code(&owner, "REGEXPRY".to_string(), target).unwrap();
         assert_eq!(out.expires_at_nanos, LINK_CODE_TTL_NANOS);
     }
 
     #[test]
     fn register_link_code_rejects_invalid_format() {
         let owner = fresh_user(11);
-        let err = register_link_code(&owner, "lowercas".to_string()).unwrap_err();
+        let target = principal(111);
+        let err = register_link_code(&owner, "lowercas".to_string(), target).unwrap_err();
         assert!(err.message().contains("uppercase"));
     }
 
     #[test]
     fn register_link_code_rejects_unknown_caller() {
         let stranger = principal(12);
-        let err = register_link_code(&stranger, "STRANGER".to_string()).unwrap_err();
+        let target = principal(112);
+        let err = register_link_code(&stranger, "STRANGER".to_string(), target).unwrap_err();
         // Surfaces whatever assert_user_id_by_principal returns for unknown
         // principals; we just want a failure, not a specific message.
         assert!(!err.message().is_empty());
     }
 
     #[test]
+    fn register_link_code_rejects_anonymous_target() {
+        let owner = fresh_user(16);
+        let err =
+            register_link_code(&owner, "ANONTGT1".to_string(), Principal::anonymous()).unwrap_err();
+        assert!(err.message().contains("anonymous"));
+    }
+
+    #[test]
     fn register_link_code_rejects_collision() {
         let a = fresh_user(13);
         let b = fresh_user(14);
-        register_link_code(&a, "COLLIDE1".to_string()).unwrap();
-        let err = register_link_code(&b, "COLLIDE1".to_string()).unwrap_err();
+        let target_a = principal(113);
+        let target_b = principal(114);
+        register_link_code(&a, "COLLIDE1".to_string(), target_a).unwrap();
+        let err = register_link_code(&b, "COLLIDE1".to_string(), target_b).unwrap_err();
         assert_eq!(err.message(), "Link code unavailable.");
     }
 
     #[test]
     fn register_link_code_caps_pending_per_user() {
         let owner = fresh_user(15);
+        let target = principal(115);
         let codes = ["CAPCODE1", "CAPCODE2", "CAPCODE3", "CAPCODE4", "CAPCODE5"];
         for c in codes {
-            register_link_code(&owner, c.to_string()).unwrap();
+            register_link_code(&owner, c.to_string(), target).unwrap();
         }
-        let err = register_link_code(&owner, "CAPCODE6".to_string()).unwrap_err();
+        let err = register_link_code(&owner, "CAPCODE6".to_string(), target).unwrap_err();
         assert!(err.message().contains("Too many pending link codes"));
     }
 
@@ -251,7 +290,7 @@ mod tests {
     fn link_my_principal_attaches_new_principal_and_consumes_code() {
         let owner = fresh_user(20);
         let new_p = principal(21);
-        register_link_code(&owner, "LINKOK01".to_string()).unwrap();
+        register_link_code(&owner, "LINKOK01".to_string(), new_p).unwrap();
 
         link_my_principal(&new_p, "LINKOK01".to_string()).unwrap();
 
@@ -264,29 +303,52 @@ mod tests {
     }
 
     #[test]
+    fn link_my_principal_rejects_caller_other_than_target() {
+        let owner = fresh_user(22);
+        let target = principal(23);
+        let attacker = principal(24);
+        register_link_code(&owner, "BINDONLY".to_string(), target).unwrap();
+
+        let err = link_my_principal(&attacker, "BINDONLY".to_string()).unwrap_err();
+        assert_eq!(err.message(), "Invalid or expired link code.");
+
+        // Attacker's attempt burns the code so a race against the legitimate
+        // caller is strictly worse for the attacker than for the user.
+        let err = link_my_principal(&target, "BINDONLY".to_string()).unwrap_err();
+        assert_eq!(err.message(), "Invalid or expired link code.");
+
+        let listed = list_my_linked_principals(&owner).unwrap();
+        assert!(!listed.contains(&attacker));
+        assert!(!listed.contains(&target));
+    }
+
+    #[test]
     fn list_my_pending_link_codes_returns_only_callers_codes() {
         let owner = fresh_user(40);
         let other = fresh_user(41);
-        register_link_code(&owner, "MINEAAAA".to_string()).unwrap();
-        register_link_code(&owner, "MINEBBBB".to_string()).unwrap();
-        register_link_code(&other, "THEIRSAA".to_string()).unwrap();
+        let target_owner = principal(140);
+        let target_other = principal(141);
+        register_link_code(&owner, "MINEAAAA".to_string(), target_owner).unwrap();
+        register_link_code(&owner, "MINEBBBB".to_string(), target_owner).unwrap();
+        register_link_code(&other, "THEIRSAA".to_string(), target_other).unwrap();
 
         let mine = list_my_pending_link_codes(&owner).unwrap();
         let codes: Vec<&str> = mine.iter().map(|e| e.code.as_str()).collect();
         assert!(codes.contains(&"MINEAAAA"));
         assert!(codes.contains(&"MINEBBBB"));
         assert!(!codes.contains(&"THEIRSAA"));
+        assert!(mine.iter().all(|e| e.target_principal == target_owner));
     }
 
     #[test]
     fn revoke_link_code_removes_pending_code() {
         let owner = fresh_user(50);
-        register_link_code(&owner, "REVOKEME".to_string()).unwrap();
+        let target = principal(150);
+        register_link_code(&owner, "REVOKEME".to_string(), target).unwrap();
 
         revoke_link_code(&owner, "REVOKEME".to_string()).unwrap();
 
-        let stranger = principal(51);
-        let err = link_my_principal(&stranger, "REVOKEME".to_string()).unwrap_err();
+        let err = link_my_principal(&target, "REVOKEME".to_string()).unwrap_err();
         assert_eq!(err.message(), "Invalid or expired link code.");
     }
 
@@ -294,7 +356,8 @@ mod tests {
     fn revoke_link_code_rejects_other_users_code() {
         let owner = fresh_user(60);
         let attacker = fresh_user(61);
-        register_link_code(&owner, "OWNCODE1".to_string()).unwrap();
+        let target = principal(160);
+        register_link_code(&owner, "OWNCODE1".to_string(), target).unwrap();
 
         let err = revoke_link_code(&attacker, "OWNCODE1".to_string()).unwrap_err();
         assert_eq!(err.message(), "Link code not found.");
@@ -310,7 +373,7 @@ mod tests {
     fn unlink_my_principal_removes_from_list() {
         let owner = fresh_user(30);
         let extra = principal(31);
-        register_link_code(&owner, "UNLINK01".to_string()).unwrap();
+        register_link_code(&owner, "UNLINK01".to_string(), extra).unwrap();
         link_my_principal(&extra, "UNLINK01".to_string()).unwrap();
 
         unlink_my_principal(&owner, extra).unwrap();

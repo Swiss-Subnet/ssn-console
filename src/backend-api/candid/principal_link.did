@@ -2,6 +2,7 @@ import "../../canister-utils/error.did";
 
 type RegisterLinkCodeRequest = record {
   code : text;
+  target_principal : principal;
 };
 
 type RegisterLinkCodeResponse = variant {
@@ -37,6 +38,7 @@ type ListMyLinkedPrincipalsResponse = variant {
 type PendingLinkCode = record {
   code : text;
   expires_at_nanos : nat64;
+  target_principal : principal;
 };
 
 type ListMyPendingLinkCodesRequest = record {};

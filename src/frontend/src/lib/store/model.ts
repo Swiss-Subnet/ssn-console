@@ -128,10 +128,13 @@ export type PrincipalLinkSlice = {
   loadPendingLinkCodes: () => Promise<void>;
   clearLinkedPrincipals: () => void;
   // Generates a fresh code, registers it with the canister from the
-  // currently logged-in identity, and returns it together with the
-  // canister-side expiry. The returned code is the bearer token the user
-  // shares with whichever identity (e.g. dfx CLI) they want to attach.
-  createLinkCode: () => Promise<{ code: string; expiresAtNanos: bigint }>;
+  // currently logged-in identity bound to `targetPrincipal`, and returns it
+  // together with the canister-side expiry. The code is only redeemable by
+  // `targetPrincipal`, so an intercepted code cannot be used from any other
+  // principal.
+  createLinkCode: (
+    targetPrincipal: string,
+  ) => Promise<{ code: string; expiresAtNanos: bigint }>;
   linkMyPrincipal: (code: string) => Promise<void>;
   unlinkMyPrincipal: (principal: string) => Promise<void>;
   revokeLinkCode: (code: string) => Promise<void>;

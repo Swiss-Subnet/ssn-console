@@ -16,6 +16,7 @@ import type {
 export type PendingLinkCode = {
   code: string;
   expiresAtNanos: bigint;
+  targetPrincipal: string;
 };
 
 const LINK_CODE_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -33,8 +34,9 @@ export function generateLinkCode(): string {
 
 export function mapRegisterLinkCodeRequest(
   code: string,
+  targetPrincipal: string,
 ): ApiRegisterLinkCodeRequest {
-  return { code };
+  return { code, target_principal: Principal.fromText(targetPrincipal) };
 }
 
 export function mapRegisterLinkCodeResponse(res: ApiRegisterLinkCodeResponse): {
@@ -82,6 +84,7 @@ export function mapListMyPendingLinkCodesResponse(
   return ok.codes.map(c => ({
     code: c.code,
     expiresAtNanos: c.expires_at_nanos,
+    targetPrincipal: c.target_principal.toText(),
   }));
 }
 

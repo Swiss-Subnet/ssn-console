@@ -32,15 +32,18 @@ export const createPrincipalLinkSlice: AppStateCreator<PrincipalLinkSlice> = (
     set({ linkedPrincipals: null, pendingLinkCodes: null });
   },
 
-  async createLinkCode() {
+  async createLinkCode(targetPrincipal) {
     const { principalLinkApi } = get();
     const code = generateLinkCode();
-    const { expiresAtNanos } = await principalLinkApi.registerLinkCode(code);
+    const { expiresAtNanos } = await principalLinkApi.registerLinkCode(
+      code,
+      targetPrincipal,
+    );
 
     set(state => ({
       pendingLinkCodes: [
         ...(state.pendingLinkCodes ?? []),
-        { code, expiresAtNanos },
+        { code, expiresAtNanos, targetPrincipal },
       ],
     }));
 

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
+import { Principal } from '@icp-sdk/core/principal';
 import { ClipboardIcon, RefreshCwIcon, TerminalIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import type { PendingLinkCode } from '@/lib/api-models';
@@ -271,6 +272,9 @@ const PendingCodeRow: FC<PendingCodeRowProps> = ({
         <code className="font-mono text-sm tracking-widest">
           {pending.code}
         </code>
+        <p className="text-muted-foreground mt-0.5 truncate font-mono text-xs">
+          For {pending.targetPrincipal}
+        </p>
         <p className="text-muted-foreground mt-0.5 text-xs">
           {isExpired
             ? 'Expired'
@@ -292,7 +296,9 @@ const PendingCodeRow: FC<PendingCodeRowProps> = ({
 };
 
 type AddIdentityCardProps = {
-  createLinkCode: () => Promise<{ code: string; expiresAtNanos: bigint }>;
+  createLinkCode: (
+    targetPrincipal: string,
+  ) => Promise<{ code: string; expiresAtNanos: bigint }>;
   linkMyPrincipal: (code: string) => Promise<void>;
   onAfterLink: () => Promise<void>;
   pendingLinkCodes: PendingLinkCode[] | null;
@@ -304,6 +310,7 @@ const AddIdentityCard: FC<AddIdentityCardProps> = ({
   onAfterLink,
   pendingLinkCodes,
 }) => {
+  const [targetPrincipal, setTargetPrincipal] = useState('');
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [codeExpiresAtMs, setCodeExpiresAtMs] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -328,9 +335,18 @@ const AddIdentityCard: FC<AddIdentityCardProps> = ({
   const remainingMs = useExpiryCountdown(codeExpiresAtMs);
 
   async function handleGenerate(): Promise<void> {
+    const trimmedTarget = targetPrincipal.trim();
+    let parsedTarget: string;
+    try {
+      parsedTarget = Principal.fromText(trimmedTarget).toText();
+    } catch (err) {
+      showErrorToast('Invalid principal', err);
+      return;
+    }
+
     setIsGenerating(true);
     try {
-      const { code, expiresAtNanos } = await createLinkCode();
+      const { code, expiresAtNanos } = await createLinkCode(parsedTarget);
       setGeneratedCode(code);
       setCodeExpiresAtMs(Number(expiresAtNanos / 1_000_000n));
     } catch (err) {
@@ -393,14 +409,25 @@ const AddIdentityCard: FC<AddIdentityCardProps> = ({
         <section className="space-y-2">
           <h3 className="text-sm font-medium">Generate a link code</h3>
           <p className="text-muted-foreground text-xs">
-            Generate a code from your current identity, then sign in as the new
-            identity (here or via dfx) and paste the code below to attach it.
+            Enter the principal you want to attach (from the new device or your
+            dfx identity), then generate a code. The code only works when
+            redeemed by that exact principal, so intercepting it in transit does
+            not let anyone else attach their own identity.
           </p>
+
+          <Input
+            value={targetPrincipal}
+            onChange={e => setTargetPrincipal(e.target.value)}
+            placeholder="aaaaa-aa..."
+            disabled={generatedCode !== null}
+            className="font-mono text-xs"
+          />
 
           {generatedCode === null ? (
             <LoadingButton
               size="sm"
               isLoading={isGenerating}
+              disabled={targetPrincipal.trim().length === 0}
               onClick={() => handleGenerate()}
             >
               Generate code
@@ -443,7 +470,9 @@ const AddIdentityCard: FC<AddIdentityCardProps> = ({
               </div>
               <p className="text-muted-foreground text-xs">
                 Run this from a shell where your dfx identity is selected (e.g.{' '}
-                <code className="font-mono">dfx identity use ...</code>).
+                <code className="font-mono">dfx identity use ...</code>). The
+                selected identity&apos;s principal must match the target you
+                entered above, otherwise the code is rejected and burned.
               </p>
               <div className="flex items-start gap-2">
                 <pre className="bg-background flex-1 overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs">

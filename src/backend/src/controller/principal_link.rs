@@ -18,16 +18,18 @@ fn register_link_code(req: RegisterLinkCodeRequest) -> ApiResultDto<RegisterLink
         return ApiResultDto::Err(err);
     }
 
-    principal_link_service::register_link_code(&caller, req.code)
+    principal_link_service::register_link_code(&caller, req.code, req.target_principal)
         .map(|out| RegisterLinkCodeResponse {
             expires_at_nanos: out.expires_at_nanos,
         })
         .into()
 }
 
-// Caller is the principal being linked. The link-code binding (`code -> user_id`)
-// was set up by an earlier call from one of the user's already-authenticated
-// principals; this call merely proves the new principal can sign for itself.
+// Caller is the principal being linked. The link-code binding
+// (`code -> (user_id, target_principal)`) was set up by an earlier call from
+// one of the user's already-authenticated principals; the service rejects this
+// call unless the caller matches the pre-committed target_principal, so an
+// intercepted code is useless from a different principal.
 #[update]
 fn link_my_principal(req: LinkMyPrincipalRequest) -> ApiResultDto<LinkMyPrincipalResponse> {
     let caller = msg_caller();
@@ -82,6 +84,7 @@ fn list_my_pending_link_codes(
                 .map(|e| PendingLinkCodeDto {
                     code: e.code,
                     expires_at_nanos: e.expires_at_nanos,
+                    target_principal: e.target_principal,
                 })
                 .collect(),
         })

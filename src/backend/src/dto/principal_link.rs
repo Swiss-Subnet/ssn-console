@@ -4,6 +4,7 @@ use serde::Deserialize;
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct RegisterLinkCodeRequest {
     pub code: String,
+    pub target_principal: Principal,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
@@ -42,6 +43,7 @@ pub struct ListMyPendingLinkCodesRequest {}
 pub struct PendingLinkCodeDto {
     pub code: String,
     pub expires_at_nanos: u64,
+    pub target_principal: Principal,
 }
 
 #[derive(Debug, Clone, CandidType)]
