@@ -1,0 +1,3 @@
+build_cmd: cargo build -p cycles-monitor --release --target wasm32-unknown-unknown --features canbench-rs
+
+wasm_path: ../../target/wasm32-unknown-unknown/release/cycles_monitor.wasm

@@ -7,6 +7,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
+canbench-rs.workspace = true
 candid.workspace = true
 candid_parser.workspace = true
 ic-cdk.workspace = true
@@ -18,3 +19,6 @@ futures.workspace = true
 
 canister-utils.workspace = true
 base64 = "0.22"
+
+[features]
+canbench-rs = []

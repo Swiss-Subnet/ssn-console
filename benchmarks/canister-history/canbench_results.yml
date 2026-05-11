@@ -1,0 +1,23 @@
+benches:
+  bench_list_subnet_canister_id_ranges_100:
+    total:
+      calls: 1
+      instructions: 1315083
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  bench_list_subnet_canister_id_ranges_1000:
+    total:
+      calls: 1
+      instructions: 13159367
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  bench_list_subnet_canister_id_ranges_10_000:
+    total:
+      calls: 1
+      instructions: 131734119
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+version: 0.5.0

@@ -20,3 +20,6 @@ tsconfig.tsbuildinfo
 
 # deployment temporary files
 tmp
+
+# canbench local runtime files
+**/.canbench

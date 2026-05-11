@@ -190,3 +190,47 @@ fn with_state<R>(f: impl FnOnce(&CanisterHistoryState) -> R) -> R {
 fn mutate_state<R>(f: impl FnOnce(&mut CanisterHistoryState) -> R) -> R {
     STATE.with(|s| f(&mut s.borrow_mut()))
 }
+
+#[cfg(feature = "canbench-rs")]
+mod benches {
+    use super::{list_subnet_canister_id_ranges, mutate_state};
+    use crate::model::CanisterChangeInfo;
+    use canbench_rs::{bench, bench_fn, BenchResult};
+    use canister_utils::CanisterId;
+
+    fn bench_list_subnet_canister_id_ranges(num_canisters: u64) -> BenchResult {
+        let canisters = (1..=num_canisters)
+            .map(|i| CanisterId::from(i).into())
+            .collect::<Vec<_>>();
+        for canister_id in canisters {
+            let info = CanisterChangeInfo {
+                total_num_changes: 10,
+                stored_num_changes: 10,
+                missed_ranges: vec![],
+                is_deleted: false,
+            };
+            mutate_state(|s| {
+                s.canister_infos.insert(canister_id, info);
+            });
+        }
+
+        bench_fn(|| {
+            list_subnet_canister_id_ranges();
+        })
+    }
+
+    #[bench(raw)]
+    pub fn bench_list_subnet_canister_id_ranges_100() -> BenchResult {
+        bench_list_subnet_canister_id_ranges(100)
+    }
+
+    #[bench(raw)]
+    pub fn bench_list_subnet_canister_id_ranges_1000() -> BenchResult {
+        bench_list_subnet_canister_id_ranges(1000)
+    }
+
+    #[bench(raw)]
+    pub fn bench_list_subnet_canister_id_ranges_10_000() -> BenchResult {
+        bench_list_subnet_canister_id_ranges(10_000)
+    }
+}
