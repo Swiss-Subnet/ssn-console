@@ -112,6 +112,19 @@ pub fn sweep_expired_org_invites(org_id: Uuid, now_ns: u64) {
     });
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("invites", s.invites.len()),
+            (
+                "organization_invite_index",
+                s.organization_invite_index.len(),
+            ),
+            ("invite_status_index", s.invite_status_index.len()),
+        ]
+    })
+}
+
 struct InviteState {
     invites: OrgInviteMemory,
     organization_invite_index: OrganizationInviteIndexMemory,

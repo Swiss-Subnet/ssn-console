@@ -29,11 +29,19 @@ const formSchema = z
     readAllOrgs: z.boolean(),
     writeBilling: z.boolean(),
     manageUsers: z.boolean(),
+    readMetrics: z.boolean(),
   })
-  .refine(data => data.readAllOrgs || data.writeBilling || data.manageUsers, {
-    message: 'Select at least one permission',
-    path: ['readAllOrgs'],
-  });
+  .refine(
+    data =>
+      data.readAllOrgs ||
+      data.writeBilling ||
+      data.manageUsers ||
+      data.readMetrics,
+    {
+      message: 'Select at least one permission',
+      path: ['readAllOrgs'],
+    },
+  );
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -42,6 +50,7 @@ type Pending = {
   readAllOrgs: boolean;
   writeBilling: boolean;
   manageUsers: boolean;
+  readMetrics: boolean;
 };
 
 export const StaffForm: FC<StaffFormProps> = ({ className }) => {
@@ -57,6 +66,7 @@ export const StaffForm: FC<StaffFormProps> = ({ className }) => {
       readAllOrgs: false,
       writeBilling: false,
       manageUsers: false,
+      readMetrics: false,
     },
   });
 
@@ -66,6 +76,7 @@ export const StaffForm: FC<StaffFormProps> = ({ className }) => {
       readAllOrgs: formData.readAllOrgs,
       writeBilling: formData.writeBilling,
       manageUsers: formData.manageUsers,
+      readMetrics: formData.readMetrics,
     });
     setConfirmInput('');
   }
@@ -78,6 +89,7 @@ export const StaffForm: FC<StaffFormProps> = ({ className }) => {
         readAllOrgs: pending.readAllOrgs,
         writeBilling: pending.writeBilling,
         manageUsers: pending.manageUsers,
+        readMetrics: pending.readMetrics,
       });
       form.reset();
       setPending(null);
@@ -182,6 +194,25 @@ export const StaffForm: FC<StaffFormProps> = ({ className }) => {
                         }
                       >
                         Manage users
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant={
+                          form.watch('readMetrics') ? 'default' : 'outline'
+                        }
+                        size="sm"
+                        onClick={() =>
+                          form.setValue(
+                            'readMetrics',
+                            !form.watch('readMetrics'),
+                            {
+                              shouldValidate: true,
+                            },
+                          )
+                        }
+                      >
+                        Read metrics
                       </Button>
                     </div>
 
@@ -306,6 +337,17 @@ const ConfirmPanel: FC<ConfirmPanelProps> = ({
                     {' '}
                     &mdash; can link or unlink principals on any user account
                     (recovery and revocation).
+                  </span>
+                </div>
+              )}
+              {pending.readMetrics && (
+                <div>
+                  <span className="font-medium">Read metrics</span>
+                  <span className="text-muted-foreground">
+                    {' '}
+                    &mdash; can read raw canister metrics (stable-memory sizes
+                    and per-store entry counts). Aggregate only; no record
+                    contents.
                   </span>
                 </div>
               )}

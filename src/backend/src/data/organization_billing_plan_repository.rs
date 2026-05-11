@@ -29,6 +29,10 @@ pub fn delete_plan(org_id: Uuid) {
     });
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| vec![("billing_plans", s.billing_plans.len())])
+}
+
 struct BillingPlanState {
     billing_plans: BillingPlanMemory,
 }

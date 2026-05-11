@@ -92,6 +92,32 @@ dfx canister call backend list_user_profiles '(record {})'
 dfx canister call backend update_user_profile '(record { user_id = "<id>"; status = opt variant { Active } })'
 ```
 
+### Granting Staff Permissions Locally
+
+Staff permissions are cross-org capabilities (read every org, write billing,
+read raw metrics) gated behind the canister controller. Grant them to a
+local user with `dfx`:
+
+```shell
+dfx canister call backend grant_staff_permissions \
+  '(record {
+      user_id = "<id>";
+      permissions = record {
+        read_all_orgs = false;
+        write_billing = false;
+        manage_users = false;
+        read_metrics = true;
+      };
+   })'
+```
+
+Then `get_metrics` (and any other staff-gated endpoint) can be called as
+that user:
+
+```shell
+dfx canister call backend get_metrics '(record {})'
+```
+
 ### Build the frontend
 
 Build the backend API library:

@@ -141,6 +141,24 @@ pub fn update_canister_name(canister_id: Uuid, name: Option<String>) -> Option<C
     })
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("canisters", s.canisters.len()),
+            (
+                "active_project_canister_index",
+                s.active_project_canister_index.len(),
+            ),
+            (
+                "deleted_project_canister_index",
+                s.deleted_project_canister_index.len(),
+            ),
+            ("canister_project_index", s.canister_project_index.len()),
+            ("principal_canister_index", s.principal_canister_index.len()),
+        ]
+    })
+}
+
 struct CanisterState {
     canisters: CanisterMemory,
     active_project_canister_index: ActiveProjectCanisterIndexMemory,
