@@ -1,8 +1,22 @@
 benches:
-  bench_insert_snapshot:
+  bench_insert_snapshot_100:
     total:
       calls: 1
-      instructions: 5457887552
+      instructions: 17387653
+      heap_increase: 0
+      stable_memory_increase: 385
+    scopes: {}
+  bench_insert_snapshot_1000:
+    total:
+      calls: 1
+      instructions: 220694895
+      heap_increase: 0
+      stable_memory_increase: 385
+    scopes: {}
+  bench_insert_snapshot_10_000:
+    total:
+      calls: 1
+      instructions: 2680132470
       heap_increase: 0
       stable_memory_increase: 385
     scopes: {}
