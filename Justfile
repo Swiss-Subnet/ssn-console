@@ -1,15 +1,17 @@
 default:
     @just --list
 
-# Format Rust + TypeScript
+# Format Rust + TypeScript + Go
 fmt:
     cargo fmt
     bun run format
+    just services::fmt
 
-# Type-check Rust + TypeScript without building
+# Type-check Rust + TypeScript + Go without building
 check:
     cargo check -p backend
     bun --bun tsc --build
+    just services::check
 
 # Verify each canister's exported candid interface still matches its .did file.
 # Fast feedback loop while iterating on .did files.
@@ -34,3 +36,6 @@ test-backend *args: build-backend
 # Re-run backend integration tests without rebuilding the wasm; same scoping args as test-backend
 retest-backend *args:
     cd src/backend-tests && bun run test {{args}}
+
+# Go microservices live under services/; see `just services::` for recipes
+mod services
