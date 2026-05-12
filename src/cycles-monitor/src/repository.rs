@@ -211,3 +211,56 @@ mod tests {
         assert_eq!(get_latest_snapshot(canister_id).unwrap().memory, 5);
     }
 }
+
+#[cfg(feature = "canbench-rs")]
+mod benches {
+    use crate::model::CyclesMetricsSnapshot;
+    use crate::repository::insert_snapshot;
+    use canbench_rs::{bench, bench_fn, BenchResult};
+    use canister_utils::CanisterId;
+
+    fn create_snapshot(base: u64) -> CyclesMetricsSnapshot {
+        let b = base as u128;
+        CyclesMetricsSnapshot {
+            memory: b,
+            compute_allocation: b,
+            ingress_induction: b,
+            instructions: b,
+            request_and_response_transmission: b,
+            uninstall: b,
+            http_outcalls: b,
+            burned_cycles: b,
+        }
+    }
+
+    fn bench_insert_snapshot(num_principals: u64, num_snapshots: u64) -> BenchResult {
+        let principals = (1..=num_principals)
+            .map(|i| CanisterId::from(i).into())
+            .collect::<Vec<_>>();
+
+        bench_fn(|| {
+            for i in 1..=num_snapshots {
+                insert_snapshot(
+                    i,
+                    principals[(i % num_principals) as usize],
+                    create_snapshot(i),
+                );
+            }
+        })
+    }
+
+    #[bench(raw)]
+    pub fn bench_insert_snapshot_100() -> BenchResult {
+        bench_insert_snapshot(10, 100)
+    }
+
+    #[bench(raw)]
+    pub fn bench_insert_snapshot_1000() -> BenchResult {
+        bench_insert_snapshot(100, 1000)
+    }
+
+    #[bench(raw)]
+    pub fn bench_insert_snapshot_10_000() -> BenchResult {
+        bench_insert_snapshot(1000, 10_000)
+    }
+}

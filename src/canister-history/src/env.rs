@@ -8,6 +8,7 @@ thread_local! {
     };
 }
 
+#[cfg(not(feature = "canbench-rs"))]
 pub fn init_backend_id() {
     BACKEND_ID.with(|_| {});
 }
