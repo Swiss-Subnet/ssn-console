@@ -26,7 +26,14 @@ import { Principal } from '@icp-sdk/core/principal';
 
 const TIMESTAMP_FILE = '/data/.last-cycles-monitor-timestamp';
 
-export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
+export type ExtractedCanisterMetrics = {
+  timestamp_ns: bigint;
+  canister_id: Principal;
+} & Record<BaseMetricName | DerivedMetricName, bigint>;
+
+export async function syncCyclesMonitorMetrics(
+  agent: HttpAgent,
+): Promise<ExtractedCanisterMetrics[]> {
   const actor = Actor.createActor<_SERVICE>(idlFactory, {
     agent,
     canisterId: env.CANISTER_ID_CYCLES_MONITOR,
@@ -49,6 +56,8 @@ export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
   let cursor: Cursor = [startTimestampNs, minPrincipal];
   let totalPushed = 0;
 
+  const latestUsages = new Map<string, ExtractedCanisterMetrics>();
+
   while (true) {
     const metricsRes: ListMetricsAfterResponse = await actor.list_metrics_after(
       {
@@ -63,11 +72,19 @@ export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
       console.log(
         `🏗️ Retrieved ${metricsRes.Ok.snapshots.length} data points. Constructing OTLP payload...`,
       );
-      const otlpPayload = buildOtlpPayload(metricsRes.Ok.snapshots);
+      const [usages, otlpPayload] = buildOtlpPayload(metricsRes.Ok.snapshots);
 
       console.log(`✉️ Pushing metrics to Grafana Alloy...`);
       await pushMetrics(otlpPayload);
       totalPushed += metricsRes.Ok.snapshots.length;
+
+      for (const usage of usages) {
+        const existing = latestUsages.get(usage.canister_id.toString());
+
+        if (!existing || usage.timestamp_ns >= existing.timestamp_ns) {
+          latestUsages.set(usage.canister_id.toString(), usage);
+        }
+      }
     }
 
     const nextCursor: Cursor | undefined = metricsRes.Ok.next_cursor[0];
@@ -83,6 +100,8 @@ export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
   } else {
     console.log(`✅ Successfully pushed ${totalPushed} metrics to Alloy.`);
   }
+
+  return Array.from(latestUsages.values());
 }
 
 type MetricKey = Exclude<
@@ -90,14 +109,32 @@ type MetricKey = Exclude<
   'timestamp_ns' | 'canister_id'
 >;
 
+export type BaseMetricName =
+  | 'ic_canister_memory_cycles_total'
+  | 'ic_canister_compute_allocation_cycles_total'
+  | 'ic_canister_ingress_induction_cycles_total'
+  | 'ic_canister_instructions_cycles_total'
+  | 'ic_canister_request_response_transmission_cycles_total'
+  | 'ic_canister_uninstall_cycles_total'
+  | 'ic_canister_http_outcalls_cycles_total'
+  | 'ic_canister_burned_cycles_total';
+
+export type DerivedMetricName =
+  | 'ic_canister_memory_bytes'
+  | 'ic_canister_compute_allocation_percent'
+  | 'ic_canister_ingress_induction_bytes_total'
+  | 'ic_canister_compute_time_seconds_total'
+  | 'ic_canister_transmission_bytes_total'
+  | 'ic_canister_uninstalls_total';
+
 type BaseMetricBucket = {
-  name: string;
+  name: BaseMetricName;
   description: string;
   dataPoints: DataPoint<number>[];
 };
 
 type DerivedMetricBucket = {
-  name: string;
+  name: DerivedMetricName;
   description: string;
   unit: string;
   dataPoints: DataPoint<number>[];
@@ -133,7 +170,7 @@ const BYTES_PER_GB = 1_024n * 1_024n * 1_024n;
 
 function buildOtlpPayload(
   snapshots: CyclesMetricsSnapshotDto[],
-): ResourceMetrics {
+): [ExtractedCanisterMetrics[], ResourceMetrics] {
   const metricBuckets: BaseMetrics = {
     memory: {
       base: {
@@ -238,6 +275,8 @@ function buildOtlpPayload(
     },
   };
 
+  const usages: ExtractedCanisterMetrics[] = [];
+
   for (const point of snapshots) {
     const canisterId = point.canister_id.toString();
 
@@ -245,10 +284,30 @@ function buildOtlpPayload(
     const endTime = toHrTime(point.timestamp_ns);
     const attributes: Attributes = { canister_id: canisterId };
 
+    const usage: ExtractedCanisterMetrics = {
+      timestamp_ns: point.timestamp_ns,
+      canister_id: point.canister_id,
+      ic_canister_memory_cycles_total: 0n,
+      ic_canister_memory_bytes: 0n,
+      ic_canister_compute_allocation_cycles_total: 0n,
+      ic_canister_compute_allocation_percent: 0n,
+      ic_canister_ingress_induction_cycles_total: 0n,
+      ic_canister_ingress_induction_bytes_total: 0n,
+      ic_canister_instructions_cycles_total: 0n,
+      ic_canister_compute_time_seconds_total: 0n,
+      ic_canister_request_response_transmission_cycles_total: 0n,
+      ic_canister_transmission_bytes_total: 0n,
+      ic_canister_uninstall_cycles_total: 0n,
+      ic_canister_uninstalls_total: 0n,
+      ic_canister_http_outcalls_cycles_total: 0n,
+      ic_canister_burned_cycles_total: 0n,
+    };
+
     for (const [key, bucket] of objectEntries(metricBuckets)) {
       const cycles = BigInt(point[key]);
       const cyclesNum = Number(cycles);
 
+      usage[bucket.base.name] = cycles;
       bucket.base.dataPoints.push({
         startTime,
         endTime,
@@ -257,14 +316,19 @@ function buildOtlpPayload(
       });
 
       if (bucket.derived) {
+        const derivedValue = bucket.derived.formula(cycles);
+        usage[bucket.derived.name] = derivedValue;
+
         bucket.derived.dataPoints.push({
           startTime,
           endTime,
           attributes,
-          value: Number(bucket.derived.formula(cycles)),
+          value: Number(derivedValue),
         });
       }
     }
+
+    usages.push(usage);
   }
 
   const generatedMetrics: MetricData[] = [];
@@ -299,19 +363,23 @@ function buildOtlpPayload(
     }
   });
 
-  return {
-    resource: resourceFromAttributes({
-      [ATTR_SERVICE_NAMESPACE]: 'ssn',
-      [ATTR_SERVICE_NAME]: 'canister-otlp-syncer',
-      [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: process.env['GRAFANA_ENVIRONMENT'],
-    }),
-    scopeMetrics: [
-      {
-        scope: { name: 'canister-otlp-syncer' },
-        metrics: generatedMetrics,
-      },
-    ],
-  };
+  return [
+    usages,
+    {
+      resource: resourceFromAttributes({
+        [ATTR_SERVICE_NAMESPACE]: 'ssn',
+        [ATTR_SERVICE_NAME]: 'canister-otlp-syncer',
+        [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]:
+          process.env['GRAFANA_ENVIRONMENT'],
+      }),
+      scopeMetrics: [
+        {
+          scope: { name: 'canister-otlp-syncer' },
+          metrics: generatedMetrics,
+        },
+      ],
+    },
+  ];
 }
 
 function objectEntries<T extends {}, K extends keyof T = keyof T>(

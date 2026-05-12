@@ -12,6 +12,7 @@ const OTEL_EXPORTER_OTLP_ENDPOINT = getRequiredEnv(
 );
 
 export const env = {
+  CANISTER_ID_BACKEND: getRequiredEnv('CANISTER_ID_BACKEND'),
   CANISTER_ID_CYCLES_MONITOR: getRequiredEnv('CANISTER_ID_CYCLES_MONITOR'),
   HTTP_GATEWAY: getRequiredEnv('HTTP_GATEWAY'),
   PRIVATE_KEY: getRequiredEnv('PRIVATE_KEY'),

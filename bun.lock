@@ -54,6 +54,7 @@
         "@opentelemetry/resources": "^2.7.0",
         "@opentelemetry/sdk-metrics": "^2.7.0",
         "@opentelemetry/semantic-conventions": "^1.40.0",
+        "@ssn/backend-api": "workspace:*",
         "@ssn/cycles-monitor-api": "workspace:*",
       },
     },
