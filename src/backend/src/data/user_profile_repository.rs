@@ -342,10 +342,7 @@ mod tests {
     }
 
     fn name_for(user_id: Uuid, principal: Principal) -> Option<String> {
-        get_principals_with_names_by_user_id(user_id)
-            .into_iter()
-            .find(|e| e.principal == principal)
-            .and_then(|e| e.name)
+        with_state(|s| s.principal_names.get(&(user_id, principal)))
     }
 
     #[test]
