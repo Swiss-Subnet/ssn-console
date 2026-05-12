@@ -86,18 +86,12 @@
             pkgs.nodejs_22
             pkgs.openssl
             pkgs.just
+            pkgs.go
           ];
 
           shellHook = ''
             if [ -t 1 ]; then
-              echo "SSN Console dev shell"
-              echo "  Rust:  $(rustc --version)"
-              echo "  Bun:   $(bun --version)"
-              echo "  Node:  $(node --version)"
-              echo "  dfx:   $(dfx --version)"
-              echo "  SSL:   $(openssl version)"
-              echo "  Just:  $(just --version)"
-              echo "  canbench: $(canbench --version)"
+              echo "SSN Console: rust ${rustToolchain.version or "$(rustc --version)"} | bun ${pkgs.bun.version} | node ${pkgs.nodejs_22.version} | dfx ${dfxVersion} | ssl ${pkgs.openssl.version} | just ${pkgs.just.version} | canbench ${canbenchVersion} | go ${pkgs.go.version}"
             fi
           '';
         };
