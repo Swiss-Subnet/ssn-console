@@ -129,7 +129,7 @@ describe('sync-cycles-monitor-metrics', () => {
       });
 
     const mockAgent = {} as HttpAgent;
-    await syncCyclesMonitorMetrics(mockAgent);
+    const latestMetrics = await syncCyclesMonitorMetrics(mockAgent);
 
     expect(mockListMetricsAfter).toHaveBeenCalledTimes(2);
 
@@ -152,6 +152,8 @@ describe('sync-cycles-monitor-metrics', () => {
 
     const payload2 = mockPushMetrics.mock.calls[1]?.[0];
     expect(payload2).toMatchSnapshot();
+
+    expect(latestMetrics).toMatchSnapshot();
   });
 
   it('does nothing when no new metrics are returned', async () => {
@@ -163,7 +165,7 @@ describe('sync-cycles-monitor-metrics', () => {
     });
 
     const mockAgent = {} as HttpAgent;
-    await syncCyclesMonitorMetrics(mockAgent);
+    const latestMetrics = await syncCyclesMonitorMetrics(mockAgent);
 
     const expectedOneHourAgoNs =
       BigInt(new Date('2024-01-01T11:00:00Z').getTime()) * 1_000_000n;
@@ -174,6 +176,7 @@ describe('sync-cycles-monitor-metrics', () => {
     });
 
     expect(mockPushMetrics).not.toHaveBeenCalled();
+    expect(latestMetrics).toHaveLength(0);
   });
 
   it('throws an error if list_metrics_after returns an Err', async () => {
