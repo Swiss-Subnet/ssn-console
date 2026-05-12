@@ -25,11 +25,9 @@ fn register_link_code(req: RegisterLinkCodeRequest) -> ApiResultDto<RegisterLink
         .into()
 }
 
-// Caller is the principal being linked. The link-code binding
-// (`code -> (user_id, target_principal)`) was set up by an earlier call from
-// one of the user's already-authenticated principals; the service rejects this
-// call unless the caller matches the pre-committed target_principal, so an
-// intercepted code is useless from a different principal.
+// Caller is the principal being linked. The code is pre-bound to a target
+// principal at registration, so an intercepted code is useless from any other
+// principal.
 #[update]
 fn link_my_principal(req: LinkMyPrincipalRequest) -> ApiResultDto<LinkMyPrincipalResponse> {
     let caller = msg_caller();

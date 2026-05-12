@@ -67,8 +67,7 @@ const LinkedIdentities: FC = () => {
             <h1 className="text-xl font-semibold">Linked identities</h1>
             <p className="text-muted-foreground mt-1 text-sm">
               Sign in to this account from any of these principals. Useful for
-              attaching a CLI identity (dfx) or a second Internet Identity
-              anchor.
+              attaching a dfx CLI identity.
             </p>
           </div>
 
@@ -409,10 +408,10 @@ const AddIdentityCard: FC<AddIdentityCardProps> = ({
         <section className="space-y-2">
           <h3 className="text-sm font-medium">Generate a link code</h3>
           <p className="text-muted-foreground text-xs">
-            Enter the principal you want to attach (from the new device or your
-            dfx identity), then generate a code. The code only works when
-            redeemed by that exact principal, so intercepting it in transit does
-            not let anyone else attach their own identity.
+            Enter the principal you want to attach (for example, the output of{' '}
+            <code className="font-mono">dfx identity get-principal</code>), then
+            generate a code. The code only works when redeemed by that exact
+            principal.
           </p>
 
           <Input
