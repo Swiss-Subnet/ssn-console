@@ -15,6 +15,7 @@ use crate::{
     service::access_control_service::ProjectAuth,
     validation::CanisterName,
 };
+use backend_api::{AddChildCanistersRequest, AddChildCanistersResponse};
 use candid::Principal;
 use canister_utils::{is_destination_invalid, ApiError, ApiResult, Uuid, MAX_CALLS_PER_BATCH};
 use futures::future::join_all;
@@ -257,8 +258,8 @@ pub async fn add_canister_controller(
 }
 
 pub async fn add_child_canisters(
-    request: dto::AddChildCanistersRequest,
-) -> ApiResult<dto::AddChildCanistersResponse> {
+    request: AddChildCanistersRequest,
+) -> ApiResult<AddChildCanistersResponse> {
     for mapping in request.parent_child_mappings {
         let child_principal = mapping.child_canister_id;
         let parent_principal = mapping.parent_canister_id;
@@ -311,5 +312,5 @@ pub async fn add_child_canisters(
         }
     }
 
-    Ok(dto::AddChildCanistersResponse {})
+    Ok(AddChildCanistersResponse {})
 }

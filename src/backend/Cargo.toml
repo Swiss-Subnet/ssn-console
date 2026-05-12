@@ -14,6 +14,7 @@ ic-cdk-timers.workspace = true
 ic-stable-structures.workspace = true
 
 serde.workspace = true
+backend-api.workspace = true
 canister-utils.workspace = true
 
 ic-http-certification = "3"
