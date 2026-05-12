@@ -6,7 +6,7 @@ export const createPrincipalLinkSlice: AppStateCreator<PrincipalLinkSlice> = (
   get,
 ) => ({
   linkedPrincipals: null,
-  pendingLinkCodes: null,
+  pendingLinkCode: null,
 
   async loadLinkedPrincipals() {
     const { principalLinkApi, isAuthenticated } = get();
@@ -18,18 +18,18 @@ export const createPrincipalLinkSlice: AppStateCreator<PrincipalLinkSlice> = (
     set({ linkedPrincipals: principals });
   },
 
-  async loadPendingLinkCodes() {
+  async loadPendingLinkCode() {
     const { principalLinkApi, isAuthenticated } = get();
     if (!isAuthenticated) {
       return;
     }
 
-    const codes = await principalLinkApi.listMyPendingLinkCodes();
-    set({ pendingLinkCodes: codes });
+    const pending = await principalLinkApi.getMyPendingLinkCode();
+    set({ pendingLinkCode: pending });
   },
 
   clearLinkedPrincipals() {
-    set({ linkedPrincipals: null, pendingLinkCodes: null });
+    set({ linkedPrincipals: null, pendingLinkCode: null });
   },
 
   async createLinkCode(targetPrincipal) {
@@ -40,12 +40,7 @@ export const createPrincipalLinkSlice: AppStateCreator<PrincipalLinkSlice> = (
       targetPrincipal,
     );
 
-    set(state => ({
-      pendingLinkCodes: [
-        ...(state.pendingLinkCodes ?? []),
-        { code, expiresAtNanos, targetPrincipal },
-      ],
-    }));
+    set({ pendingLinkCode: { code, expiresAtNanos, targetPrincipal } });
 
     return { code, expiresAtNanos };
   },
@@ -68,13 +63,9 @@ export const createPrincipalLinkSlice: AppStateCreator<PrincipalLinkSlice> = (
     }));
   },
 
-  async revokeLinkCode(code) {
+  async revokeMyLinkCode() {
     const { principalLinkApi } = get();
-    await principalLinkApi.revokeLinkCode(code);
-
-    set(state => ({
-      pendingLinkCodes:
-        state.pendingLinkCodes?.filter(c => c.code !== code) ?? null,
-    }));
+    await principalLinkApi.revokeMyLinkCode();
+    set({ pendingLinkCode: null });
   },
 });

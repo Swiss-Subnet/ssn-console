@@ -41,18 +41,16 @@ type PendingLinkCode = record {
   target_principal : principal;
 };
 
-type ListMyPendingLinkCodesRequest = record {};
+type GetMyPendingLinkCodeRequest = record {};
 
-type ListMyPendingLinkCodesResponse = variant {
-  Ok : record { codes : vec PendingLinkCode };
+type GetMyPendingLinkCodeResponse = variant {
+  Ok : record { code : opt PendingLinkCode };
   Err : ApiError;
 };
 
-type RevokeLinkCodeRequest = record {
-  code : text;
-};
+type RevokeMyLinkCodeRequest = record {};
 
-type RevokeLinkCodeResponse = variant {
+type RevokeMyLinkCodeResponse = variant {
   Ok : record {};
   Err : ApiError;
 };
@@ -62,6 +60,6 @@ service : {
   link_my_principal : (LinkMyPrincipalRequest) -> (LinkMyPrincipalResponse);
   unlink_my_principal : (UnlinkMyPrincipalRequest) -> (UnlinkMyPrincipalResponse);
   list_my_linked_principals : (ListMyLinkedPrincipalsRequest) -> (ListMyLinkedPrincipalsResponse) query;
-  list_my_pending_link_codes : (ListMyPendingLinkCodesRequest) -> (ListMyPendingLinkCodesResponse) query;
-  revoke_link_code : (RevokeLinkCodeRequest) -> (RevokeLinkCodeResponse);
+  get_my_pending_link_code : (GetMyPendingLinkCodeRequest) -> (GetMyPendingLinkCodeResponse) query;
+  revoke_my_link_code : (RevokeMyLinkCodeRequest) -> (RevokeMyLinkCodeResponse);
 };

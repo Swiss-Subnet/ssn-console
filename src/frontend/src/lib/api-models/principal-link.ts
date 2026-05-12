@@ -1,14 +1,13 @@
 import { mapOkResponse } from '@/lib/api-models/error';
 import { Principal } from '@icp-sdk/core/principal';
 import type {
+  GetMyPendingLinkCodeResponse as ApiGetMyPendingLinkCodeResponse,
   LinkMyPrincipalRequest as ApiLinkMyPrincipalRequest,
   LinkMyPrincipalResponse as ApiLinkMyPrincipalResponse,
   ListMyLinkedPrincipalsResponse as ApiListMyLinkedPrincipalsResponse,
-  ListMyPendingLinkCodesResponse as ApiListMyPendingLinkCodesResponse,
   RegisterLinkCodeRequest as ApiRegisterLinkCodeRequest,
   RegisterLinkCodeResponse as ApiRegisterLinkCodeResponse,
-  RevokeLinkCodeRequest as ApiRevokeLinkCodeRequest,
-  RevokeLinkCodeResponse as ApiRevokeLinkCodeResponse,
+  RevokeMyLinkCodeResponse as ApiRevokeMyLinkCodeResponse,
   UnlinkMyPrincipalRequest as ApiUnlinkMyPrincipalRequest,
   UnlinkMyPrincipalResponse as ApiUnlinkMyPrincipalResponse,
 } from '@ssn/backend-api';
@@ -77,25 +76,21 @@ export function mapListMyLinkedPrincipalsResponse(
   return ok.principals.map(p => p.toText());
 }
 
-export function mapListMyPendingLinkCodesResponse(
-  res: ApiListMyPendingLinkCodesResponse,
-): PendingLinkCode[] {
+export function mapGetMyPendingLinkCodeResponse(
+  res: ApiGetMyPendingLinkCodeResponse,
+): PendingLinkCode | null {
   const ok = mapOkResponse(res);
-  return ok.codes.map(c => ({
-    code: c.code,
-    expiresAtNanos: c.expires_at_nanos,
-    targetPrincipal: c.target_principal.toText(),
-  }));
+  const [entry] = ok.code;
+  if (entry === undefined) return null;
+  return {
+    code: entry.code,
+    expiresAtNanos: entry.expires_at_nanos,
+    targetPrincipal: entry.target_principal.toText(),
+  };
 }
 
-export function mapRevokeLinkCodeRequest(
-  code: string,
-): ApiRevokeLinkCodeRequest {
-  return { code };
-}
-
-export function mapRevokeLinkCodeResponse(
-  res: ApiRevokeLinkCodeResponse,
+export function mapRevokeMyLinkCodeResponse(
+  res: ApiRevokeMyLinkCodeResponse,
 ): void {
   mapOkResponse(res);
 }

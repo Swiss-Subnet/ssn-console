@@ -1,10 +1,10 @@
 use crate::{
     dto::{
-        LinkMyPrincipalRequest, LinkMyPrincipalResponse, ListMyLinkedPrincipalsRequest,
-        ListMyLinkedPrincipalsResponse, ListMyPendingLinkCodesRequest,
-        ListMyPendingLinkCodesResponse, PendingLinkCodeDto, RegisterLinkCodeRequest,
-        RegisterLinkCodeResponse, RevokeLinkCodeRequest, RevokeLinkCodeResponse,
-        UnlinkMyPrincipalRequest, UnlinkMyPrincipalResponse,
+        GetMyPendingLinkCodeRequest, GetMyPendingLinkCodeResponse, LinkMyPrincipalRequest,
+        LinkMyPrincipalResponse, ListMyLinkedPrincipalsRequest, ListMyLinkedPrincipalsResponse,
+        PendingLinkCodeDto, RegisterLinkCodeRequest, RegisterLinkCodeResponse,
+        RevokeMyLinkCodeRequest, RevokeMyLinkCodeResponse, UnlinkMyPrincipalRequest,
+        UnlinkMyPrincipalResponse,
     },
     service::principal_link_service,
 };
@@ -67,36 +67,33 @@ fn list_my_linked_principals(
 }
 
 #[query]
-fn list_my_pending_link_codes(
-    _req: ListMyPendingLinkCodesRequest,
-) -> ApiResultDto<ListMyPendingLinkCodesResponse> {
+fn get_my_pending_link_code(
+    _req: GetMyPendingLinkCodeRequest,
+) -> ApiResultDto<GetMyPendingLinkCodeResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
     }
 
-    principal_link_service::list_my_pending_link_codes(&caller)
-        .map(|entries| ListMyPendingLinkCodesResponse {
-            codes: entries
-                .into_iter()
-                .map(|e| PendingLinkCodeDto {
-                    code: e.code,
-                    expires_at_nanos: e.expires_at_nanos,
-                    target_principal: e.target_principal,
-                })
-                .collect(),
+    principal_link_service::get_my_pending_link_code(&caller)
+        .map(|entry| GetMyPendingLinkCodeResponse {
+            code: entry.map(|e| PendingLinkCodeDto {
+                code: e.code,
+                expires_at_nanos: e.expires_at_nanos,
+                target_principal: e.target_principal,
+            }),
         })
         .into()
 }
 
 #[update]
-fn revoke_link_code(req: RevokeLinkCodeRequest) -> ApiResultDto<RevokeLinkCodeResponse> {
+fn revoke_my_link_code(_req: RevokeMyLinkCodeRequest) -> ApiResultDto<RevokeMyLinkCodeResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_authenticated(&caller) {
         return ApiResultDto::Err(err);
     }
 
-    principal_link_service::revoke_link_code(&caller, req.code)
-        .map(|()| RevokeLinkCodeResponse {})
+    principal_link_service::revoke_my_link_code(&caller)
+        .map(|()| RevokeMyLinkCodeResponse {})
         .into()
 }

@@ -12,20 +12,16 @@ import { ClipboardIcon, RefreshCwIcon, TerminalIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import type { PendingLinkCode } from '@/lib/api-models';
 
-const LINK_CODE_LEN = 8;
-const LINK_CODE_PATTERN = /^[A-Z0-9]{8}$/;
-
 const LinkedIdentities: FC = () => {
   const {
     identity,
     linkedPrincipals,
-    pendingLinkCodes,
+    pendingLinkCode,
     loadLinkedPrincipals,
-    loadPendingLinkCodes,
+    loadPendingLinkCode,
     createLinkCode,
-    linkMyPrincipal,
     unlinkMyPrincipal,
-    revokeLinkCode,
+    revokeMyLinkCode,
   } = useAppStore();
 
   const currentPrincipal = useMemo(
@@ -38,11 +34,11 @@ const LinkedIdentities: FC = () => {
       loadLinkedPrincipals().catch(err =>
         showErrorToast('Failed to load linked identities', err),
       ),
-      loadPendingLinkCodes().catch(err =>
-        showErrorToast('Failed to load pending link codes', err),
+      loadPendingLinkCode().catch(err =>
+        showErrorToast('Failed to load pending link code', err),
       ),
     ]);
-  }, [loadLinkedPrincipals, loadPendingLinkCodes]);
+  }, [loadLinkedPrincipals, loadPendingLinkCode]);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -92,16 +88,14 @@ const LinkedIdentities: FC = () => {
           onAfterUnlink={loadLinkedPrincipals}
         />
 
-        <PendingCodesCard
-          pendingLinkCodes={pendingLinkCodes}
-          onRevoke={revokeLinkCode}
+        <PendingCodeCard
+          pendingLinkCode={pendingLinkCode}
+          onRevoke={revokeMyLinkCode}
         />
 
         <AddIdentityCard
           createLinkCode={createLinkCode}
-          linkMyPrincipal={linkMyPrincipal}
-          onAfterLink={refresh}
-          pendingLinkCodes={pendingLinkCodes}
+          pendingLinkCode={pendingLinkCode}
         />
       </div>
     </Container>
@@ -194,52 +188,47 @@ const CurrentlyLinkedCard: FC<CurrentlyLinkedCardProps> = ({
   );
 };
 
-type PendingCodesCardProps = {
-  pendingLinkCodes: PendingLinkCode[] | null;
-  onRevoke: (code: string) => Promise<void>;
+type PendingCodeCardProps = {
+  pendingLinkCode: PendingLinkCode | null;
+  onRevoke: () => Promise<void>;
 };
 
-const PendingCodesCard: FC<PendingCodesCardProps> = ({
-  pendingLinkCodes,
+const PendingCodeCard: FC<PendingCodeCardProps> = ({
+  pendingLinkCode,
   onRevoke,
 }) => {
-  const [busyCode, setBusyCode] = useState<string | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
 
-  async function handleRevoke(code: string): Promise<void> {
-    setBusyCode(code);
+  async function handleRevoke(): Promise<void> {
+    setIsBusy(true);
     try {
-      await onRevoke(code);
+      await onRevoke();
       showSuccessToast('Link code revoked');
     } catch (err) {
       showErrorToast('Failed to revoke link code', err);
     } finally {
-      setBusyCode(null);
+      setIsBusy(false);
     }
   }
 
   return (
     <Card className="mx-auto max-w-2xl">
       <CardHeader>
-        <CardTitle>Pending link codes</CardTitle>
+        <CardTitle>Pending link code</CardTitle>
       </CardHeader>
 
       <CardContent>
-        {pendingLinkCodes === null ? (
-          <Skeleton className="h-8 w-full" />
-        ) : pendingLinkCodes.length === 0 ? (
+        {pendingLinkCode === null ? (
           <p className="text-muted-foreground text-sm">
-            No pending codes. Generate one below to attach a new identity.
+            No pending code. Generate one below to attach a new identity.
           </p>
         ) : (
           <ul className="divide-y">
-            {pendingLinkCodes.map(c => (
-              <PendingCodeRow
-                key={c.code}
-                pending={c}
-                isBusy={busyCode === c.code}
-                onRevoke={() => handleRevoke(c.code)}
-              />
-            ))}
+            <PendingCodeRow
+              pending={pendingLinkCode}
+              isBusy={isBusy}
+              onRevoke={handleRevoke}
+            />
           </ul>
         )}
       </CardContent>
@@ -298,38 +287,26 @@ type AddIdentityCardProps = {
   createLinkCode: (
     targetPrincipal: string,
   ) => Promise<{ code: string; expiresAtNanos: bigint }>;
-  linkMyPrincipal: (code: string) => Promise<void>;
-  onAfterLink: () => Promise<void>;
-  pendingLinkCodes: PendingLinkCode[] | null;
+  pendingLinkCode: PendingLinkCode | null;
 };
 
 const AddIdentityCard: FC<AddIdentityCardProps> = ({
   createLinkCode,
-  linkMyPrincipal,
-  onAfterLink,
-  pendingLinkCodes,
+  pendingLinkCode,
 }) => {
   const [targetPrincipal, setTargetPrincipal] = useState('');
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [codeExpiresAtMs, setCodeExpiresAtMs] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const [enteredCode, setEnteredCode] = useState('');
-  const [isLinking, setIsLinking] = useState(false);
-
-  // Clear the displayed code when it stops being a live pending code
-  // (revoked from the list above, expired, or consumed by a successful
-  // link in another tab). Skip while pendingLinkCodes is still loading
-  // (null) so we don't blow it away during the initial fetch.
+  // Clear the displayed code when it stops matching the store's pending code
+  // (revoked, expired, or consumed by a successful link in another tab).
   useEffect(() => {
     if (generatedCode === null) return;
-    if (pendingLinkCodes === null) return;
-    const stillPending = pendingLinkCodes.some(c => c.code === generatedCode);
-    if (!stillPending) {
-      setGeneratedCode(null);
-      setCodeExpiresAtMs(null);
-    }
-  }, [generatedCode, pendingLinkCodes]);
+    if (pendingLinkCode?.code === generatedCode) return;
+    setGeneratedCode(null);
+    setCodeExpiresAtMs(null);
+  }, [generatedCode, pendingLinkCode]);
 
   const remainingMs = useExpiryCountdown(codeExpiresAtMs);
 
@@ -373,28 +350,6 @@ const AddIdentityCard: FC<AddIdentityCardProps> = ({
       showSuccessToast('Command copied to clipboard');
     } catch (err) {
       showErrorToast('Failed to copy command', err);
-    }
-  }
-
-  async function handleLink(): Promise<void> {
-    const code = enteredCode.trim().toUpperCase();
-    if (!LINK_CODE_PATTERN.test(code)) {
-      showErrorToast(
-        'Invalid link code',
-        new Error('Link code must be 8 characters (A-Z, 0-9).'),
-      );
-      return;
-    }
-    setIsLinking(true);
-    try {
-      await linkMyPrincipal(code);
-      showSuccessToast('Identity linked');
-      setEnteredCode('');
-      await onAfterLink();
-    } catch (err) {
-      showErrorToast('Failed to link identity', err);
-    } finally {
-      setIsLinking(false);
     }
   }
 
@@ -471,7 +426,7 @@ const AddIdentityCard: FC<AddIdentityCardProps> = ({
                 Run this from a shell where your dfx identity is selected (e.g.{' '}
                 <code className="font-mono">dfx identity use ...</code>). The
                 selected identity&apos;s principal must match the target you
-                entered above, otherwise the code is rejected and burned.
+                entered above.
               </p>
               <div className="flex items-start gap-2">
                 <pre className="bg-background flex-1 overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs">
@@ -488,30 +443,6 @@ const AddIdentityCard: FC<AddIdentityCardProps> = ({
               </div>
             </div>
           )}
-        </section>
-
-        <section className="space-y-2">
-          <h3 className="text-sm font-medium">I have a link code</h3>
-          <p className="text-muted-foreground text-xs">
-            Paste a code generated from another identity to attach this
-            principal to that account.
-          </p>
-          <div className="flex items-center gap-2">
-            <Input
-              value={enteredCode}
-              onChange={e => setEnteredCode(e.target.value.toUpperCase())}
-              placeholder="ABCD1234"
-              maxLength={LINK_CODE_LEN}
-              className="font-mono tracking-widest uppercase"
-            />
-            <LoadingButton
-              size="sm"
-              isLoading={isLinking}
-              onClick={() => handleLink()}
-            >
-              Link this principal
-            </LoadingButton>
-          </div>
         </section>
       </CardContent>
     </Card>

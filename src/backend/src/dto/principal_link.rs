@@ -37,7 +37,7 @@ pub struct ListMyLinkedPrincipalsResponse {
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct ListMyPendingLinkCodesRequest {}
+pub struct GetMyPendingLinkCodeRequest {}
 
 #[derive(Debug, Clone, CandidType)]
 pub struct PendingLinkCodeDto {
@@ -47,14 +47,12 @@ pub struct PendingLinkCodeDto {
 }
 
 #[derive(Debug, Clone, CandidType)]
-pub struct ListMyPendingLinkCodesResponse {
-    pub codes: Vec<PendingLinkCodeDto>,
+pub struct GetMyPendingLinkCodeResponse {
+    pub code: Option<PendingLinkCodeDto>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct RevokeLinkCodeRequest {
-    pub code: String,
-}
+pub struct RevokeMyLinkCodeRequest {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct RevokeLinkCodeResponse {}
+pub struct RevokeMyLinkCodeResponse {}

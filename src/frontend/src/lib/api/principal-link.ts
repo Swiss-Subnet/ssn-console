@@ -1,12 +1,11 @@
 import {
+  mapGetMyPendingLinkCodeResponse,
   mapLinkMyPrincipalRequest,
   mapLinkMyPrincipalResponse,
   mapListMyLinkedPrincipalsResponse,
-  mapListMyPendingLinkCodesResponse,
   mapRegisterLinkCodeRequest,
   mapRegisterLinkCodeResponse,
-  mapRevokeLinkCodeRequest,
-  mapRevokeLinkCodeResponse,
+  mapRevokeMyLinkCodeResponse,
   mapUnlinkMyPrincipalRequest,
   mapUnlinkMyPrincipalResponse,
   type PendingLinkCode,
@@ -46,15 +45,13 @@ export class PrincipalLinkApi {
     return mapListMyLinkedPrincipalsResponse(res);
   }
 
-  public async listMyPendingLinkCodes(): Promise<PendingLinkCode[]> {
-    const res = await this.actor.list_my_pending_link_codes({});
-    return mapListMyPendingLinkCodesResponse(res);
+  public async getMyPendingLinkCode(): Promise<PendingLinkCode | null> {
+    const res = await this.actor.get_my_pending_link_code({});
+    return mapGetMyPendingLinkCodeResponse(res);
   }
 
-  public async revokeLinkCode(code: string): Promise<void> {
-    const res = await this.actor.revoke_link_code(
-      mapRevokeLinkCodeRequest(code),
-    );
-    mapRevokeLinkCodeResponse(res);
+  public async revokeMyLinkCode(): Promise<void> {
+    const res = await this.actor.revoke_my_link_code({});
+    mapRevokeMyLinkCodeResponse(res);
   }
 }

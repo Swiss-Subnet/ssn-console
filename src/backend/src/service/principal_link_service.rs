@@ -109,7 +109,7 @@ pub struct PendingLinkCodeEntry {
     pub target_principal: Principal,
 }
 
-pub fn list_my_pending_link_codes(caller: &Principal) -> ApiResult<Vec<PendingLinkCodeEntry>> {
+pub fn get_my_pending_link_code(caller: &Principal) -> ApiResult<Option<PendingLinkCodeEntry>> {
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let now = now_nanos();
 
@@ -117,30 +117,23 @@ pub fn list_my_pending_link_codes(caller: &Principal) -> ApiResult<Vec<PendingLi
         let mut codes = cell.borrow_mut();
         codes.retain(|_, v| v.expires_at_nanos > now);
 
-        Ok(codes
-            .get(&user_id)
-            .map(|v| PendingLinkCodeEntry {
-                code: v.code.clone(),
-                expires_at_nanos: v.expires_at_nanos,
-                target_principal: v.target_principal,
-            })
-            .into_iter()
-            .collect())
+        Ok(codes.get(&user_id).map(|v| PendingLinkCodeEntry {
+            code: v.code.clone(),
+            expires_at_nanos: v.expires_at_nanos,
+            target_principal: v.target_principal,
+        }))
     })
 }
 
-pub fn revoke_link_code(caller: &Principal, code: String) -> ApiResult {
+pub fn revoke_my_link_code(caller: &Principal) -> ApiResult {
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
 
     PENDING_LINK_CODES.with(|cell| {
         let mut codes = cell.borrow_mut();
-        match codes.get(&user_id) {
-            Some(entry) if entry.code == code => {
-                codes.remove(&user_id);
-                Ok(())
-            }
-            _ => Err(ApiError::client_error("Link code not found.".to_string())),
+        if codes.remove(&user_id).is_none() {
+            return Err(ApiError::client_error("Link code not found.".to_string()));
         }
+        Ok(())
     })
 }
 
@@ -245,9 +238,8 @@ mod tests {
         register_link_code(&owner, "FIRSTOWN".to_string(), target).unwrap();
         register_link_code(&owner, "SECONDOW".to_string(), target).unwrap();
 
-        let pending = list_my_pending_link_codes(&owner).unwrap();
-        assert_eq!(pending.len(), 1);
-        assert_eq!(pending[0].code, "SECONDOW");
+        let pending = get_my_pending_link_code(&owner).unwrap().unwrap();
+        assert_eq!(pending.code, "SECONDOW");
 
         let err = link_my_principal(&target, "FIRSTOWN".to_string()).unwrap_err();
         assert_eq!(err.message(), "Invalid or expired link code.");
@@ -287,7 +279,7 @@ mod tests {
     }
 
     #[test]
-    fn list_my_pending_link_codes_returns_only_callers_code() {
+    fn get_my_pending_link_code_returns_only_callers_code() {
         let owner = fresh_user(40);
         let other = fresh_user(41);
         let target_owner = principal(140);
@@ -295,38 +287,37 @@ mod tests {
         register_link_code(&owner, "MINECODE".to_string(), target_owner).unwrap();
         register_link_code(&other, "THEIRSAA".to_string(), target_other).unwrap();
 
-        let mine = list_my_pending_link_codes(&owner).unwrap();
-        assert_eq!(mine.len(), 1);
-        assert_eq!(mine[0].code, "MINECODE");
-        assert_eq!(mine[0].target_principal, target_owner);
+        let mine = get_my_pending_link_code(&owner).unwrap().unwrap();
+        assert_eq!(mine.code, "MINECODE");
+        assert_eq!(mine.target_principal, target_owner);
     }
 
     #[test]
-    fn revoke_link_code_removes_pending_code() {
+    fn revoke_my_link_code_removes_pending_code() {
         let owner = fresh_user(50);
         let target = principal(150);
         register_link_code(&owner, "REVOKEME".to_string(), target).unwrap();
 
-        revoke_link_code(&owner, "REVOKEME".to_string()).unwrap();
+        revoke_my_link_code(&owner).unwrap();
 
         let err = link_my_principal(&target, "REVOKEME".to_string()).unwrap_err();
         assert_eq!(err.message(), "Invalid or expired link code.");
     }
 
     #[test]
-    fn revoke_link_code_rejects_other_users_code() {
+    fn revoke_my_link_code_errors_when_caller_has_none() {
         let owner = fresh_user(60);
         let attacker = fresh_user(61);
         let target = principal(160);
         register_link_code(&owner, "OWNCODE1".to_string(), target).unwrap();
 
-        let err = revoke_link_code(&attacker, "OWNCODE1".to_string()).unwrap_err();
+        let err = revoke_my_link_code(&attacker).unwrap_err();
         assert_eq!(err.message(), "Link code not found.");
 
-        assert!(list_my_pending_link_codes(&owner)
-            .unwrap()
-            .iter()
-            .any(|e| e.code == "OWNCODE1"));
+        assert_eq!(
+            get_my_pending_link_code(&owner).unwrap().unwrap().code,
+            "OWNCODE1"
+        );
     }
 
     #[test]
