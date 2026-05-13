@@ -224,5 +224,63 @@ describe('Usage Metrics', () => {
         'historical-usage-july-2026',
       );
     });
+
+    // The syncer (canister-otlp-syncer) forwards lifetime-cumulative cycle
+    // counters from the cycles-monitor canister to upsert_usage. The backend
+    // currently treats those as period totals, so the cross-month delta is
+    // missing: each month's row holds the lifetime cumulative at the time of
+    // the last upsert, not the cycles consumed *during* that month.
+    it('returns July-only usage when fed lifetime-cumulative counters across a month boundary', async () => {
+      driver.actor.setIdentity(userIdentity);
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(userIdentity, project.id);
+
+      const canisterRes = await driver.actor.list_my_canisters({
+        project_id: project.id,
+      });
+      const canister = extractOkResponse(canisterRes)[0]!;
+
+      // Lifetime burned_cycles at end of June: 1.5T (everything before July).
+      await driver.pic.setTime(new Date('2026-06-30T23:00:00Z'));
+      await driver.pic.tick();
+      driver.actor.setIdentity(offchainIdentity);
+      extractOkResponse(
+        await driver.actor.upsert_usage({
+          usages: [
+            {
+              ...createUsage(canister.principal_id, 0n),
+              burned_cycles: 1_500_000_000_000n,
+            },
+          ],
+        }),
+      );
+
+      // Lifetime burned_cycles at start of July: only 500 cycles burned *in* July.
+      await driver.pic.setTime(new Date('2026-07-01T00:00:00Z'));
+      await driver.pic.tick();
+      extractOkResponse(
+        await driver.actor.upsert_usage({
+          usages: [
+            {
+              ...createUsage(canister.principal_id, 0n),
+              burned_cycles: 1_500_000_000_500n,
+            },
+          ],
+        }),
+      );
+
+      driver.actor.setIdentity(userIdentity);
+      const julyUsage = extractOkResponse(
+        await driver.actor.get_usage({
+          project_id: project.id,
+          billing_month: ['2026-07'],
+        }),
+      );
+
+      // "Usage during July" should be 500 cycles. Currently returns 1.5T + 500
+      // because the backend stores cumulative-at-end-of-month instead of
+      // subtracting June's anchor.
+      expect(julyUsage.project.burned_cycles).toBe(500n);
+    });
   });
 });
