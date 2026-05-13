@@ -34,6 +34,7 @@ fn post_upgrade() {
     data::team_repository::migrate_org_team_permissions();
     data::project_repository::migrate_project_team_permissions();
     data::canister_repository::migrate_principal_canister_index();
+    data::user_profile_repository::migrate_verified_email_index();
 }
 
 #[cfg(test)]

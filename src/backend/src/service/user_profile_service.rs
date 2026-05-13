@@ -17,6 +17,7 @@ use crate::{
         map_list_user_profiles_response, map_user_status_request,
     },
     service::access_control_service::ProjectAuth,
+    validation::Email,
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid};
@@ -128,11 +129,26 @@ pub fn update_my_user_profile(caller: Principal, req: UpdateMyUserProfileRequest
             ))
         })?;
 
-    if let Some(email) = req.email {
-        current_user_profile.email = Some(email);
+    if let Some(raw_email) = req.email {
+        let new_email = Email::try_from(raw_email)?.into_inner();
+        let previous_email = current_user_profile.email.clone();
+        let changed = previous_email.as_deref() != Some(new_email.as_str());
+
+        current_user_profile.email = Some(new_email);
+
+        // Changing the address invalidates verification: the user has not
+        // proven control of the new mailbox. Release the old index entry
+        // here; the new address stays unclaimed until verify_email runs.
+        if changed && current_user_profile.email_verified {
+            current_user_profile.email_verified = false;
+            if let Some(old) = previous_email.as_deref() {
+                user_profile_repository::release_verified_email(user_id, old);
+            }
+        }
     }
 
-    user_profile_repository::update_user_profile(user_id, current_user_profile)?;
+    user_profile_repository::update_user_profile(user_id, current_user_profile)
+        .expect("profile existence proven above");
 
     Ok(())
 }
@@ -157,20 +173,29 @@ pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> ApiResult {
             ))
         })?;
 
-    let Some(email) = &profile.email else {
+    let Some(stored_email) = profile.email.clone() else {
         return Err(ApiError::client_error(
             "User profile does not have an email to verify".to_string(),
         ));
     };
 
-    if email != &token_data.email {
+    // Normalize both sides: legacy rows weren't normalized at write time,
+    // so a raw comparison would make verification unreachable for them.
+    let profile_email = Email::try_from(stored_email)?;
+    let claim_email = Email::try_from(token_data.email)?;
+    if profile_email.as_str() != claim_email.as_str() {
         return Err(ApiError::client_error(
             "Token email does not match user profile email".to_string(),
         ));
     }
 
+    // Claim the index before flipping the flag so a collision leaves the
+    // profile untouched.
+    user_profile_repository::claim_verified_email(user_id, profile_email)?;
+
     profile.email_verified = true;
-    user_profile_repository::update_user_profile(user_id, profile)?;
+    user_profile_repository::update_user_profile(user_id, profile)
+        .expect("profile existence proven above");
 
     Ok(())
 }
