@@ -26,6 +26,7 @@ pub fn map_staff_permissions(perms: data::StaffPermissions) -> dto::StaffPermiss
     dto::StaffPermissions {
         read_all_orgs: perms.contains(data::StaffPermissions::READ_ALL_ORGS),
         write_billing: perms.contains(data::StaffPermissions::WRITE_BILLING),
+        manage_users: perms.contains(data::StaffPermissions::MANAGE_USERS),
     }
 }
 
@@ -36,6 +37,9 @@ pub fn map_staff_permissions_from_dto(perms: dto::StaffPermissions) -> data::Sta
     }
     if perms.write_billing {
         out = out.union(data::StaffPermissions::WRITE_BILLING);
+    }
+    if perms.manage_users {
+        out = out.union(data::StaffPermissions::MANAGE_USERS);
     }
     out
 }

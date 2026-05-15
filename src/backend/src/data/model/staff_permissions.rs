@@ -30,6 +30,12 @@ impl StaffPermissions {
     // contracts, comp accounts, suspensions).
     pub const WRITE_BILLING: Self = Self(1 << 1);
 
+    // Link or unlink principals on any user account. The recovery-of-last-
+    // resort path for users who have lost access to every principal on
+    // their account; also lets staff revoke a compromised principal
+    // without involving the user.
+    pub const MANAGE_USERS: Self = Self(1 << 2);
+
     // Bundle: read-only across all orgs. Default grant for L1 support.
     pub const SUPPORT: Self = Self::READ_ALL_ORGS;
 
@@ -44,7 +50,8 @@ impl StaffPermissions {
     // users already granted a bundle do NOT retroactively gain new bits —
     // they were granted a specific u64, and a re-grant is required to
     // include flags added after their original grant.
-    pub const ALL: Self = Self(Self::READ_ALL_ORGS.0 | Self::WRITE_BILLING.0);
+    pub const ALL: Self =
+        Self(Self::READ_ALL_ORGS.0 | Self::WRITE_BILLING.0 | Self::MANAGE_USERS.0);
 
     pub const fn contains(self, other: Self) -> bool {
         self.0 & other.0 == other.0
@@ -72,6 +79,7 @@ impl fmt::Display for StaffPermissions {
         const FLAGS: &[(StaffPermissions, &str)] = &[
             (StaffPermissions::READ_ALL_ORGS, "READ_ALL_ORGS"),
             (StaffPermissions::WRITE_BILLING, "WRITE_BILLING"),
+            (StaffPermissions::MANAGE_USERS, "MANAGE_USERS"),
         ];
 
         let mut first = true;
@@ -96,7 +104,7 @@ mod tests {
     use super::*;
 
     // Bump this when adding or removing a flag (and update ALL accordingly).
-    const STAFF_FLAG_COUNT: u32 = 2;
+    const STAFF_FLAG_COUNT: u32 = 3;
 
     #[test]
     fn all_covers_every_flag() {
@@ -117,6 +125,7 @@ mod tests {
     fn bit_positions_are_pinned() {
         assert_eq!(StaffPermissions::READ_ALL_ORGS.0, 1 << 0);
         assert_eq!(StaffPermissions::WRITE_BILLING.0, 1 << 1);
+        assert_eq!(StaffPermissions::MANAGE_USERS.0, 1 << 2);
     }
 
     #[test]
@@ -166,9 +175,10 @@ mod tests {
     // case is covered in user_profile.rs.
     #[test]
     fn unknown_bits_are_preserved_and_ignored_by_contains() {
-        let with_extra = StaffPermissions::from_bits_truncate(0b111);
+        let with_extra = StaffPermissions::from_bits_truncate(0b1111);
         assert!(with_extra.contains(StaffPermissions::READ_ALL_ORGS));
         assert!(with_extra.contains(StaffPermissions::WRITE_BILLING));
-        assert_eq!(with_extra.bits(), 0b111);
+        assert!(with_extra.contains(StaffPermissions::MANAGE_USERS));
+        assert_eq!(with_extra.bits(), 0b1111);
     }
 }

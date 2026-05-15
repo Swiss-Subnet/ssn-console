@@ -16,8 +16,9 @@ export const StaffPermissionBadges: FC<StaffPermissionBadgesProps> = ({
     {permissions.writeBilling && (
       <Badge variant="secondary">Write billing</Badge>
     )}
-    {!permissions.readAllOrgs && !permissions.writeBilling && (
-      <Badge variant="outline">None</Badge>
-    )}
+    {permissions.manageUsers && <Badge variant="secondary">Manage users</Badge>}
+    {!permissions.readAllOrgs &&
+      !permissions.writeBilling &&
+      !permissions.manageUsers && <Badge variant="outline">None</Badge>}
   </div>
 );

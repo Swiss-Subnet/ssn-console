@@ -5,7 +5,25 @@ use crate::data::{
 };
 use candid::Principal;
 use canister_utils::{assert_authenticated, ApiError, ApiResult, Uuid};
-use ic_cdk::api::is_controller;
+
+// `ic_cdk::api::is_controller` panics outside a real canister (it calls into
+// the replica's system API), which makes any function that consults it
+// unreachable from `cargo test`. We wrap it so the wasm build keeps the real
+// check and non-wasm builds get a deterministic `false`: a unit test that
+// wants to assert controller short-circuit behaviour can't do so this way,
+// but every other test path through `assert_staff_perm` /
+// `assert_has_platform_access` becomes reachable. The wasm canister always
+// uses the real implementation, so the gate's production behaviour is
+// unaffected.
+#[cfg(target_arch = "wasm32")]
+fn is_controller(principal: &Principal) -> bool {
+    ic_cdk::api::is_controller(principal)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn is_controller(_principal: &Principal) -> bool {
+    false
+}
 
 // Generic "not found or no access" errors. A caller who is not allowed to
 // know that a resource exists (or which org owns it) gets this same message

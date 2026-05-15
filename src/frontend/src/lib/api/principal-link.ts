@@ -1,4 +1,10 @@
 import {
+  mapAdminLinkPrincipalRequest,
+  mapAdminLinkPrincipalResponse,
+  mapAdminListLinkedPrincipalsRequest,
+  mapAdminListLinkedPrincipalsResponse,
+  mapAdminUnlinkPrincipalRequest,
+  mapAdminUnlinkPrincipalResponse,
   mapGetMyPendingLinkCodeResponse,
   mapLinkMyPrincipalRequest,
   mapLinkMyPrincipalResponse,
@@ -66,5 +72,32 @@ export class PrincipalLinkApi {
       mapSetMyPrincipalNameRequest(principal, name),
     );
     mapSetMyPrincipalNameResponse(res);
+  }
+
+  public async adminLinkPrincipalToUser(
+    userId: string,
+    principal: string,
+  ): Promise<void> {
+    const res = await this.actor.admin_link_principal_to_user(
+      mapAdminLinkPrincipalRequest(userId, principal),
+    );
+    mapAdminLinkPrincipalResponse(res);
+  }
+
+  public async adminUnlinkPrincipalFromUser(
+    userId: string,
+    principal: string,
+  ): Promise<void> {
+    const res = await this.actor.admin_unlink_principal_from_user(
+      mapAdminUnlinkPrincipalRequest(userId, principal),
+    );
+    mapAdminUnlinkPrincipalResponse(res);
+  }
+
+  public async adminListLinkedPrincipals(userId: string): Promise<string[]> {
+    const res = await this.actor.admin_list_linked_principals(
+      mapAdminListLinkedPrincipalsRequest(userId),
+    );
+    return mapAdminListLinkedPrincipalsResponse(res);
   }
 }

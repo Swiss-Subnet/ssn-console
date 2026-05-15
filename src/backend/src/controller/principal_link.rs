@@ -1,15 +1,17 @@
 use crate::{
     dto::{
-        GetMyPendingLinkCodeRequest, GetMyPendingLinkCodeResponse, LinkMyPrincipalRequest,
-        LinkMyPrincipalResponse, LinkedPrincipalDto, ListMyLinkedPrincipalsRequest,
-        ListMyLinkedPrincipalsResponse, PendingLinkCodeDto, RegisterLinkCodeRequest,
-        RegisterLinkCodeResponse, RevokeMyLinkCodeRequest, RevokeMyLinkCodeResponse,
-        SetMyPrincipalNameRequest, SetMyPrincipalNameResponse, UnlinkMyPrincipalRequest,
-        UnlinkMyPrincipalResponse,
+        AdminLinkPrincipalRequest, AdminLinkPrincipalResponse, AdminListLinkedPrincipalsRequest,
+        AdminListLinkedPrincipalsResponse, AdminUnlinkPrincipalRequest,
+        AdminUnlinkPrincipalResponse, GetMyPendingLinkCodeRequest, GetMyPendingLinkCodeResponse,
+        LinkMyPrincipalRequest, LinkMyPrincipalResponse, LinkedPrincipalDto,
+        ListMyLinkedPrincipalsRequest, ListMyLinkedPrincipalsResponse, PendingLinkCodeDto,
+        RegisterLinkCodeRequest, RegisterLinkCodeResponse, RevokeMyLinkCodeRequest,
+        RevokeMyLinkCodeResponse, SetMyPrincipalNameRequest, SetMyPrincipalNameResponse,
+        UnlinkMyPrincipalRequest, UnlinkMyPrincipalResponse,
     },
     service::principal_link_service,
 };
-use canister_utils::{assert_authenticated, ApiResultDto};
+use canister_utils::{assert_authenticated, ApiResultDto, Uuid};
 use ic_cdk::{api::msg_caller, *};
 
 #[update]
@@ -118,5 +120,66 @@ fn revoke_my_link_code(_req: RevokeMyLinkCodeRequest) -> ApiResultDto<RevokeMyLi
 
     principal_link_service::revoke_my_link_code(&caller)
         .map(|()| RevokeMyLinkCodeResponse {})
+        .into()
+}
+
+// Staff-only escape hatch: attach a principal to any user account. The
+// service layer enforces `MANAGE_USERS`; the controller only checks the
+// caller is non-anonymous so authorisation errors don't leak through the
+// generic anonymous-call path.
+#[update]
+fn admin_link_principal_to_user(
+    req: AdminLinkPrincipalRequest,
+) -> ApiResultDto<AdminLinkPrincipalResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    let user_id = match Uuid::try_from(req.user_id.as_str()) {
+        Ok(id) => id,
+        Err(err) => return ApiResultDto::Err(err),
+    };
+
+    principal_link_service::admin_link_principal_to_user(&caller, user_id, req.principal)
+        .map(|()| AdminLinkPrincipalResponse {})
+        .into()
+}
+
+#[update]
+fn admin_unlink_principal_from_user(
+    req: AdminUnlinkPrincipalRequest,
+) -> ApiResultDto<AdminUnlinkPrincipalResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    let user_id = match Uuid::try_from(req.user_id.as_str()) {
+        Ok(id) => id,
+        Err(err) => return ApiResultDto::Err(err),
+    };
+
+    principal_link_service::admin_unlink_principal_from_user(&caller, user_id, req.principal)
+        .map(|()| AdminUnlinkPrincipalResponse {})
+        .into()
+}
+
+#[query]
+fn admin_list_linked_principals(
+    req: AdminListLinkedPrincipalsRequest,
+) -> ApiResultDto<AdminListLinkedPrincipalsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    let user_id = match Uuid::try_from(req.user_id.as_str()) {
+        Ok(id) => id,
+        Err(err) => return ApiResultDto::Err(err),
+    };
+
+    principal_link_service::admin_list_linked_principals(&caller, user_id)
+        .map(|principals| AdminListLinkedPrincipalsResponse { principals })
         .into()
 }
