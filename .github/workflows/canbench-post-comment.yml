@@ -2,7 +2,7 @@ name: Post Canbench results
 
 on:
   workflow_run:
-    workflows: ["run-benchmarks"]
+    workflows: ['run-benchmarks']
     types:
       - completed
 
