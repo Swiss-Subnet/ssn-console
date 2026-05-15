@@ -54,6 +54,9 @@ const ProjectSettings = lazy(
   () => import('@/routes/organizations/projects/project-settings'),
 );
 const MyInvitations = lazy(() => import('@/routes/invitations/my-invitations'));
+const LinkedIdentities = lazy(
+  () => import('@/routes/account/linked-identities'),
+);
 
 export const Router: FC = () => (
   <BrowserRouter>
@@ -94,6 +97,7 @@ export const Router: FC = () => (
             element={<ProjectSettings />}
           />
           <Route path="invitations" element={<MyInvitations />} />
+          <Route path="account/identities" element={<LinkedIdentities />} />
 
           <Route path="projects/:projectId" element={<ProjectLayout />}>
             <Route path="canisters" element={<Canisters />} />

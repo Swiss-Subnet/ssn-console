@@ -7,6 +7,7 @@ import {
   ApprovalPolicyApi,
   CanisterApi,
   CanisterHistoryApi,
+  PrincipalLinkApi,
   ProposalApi,
   StaffPermissionsApi,
   TrustedPartnerApi,
@@ -75,6 +76,7 @@ const canisterHistoryApi = new CanisterHistoryApi(canisterHistoryActor);
 const authApi = new AuthApi(OFFCHAIN_SERVICE_URL);
 const approvalPolicyApi = new ApprovalPolicyApi(actor);
 const proposalApi = new ProposalApi(actor);
+const principalLinkApi = new PrincipalLinkApi(actor);
 
 export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
   agent,
@@ -93,6 +95,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
   authApi,
   approvalPolicyApi,
   proposalApi,
+  principalLinkApi,
 
   setAgentIdentity: identity => {
     const { agent } = get();

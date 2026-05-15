@@ -4,6 +4,7 @@ pub mod canister_service;
 pub mod cycles_ledger_service;
 pub mod invite_service;
 pub mod organization_service;
+pub mod principal_link_service;
 pub mod project_service;
 pub mod proposal_service;
 pub mod staff_permissions_service;

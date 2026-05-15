@@ -24,10 +24,12 @@ import {
   formatNumber,
   formatTimestamp,
 } from '@/lib/format';
+import { BACKEND_CANISTER_ID } from '@/env';
 import { isNil } from '@/lib/nil';
 import { useRequireProjectId, useRequireCanisterId } from '@/lib/params';
 import { selectOrgMap, selectProjectMap, useAppStore } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
+import type { UserProfileBrief } from '@/lib/api-models/user-profile';
 import { AddControllerForm } from '@/routes/canisters/add-controller-form';
 import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-canister-controller-cta';
 import { DeletedCanisterCta } from '@/routes/canisters/deleted-canister-cta';
@@ -154,11 +156,13 @@ const RenameCanisterCard: FC<RenameCanisterCardProps> = ({
 type CanisterInfoSectionsProps = {
   canisterPrincipal: string;
   info: CanisterInfo;
+  controllerNames: Map<string, string>;
 };
 
 const CanisterInfoSections: FC<CanisterInfoSectionsProps> = ({
   canisterPrincipal,
   info,
+  controllerNames,
 }) => {
   const logVisibilityLabel =
     typeof info.settings.logVisibility === 'string'
@@ -211,14 +215,24 @@ const CanisterInfoSections: FC<CanisterInfoSectionsProps> = ({
           <div className="mb-1 text-xs font-medium">Controllers</div>
           {info.settings.controllers.length > 0 ? (
             <div className="flex flex-col gap-1">
-              {info.settings.controllers.map(c => (
-                <p
-                  key={c}
-                  className="text-muted-foreground font-mono text-xs break-all"
-                >
-                  {c}
-                </p>
-              ))}
+              {info.settings.controllers.map(c => {
+                const name = controllerNames.get(c);
+                return (
+                  <p
+                    key={c}
+                    className="text-muted-foreground text-xs break-all"
+                  >
+                    {name !== undefined && (
+                      <span className="text-foreground font-medium">
+                        {name}{' '}
+                      </span>
+                    )}
+                    <span className="font-mono">
+                      {name !== undefined ? `(${c})` : c}
+                    </span>
+                  </p>
+                );
+              })}
             </div>
           ) : (
             <p className="text-muted-foreground text-xs">No controllers.</p>
@@ -340,15 +354,15 @@ function changeLabel(change: CanisterChange): string {
   }
 }
 
-function changeOriginLabel(change: CanisterChange): string {
-  if (change.origin === null) return '';
-  if (change.origin.type === 'user') return change.origin.userId;
-  return change.origin.canisterId;
-}
+type CanisterHistoryProps = {
+  canisterPrincipal: string;
+  canisterNames: Map<string, string>;
+};
 
-type CanisterHistoryProps = { canisterPrincipal: string };
-
-const CanisterHistory: FC<CanisterHistoryProps> = ({ canisterPrincipal }) => {
+const CanisterHistory: FC<CanisterHistoryProps> = ({
+  canisterPrincipal,
+  canisterNames,
+}) => {
   const { canisterHistoryApi } = useAppStore();
   const [changes, setChanges] = useState<CanisterChange[] | null>(null);
   const [isDeleted, setIsDeleted] = useState(false);
@@ -385,11 +399,27 @@ const CanisterHistory: FC<CanisterHistoryProps> = ({ canisterPrincipal }) => {
             >
               <div>
                 <span className="font-medium">{changeLabel(change)}</span>
-                {change.origin !== null && (
-                  <span className="text-muted-foreground ml-1.5 font-mono">
-                    {changeOriginLabel(change)}
-                  </span>
-                )}
+                {change.origin !== null &&
+                  (() => {
+                    const id =
+                      change.origin.type === 'user'
+                        ? change.origin.userId
+                        : change.origin.canisterId;
+                    const name =
+                      change.origin.type === 'canister'
+                        ? canisterNames.get(id)
+                        : undefined;
+                    return (
+                      <span className="text-muted-foreground ml-1.5">
+                        {name !== undefined && (
+                          <span className="font-medium">{name} </span>
+                        )}
+                        <span className="font-mono">
+                          {name !== undefined ? `(${id})` : id}
+                        </span>
+                      </span>
+                    );
+                  })()}
               </div>
               <div className="text-muted-foreground shrink-0 text-right">
                 <div>{formatTimestamp(change.timestampNanos)}</div>
@@ -424,6 +454,49 @@ const CanisterDetail: FC = () => {
     () => canisters?.get(projectId)?.find(c => c.id === canisterId) ?? null,
     [canisters, projectId, canisterId],
   );
+
+  const getUserProfilesByPrincipals = useAppStore(
+    s => s.getUserProfilesByPrincipals,
+  );
+  const [userProfiles, setUserProfiles] = useState<
+    Map<string, UserProfileBrief | null>
+  >(new Map());
+
+  const controllerPrincipals = useMemo(() => {
+    if (canister?.state.availability !== CanisterAvailability.Accessible) {
+      return [] as string[];
+    }
+    return canister.state.info.settings.controllers;
+  }, [canister]);
+
+  useEffect(() => {
+    const unknown = controllerPrincipals.filter(p => !userProfiles.has(p));
+    if (unknown.length === 0) return;
+    getUserProfilesByPrincipals(projectId, unknown)
+      .then(entries => {
+        setUserProfiles(prev => {
+          const next = new Map(prev);
+          for (const e of entries) next.set(e.principal, e.profile);
+          return next;
+        });
+      })
+      .catch(err =>
+        showErrorToast('Failed to resolve controller profiles', err),
+      );
+  }, [controllerPrincipals, projectId, getUserProfilesByPrincipals]);
+
+  const controllerNames = useMemo(() => {
+    const map = new Map<string, string>();
+    map.set(BACKEND_CANISTER_ID, 'Swiss Subnet Console');
+    for (const c of canisters?.get(projectId) ?? []) {
+      if (c.name !== null) map.set(c.principal, c.name);
+    }
+    for (const [principal, profile] of userProfiles) {
+      if (map.has(principal)) continue;
+      if (profile?.email) map.set(principal, profile.email);
+    }
+    return map;
+  }, [canisters, projectId, userProfiles]);
 
   const project = useMemo(
     () => projectMap.get(projectId) ?? null,
@@ -508,6 +581,7 @@ const CanisterDetail: FC = () => {
             <CanisterInfoSections
               canisterPrincipal={canister.principal}
               info={canister.state.info}
+              controllerNames={controllerNames}
             />
           ) : canister.state.availability === CanisterAvailability.Deleted ? (
             <DeletedCanisterCta
@@ -517,7 +591,10 @@ const CanisterDetail: FC = () => {
           ) : (
             <AddMissingCanisterControllerCta canisterId={canister.principal} />
           )}
-          <CanisterHistory canisterPrincipal={canister.principal} />
+          <CanisterHistory
+            canisterPrincipal={canister.principal}
+            canisterNames={controllerNames}
+          />
         </div>
       )}
     </>

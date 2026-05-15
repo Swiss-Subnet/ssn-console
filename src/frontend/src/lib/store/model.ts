@@ -28,11 +28,13 @@ import type {
   Organization,
   Project,
   Team,
+  PendingLinkCode,
 } from '@/lib/api-models';
 import type {
   ApprovalPolicyApi,
   CanisterApi,
   CanisterHistoryApi,
+  PrincipalLinkApi,
   ProposalApi,
   StaffPermissionsApi,
   TrustedPartnerApi,
@@ -80,6 +82,7 @@ export type ApiSlice = {
   inviteApi: InviteApi;
   approvalPolicyApi: ApprovalPolicyApi;
   proposalApi: ProposalApi;
+  principalLinkApi: PrincipalLinkApi;
 
   setAgentIdentity: (identity: Identity) => void;
 };
@@ -115,6 +118,21 @@ export type UserProfileSlice = {
   setEmail: (email: string) => Promise<void>;
   setEmailVerified: () => void;
   sendVerificationEmail: (email: string) => Promise<void>;
+};
+
+export type PrincipalLinkSlice = {
+  linkedPrincipals: string[] | null;
+  pendingLinkCode: PendingLinkCode | null;
+
+  loadLinkedPrincipals: () => Promise<void>;
+  loadPendingLinkCode: () => Promise<void>;
+  clearLinkedPrincipals: () => void;
+  createLinkCode: (
+    targetPrincipal: string,
+  ) => Promise<{ code: string; expiresAtNanos: bigint }>;
+  linkMyPrincipal: (code: string) => Promise<void>;
+  unlinkMyPrincipal: (principal: string) => Promise<void>;
+  revokeMyLinkCode: () => Promise<void>;
 };
 
 export type UsersSlice = {
@@ -277,6 +295,7 @@ export type AppSlice = AuthSlice &
   TeamsSlice &
   InvitesSlice &
   ApprovalPoliciesSlice &
-  ProposalsSlice;
+  ProposalsSlice &
+  PrincipalLinkSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;

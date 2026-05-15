@@ -15,6 +15,7 @@ import {
   CircleUserRoundIcon,
   ClipboardIcon,
   CogIcon,
+  KeyRoundIcon,
   LogOutIcon,
   MailIcon,
   ScrollTextIcon,
@@ -93,6 +94,16 @@ export const HeaderMenu: FC = () => {
               ) : (
                 <MailIcon />
               )}
+            </DropdownMenuItem>
+          )}
+
+          {isActive && (
+            <DropdownMenuItem
+              className="justify-between"
+              render={<NavLink to="/account/identities" />}
+            >
+              Linked identities
+              <KeyRoundIcon />
             </DropdownMenuItem>
           )}
 
