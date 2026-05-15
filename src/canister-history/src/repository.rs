@@ -65,6 +65,8 @@ pub fn list_subnet_canister_id_ranges() -> Vec<(Principal, Principal)> {
                 continue;
             }
 
+            // No changes.
+
             let Ok(canister_id) = CanisterId::try_from(principal) else {
                 // this shouldn't ever happen since we get the list of canister IDs
                 // by iterating through all possible canister ids on the subnet
