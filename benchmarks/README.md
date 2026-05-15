@@ -6,9 +6,10 @@ SSN console canisters as well as their results.
 ## Installing canbench in your environment
 
 Simply run
-  ```shell
-  cargo install canbench
-  ```
+
+```shell
+cargo install canbench
+```
 
 ## Running benchmarks
 
@@ -22,6 +23,7 @@ Simply run
   ```
 
 If you want to persist results of a benchmark, run
-  ```shell
-  canbench --persist
-  ```
+
+```shell
+canbench --persist
+```
