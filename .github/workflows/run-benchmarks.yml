@@ -1,5 +1,11 @@
 name: Run canister benchmarks
-on: [pull_request]
+
+on:
+  pull_request:
+
+concurrency:
+  group: pr-${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
 
 env:
   RUST_VERSION: 1.92.0 # Use the same version as in `rust-toolchain.toml`
@@ -9,7 +15,6 @@ env:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    needs: build
     strategy:
       matrix:
         name:
@@ -26,10 +31,10 @@ jobs:
 
     steps:
       - name: Checkout current PR
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Checkout baseline branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: main
           path: _canbench_baseline_branch
