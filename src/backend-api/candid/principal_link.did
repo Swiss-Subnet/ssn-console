@@ -30,8 +30,23 @@ type UnlinkMyPrincipalResponse = variant {
 
 type ListMyLinkedPrincipalsRequest = record {};
 
+type LinkedPrincipal = record {
+  "principal" : principal;
+  name : opt text;
+};
+
 type ListMyLinkedPrincipalsResponse = variant {
-  Ok : record { principals : vec principal };
+  Ok : record { principals : vec LinkedPrincipal };
+  Err : ApiError;
+};
+
+type SetMyPrincipalNameRequest = record {
+  "principal" : principal;
+  name : opt text;
+};
+
+type SetMyPrincipalNameResponse = variant {
+  Ok : record {};
   Err : ApiError;
 };
 
@@ -62,4 +77,5 @@ service : {
   list_my_linked_principals : (ListMyLinkedPrincipalsRequest) -> (ListMyLinkedPrincipalsResponse) query;
   get_my_pending_link_code : (GetMyPendingLinkCodeRequest) -> (GetMyPendingLinkCodeResponse) query;
   revoke_my_link_code : (RevokeMyLinkCodeRequest) -> (RevokeMyLinkCodeResponse);
+  set_my_principal_name : (SetMyPrincipalNameRequest) -> (SetMyPrincipalNameResponse);
 };

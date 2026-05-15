@@ -3,10 +3,11 @@ use super::{
         init_user_profile_principal_index, init_user_profiles, init_user_stats, UserProfileMemory,
         UserProfilePrincipalIndexMemory, UserStatsMemory,
     },
-    UserProfile, UserStatsData,
+    LinkedPrincipal, UserProfile, UserStatsData,
 };
 use crate::data::memory::{
-    init_user_profile_id_principal_index, UserProfileIdPrincipalIndexMemory,
+    init_user_principal_names, init_user_profile_id_principal_index, UserPrincipalNameMemory,
+    UserProfileIdPrincipalIndexMemory,
 };
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid, MAX_PRINCIPAL, MIN_PRINCIPAL};
@@ -114,6 +115,41 @@ pub fn unlink_principal_from_user(user_id: Uuid, principal: Principal) -> ApiRes
 
         s.principal_index.remove(&principal);
         s.id_principal_index.remove(&(user_id, principal));
+        s.principal_names.remove(&(user_id, principal));
+        Ok(())
+    })
+}
+
+pub fn get_principals_with_names_by_user_id(user_id: Uuid) -> Vec<LinkedPrincipal> {
+    with_state(|s| {
+        s.id_principal_index
+            .range((user_id, MIN_PRINCIPAL)..=(user_id, MAX_PRINCIPAL))
+            .map(|(_, principal)| LinkedPrincipal {
+                principal,
+                name: s.principal_names.get(&(user_id, principal)),
+            })
+            .collect()
+    })
+}
+
+/// Sets or clears the display name a user has assigned to one of their own
+/// linked principals. `name = None` clears the entry. Caller-supplied input
+/// must be validated by `validation::validate_optional_principal_name` first.
+pub fn set_principal_name(user_id: Uuid, principal: Principal, name: Option<String>) -> ApiResult {
+    mutate_state(|s| {
+        if !s.id_principal_index.contains(&(user_id, principal)) {
+            return Err(ApiError::client_error(
+                "Principal cannot be renamed.".to_string(),
+            ));
+        }
+        match name {
+            Some(value) => {
+                s.principal_names.insert((user_id, principal), value);
+            }
+            None => {
+                s.principal_names.remove(&(user_id, principal));
+            }
+        }
         Ok(())
     })
 }
@@ -171,6 +207,7 @@ struct UserProfileState {
     profiles: UserProfileMemory,
     principal_index: UserProfilePrincipalIndexMemory,
     id_principal_index: UserProfileIdPrincipalIndexMemory,
+    principal_names: UserPrincipalNameMemory,
     stats: UserStatsMemory,
 }
 
@@ -180,6 +217,7 @@ impl Default for UserProfileState {
             profiles: init_user_profiles(),
             principal_index: init_user_profile_principal_index(),
             id_principal_index: init_user_profile_id_principal_index(),
+            principal_names: init_user_principal_names(),
             stats: init_user_stats(),
         }
     }
@@ -301,5 +339,86 @@ mod tests {
 
         let err = unlink_principal_from_user(user_id, p2).unwrap_err();
         assert_eq!(err.message(), "Principal cannot be unlinked.");
+    }
+
+    fn name_for(user_id: Uuid, principal: Principal) -> Option<String> {
+        with_state(|s| s.principal_names.get(&(user_id, principal)))
+    }
+
+    #[test]
+    fn set_principal_name_stores_and_lists_name() {
+        let p1 = principal(90);
+        let p2 = principal(91);
+        let user_id = seed_user(p1);
+        link_principal_to_user(user_id, p2).unwrap();
+
+        set_principal_name(user_id, p2, Some("Hardware wallet".to_string())).unwrap();
+
+        let listed = get_principals_with_names_by_user_id(user_id);
+        assert!(listed
+            .iter()
+            .any(|e| e.principal == p2 && e.name.as_deref() == Some("Hardware wallet")));
+        assert!(listed.iter().any(|e| e.principal == p1 && e.name.is_none()));
+    }
+
+    #[test]
+    fn set_principal_name_with_none_clears() {
+        let p1 = principal(100);
+        let p2 = principal(101);
+        let user_id = seed_user(p1);
+        link_principal_to_user(user_id, p2).unwrap();
+        set_principal_name(user_id, p2, Some("Laptop".to_string())).unwrap();
+
+        set_principal_name(user_id, p2, None).unwrap();
+
+        assert_eq!(name_for(user_id, p2), None);
+    }
+
+    #[test]
+    fn set_principal_name_rejects_principal_not_owned_by_user() {
+        let p1 = principal(110);
+        let p2 = principal(111);
+        let user_a = seed_user(p1);
+        seed_user(p2);
+
+        let err = set_principal_name(user_a, p2, Some("Stranger".to_string())).unwrap_err();
+        assert_eq!(err.message(), "Principal cannot be renamed.");
+        assert_eq!(name_for(user_a, p2), None);
+    }
+
+    #[test]
+    fn set_principal_name_by_sibling_principal_succeeds() {
+        // Ownership is by user, not by caller principal: P1 setting P2's name
+        // is the same operation as P2 setting it. The controller resolves the
+        // caller's user_id and passes it in here.
+        let p1 = principal(120);
+        let p2 = principal(121);
+        let user_id = seed_user(p1);
+        link_principal_to_user(user_id, p2).unwrap();
+
+        set_principal_name(user_id, p2, Some("My phone".to_string())).unwrap();
+        set_principal_name(user_id, p1, Some("My laptop".to_string())).unwrap();
+
+        assert_eq!(name_for(user_id, p1), Some("My laptop".to_string()));
+        assert_eq!(name_for(user_id, p2), Some("My phone".to_string()));
+    }
+
+    #[test]
+    fn unlink_principal_clears_its_name() {
+        let p1 = principal(130);
+        let p2 = principal(131);
+        let user_id = seed_user(p1);
+        link_principal_to_user(user_id, p2).unwrap();
+        set_principal_name(user_id, p2, Some("Old device".to_string())).unwrap();
+
+        unlink_principal_from_user(user_id, p2).unwrap();
+
+        // After unlink, the principal is no longer in the listing — its name
+        // entry must also be gone, so re-linking later starts unnamed.
+        assert!(!get_principals_with_names_by_user_id(user_id)
+            .iter()
+            .any(|e| e.principal == p2));
+        link_principal_to_user(user_id, p2).unwrap();
+        assert_eq!(name_for(user_id, p2), None);
     }
 }

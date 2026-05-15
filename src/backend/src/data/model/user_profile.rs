@@ -1,8 +1,18 @@
 use super::StaffPermissions;
+use candid::Principal;
 use canister_utils::{deserialize_cbor, serialize_cbor};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+
+/// A principal linked to a user account, paired with its optional display
+/// name. Returned by the repository when listing all principals owned by a
+/// given user.
+#[derive(Debug, Clone)]
+pub struct LinkedPrincipal {
+    pub principal: Principal,
+    pub name: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserProfile {

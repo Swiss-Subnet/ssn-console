@@ -8,6 +8,8 @@ import type {
   RegisterLinkCodeRequest as ApiRegisterLinkCodeRequest,
   RegisterLinkCodeResponse as ApiRegisterLinkCodeResponse,
   RevokeMyLinkCodeResponse as ApiRevokeMyLinkCodeResponse,
+  SetMyPrincipalNameRequest as ApiSetMyPrincipalNameRequest,
+  SetMyPrincipalNameResponse as ApiSetMyPrincipalNameResponse,
   UnlinkMyPrincipalRequest as ApiUnlinkMyPrincipalRequest,
   UnlinkMyPrincipalResponse as ApiUnlinkMyPrincipalResponse,
 } from '@ssn/backend-api';
@@ -16,6 +18,11 @@ export type PendingLinkCode = {
   code: string;
   expiresAtNanos: bigint;
   targetPrincipal: string;
+};
+
+export type LinkedPrincipal = {
+  principal: string;
+  name: string | null;
 };
 
 const LINK_CODE_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -71,9 +78,28 @@ export function mapUnlinkMyPrincipalResponse(
 
 export function mapListMyLinkedPrincipalsResponse(
   res: ApiListMyLinkedPrincipalsResponse,
-): string[] {
+): LinkedPrincipal[] {
   const ok = mapOkResponse(res);
-  return ok.principals.map(p => p.toText());
+  return ok.principals.map(p => ({
+    principal: p.principal.toText(),
+    name: p.name[0] ?? null,
+  }));
+}
+
+export function mapSetMyPrincipalNameRequest(
+  principal: string,
+  name: string | null,
+): ApiSetMyPrincipalNameRequest {
+  return {
+    principal: Principal.fromText(principal),
+    name: name === null ? [] : [name],
+  };
+}
+
+export function mapSetMyPrincipalNameResponse(
+  res: ApiSetMyPrincipalNameResponse,
+): void {
+  mapOkResponse(res);
 }
 
 export function mapGetMyPendingLinkCodeResponse(
