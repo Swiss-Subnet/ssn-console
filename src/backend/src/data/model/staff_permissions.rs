@@ -58,10 +58,7 @@ impl StaffPermissions {
     // they were granted a specific u64, and a re-grant is required to
     // include flags added after their original grant.
     pub const ALL: Self = Self(
-        Self::READ_ALL_ORGS.0
-            | Self::WRITE_BILLING.0
-            | Self::MANAGE_USERS.0
-            | Self::READ_METRICS.0,
+        Self::READ_ALL_ORGS.0 | Self::WRITE_BILLING.0 | Self::MANAGE_USERS.0 | Self::READ_METRICS.0,
     );
 
     pub const fn contains(self, other: Self) -> bool {
