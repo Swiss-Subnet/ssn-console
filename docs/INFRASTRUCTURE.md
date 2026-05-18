@@ -39,6 +39,10 @@ REMOTE_HOST="${REMOTE_HOST}"
 ELASTIC_IP="${ELASTIC_IP}" # this should only be set for VPSs that have an assigned elastic IP address (i.e. prod)
 CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
 
+# optionally specify additional SSH keys to add
+ADDITIONAL_SSH_KEYS="ssh-rsa AAAAB3NzaC1...
+ssh-ed25519 AAAAC3NzaC1..."
+
 PRIVATE_KEY="${PRIVATE_KEY}"
 FRONTEND_URL="${FRONTEND_URL}"
 OFFCHAIN_SERVICE_DOMAIN="${OFFCHAIN_SERVICE_DOMAIN}"
