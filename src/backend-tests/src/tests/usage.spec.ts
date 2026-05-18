@@ -53,10 +53,10 @@ describe('Usage Metrics', () => {
     await driver.tearDown();
   });
 
-  describe('upsert_usage', () => {
+  describe('record_usage', () => {
     it('should reject unauthenticated caller', async () => {
       driver.actor.setIdentity(anonymousIdentity);
-      const result = await driver.actor.upsert_usage({ usages: [] });
+      const result = await driver.actor.record_usage({ usages: [] });
       expect(result).toEqual({
         Err: {
           code: [{ Unauthorized: {} }],
@@ -67,7 +67,7 @@ describe('Usage Metrics', () => {
 
     it('should reject normal user', async () => {
       driver.actor.setIdentity(userIdentity);
-      const result = await driver.actor.upsert_usage({ usages: [] });
+      const result = await driver.actor.record_usage({ usages: [] });
       expect(result).toEqual({
         Err: {
           code: [{ Unauthorized: {} }],
@@ -78,7 +78,7 @@ describe('Usage Metrics', () => {
 
     it('should accept offchain service identity', async () => {
       driver.actor.setIdentity(offchainIdentity);
-      const result = await driver.actor.upsert_usage({ usages: [] });
+      const result = await driver.actor.record_usage({ usages: [] });
       expect(result).toEqual({ Ok: {} });
     });
   });
@@ -150,7 +150,7 @@ describe('Usage Metrics', () => {
         }
 
         driver.actor.setIdentity(offchainIdentity);
-        const upsertRes = await driver.actor.upsert_usage({ usages });
+        const upsertRes = await driver.actor.record_usage({ usages });
         extractOkResponse(upsertRes);
       }
 
@@ -187,7 +187,7 @@ describe('Usage Metrics', () => {
         await driver.pic.setTime(new Date('2026-06-15T12:00:00Z'));
         await driver.pic.tick();
         driver.actor.setIdentity(offchainIdentity);
-        const upsertRes = await driver.actor.upsert_usage({
+        const upsertRes = await driver.actor.record_usage({
           usages: [createUsage(canister.principal_id, 1n)],
         });
         extractOkResponse(upsertRes);
@@ -198,7 +198,7 @@ describe('Usage Metrics', () => {
         await driver.pic.setTime(new Date('2026-07-15T12:00:00Z'));
         await driver.pic.tick();
         driver.actor.setIdentity(offchainIdentity);
-        const upsertRes = await driver.actor.upsert_usage({
+        const upsertRes = await driver.actor.record_usage({
           usages: [createUsage(canister.principal_id, 2n)],
         });
         extractOkResponse(upsertRes);
@@ -211,16 +211,16 @@ describe('Usage Metrics', () => {
       });
       const janUsage = extractOkResponse(janRes);
 
-      const febRes = await driver.actor.get_usage({
+      const julyRes = await driver.actor.get_usage({
         project_id: project.id,
         billing_month: ['2026-07'],
       });
-      const febUsage = extractOkResponse(febRes);
+      const julyUsage = extractOkResponse(julyRes);
 
       expect(cleanUsage(janUsage)).toMatchSnapshot(
         'historical-usage-june-2026',
       );
-      expect(cleanUsage(febUsage)).toMatchSnapshot(
+      expect(cleanUsage(julyUsage)).toMatchSnapshot(
         'historical-usage-july-2026',
       );
     });

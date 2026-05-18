@@ -18,11 +18,11 @@ type CanisterUsage = record {
   burned_cycles : nat64;
 };
 
-type UpsertUsageRequest = record {
+type RecordUsageRequest = record {
   usages : vec CanisterUsage;
 };
 
-type UpsertUsageResponse = variant {
+type RecordUsageResponse = variant {
   Ok : record {};
   Err : ApiError;
 };
@@ -60,6 +60,6 @@ type GetUsageResponse = variant {
 };
 
 service : {
-  upsert_usage : (UpsertUsageRequest) -> (UpsertUsageResponse);
+  record_usage : (RecordUsageRequest) -> (RecordUsageResponse);
   get_usage : (GetUsageRequest) -> (GetUsageResponse) query;
 };

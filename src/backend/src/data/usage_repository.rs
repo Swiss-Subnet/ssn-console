@@ -1,11 +1,8 @@
 use crate::{
     data::{
-        canister_repository,
-        memory::{
-            init_canister_usage, init_project_usage, BillingMonth, CanisterUsageMemory,
-            ProjectUsageMemory,
-        },
-        CanisterUsage, ProjectUsage,
+        BillingMonth, CanisterUsage, ProjectUsage, canister_repository, memory::{
+            CanisterUsageMemory, ProjectUsageMemory, init_canister_usage, init_project_usage
+        }
     },
     dto,
     mapping::usage::map_canister_usage_data,
@@ -35,7 +32,7 @@ pub fn upsert_canister_usages(billing_month: String, usages: Vec<dto::CanisterUs
                     .and_then(canister_repository::get_canister_project_id)
             else {
                 ic_cdk::println!("Warning, tried to upsert usage for canister with ID {:?} but it does not exist", usage.canister_id);
-                break;
+                continue;
             };
 
             let current_canister_usage = map_canister_usage_data(usage.clone());

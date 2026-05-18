@@ -2,12 +2,12 @@ use candid::{CandidType, Principal};
 use serde::Deserialize;
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct UpsertUsageRequest {
+pub struct RecordUsageRequest {
     pub usages: Vec<CanisterUsage>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct UpsertUsageResponse {}
+pub struct RecordUsageResponse {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct GetUsageResponse {
