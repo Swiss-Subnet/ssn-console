@@ -86,24 +86,6 @@ export OFFCHAIN_CONTAINER_PATH="${ROOT_DIR}/config/offchain-service.containerfil
 
 export REMOTE_OFFCHAIN_SERVICE_TAR_PATH="${REMOTE_IMAGE_DIR}/${OFFCHAIN_SERVICE_TAR_NAME}"
 
-# --- Auth Service Variables ---
-
-export AUTH_SERVICE_IMAGE_NAMESPACE="localhost"
-export AUTH_SERVICE_IMAGE_NAME="auth-service"
-export AUTH_SERVICE_SERVICE_NAME="auth-service"
-
-export AUTH_SERVICE_TAR_NAME="${AUTH_SERVICE_SERVICE_NAME}.tar"
-export AUTH_SERVICE_TAR_PATH="${IMAGE_OUTPUT_DIR}/${AUTH_SERVICE_TAR_NAME}"
-
-export AUTH_SERVICE_POLICY_FILE_NAME="auth-service.cil"
-export AUTH_SERVICE_POLICY_PATH="${CONFIG_INPUT_DIR}/${AUTH_SERVICE_POLICY_FILE_NAME}"
-
-export AUTH_SERVICE_CONTAINER_PATH="${ROOT_DIR}/config/auth-service.containerfile"
-# auth-service has a self-contained Go module, so build context is just the service dir.
-export AUTH_SERVICE_BUILD_CONTEXT="${ROOT_DIR}/services/auth-service"
-
-export REMOTE_AUTH_SERVICE_TAR_PATH="${REMOTE_IMAGE_DIR}/${AUTH_SERVICE_TAR_NAME}"
-
 # --- Canister OTLP Syncer Variables ---
 
 export CANISTER_ID_CYCLES_MONITOR=$(jq -r ".[\"cycles-monitor\"].${DFX_NETWORK}" "${ROOT_DIR}/canister_ids.json")
@@ -220,21 +202,6 @@ echo "🔎 --- Verifying local offchain-service image and tar. ---"
 docker image inspect "${OFFCHAIN_SERVICE_IMAGE_NAMESPACE}/${OFFCHAIN_SERVICE_IMAGE_NAME}" >/dev/null 2>&1 || fail "Docker image not found: ${OFFCHAIN_SERVICE_IMAGE_NAMESPACE}/${OFFCHAIN_SERVICE_IMAGE_NAME}"
 [ -s "${OFFCHAIN_SERVICE_TAR_PATH}" ] || fail "Offchain-service tar not created: ${OFFCHAIN_SERVICE_TAR_PATH}"
 
-# --- Build Auth-Service Image ---
-
-echo
-echo "🛠️ --- Building the ${AUTH_SERVICE_SERVICE_NAME} container image. ---"
-docker build -t "${AUTH_SERVICE_IMAGE_NAMESPACE}/${AUTH_SERVICE_IMAGE_NAME}" -f "${AUTH_SERVICE_CONTAINER_PATH}" "${AUTH_SERVICE_BUILD_CONTEXT}"
-
-echo
-echo "💾 --- Saving the ${AUTH_SERVICE_SERVICE_NAME} container image to ${AUTH_SERVICE_TAR_PATH}. ---"
-docker save "${AUTH_SERVICE_IMAGE_NAMESPACE}/${AUTH_SERVICE_IMAGE_NAME}" > "${AUTH_SERVICE_TAR_PATH}"
-
-echo
-echo "🔎 --- Verifying local auth-service image and tar. ---"
-docker image inspect "${AUTH_SERVICE_IMAGE_NAMESPACE}/${AUTH_SERVICE_IMAGE_NAME}" >/dev/null 2>&1 || fail "Docker image not found: ${AUTH_SERVICE_IMAGE_NAMESPACE}/${AUTH_SERVICE_IMAGE_NAME}"
-[ -s "${AUTH_SERVICE_TAR_PATH}" ] || fail "Auth-service tar not created: ${AUTH_SERVICE_TAR_PATH}"
-
 
 # --- Build Canister OTLP Syncer Image ---
 
@@ -261,7 +228,6 @@ echo
 echo "🔎 --- Verifying remote images tar files exist. ---"
 remote_assert_contains "test -s ${REMOTE_CADDY_TAR_PATH} && echo ok || true" "ok"
 remote_assert_contains "test -s ${REMOTE_OFFCHAIN_SERVICE_TAR_PATH} && echo ok || true" "ok"
-remote_assert_contains "test -s ${REMOTE_AUTH_SERVICE_TAR_PATH} && echo ok || true" "ok"
 remote_assert_contains "test -s ${REMOTE_CANISTER_OTLP_SYNCER_TAR_PATH} && echo ok || true" "ok"
 
 # --- Substitute Quadlet Files ---
@@ -328,10 +294,6 @@ echo "📦 --- Transferring the ${OFFCHAIN_SERVICE_POLICY_PATH} file to ${REMOTE
 scp_run "${OFFCHAIN_SERVICE_POLICY_PATH}" "${REMOTE_POLICY_DIR}/"
 
 echo
-echo "📦 --- Transferring the ${AUTH_SERVICE_POLICY_PATH} file to ${REMOTE_HOST}. ---"
-scp_run "${AUTH_SERVICE_POLICY_PATH}" "${REMOTE_POLICY_DIR}/"
-
-echo
 echo "📦 --- Transferring the ${CANISTER_OTLP_SYNCER_POLICY_PATH} file to ${REMOTE_HOST}. ---"
 scp_run "${CANISTER_OTLP_SYNCER_POLICY_PATH}" "${REMOTE_POLICY_DIR}/"
 
@@ -340,7 +302,6 @@ scp_run "${CANISTER_OTLP_SYNCER_POLICY_PATH}" "${REMOTE_POLICY_DIR}/"
 
 POLICY_LIST="${REMOTE_POLICY_DIR}/${CADDY_POLICY_FILE_NAME}"
 POLICY_LIST+=" ${REMOTE_POLICY_DIR}/${OFFCHAIN_SERVICE_POLICY_FILE_NAME}"
-POLICY_LIST+=" ${REMOTE_POLICY_DIR}/${AUTH_SERVICE_POLICY_FILE_NAME}"
 POLICY_LIST+=" ${REMOTE_POLICY_DIR}/${CANISTER_OTLP_SYNCER_POLICY_FILE_NAME}"
 
 echo
@@ -363,10 +324,6 @@ echo "📦 --- Loading ${OFFCHAIN_SERVICE_SERVICE_NAME} image from ${REMOTE_OFFC
 ssh_run "podman load < ${REMOTE_OFFCHAIN_SERVICE_TAR_PATH}"
 
 echo
-echo "📦 --- Loading ${AUTH_SERVICE_SERVICE_NAME} image from ${REMOTE_AUTH_SERVICE_TAR_PATH}. ---"
-ssh_run "podman load < ${REMOTE_AUTH_SERVICE_TAR_PATH}"
-
-echo
 echo "📦 --- Loading ${CANISTER_OTLP_SYNCER_SERVICE_NAME} image from ${REMOTE_CANISTER_OTLP_SYNCER_TAR_PATH}. ---"
 ssh_run "podman load < ${REMOTE_CANISTER_OTLP_SYNCER_TAR_PATH}"
 
@@ -383,10 +340,6 @@ echo "🚀 --- Restarting the ${OFFCHAIN_SERVICE_SERVICE_NAME} service on ${REMO
 ssh_run "systemctl --user restart ${OFFCHAIN_SERVICE_SERVICE_NAME}.service"
 
 echo
-echo "🚀 --- Restarting the ${AUTH_SERVICE_SERVICE_NAME} service on ${REMOTE_HOST}. ---"
-ssh_run "systemctl --user restart ${AUTH_SERVICE_SERVICE_NAME}.service"
-
-echo
 echo "🚀 --- Enabling and starting the ${CANISTER_OTLP_SYNCER_SERVICE_NAME} timer on ${REMOTE_HOST}. ---"
 ssh_run "systemctl --user enable --now ${CANISTER_OTLP_SYNCER_SERVICE_NAME}.timer"
 
@@ -398,7 +351,6 @@ echo
 echo "🔎 --- Verifying services are active. ---"
 remote_assert_equals "systemctl --user is-active ${CADDY_SERVICE_NAME}.service" "active"
 remote_assert_equals "systemctl --user is-active ${OFFCHAIN_SERVICE_SERVICE_NAME}.service" "active"
-remote_assert_equals "systemctl --user is-active ${AUTH_SERVICE_SERVICE_NAME}.service" "active"
 remote_assert_equals "systemctl --user is-active ${CANISTER_OTLP_SYNCER_SERVICE_NAME}.timer" "active"
 remote_assert_equals "sudo systemctl is-active alloy.service" "active"
 
@@ -407,18 +359,15 @@ echo "🔎 --- Verifying services are reachable from the remote host. ---"
 
 remote_assert_contains "podman ps --format '{{.Names}}' || true" "${CADDY_SERVICE_NAME}"
 remote_assert_contains "podman ps --format '{{.Names}}' || true" "${OFFCHAIN_SERVICE_SERVICE_NAME}"
-remote_assert_contains "podman ps --format '{{.Names}}' || true" "${AUTH_SERVICE_SERVICE_NAME}"
 
 remote_assert_contains "curl -sSL --connect-timeout 5 -I http://127.0.0.1:2019 || true" "HTTP/"
 remote_assert_contains "curl -sSL --connect-timeout 5 -H \"Host: ${OFFCHAIN_SERVICE_DOMAIN}\" http://127.0.0.1/status || true" "ok"
-remote_assert_contains "curl -sSL --connect-timeout 5 -H \"Host: ${AUTH_SERVICE_DOMAIN}\" http://127.0.0.1/status || true" "ok"
 remote_assert_contains "curl -sSL --connect-timeout 5 -I http://127.0.0.1:12345/ || true" "HTTP/"
 
 echo
 echo "🔎 --- Verifying services are reachable from the local machine. ---"
 
 local_assert_contains "curl -sSL --connect-timeout 5 -H \"Host: ${OFFCHAIN_SERVICE_DOMAIN}\" http://${REMOTE_HOST}/status || true" "ok"
-local_assert_contains "curl -sSL --connect-timeout 5 -H \"Host: ${AUTH_SERVICE_DOMAIN}\" http://${REMOTE_HOST}/status || true" "ok"
 
 echo
 echo "🧹 --- Cleaning up old images. ---"
