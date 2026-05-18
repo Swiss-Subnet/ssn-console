@@ -27,15 +27,3 @@ ${OFFCHAIN_SERVICE_DOMAIN}:443 {
 
 	log
 }
-
-${AUTH_SERVICE_DOMAIN}:443 {
-	reverse_proxy ${AUTH_SERVICE_IMAGE_NAME}:${AUTH_SERVICE_PORT} {
-		header_up X-Real-IP {remote_host}
-	}
-
-	tls {
-		dns cloudflare ${CLOUDFLARE_API_TOKEN}
-	}
-
-	log
-}
