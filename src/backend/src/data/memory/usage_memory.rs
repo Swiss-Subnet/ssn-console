@@ -6,7 +6,7 @@ use candid::Principal;
 use canister_utils::Uuid;
 use ic_stable_structures::StableBTreeMap;
 
-pub type CanisterUsageMemory = StableBTreeMap<(Principal, BillingMonth), CanisterUsage, Memory>;
+pub type CanisterUsageMemory = StableBTreeMap<(Uuid, BillingMonth, Principal), CanisterUsage, Memory>;
 pub type ProjectUsageMemory = StableBTreeMap<(Uuid, BillingMonth), ProjectUsage, Memory>;
 
 pub fn init_canister_usage() -> CanisterUsageMemory {
