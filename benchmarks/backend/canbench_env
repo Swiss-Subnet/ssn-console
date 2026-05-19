@@ -1,0 +1,3 @@
+OFFCHAIN_SERVICE_URL,https://offchain.example
+PUBLIC_KEY,bench-public-key
+CANISTER_HISTORY_ID,aaaaa-aa

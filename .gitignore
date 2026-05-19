@@ -23,3 +23,5 @@ tmp
 
 # canbench local runtime files
 **/.canbench
+# flamegraphs from `canbench --instruction-tracing` land next to results.yml
+benchmarks/**/*.svg

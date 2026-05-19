@@ -1,0 +1,23 @@
+benches:
+  bench_get_principals_with_names_by_user_id_10:
+    total:
+      calls: 1
+      instructions: 198472
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  bench_get_principals_with_names_by_user_id_100:
+    total:
+      calls: 1
+      instructions: 3495722
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  bench_get_principals_with_names_by_user_id_1000:
+    total:
+      calls: 1
+      instructions: 52633460
+      heap_increase: 1
+      stable_memory_increase: 0
+    scopes: {}
+version: 0.6.0

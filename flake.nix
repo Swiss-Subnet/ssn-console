@@ -26,6 +26,19 @@
           targets = ["wasm32-unknown-unknown"];
         };
 
+        canbenchVersion = "0.6.0";
+        canbench = pkgs.rustPlatform.buildRustPackage {
+          pname = "canbench";
+          version = canbenchVersion;
+          src = pkgs.fetchCrate {
+            pname = "canbench";
+            version = canbenchVersion;
+            hash = "sha256-piCCL8BVDZnwtGcWp7BxJgDJxkaZ/h58HAt8pmFhpIA=";
+          };
+          cargoHash = "sha256-ixgerqJ5UwPOWUzhtZ1yAh9HpcOJ6eYQUVrdYaUwSR4=";
+          doCheck = false;
+        };
+
         dfxVersion = "0.31.0";
         dfx = let
           platformMap = {
@@ -67,6 +80,7 @@
           buildInputs = [
             rustToolchain
             dfx
+            canbench
 
             pkgs.bun
             pkgs.nodejs_22
@@ -83,6 +97,7 @@
               echo "  dfx:   $(dfx --version)"
               echo "  SSL:   $(openssl version)"
               echo "  Just:  $(just --version)"
+              echo "  canbench: $(canbench --version)"
             fi
           '';
         };

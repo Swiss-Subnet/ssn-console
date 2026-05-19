@@ -59,6 +59,7 @@ version = "0.1.0"
 dependencies = [
  "backend-api",
  "base64",
+ "canbench-rs",
  "candid",
  "candid_parser",
  "canister-utils",
