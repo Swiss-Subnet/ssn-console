@@ -25,7 +25,7 @@ BASELINE_BRANCH_RESULTS_FILE="$BASELINE_BRANCH_DIR/$CANBENCH_RESULTS_FILE"
 CANBENCH_RESULTS_CSV_FILE="/tmp/canbench_results_${CANBENCH_JOB_NAME}.csv"
 
 # Install canbench. Version should match the one for `canbench-rs` in Cargo.toml.
-cargo install canbench --version 0.5.0 --locked
+cargo install canbench --version 0.6.0 --locked
 
 # Verify that the canbench results file exists.
 if [ ! -f "$CANBENCH_RESULTS_FILE" ]; then
