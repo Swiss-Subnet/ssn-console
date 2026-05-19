@@ -21,7 +21,6 @@ thread_local! {
     };
 }
 
-#[cfg(not(feature = "canbench-rs"))]
 pub fn init_canister_history_id() {
     CANISTER_HISTORY_ID.with(|_| {});
 }
@@ -30,7 +29,6 @@ pub fn get_canister_history_id() -> Principal {
     CANISTER_HISTORY_ID.with(|id| *id)
 }
 
-#[cfg(not(feature = "canbench-rs"))]
 pub fn init_public_key() {
     PUBLIC_KEY_PRINCIPAL.with(|_| {});
 }

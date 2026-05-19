@@ -30,12 +30,6 @@ fn post_upgrade() {
 }
 
 fn check_env_vars() {
-    // Canbench does not support setting environment variables, so skip the
-    // check that environment variables are set until that's supported.
-    //
-    // This is safe to do as long as benchmarks do not need to access
-    // environment variables, which is true for the current set of benchmarks.
-    #[cfg(not(feature = "canbench-rs"))]
     {
         env::init_canister_history_id();
         env::init_public_key();
