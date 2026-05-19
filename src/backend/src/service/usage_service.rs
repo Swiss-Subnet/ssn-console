@@ -1,5 +1,5 @@
 use crate::{
-    data::{canister_repository, usage_repository, ProjectPermissions},
+    data::{usage_repository, ProjectPermissions},
     dto,
     mapping::usage::{map_canister_usage_dto, map_project_usage_dto},
     service::access_control_service::ProjectAuth,
@@ -25,14 +25,9 @@ pub fn get_usage(caller: Principal, req: dto::GetUsageRequest) -> ApiResult<dto:
         project_id,
         &billing_month,
     ));
-    let canisters = canister_repository::list_canisters_by_project_including_deleted(project_id)
+    let canisters = usage_repository::list_canister_usages_for_project(project_id, &billing_month)
         .into_iter()
-        .map(|(_, canister)| {
-            map_canister_usage_dto(usage_repository::get_canister_usage(
-                canister.principal,
-                &billing_month,
-            ))
-        })
+        .map(map_canister_usage_dto)
         .collect();
 
     Ok(dto::GetUsageResponse { project, canisters })

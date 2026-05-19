@@ -9,8 +9,7 @@ use crate::{
     dto,
     mapping::usage::map_canister_usage_data,
 };
-use candid::Principal;
-use canister_utils::Uuid;
+use canister_utils::{Uuid, MAX_PRINCIPAL, MIN_PRINCIPAL};
 use std::cell::RefCell;
 
 struct State {
@@ -40,7 +39,7 @@ pub fn upsert_canister_usages(billing_month: String, usages: Vec<dto::CanisterUs
             let current_canister_usage = map_canister_usage_data(usage.clone());
             let prev_canister_usage = s
                 .canister_usage
-                .get(&(usage.canister_id, BillingMonth::new(billing_month.clone())))
+                .get(&(project_id, BillingMonth::new(billing_month.clone()), usage.canister_id))
                 .unwrap_or(CanisterUsage {
                     canister_id: usage.canister_id,
                     memory: 0,
@@ -132,35 +131,33 @@ pub fn upsert_canister_usages(billing_month: String, usages: Vec<dto::CanisterUs
                 .insert((project_id, BillingMonth::new(billing_month.clone())), project_usage);
 
             s.canister_usage.insert(
-                (usage.canister_id, BillingMonth::new(billing_month.clone())),
+                (project_id, BillingMonth::new(billing_month.clone()), usage.canister_id),
                 map_canister_usage_data(usage),
             );
         }
     });
 }
 
-pub fn get_canister_usage(canister_id: Principal, billing_month: &str) -> CanisterUsage {
+pub fn list_canister_usages_for_project(
+    project_id: Uuid,
+    billing_month: &str,
+) -> Vec<CanisterUsage> {
     STATE.with(|s| {
-        s.borrow()
-            .canister_usage
-            .get(&(canister_id, BillingMonth::new(billing_month.to_string())))
-            .unwrap_or(CanisterUsage {
-                canister_id,
-                memory: 0,
-                memory_bytes: 0,
-                compute_allocation: 0,
-                compute_allocation_percent: 0,
-                ingress_induction: 0,
-                ingress_induction_bytes_total: 0,
-                instructions: 0,
-                compute_time_seconds_total: 0,
-                request_and_response_transmission: 0,
-                transmission_bytes_total: 0,
-                uninstall: 0,
-                uninstalls_total: 0,
-                http_outcalls: 0,
-                burned_cycles: 0,
-            })
+        let s = s.borrow();
+        let start = (
+            project_id,
+            BillingMonth::new(billing_month.to_string()),
+            MIN_PRINCIPAL,
+        );
+        let end = (
+            project_id,
+            BillingMonth::new(billing_month.to_string()),
+            MAX_PRINCIPAL,
+        );
+        s.canister_usage
+            .range(start..=end)
+            .map(|entry| entry.value())
+            .collect()
     })
 }
 
