@@ -1,10 +1,11 @@
 use super::{
     Memory, USER_PRINCIPAL_NAME_MEMORY_ID, USER_PROFILES_MEMORY_ID,
-    USER_PROFILE_PRINCIPAL_INDEX_MEMORY_ID, USER_STATS_MEMORY_ID,
+    USER_PROFILE_PRINCIPAL_INDEX_MEMORY_ID, USER_PROFILE_VERIFIED_EMAIL_INDEX_MEMORY_ID,
+    USER_STATS_MEMORY_ID,
 };
 use crate::data::{
     memory::{get_memory, USER_PROFILE_ID_PRINCIPAL_INDEX_MEMORY_ID},
-    UserProfile, UserStatsData,
+    UserProfile, UserStatsData, VerifiedEmailKey,
 };
 use candid::Principal;
 use canister_utils::Uuid;
@@ -14,6 +15,7 @@ pub type UserProfileMemory = BTreeMap<Uuid, UserProfile, Memory>;
 pub type UserProfilePrincipalIndexMemory = BTreeMap<Principal, Uuid, Memory>;
 pub type UserProfileIdPrincipalIndexMemory = BTreeSet<(Uuid, Principal), Memory>;
 pub type UserPrincipalNameMemory = BTreeMap<(Uuid, Principal), String, Memory>;
+pub type UserProfileVerifiedEmailIndexMemory = BTreeMap<VerifiedEmailKey, Uuid, Memory>;
 pub type UserStatsMemory = StableCell<UserStatsData, Memory>;
 
 pub fn init_user_profiles() -> UserProfileMemory {
@@ -30,6 +32,10 @@ pub fn init_user_profile_id_principal_index() -> UserProfileIdPrincipalIndexMemo
 
 pub fn init_user_principal_names() -> UserPrincipalNameMemory {
     UserPrincipalNameMemory::init(get_user_principal_name_memory())
+}
+
+pub fn init_user_profile_verified_email_index() -> UserProfileVerifiedEmailIndexMemory {
+    UserProfileVerifiedEmailIndexMemory::init(get_user_profile_verified_email_index_memory())
 }
 
 pub fn init_user_stats() -> UserStatsMemory {
@@ -50,6 +56,10 @@ fn get_user_profile_id_principal_index_memory() -> Memory {
 
 fn get_user_principal_name_memory() -> Memory {
     get_memory(USER_PRINCIPAL_NAME_MEMORY_ID)
+}
+
+fn get_user_profile_verified_email_index_memory() -> Memory {
+    get_memory(USER_PROFILE_VERIFIED_EMAIL_INDEX_MEMORY_ID)
 }
 
 fn get_user_stats_memory() -> Memory {
