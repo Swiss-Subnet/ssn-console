@@ -80,6 +80,21 @@ echo "🔎 --- Verifying unprivileged port config. ---"
 remote_assert_equals "sysctl -n net.ipv4.ip_unprivileged_port_start" "80"
 echo "✅ --- Unprivileged port config verified! ---"
 
+# --- SSH Keys Configuration ---
+
+if [ -n "${ADDITIONAL_SSH_KEYS:-}" ]; then
+  echo
+  echo "🔑 --- Adding additional SSH keys to authorized_keys on ${REMOTE_HOST}. ---"
+  ssh_run 'bash -s' <<EOF
+echo "${ADDITIONAL_SSH_KEYS}" | while read -r key; do
+  if [ -n "\$key" ] && ! grep -Fq "\$key" ~/.ssh/authorized_keys; then
+    echo "\$key" >> ~/.ssh/authorized_keys
+    echo "Added key: \$key"
+  fi
+done
+EOF
+fi
+
 # --- Networking Configuration ---
 
 if [ -n "${ELASTIC_IP:-}" ]; then
