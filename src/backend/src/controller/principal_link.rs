@@ -2,10 +2,10 @@ use crate::{
     dto::{
         GetMyPendingLinkCodeRequest, GetMyPendingLinkCodeResponse, LinkMyPrincipalRequest,
         LinkMyPrincipalResponse, LinkedPrincipalDto, ListMyLinkedPrincipalsRequest,
-        ListMyLinkedPrincipalsResponse, PendingLinkCodeDto, RegisterLinkCodeRequest,
-        RegisterLinkCodeResponse, RevokeMyLinkCodeRequest, RevokeMyLinkCodeResponse,
-        SetMyPrincipalNameRequest, SetMyPrincipalNameResponse, UnlinkMyPrincipalRequest,
-        UnlinkMyPrincipalResponse,
+        ListMyLinkedPrincipalsResponse, PendingLinkCodeDto, RecoverAccountByEmailRequest,
+        RecoverAccountByEmailResponse, RegisterLinkCodeRequest, RegisterLinkCodeResponse,
+        RevokeMyLinkCodeRequest, RevokeMyLinkCodeResponse, SetMyPrincipalNameRequest,
+        SetMyPrincipalNameResponse, UnlinkMyPrincipalRequest, UnlinkMyPrincipalResponse,
     },
     service::principal_link_service,
 };
@@ -118,5 +118,19 @@ fn revoke_my_link_code(_req: RevokeMyLinkCodeRequest) -> ApiResultDto<RevokeMyLi
 
     principal_link_service::revoke_my_link_code(&caller)
         .map(|()| RevokeMyLinkCodeResponse {})
+        .into()
+}
+
+#[update]
+fn recover_account_by_email(
+    req: RecoverAccountByEmailRequest,
+) -> ApiResultDto<RecoverAccountByEmailResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    principal_link_service::recover_account_by_email(&caller, req.token)
+        .map(|()| RecoverAccountByEmailResponse {})
         .into()
 }
