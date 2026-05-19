@@ -75,16 +75,14 @@ impl Storable for ProjectUsage {
 
 // billing month is a string date in the form YYYY-MM
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct BillingMonth(pub String);
+pub struct BillingMonth(String);
 
 impl Storable for BillingMonth {
     fn to_bytes(&self) -> Cow<'_, [u8]> {
-        self.validate();
         Cow::Borrowed(self.0.as_bytes())
     }
 
     fn into_bytes(self) -> Vec<u8> {
-        self.validate();
         self.0.into_bytes()
     }
 
@@ -99,6 +97,12 @@ impl Storable for BillingMonth {
 }
 
 impl BillingMonth {
+    pub fn new(val: String) -> Self {
+        let instance = Self(val);
+        instance.validate();
+        instance
+    }
+
     fn validate(&self) {
         assert_eq!(self.0.len(), 7, "billing_month must be 7 characters");
         let parts: Vec<&str> = self.0.split('-').collect();
