@@ -16,6 +16,7 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         name:
           - canister-history
