@@ -242,8 +242,8 @@ mod benches {
         set_principal_name,
     };
     use crate::data::UserProfile;
-    use candid::Principal;
     use canbench_rs::{bench, bench_fn, BenchResult};
+    use candid::Principal;
 
     fn principal(i: u32) -> Principal {
         let mut bytes = [0u8; 29];
