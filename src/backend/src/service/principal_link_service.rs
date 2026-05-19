@@ -171,9 +171,10 @@ fn recover_with_claims(caller: &Principal, claims: Claims) -> ApiResult {
     }
 
     let email = Email::try_from(claims.email)?;
-    let user_id = user_profile_repository::get_user_id_by_verified_email(&email).ok_or_else(
-        || ApiError::client_error("No verified account found for this email.".to_string()),
-    )?;
+    let user_id =
+        user_profile_repository::get_user_id_by_verified_email(&email).ok_or_else(|| {
+            ApiError::client_error("No verified account found for this email.".to_string())
+        })?;
 
     user_profile_repository::link_principal_to_user(user_id, *caller)
 }
@@ -471,7 +472,10 @@ mod tests {
         recover_with_claims(&new_principal, recovery_claims("recover-ok@example.com")).unwrap();
 
         let listed = user_profile_repository::get_user_profile_by_principal(&new_principal);
-        assert!(listed.is_some(), "new principal should resolve to the account");
+        assert!(
+            listed.is_some(),
+            "new principal should resolve to the account"
+        );
     }
 
     #[test]
@@ -492,8 +496,8 @@ mod tests {
     fn recover_rejects_email_with_no_verified_account() {
         let new_principal = principal(204);
 
-        let err = recover_with_claims(&new_principal, recovery_claims("nobody@example.com"))
-            .unwrap_err();
+        let err =
+            recover_with_claims(&new_principal, recovery_claims("nobody@example.com")).unwrap_err();
         assert!(err.message().contains("No verified account"));
     }
 
@@ -556,8 +560,7 @@ mod tests {
     fn recover_rejects_malformed_email_in_claim() {
         let new_principal = principal(211);
 
-        let err = recover_with_claims(&new_principal, recovery_claims("not-an-email"))
-            .unwrap_err();
+        let err = recover_with_claims(&new_principal, recovery_claims("not-an-email")).unwrap_err();
         assert!(err.message().contains("'@'"));
     }
 }
