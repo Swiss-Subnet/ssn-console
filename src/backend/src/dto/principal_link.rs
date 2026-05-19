@@ -71,3 +71,11 @@ pub struct RevokeMyLinkCodeRequest {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct RevokeMyLinkCodeResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct RecoverAccountByEmailRequest {
+    pub token: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct RecoverAccountByEmailResponse {}

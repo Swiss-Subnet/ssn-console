@@ -24,11 +24,16 @@ use canister_utils::{ApiError, ApiResult, Uuid};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    email: String,
-    exp: usize,
-    iat: usize,
+pub(crate) struct Claims {
+    pub email: String,
+    pub exp: usize,
+    pub iat: usize,
+    #[serde(default)]
+    pub purpose: Option<String>,
 }
+
+pub(crate) const PURPOSE_EMAIL_VERIFICATION: &str = "email_verification";
+pub(crate) const PURPOSE_ACCOUNT_RECOVERY: &str = "account_recovery";
 
 pub fn list_user_profiles() -> ListUserProfilesResponse {
     map_list_user_profiles_response(user_profile_repository::list_user_profiles())
@@ -164,6 +169,19 @@ pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> ApiResult {
         .map_err(|e| ApiError::internal_error(format!("Failed to parse public key: {}", e)))?;
 
     let token_data: Claims = verify_jwt(&req.token, &pub_key_bytes)?;
+
+    // Tolerant during rollout: legacy tokens (no purpose) and the new
+    // purpose: "email_verification" both pass. Anything else (notably a
+    // recovery token) is rejected. Tighten to require the claim once
+    // auth-service has been live with purpose-minting for one release.
+    match token_data.purpose.as_deref() {
+        None | Some(PURPOSE_EMAIL_VERIFICATION) => {}
+        Some(_) => {
+            return Err(ApiError::client_error(
+                "Token cannot be used to verify an email.".to_string(),
+            ));
+        }
+    }
 
     let (user_id, mut profile) = user_profile_repository::get_user_profile_by_principal(&caller)
         .ok_or_else(|| {
