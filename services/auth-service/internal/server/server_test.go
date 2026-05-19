@@ -155,12 +155,15 @@ func TestEmailVerification_HappyPath(t *testing.T) {
 	}
 }
 
+// The handler returns 202 even for invalid input so callers can't tell
+// valid/invalid/throttled apart. The check is that no mail goes out.
 func TestEmailVerification_InvalidEmail(t *testing.T) {
 	f := newFixture(t)
 	rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{"email": "invalid-email"})
-	if rr.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("status: got %d want 422", rr.Code)
+	if rr.Code != http.StatusAccepted {
+		t.Fatalf("status: got %d want 202", rr.Code)
 	}
+	f.drain(t)
 	if _, ok := f.mailer.LastSent(); ok {
 		t.Error("mail was sent for invalid email")
 	}
@@ -169,8 +172,31 @@ func TestEmailVerification_InvalidEmail(t *testing.T) {
 func TestEmailVerification_MissingEmail(t *testing.T) {
 	f := newFixture(t)
 	rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{})
-	if rr.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("status: got %d want 422", rr.Code)
+	if rr.Code != http.StatusAccepted {
+		t.Fatalf("status: got %d want 202", rr.Code)
+	}
+	f.drain(t)
+	if _, ok := f.mailer.LastSent(); ok {
+		t.Error("mail was sent for missing email")
+	}
+}
+
+// Two requests for the same address within the throttle window: the first
+// sends, the second is silently dropped (still 202).
+func TestEmailVerification_ThrottlesRepeatAddress(t *testing.T) {
+	f := newFixture(t)
+	const email = "test@example.com"
+
+	for i := range 2 {
+		rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{"email": email})
+		if rr.Code != http.StatusAccepted {
+			t.Fatalf("req %d: got %d want 202", i, rr.Code)
+		}
+	}
+	f.drain(t)
+
+	if got := len(f.mailer.Sent); got != 1 {
+		t.Errorf("sent count: got %d want 1", got)
 	}
 }
 

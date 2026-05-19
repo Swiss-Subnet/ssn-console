@@ -23,6 +23,10 @@ const emailVerificationTTL = 15 * time.Minute
 // 202 before the send starts, so this is independent of the HTTP request.
 const backgroundSendTimeout = 30 * time.Second
 
+const maxInFlightSends = 32
+const perEmailThrottle = 60 * time.Second
+const throttleSweepThreshold = 4096
+
 // Signer mints email-verification tokens. Kept as an interface so tests can
 // stub it the same way the mailer is stubbed.
 type Signer interface {
@@ -41,10 +45,19 @@ type Deps struct {
 type Server struct {
 	handler http.Handler
 	wg      sync.WaitGroup
+	sem     chan struct{}
+	now     func() time.Time
+
+	throttleMu sync.Mutex
+	throttle   map[string]time.Time
 }
 
 func New(deps Deps) *Server {
-	s := &Server{}
+	s := &Server{
+		sem:      make(chan struct{}, maxInFlightSends),
+		now:      time.Now,
+		throttle: make(map[string]time.Time),
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /status", handleStatus)
 	mux.HandleFunc("POST /v1.0/auth/email-verification", s.handleEmailVerification(deps))
@@ -126,23 +139,26 @@ const maxRequestBody = 1 << 10
 
 func (s *Server) handleEmailVerification(deps Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Always 202 so callers can't distinguish valid/invalid/throttled.
+		defer w.WriteHeader(http.StatusAccepted)
+
 		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBody)
 		var req createEmailVerificationRequest
 		dec := json.NewDecoder(r.Body)
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&req); err != nil {
-			http.Error(w, "invalid body", http.StatusUnprocessableEntity)
 			return
 		}
 		if !validEmail(req.Email) {
-			http.Error(w, "invalid email", http.StatusUnprocessableEntity)
+			return
+		}
+		if !s.allowSend(req.Email) {
 			return
 		}
 
 		jwt, err := deps.Signer.SignEmailVerification(req.Email, emailVerificationTTL)
 		if err != nil {
 			log.Printf("sign token: %v", err)
-			http.Error(w, "sign token", http.StatusInternalServerError)
 			return
 		}
 
@@ -150,7 +166,6 @@ func (s *Server) handleEmailVerification(deps Deps) http.HandlerFunc {
 		var htmlBuf bytes.Buffer
 		if err := verificationEmailHTML.Execute(&htmlBuf, struct{ Link string }{link}); err != nil {
 			log.Printf("render email: %v", err)
-			http.Error(w, "render email", http.StatusInternalServerError)
 			return
 		}
 		msg := mailer.Message{
@@ -162,20 +177,45 @@ func (s *Server) handleEmailVerification(deps Deps) http.HandlerFunc {
 				"\nThis link will expire in 15 minutes.",
 		}
 
+		// Non-blocking: drop rather than queue (would just move the unbounded
+		// growth into the channel) or block the handler.
+		select {
+		case s.sem <- struct{}{}:
+		default:
+			log.Printf("send mail to %s: dropped, in-flight cap reached", msg.To)
+			return
+		}
+
 		// Detach the send: the client gets 202 without waiting for SMTP.
-		// We use a fresh context (not r.Context()) so the send isn't
-		// cancelled when we write the response. Wait() drains in-flight
-		// sends on shutdown.
+		// Fresh context so writing the response doesn't cancel the send.
 		s.wg.Add(1)
 		go func() {
 			defer s.wg.Done()
+			defer func() { <-s.sem }()
 			ctx, cancel := context.WithTimeout(context.Background(), backgroundSendTimeout)
 			defer cancel()
 			if err := deps.Mailer.Send(ctx, msg); err != nil {
 				log.Printf("send mail to %s: %v", msg.To, err)
 			}
 		}()
-
-		w.WriteHeader(http.StatusAccepted)
 	}
+}
+
+func (s *Server) allowSend(email string) bool {
+	now := s.now()
+	s.throttleMu.Lock()
+	defer s.throttleMu.Unlock()
+
+	if last, ok := s.throttle[email]; ok && now.Sub(last) < perEmailThrottle {
+		return false
+	}
+	if len(s.throttle) >= throttleSweepThreshold {
+		for k, t := range s.throttle {
+			if now.Sub(t) >= perEmailThrottle {
+				delete(s.throttle, k)
+			}
+		}
+	}
+	s.throttle[email] = now
+	return true
 }
