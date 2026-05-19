@@ -5,7 +5,7 @@ use crate::{
     service::access_control_service::ProjectAuth,
 };
 use candid::Principal;
-use canister_utils::{ApiResult, Uuid, get_current_month, get_current_year};
+use canister_utils::{get_current_month, get_current_year, ApiResult, Uuid};
 
 pub fn record_usage(req: dto::RecordUsageRequest) -> ApiResult<dto::RecordUsageResponse> {
     let current_billing_month = get_current_billing_month();

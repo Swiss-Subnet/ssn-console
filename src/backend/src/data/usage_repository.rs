@@ -1,8 +1,10 @@
 use crate::{
     data::{
-        BillingMonth, CanisterUsage, ProjectUsage, canister_repository, memory::{
-            CanisterUsageMemory, ProjectUsageMemory, init_canister_usage, init_project_usage
-        }
+        canister_repository,
+        memory::{
+            init_canister_usage, init_project_usage, CanisterUsageMemory, ProjectUsageMemory,
+        },
+        BillingMonth, CanisterUsage, ProjectUsage,
     },
     dto,
     mapping::usage::map_canister_usage_data,
@@ -38,7 +40,7 @@ pub fn upsert_canister_usages(billing_month: String, usages: Vec<dto::CanisterUs
             let current_canister_usage = map_canister_usage_data(usage.clone());
             let prev_canister_usage = s
                 .canister_usage
-                .get(&(usage.canister_id, BillingMonth(billing_month.clone())))
+                .get(&(usage.canister_id, BillingMonth::new(billing_month.clone())))
                 .unwrap_or(CanisterUsage {
                     canister_id: usage.canister_id,
                     memory: 0,
@@ -59,7 +61,7 @@ pub fn upsert_canister_usages(billing_month: String, usages: Vec<dto::CanisterUs
 
             let mut project_usage = s
                 .project_usage
-                .get(&(project_id, BillingMonth(billing_month.clone())))
+                .get(&(project_id, BillingMonth::new(billing_month.clone())))
                 .unwrap_or_default();
 
             project_usage.memory = project_usage
@@ -127,10 +129,10 @@ pub fn upsert_canister_usages(billing_month: String, usages: Vec<dto::CanisterUs
                 .saturating_sub(prev_canister_usage.burned_cycles);
 
             s.project_usage
-                .insert((project_id, BillingMonth(billing_month.clone())), project_usage);
+                .insert((project_id, BillingMonth::new(billing_month.clone())), project_usage);
 
             s.canister_usage.insert(
-                (usage.canister_id, BillingMonth(billing_month.clone())),
+                (usage.canister_id, BillingMonth::new(billing_month.clone())),
                 map_canister_usage_data(usage),
             );
         }
@@ -141,7 +143,7 @@ pub fn get_canister_usage(canister_id: Principal, billing_month: &str) -> Canist
     STATE.with(|s| {
         s.borrow()
             .canister_usage
-            .get(&(canister_id, BillingMonth(billing_month.to_string())))
+            .get(&(canister_id, BillingMonth::new(billing_month.to_string())))
             .unwrap_or(CanisterUsage {
                 canister_id,
                 memory: 0,
@@ -166,7 +168,7 @@ pub fn get_project_usage(project_id: Uuid, billing_month: &str) -> ProjectUsage 
     STATE.with(|s| {
         s.borrow()
             .project_usage
-            .get(&(project_id, BillingMonth(billing_month.to_string())))
+            .get(&(project_id, BillingMonth::new(billing_month.to_string())))
             .unwrap_or_default()
     })
 }

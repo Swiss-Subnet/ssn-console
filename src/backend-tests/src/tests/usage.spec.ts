@@ -205,11 +205,11 @@ describe('Usage Metrics', () => {
       }
 
       driver.actor.setIdentity(userIdentity);
-      const janRes = await driver.actor.get_usage({
+      const juneRes = await driver.actor.get_usage({
         project_id: project.id,
         billing_month: ['2026-06'],
       });
-      const janUsage = extractOkResponse(janRes);
+      const juneUsage = extractOkResponse(juneRes);
 
       const julyRes = await driver.actor.get_usage({
         project_id: project.id,
@@ -217,7 +217,7 @@ describe('Usage Metrics', () => {
       });
       const julyUsage = extractOkResponse(julyRes);
 
-      expect(cleanUsage(janUsage)).toMatchSnapshot(
+      expect(cleanUsage(juneUsage)).toMatchSnapshot(
         'historical-usage-june-2026',
       );
       expect(cleanUsage(julyUsage)).toMatchSnapshot(
