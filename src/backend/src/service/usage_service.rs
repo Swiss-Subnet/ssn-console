@@ -1,5 +1,5 @@
 use crate::{
-    data::{usage_repository, ProjectPermissions},
+    data::{usage_repository, BillingMonth, ProjectPermissions},
     dto,
     mapping::usage::{map_canister_usage_dto, map_project_usage_dto},
     service::access_control_service::ProjectAuth,
@@ -19,7 +19,8 @@ pub fn get_usage(caller: Principal, req: dto::GetUsageRequest) -> ApiResult<dto:
     let project_id = Uuid::try_from(req.project_id.as_str())?;
     let _auth = ProjectAuth::require(&caller, project_id, ProjectPermissions::EMPTY)?;
 
-    let billing_month = req.billing_month.unwrap_or_else(get_current_billing_month);
+    let billing_month_str = req.billing_month.unwrap_or_else(get_current_billing_month);
+    let billing_month = BillingMonth::try_new(billing_month_str)?;
 
     let project = map_project_usage_dto(usage_repository::get_project_usage(
         project_id,

@@ -2,9 +2,9 @@ import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
 import { HttpAgent } from '@icp-sdk/core/agent';
 import { Principal } from '@icp-sdk/core/principal';
 
-const mockUpsertUsage = mock();
+const mockRecordUsage = mock();
 const mockCreateActor = mock().mockReturnValue({
-  upsert_usage: mockUpsertUsage,
+  record_usage: mockRecordUsage,
 });
 
 mock.module('@icp-sdk/core/agent', () => {
@@ -21,11 +21,11 @@ import type { ExtractedCanisterMetrics } from '../sync-cycles-monitor-metrics';
 
 describe('sync-canister-usage', () => {
   beforeEach(() => {
-    mockUpsertUsage.mockClear();
+    mockRecordUsage.mockClear();
   });
 
   afterEach(() => {
-    mockUpsertUsage.mockRestore();
+    mockRecordUsage.mockRestore();
   });
 
   it('does nothing when the usages list is empty', async () => {
@@ -33,11 +33,11 @@ describe('sync-canister-usage', () => {
     await syncCanisterUsage(mockAgent, []);
 
     expect(mockCreateActor).not.toHaveBeenCalled();
-    expect(mockUpsertUsage).not.toHaveBeenCalled();
+    expect(mockRecordUsage).not.toHaveBeenCalled();
   });
 
   it('syncs usages to backend properly', async () => {
-    mockUpsertUsage.mockResolvedValue({ Ok: null });
+    mockRecordUsage.mockResolvedValue({ Ok: null });
 
     const mockUsages: ExtractedCanisterMetrics[] = [
       {
@@ -63,8 +63,8 @@ describe('sync-canister-usage', () => {
     const mockAgent = {} as HttpAgent;
     await syncCanisterUsage(mockAgent, mockUsages);
 
-    expect(mockUpsertUsage).toHaveBeenCalledTimes(1);
-    expect(mockUpsertUsage).toHaveBeenCalledWith({
+    expect(mockRecordUsage).toHaveBeenCalledTimes(1);
+    expect(mockRecordUsage).toHaveBeenCalledWith({
       usages: [
         {
           canister_id: Principal.fromText('aaaaa-aa'),
@@ -87,8 +87,8 @@ describe('sync-canister-usage', () => {
     });
   });
 
-  it('throws an error if upsert_usage returns an Err', async () => {
-    mockUpsertUsage.mockResolvedValue({
+  it('throws an error if record_usage returns an Err', async () => {
+    mockRecordUsage.mockResolvedValue({
       Err: {
         message: 'Backend error',
       },
