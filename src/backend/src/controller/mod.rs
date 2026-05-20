@@ -1,6 +1,7 @@
 mod approval_policy;
 mod canister;
 mod cycles_ledger;
+#[cfg(not(feature = "canbench-rs"))]
 pub mod http;
 mod invite;
 mod organization;

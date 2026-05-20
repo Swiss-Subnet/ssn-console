@@ -30,6 +30,7 @@ fn post_upgrade() {
     env::init_public_key();
     env::init_canister_history_id();
 
+    #[cfg(not(feature = "canbench-rs"))]
     controller::http::init();
     data::team_repository::migrate_org_team_permissions();
     data::project_repository::migrate_project_team_permissions();
