@@ -1,29 +1,40 @@
 #!/usr/bin/env bash
-set -Eexuo pipefail
+set -Eeuo pipefail
 
-# Collects benchmark results from artifact files and outputs them as a JSON array
-# to be used in a GitHub Actions matrix.
+# Combines benchmark result artifacts into a single PR comment body and writes
+# the PR number for the post-comment job.
 
-json_array="["
+OUTPUT_FILE=./canbench_combined_comment.md
+: > "$OUTPUT_FILE"
 
-# Loop through each directory matching the prefix "canbench_result_"
-for file in canbench_result_*; do
-  if [ -e "$file" ]; then
-    # Read the contents of the result file, escape double quotes, and format with escaped newlines
-    content=$(<"$file/$file" sed 's/"/\\"/g' | awk '{printf "%s\\n", $0}' | sed '$ s/\\n$//')
+commit_hash=""
+shopt -s nullglob
+for dir in canbench_result_*; do
+  name=${dir#canbench_result_}
+  file="$dir/$dir"
+  [ -f "$file" ] || continue
 
-    # Construct a JSON object for the current result
-    json_object="{\"title\":\"$file\",\"result\":\"$content\"},"
-
-    # Append it to the array
-    json_array+="$json_object"
+  # Pull the commit hash + timestamp header line from the first benchmark so the
+  # combined comment still surfaces which commit was benchmarked.
+  if [ -z "$commit_hash" ]; then
+    header_line=$(head -n 1 "$file")
+    echo "# \`canbench\` 🏋 ${header_line#*\) }" >> "$OUTPUT_FILE"
+    echo "" >> "$OUTPUT_FILE"
+    commit_hash="set"
   fi
+
+  status_line=$(sed -n '2p' "$file")
+  open_attr=""
+  if [[ "$status_line" != ✅* ]]; then
+    open_attr=" open"
+  fi
+  echo "<details${open_attr}><summary><strong>${name}</strong> -- ${status_line}</summary>" >> "$OUTPUT_FILE"
+  echo "" >> "$OUTPUT_FILE"
+  tail -n +3 "$file" >> "$OUTPUT_FILE"
+  echo "" >> "$OUTPUT_FILE"
+  echo "</details>" >> "$OUTPUT_FILE"
+  echo "" >> "$OUTPUT_FILE"
 done
 
-# Remove the trailing comma and close the JSON array
-json_array=${json_array%,}
-json_array+="]"
-
-# Output the benchmark matrix and PR number to be used by the next job
-echo "matrix={\"benchmark\": $json_array}" >> "$GITHUB_OUTPUT"
 echo "pr_number=$(cat ./pr_number/pr_number)" >> "$GITHUB_OUTPUT"
+echo "comment_file=$OUTPUT_FILE" >> "$GITHUB_OUTPUT"
