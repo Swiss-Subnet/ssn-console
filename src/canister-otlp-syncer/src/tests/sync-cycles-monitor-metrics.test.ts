@@ -58,6 +58,7 @@ describe('sync-cycles-monitor-metrics', () => {
   it('syncs metrics properly when snapshots are returned', async () => {
     const time1 = 1_000_000_000_000n; // 1000 seconds
     const time2 = 1_005_000_000_000n; // 1005 seconds, delta = 5 seconds
+    const time3 = 1_010_000_000_000n; // 1010 seconds
 
     mockListMetricsAfter
       .mockResolvedValueOnce({
@@ -85,9 +86,9 @@ describe('sync-cycles-monitor-metrics', () => {
             {
               timestamp_ns: time2,
               canister_id: 'aaaaa-aa',
-              // delta: 1,270,000 cycles / (5s * 127k) = 2 GB
+              // total: 1,270,000 cycles * BYTES_PER_GB / 127k = 10 GB
               memory: 1_270_000n,
-              // delta: 2.5B cycles / (5s * 10M) = 50%
+              // total: 2.5B cycles / 10M = 250%
               compute_allocation: 2_500_000_000n,
               // total: 10M / 2000 = 5000 bytes
               ingress_induction: 10_000_000n,
@@ -102,13 +103,33 @@ describe('sync-cycles-monitor-metrics', () => {
               // total: 1T / 1T * 1.35 = 1.35 USD
               burned_cycles: 1_000_000_000_000n,
             },
+            {
+              timestamp_ns: time3,
+              canister_id: 'aaaaa-aa',
+              // total: 2,540,000 cycles * BYTES_PER_GB / 127k = 20 GB
+              memory: 2_540_000n,
+              // total: 5.0B cycles / 10M = 500%
+              compute_allocation: 5_000_000_000n,
+              // total: 20M / 2000 = 10000 bytes
+              ingress_induction: 20_000_000n,
+              // total: 60B cycles / 2B = 30s
+              instructions: 60_000_000_000n,
+              // total: 20M / 1000 = 20000 bytes
+              request_and_response_transmission: 20_000_000n,
+              // total: 100M / 5M = 20 uninstalls
+              uninstall: 100_000_000n,
+              // total: 20.8M / 10400 = 2000 bytes
+              http_outcalls: 20_800_000n,
+              // total: 2T / 1T * 1.35 = 2.70 USD
+              burned_cycles: 2_000_000_000_000n,
+            },
           ],
           next_cursor: [],
         },
       });
 
     const mockAgent = {} as HttpAgent;
-    await syncCyclesMonitorMetrics(mockAgent);
+    const latestMetrics = await syncCyclesMonitorMetrics(mockAgent);
 
     expect(mockListMetricsAfter).toHaveBeenCalledTimes(2);
 
@@ -131,6 +152,8 @@ describe('sync-cycles-monitor-metrics', () => {
 
     const payload2 = mockPushMetrics.mock.calls[1]?.[0];
     expect(payload2).toMatchSnapshot();
+
+    expect(latestMetrics).toMatchSnapshot();
   });
 
   it('does nothing when no new metrics are returned', async () => {
@@ -142,7 +165,7 @@ describe('sync-cycles-monitor-metrics', () => {
     });
 
     const mockAgent = {} as HttpAgent;
-    await syncCyclesMonitorMetrics(mockAgent);
+    const latestMetrics = await syncCyclesMonitorMetrics(mockAgent);
 
     const expectedOneHourAgoNs =
       BigInt(new Date('2024-01-01T11:00:00Z').getTime()) * 1_000_000n;
@@ -153,6 +176,7 @@ describe('sync-cycles-monitor-metrics', () => {
     });
 
     expect(mockPushMetrics).not.toHaveBeenCalled();
+    expect(latestMetrics).toHaveLength(0);
   });
 
   it('throws an error if list_metrics_after returns an Err', async () => {

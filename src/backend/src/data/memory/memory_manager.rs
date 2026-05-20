@@ -73,3 +73,7 @@ pub(super) const ORPHANED_CANISTER_PARENT_CHILD_INDEX_MEMORY_ID: MemoryId = Memo
 pub(super) const PRINCIPAL_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(38);
 
 pub(super) const USER_PRINCIPAL_NAME_MEMORY_ID: MemoryId = MemoryId::new(39);
+
+pub(super) const CANISTER_USAGE_MEMORY_ID: MemoryId = MemoryId::new(40);
+pub(super) const PROJECT_USAGE_MEMORY_ID: MemoryId = MemoryId::new(41);
+pub(super) const CANISTER_MONTH_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(42);

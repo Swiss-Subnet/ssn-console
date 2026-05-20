@@ -95,6 +95,13 @@ if [ -z "${CANISTER_ID_CYCLES_MONITOR}" ] || [ "${CANISTER_ID_CYCLES_MONITOR}" =
   exit 1
 fi
 
+export CANISTER_ID_BACKEND=$(jq -r ".[\"backend\"].${DFX_NETWORK}" "${ROOT_DIR}/canister_ids.json")
+if [ -z "${CANISTER_ID_BACKEND}" ] || [ "${CANISTER_ID_BACKEND}" = "null" ]; then
+  echo
+  echo "💢 --- Failed to find backend ID for network '${DFX_NETWORK}' in canister_ids.json! Exiting. ---"
+  exit 1
+fi
+
 export CANISTER_OTLP_SYNCER_IMAGE_NAMESPACE="localhost"
 export CANISTER_OTLP_SYNCER_IMAGE_NAME="canister-otlp-syncer"
 export CANISTER_OTLP_SYNCER_SERVICE_NAME="canister-otlp-syncer"
