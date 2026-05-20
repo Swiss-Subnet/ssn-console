@@ -76,3 +76,4 @@ pub(super) const USER_PRINCIPAL_NAME_MEMORY_ID: MemoryId = MemoryId::new(39);
 
 pub(super) const CANISTER_USAGE_MEMORY_ID: MemoryId = MemoryId::new(40);
 pub(super) const PROJECT_USAGE_MEMORY_ID: MemoryId = MemoryId::new(41);
+pub(super) const CANISTER_MONTH_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(42);

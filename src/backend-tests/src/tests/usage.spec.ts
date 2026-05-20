@@ -225,11 +225,6 @@ describe('Usage Metrics', () => {
       );
     });
 
-    // The syncer (canister-otlp-syncer) forwards lifetime-cumulative cycle
-    // counters from the cycles-monitor canister to upsert_usage. The backend
-    // currently treats those as period totals, so the cross-month delta is
-    // missing: each month's row holds the lifetime cumulative at the time of
-    // the last upsert, not the cycles consumed *during* that month.
     it('returns July-only usage when fed lifetime-cumulative counters across a month boundary', async () => {
       driver.actor.setIdentity(userIdentity);
       const project = await driver.getDefaultProject();
@@ -245,7 +240,7 @@ describe('Usage Metrics', () => {
       await driver.pic.tick();
       driver.actor.setIdentity(offchainIdentity);
       extractOkResponse(
-        await driver.actor.upsert_usage({
+        await driver.actor.record_usage({
           usages: [
             {
               ...createUsage(canister.principal_id, 0n),
@@ -259,7 +254,7 @@ describe('Usage Metrics', () => {
       await driver.pic.setTime(new Date('2026-07-01T00:00:00Z'));
       await driver.pic.tick();
       extractOkResponse(
-        await driver.actor.upsert_usage({
+        await driver.actor.record_usage({
           usages: [
             {
               ...createUsage(canister.principal_id, 0n),

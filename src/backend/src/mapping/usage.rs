@@ -1,6 +1,8 @@
+use candid::Principal;
+
 use crate::{data, dto};
 
-pub fn map_project_usage_dto(usage: data::ProjectUsage) -> dto::ProjectUsage {
+pub fn map_project_usage_dto(usage: data::Usage) -> dto::ProjectUsage {
     dto::ProjectUsage {
         memory: usage.memory,
         memory_bytes: usage.memory_bytes,
@@ -19,9 +21,11 @@ pub fn map_project_usage_dto(usage: data::ProjectUsage) -> dto::ProjectUsage {
     }
 }
 
-pub fn map_canister_usage_dto(usage: data::CanisterUsage) -> dto::CanisterUsage {
+pub fn map_canister_usage_dto(
+    (canister_id, usage): (Principal, data::Usage),
+) -> dto::CanisterUsage {
     dto::CanisterUsage {
-        canister_id: usage.canister_id,
+        canister_id,
         memory: usage.memory,
         memory_bytes: usage.memory_bytes,
         compute_allocation: usage.compute_allocation,
@@ -39,9 +43,8 @@ pub fn map_canister_usage_dto(usage: data::CanisterUsage) -> dto::CanisterUsage 
     }
 }
 
-pub fn map_canister_usage_data(usage: dto::CanisterUsage) -> data::CanisterUsage {
-    data::CanisterUsage {
-        canister_id: usage.canister_id,
+pub fn map_canister_usage_data(usage: dto::CanisterUsage) -> data::Usage {
+    data::Usage {
         memory: usage.memory,
         memory_bytes: usage.memory_bytes,
         compute_allocation: usage.compute_allocation,

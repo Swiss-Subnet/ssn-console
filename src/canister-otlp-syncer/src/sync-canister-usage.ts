@@ -44,7 +44,7 @@ export async function syncCanisterUsage(
 
   console.log(`🚀 Syncing ${usages.length} canister usages to backend...`);
 
-  const res = await actor.upsert_usage({ usages });
+  const res = await actor.record_usage({ usages });
   if ('Err' in res) {
     throw new Error(`Failed to upsert usage: ${res.Err.message}`);
   }
