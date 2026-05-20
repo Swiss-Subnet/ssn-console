@@ -1,6 +1,8 @@
 mod memory_manager;
 use memory_manager::*;
 
+pub use memory_manager::memory_metrics;
+
 mod approval_policy_memory;
 mod billing_plan_memory;
 mod canister_memory;

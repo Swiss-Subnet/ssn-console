@@ -3,6 +3,7 @@ mod canister;
 mod cycles_ledger;
 pub mod http;
 mod invite;
+mod metrics;
 mod organization;
 mod principal_link;
 mod project;

@@ -253,6 +253,27 @@ pub fn org_has_projects(org_id: Uuid) -> bool {
     })
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("projects", s.projects.len()),
+            ("project_team_index", s.project_team_index.len()),
+            (
+                "organization_project_index",
+                s.organization_project_index.len(),
+            ),
+            (
+                "project_team_permissions_index",
+                s.project_team_permissions_index.len(),
+            ),
+            (
+                "team_project_permissions_index",
+                s.team_project_permissions_index.len(),
+            ),
+        ]
+    })
+}
+
 struct ProjectState {
     projects: ProjectMemory,
     project_team_index: ProjectTeamIndexMemory, // TODO: remove after migration has run on all environments

@@ -213,6 +213,15 @@ fn set_proposal_status(proposal_id: Uuid, status: ProposalStatus) -> ApiResult {
     })
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("proposals", s.proposals.len()),
+            ("project_proposals_index", s.project_proposals_index.len()),
+        ]
+    })
+}
+
 struct ProposalState {
     proposals: ProposalMemory,
     project_proposals_index: ProjectProposalIndexMemory,

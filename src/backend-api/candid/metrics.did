@@ -1,0 +1,30 @@
+import "../../canister-utils/error.did";
+
+type GetMetricsRequest = record {};
+
+type GetMetricsResponse = variant {
+  Ok : record {
+    entry_counts : vec EntryCount;
+    memory_regions : vec MemoryRegion;
+    total_stable_pages : nat64;
+    total_stable_bytes : nat64;
+    cycles_balance : nat;
+  };
+  Err : ApiError;
+};
+
+type EntryCount = record {
+  name : text;
+  count : nat64;
+};
+
+type MemoryRegion = record {
+  name : text;
+  memory_id : nat8;
+  pages : nat64;
+  bytes : nat64;
+};
+
+service : {
+  get_metrics : (GetMetricsRequest) -> (GetMetricsResponse) query;
+};

@@ -249,6 +249,21 @@ pub fn list_user_teams(user_id: Uuid) -> Vec<(Uuid, Team)> {
     })
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("teams", s.teams.len()),
+            ("team_user_index", s.team_user_index.len()),
+            ("user_team_index", s.user_team_index.len()),
+            ("organization_team_index", s.organization_team_index.len()),
+            (
+                "organization_team_permissions_index",
+                s.organization_team_permissions_index.len(),
+            ),
+        ]
+    })
+}
+
 struct TeamState {
     teams: TeamMemory,
     team_user_index: TeamUserIndexMemory,
