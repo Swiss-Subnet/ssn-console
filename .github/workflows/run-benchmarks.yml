@@ -19,9 +19,12 @@ jobs:
       fail-fast: false
       matrix:
         name:
+          - backend
           - canister-history
           - cycles-monitor
         include:
+          - name: backend
+            project_dir: ./benchmarks/backend
           - name: canister-history
             project_dir: ./benchmarks/canister-history
           - name: cycles-monitor

@@ -1,0 +1,6 @@
+build_cmd: cargo build -p backend --release --target wasm32-unknown-unknown --features canbench-rs
+
+wasm_path: ../../target/wasm32-unknown-unknown/release/backend.wasm
+
+env_vars:
+  file: env_vars.csv

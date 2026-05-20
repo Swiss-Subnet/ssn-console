@@ -1,7 +1,10 @@
 use candid::Principal;
 use canister_utils::load_runtime_env;
 
+#[cfg(not(feature = "canbench-rs"))]
 const NETWORK: &str = dotenv!("DFX_NETWORK");
+#[cfg(feature = "canbench-rs")]
+const NETWORK: &str = "local";
 
 pub fn is_local() -> bool {
     NETWORK == "local"

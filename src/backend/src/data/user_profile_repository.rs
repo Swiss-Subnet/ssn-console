@@ -235,6 +235,54 @@ fn mutate_state<R>(f: impl FnOnce(&mut UserProfileState) -> R) -> R {
     STATE.with(|s| f(&mut s.borrow_mut()))
 }
 
+#[cfg(feature = "canbench-rs")]
+mod benches {
+    use super::{
+        create_user_profile, get_principals_with_names_by_user_id, link_principal_to_user,
+        set_principal_name,
+    };
+    use crate::data::UserProfile;
+    use canbench_rs::{bench, bench_fn, BenchResult};
+    use candid::Principal;
+
+    fn principal(i: u32) -> Principal {
+        let mut bytes = [0u8; 29];
+        bytes[25..29].copy_from_slice(&i.to_be_bytes());
+        Principal::from_slice(&bytes)
+    }
+
+    fn bench_get_principals_with_names_by_user_id(num_principals: u32) -> BenchResult {
+        let user_id = create_user_profile(principal(0), UserProfile::default());
+        for i in 1..num_principals {
+            link_principal_to_user(user_id, principal(i)).unwrap();
+        }
+        // Name every other principal so the secondary lookup hits a mix of
+        // present and absent entries — closer to real load than all-named.
+        for i in (0..num_principals).step_by(2) {
+            set_principal_name(user_id, principal(i), Some(format!("device-{i}"))).unwrap();
+        }
+
+        bench_fn(|| {
+            get_principals_with_names_by_user_id(user_id);
+        })
+    }
+
+    #[bench(raw)]
+    pub fn bench_get_principals_with_names_by_user_id_10() -> BenchResult {
+        bench_get_principals_with_names_by_user_id(10)
+    }
+
+    #[bench(raw)]
+    pub fn bench_get_principals_with_names_by_user_id_100() -> BenchResult {
+        bench_get_principals_with_names_by_user_id(100)
+    }
+
+    #[bench(raw)]
+    pub fn bench_get_principals_with_names_by_user_id_1000() -> BenchResult {
+        bench_get_principals_with_names_by_user_id(1000)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
