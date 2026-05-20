@@ -76,3 +76,18 @@ jobs:
       - name: Pass or fail
         run: |
           bash ./scripts/ci-post-run-benchmark.sh
+
+  upload-pr-number:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Save PR number
+        run: |
+          echo ${{ github.event.number }} > /tmp/pr_number
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: pr_number
+          path: /tmp/pr_number
