@@ -72,6 +72,7 @@
             pkgs.nodejs_22
             pkgs.openssl
             pkgs.just
+            pkgs.go
           ];
 
           shellHook = ''
@@ -83,6 +84,7 @@
               echo "  dfx:   $(dfx --version)"
               echo "  SSL:   $(openssl version)"
               echo "  Just:  $(just --version)"
+              echo "  Go:    $(go version)"
             fi
           '';
         };
