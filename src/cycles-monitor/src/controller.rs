@@ -30,10 +30,8 @@ fn post_upgrade() {
 }
 
 fn check_env_vars() {
-    {
-        env::init_canister_history_id();
-        env::init_public_key();
-    }
+    env::init_canister_history_id();
+    env::init_public_key();
 }
 
 #[update]
