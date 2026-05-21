@@ -248,6 +248,12 @@ export type OrganizationsSlice = {
   loadOrgUsers: (
     orgId: string,
   ) => Promise<import('@/lib/api-models').OrgUser[]>;
+  loadOrgBillingPlan: (
+    orgId: string,
+  ) => Promise<import('@/lib/api-models').OrgBillingPlan>;
+  loadMyOrgBillingPlans: () => Promise<
+    import('@/lib/api-models').MyOrgBillingPlan[]
+  >;
 };
 
 export type InvitesSlice = {

@@ -1,0 +1,52 @@
+import "../../canister-utils/error.did";
+
+type PlanTier = variant {
+  Free;
+  Pro;
+  Enterprise;
+};
+
+type SetOrgBillingPlanRequest = record {
+  org_id : text;
+  tier : PlanTier;
+};
+
+type SetOrgBillingPlanResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type GetOrgBillingPlanRequest = record {
+  org_id : text;
+};
+
+type GetOrgBillingPlanResponseData = record {
+  tier : PlanTier;
+  max_canisters : nat32;
+  canisters_used : nat32;
+  max_storage_bytes : opt nat64;
+};
+
+type GetOrgBillingPlanResponse = variant {
+  Ok : GetOrgBillingPlanResponseData;
+  Err : ApiError;
+};
+
+type MyOrgBillingPlan = record {
+  org_id : text;
+  tier : PlanTier;
+  max_canisters : nat32;
+  canisters_used : nat32;
+  max_storage_bytes : opt nat64;
+};
+
+type ListMyOrgBillingPlansResponse = variant {
+  Ok : vec MyOrgBillingPlan;
+  Err : ApiError;
+};
+
+service : {
+  set_org_billing_plan : (SetOrgBillingPlanRequest) -> (SetOrgBillingPlanResponse);
+  get_org_billing_plan : (GetOrgBillingPlanRequest) -> (GetOrgBillingPlanResponse) query;
+  list_my_org_billing_plans : () -> (ListMyOrgBillingPlansResponse) query;
+};

@@ -43,6 +43,10 @@ impl ApiError {
         Self::error(ApiErrorCode::ClientError {}, message)
     }
 
+    pub fn quota_exceeded(message: String) -> ApiError {
+        Self::error(ApiErrorCode::QuotaExceeded {}, message)
+    }
+
     fn error(code: ApiErrorCode, message: String) -> ApiError {
         ApiError {
             code: Some(code),
@@ -58,6 +62,7 @@ pub enum ApiErrorCode {
     DependencyError {},
     InternalError {},
     ClientError {},
+    QuotaExceeded {},
 }
 
 impl<T> From<Result<T, ApiError>> for ApiResultDto<T> {

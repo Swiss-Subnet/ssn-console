@@ -6,6 +6,7 @@ pub mod http;
 mod invite;
 mod metrics;
 mod organization;
+mod organization_billing_plan;
 mod principal_link;
 mod project;
 mod proposal;

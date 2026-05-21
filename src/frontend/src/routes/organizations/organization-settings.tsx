@@ -12,13 +12,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAppStore, selectOrgMap } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
-import type { OrgTeam, OrgUser, Project } from '@/lib/api-models';
+import type {
+  OrgBillingPlan,
+  OrgTeam,
+  OrgUser,
+  Project,
+} from '@/lib/api-models';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router';
 import { isNil } from '@/lib/nil';
 import { z } from 'zod';
+import { OrganizationBillingPlan } from './organization-billing-plan';
 import { OrganizationTeams } from './organization-teams';
 import { OrganizationMembers } from './organization-members';
 import { OrganizationInvitations } from './organization-invitations';
@@ -43,6 +49,7 @@ const OrganizationSettings: FC = () => {
     loadOrgUsers,
     loadOrgTeams,
     loadOrgProjects,
+    loadOrgBillingPlan,
   } = useAppStore();
   const orgMap = useAppStore(selectOrgMap);
 
@@ -59,6 +66,7 @@ const OrganizationSettings: FC = () => {
   const [members, setMembers] = useState<OrgUser[]>([]);
   const [teams, setTeams] = useState<OrgTeam[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [billingPlan, setBillingPlan] = useState<OrgBillingPlan | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const refreshMembers = useCallback(async () => {
@@ -88,6 +96,15 @@ const OrganizationSettings: FC = () => {
     }
   }, [orgId, loadOrgProjects]);
 
+  const refreshBillingPlan = useCallback(async () => {
+    if (!orgId) return;
+    try {
+      setBillingPlan(await loadOrgBillingPlan(orgId));
+    } catch (err) {
+      showErrorToast('Failed to load billing plan', err);
+    }
+  }, [orgId, loadOrgBillingPlan]);
+
   useEffect(() => {
     if (organization) {
       form.reset({ name: organization.name });
@@ -98,7 +115,8 @@ const OrganizationSettings: FC = () => {
     refreshMembers();
     refreshTeams();
     refreshProjects();
-  }, [refreshMembers, refreshTeams, refreshProjects]);
+    refreshBillingPlan();
+  }, [refreshMembers, refreshTeams, refreshProjects, refreshBillingPlan]);
 
   if (isNil(orgId) || isNil(organization)) {
     return (
@@ -177,6 +195,8 @@ const OrganizationSettings: FC = () => {
             </Form>
           </CardContent>
         </Card>
+
+        {billingPlan && <OrganizationBillingPlan plan={billingPlan} />}
 
         <OrganizationTeams
           orgId={orgId}

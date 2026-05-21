@@ -3,12 +3,16 @@ import { H1 } from '@/components/typography/h1';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
-import { CanisterAvailability, CanisterStatus } from '@/lib/api-models';
+import {
+  CanisterAvailability,
+  CanisterStatus,
+  type MyOrgBillingPlan,
+} from '@/lib/api-models';
 import { formatBytes, formatCycles } from '@/lib/format';
 import { isNotNil } from '@/lib/nil';
 import { selectOrgsWithProjects, useAppStore } from '@/lib/store';
 import { Link } from 'react-router';
-import { useEffect, useMemo, type FC } from 'react';
+import { useEffect, useMemo, useState, type FC } from 'react';
 
 type StatRowProps = { label: string; value: string };
 
@@ -20,18 +24,46 @@ const StatRow: FC<StatRowProps> = ({ label, value }) => (
 );
 
 const Dashboard: FC = () => {
-  const { organizations, projects, teams, canisters, initializeCanisters } =
-    useAppStore();
+  const {
+    organizations,
+    projects,
+    teams,
+    canisters,
+    initializeCanisters,
+    loadMyOrgBillingPlans,
+  } = useAppStore();
   const orgsWithProjects = useAppStore(selectOrgsWithProjects);
 
   const defaultProject = projects[0];
   const defaultProjectId = defaultProject?.id;
+
+  const [billingPlansByOrg, setBillingPlansByOrg] = useState<
+    Map<string, MyOrgBillingPlan>
+  >(new Map());
 
   useEffect(() => {
     if (isNotNil(defaultProjectId)) {
       initializeCanisters(defaultProjectId);
     }
   }, [defaultProjectId, initializeCanisters]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadMyOrgBillingPlans()
+      .then(plans => {
+        if (cancelled) return;
+        const map = new Map<string, MyOrgBillingPlan>();
+        for (const plan of plans) map.set(plan.orgId, plan);
+        setBillingPlansByOrg(map);
+      })
+      .catch(() => {
+        // Non-fatal: the dashboard renders without the X/Y badge if the
+        // billing fetch fails. Errors surface in network logs.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadMyOrgBillingPlans]);
 
   const defaultCanisters = useMemo(
     () =>
@@ -173,23 +205,39 @@ const Dashboard: FC = () => {
               </p>
             ) : (
               <ul className="divide-y">
-                {orgsWithProjects.map(org => (
-                  <li
-                    key={org.id}
-                    className="flex items-center justify-between py-3 text-sm"
-                  >
-                    <Link
-                      to={`/organizations/${org.id}/settings`}
-                      className="hover:text-foreground font-medium transition-colors"
+                {orgsWithProjects.map(org => {
+                  const plan = billingPlansByOrg.get(org.id);
+                  const atLimit =
+                    plan && plan.canistersUsed >= plan.maxCanisters;
+                  return (
+                    <li
+                      key={org.id}
+                      className="flex items-center justify-between py-3 text-sm"
                     >
-                      {org.name}
-                    </Link>
-                    <span className="text-muted-foreground text-xs">
-                      {org.projects.length}{' '}
-                      {org.projects.length === 1 ? 'project' : 'projects'}
-                    </span>
-                  </li>
-                ))}
+                      <Link
+                        to={`/organizations/${org.id}/settings`}
+                        className="hover:text-foreground font-medium transition-colors"
+                      >
+                        {org.name}
+                      </Link>
+                      <span className="text-muted-foreground flex items-center gap-3 text-xs">
+                        <span>
+                          {org.projects.length}{' '}
+                          {org.projects.length === 1 ? 'project' : 'projects'}
+                        </span>
+                        {plan && (
+                          <span
+                            className={
+                              atLimit ? 'text-destructive font-medium' : ''
+                            }
+                          >
+                            {plan.canistersUsed} / {plan.maxCanisters} canisters
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </CardContent>

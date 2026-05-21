@@ -258,6 +258,89 @@ describe('Approval Policy + Proposal Voting', () => {
       });
     });
 
+    // Regression: the per-project quota is checked at proposal creation
+    // time, but FixedQuorum lets two proposals sit pending while there is
+    // headroom for only one more canister. The second to execute must be
+    // re-checked at vote-approval time and recorded as Failed, not Executed.
+    it('should fail the second concurrently-approved proposal when quota is exhausted between vote and execute', async () => {
+      const alice = await driver.users.createUser();
+      const bob = await driver.users.createUser();
+      await driver.users.inviteIntoOrgAndDefaultTeam(alice, bob);
+
+      const [aliceIdentity] = alice;
+      const [bobIdentity] = bob;
+      driver.actor.setIdentity(aliceIdentity);
+      const project = await driver.getDefaultProject();
+
+      // Bring the Free org to 2 of 3 canisters using AutoApprove, then
+      // switch CreateCanister to FixedQuorum: 2.
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.upsert_approval_policy({
+        project_id: project.id,
+        operation_type: { CreateCanister: {} },
+        policy_type: { FixedQuorum: { threshold: 2 } },
+      });
+
+      // Two pending proposals, both pass the creation-time check (headroom 1).
+      const firstRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const first = extractOkResponse(firstRes);
+      const secondRes = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      const second = extractOkResponse(secondRes);
+
+      // Approve the first to execution. Cap is reached.
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.vote_proposal({
+        proposal_id: first.id,
+        vote: { Approve: {} },
+      });
+      driver.actor.setIdentity(bobIdentity);
+      const firstFinal = extractOkResponse(
+        await driver.actor.vote_proposal({
+          proposal_id: first.id,
+          vote: { Approve: {} },
+        }),
+      );
+      expectStatusTag(firstFinal, 'Executed');
+
+      // Approve the second. Cap is now exhausted, so execution must fail
+      // rather than blow past the plan limit.
+      driver.actor.setIdentity(aliceIdentity);
+      await driver.actor.vote_proposal({
+        proposal_id: second.id,
+        vote: { Approve: {} },
+      });
+      driver.actor.setIdentity(bobIdentity);
+      const secondFinal = extractOkResponse(
+        await driver.actor.vote_proposal({
+          proposal_id: second.id,
+          vote: { Approve: {} },
+        }),
+      );
+      const [status] = secondFinal.status;
+      if (!status || !('Failed' in status)) {
+        throw new Error(
+          `expected Failed, got ${JSON.stringify(secondFinal.status)}`,
+        );
+      }
+      expect(status.Failed.message).toContain(
+        'has reached its plan limit of 3 canisters',
+      );
+
+      // And the canister count must still equal the Free cap, not exceed it.
+      const canisters = extractOkResponse(
+        await driver.actor.list_my_canisters({ project_id: project.id }),
+      );
+      expect(canisters).toHaveLength(3);
+    });
+
     it('should reject a duplicate vote from the same approver', async () => {
       const alice = await driver.users.createUser();
       const bob = await driver.users.createUser();
