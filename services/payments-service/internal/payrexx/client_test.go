@@ -77,7 +77,7 @@ func TestDo_POST_signsFormBody(t *testing.T) {
 
 	c := NewClient(srv.URL, testInstance, testSecret)
 
-	form := url.Values{}
+	form := make(url.Values)
 	form.Set("amount", "1000")
 	form.Set("currency", "CHF")
 
@@ -124,6 +124,87 @@ func TestDo_POST_signsFormBody(t *testing.T) {
 	}
 }
 
+// Hard-coded so a change in how production builds the signed payload
+// can't silently co-vary with a test that recomputes it the same way.
+func TestDo_POST_pinnedSignature(t *testing.T) {
+	const wantSig = "vixLyDWgvhyZ1fuh8bk1i8YrJY0HfL3U7ZfhJVF7z+o="
+
+	var gotBody string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		gotBody = string(raw)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	c := NewClient(srv.URL, testInstance, testSecret)
+	form := make(url.Values)
+	form.Set("amount", "1000")
+	if _, _, err := c.Do(context.Background(), http.MethodPost, "/Gateway/", form); err != nil {
+		t.Fatalf("Do: %v", err)
+	}
+	parsed, err := url.ParseQuery(gotBody)
+	if err != nil {
+		t.Fatalf("parse body: %v", err)
+	}
+	if got := parsed.Get("ApiSignature"); got != wantSig {
+		t.Errorf("ApiSignature = %q, want %q", got, wantSig)
+	}
+}
+
+func TestDo_POST_stripsCallerProvidedApiSignature(t *testing.T) {
+	var gotBody string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		gotBody = string(raw)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	c := NewClient(srv.URL, testInstance, testSecret)
+	form := make(url.Values)
+	form.Set("amount", "1000")
+	form.Set("ApiSignature", "attacker-supplied")
+
+	if _, _, err := c.Do(context.Background(), http.MethodPost, "/Gateway/", form); err != nil {
+		t.Fatalf("Do: %v", err)
+	}
+	parsed, err := url.ParseQuery(gotBody)
+	if err != nil {
+		t.Fatalf("parse body: %v", err)
+	}
+	if sigs := parsed["ApiSignature"]; len(sigs) != 1 {
+		t.Fatalf("ApiSignature count = %d (%v), want exactly 1", len(sigs), sigs)
+	}
+	want := expectedSig(t, "amount=1000")
+	if got := parsed.Get("ApiSignature"); got != want {
+		t.Errorf("ApiSignature = %q, want %q (client-computed, caller value stripped)", got, want)
+	}
+}
+
+func TestDo_GET_stripsCallerProvidedApiSignature(t *testing.T) {
+	var gotQuery url.Values
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	c := NewClient(srv.URL, testInstance, testSecret)
+	form := make(url.Values)
+	form.Set("ApiSignature", "attacker-supplied")
+
+	if _, _, err := c.Do(context.Background(), http.MethodGet, "/Transaction/", form); err != nil {
+		t.Fatalf("Do: %v", err)
+	}
+	if sigs := gotQuery["ApiSignature"]; len(sigs) != 1 {
+		t.Fatalf("ApiSignature count = %d (%v), want exactly 1", len(sigs), sigs)
+	}
+	if got, want := gotQuery.Get("ApiSignature"), expectedSig(t, ""); got != want {
+		t.Errorf("ApiSignature = %q, want %q (client-computed empty-payload signature)", got, want)
+	}
+}
+
 func TestDo_GET_appendsExtraFormValuesToQuery(t *testing.T) {
 	var gotQuery url.Values
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +214,7 @@ func TestDo_GET_appendsExtraFormValuesToQuery(t *testing.T) {
 	defer srv.Close()
 
 	c := NewClient(srv.URL, testInstance, testSecret)
-	form := url.Values{}
+	form := make(url.Values)
 	form.Set("status", "confirmed")
 
 	_, _, err := c.Do(context.Background(), http.MethodGet, "/Transaction/", form)

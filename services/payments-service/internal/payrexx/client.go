@@ -50,6 +50,9 @@ func (c *Client) Do(ctx context.Context, method, path string, body url.Values) (
 	if body == nil {
 		body = url.Values{}
 	}
+	// A caller-supplied ApiSignature would be signed-into the POST payload
+	// or land twice in the GET query.
+	body.Del("ApiSignature")
 
 	endpoint, err := url.Parse(c.baseURL + path)
 	if err != nil {
