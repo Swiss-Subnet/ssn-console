@@ -2,6 +2,7 @@ import { HeaderMenu } from '@/components/layout/header-menu';
 import { OrgSwitcher } from '@/components/layout/org-switcher';
 import { Logo } from '@/components/logo';
 import { ModeToggle } from '@/components/mode-toggle';
+import { ENVIRONMENT_BANNER } from '@/env';
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -22,6 +23,14 @@ export const Header: FC = () => {
       <NavLink to="/">
         <Logo className="h-13" />
       </NavLink>
+
+      {ENVIRONMENT_BANNER && (
+        <span
+          className={`rounded-md px-2 py-1 text-xs font-semibold tracking-wide uppercase ${ENVIRONMENT_BANNER.className}`}
+        >
+          {ENVIRONMENT_BANNER.label}
+        </span>
+      )}
 
       {isAuthenticated && isActive && <OrgSwitcher />}
 

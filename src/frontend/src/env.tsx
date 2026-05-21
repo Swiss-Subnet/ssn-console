@@ -11,6 +11,21 @@ function getEnvVar(name: string): string {
 const DFX_NETWORK = getEnvVar('DFX_NETWORK');
 const IS_LOCAL = DFX_NETWORK === 'local';
 const IS_TEST = DFX_NETWORK === 'test';
+
+export const ENVIRONMENT_BANNER: {
+  label: string;
+  className: string;
+} | null = IS_LOCAL
+  ? {
+      label: 'Local',
+      className: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
+    }
+  : IS_TEST
+    ? {
+        label: 'Staging',
+        className: 'bg-amber-500/20 text-amber-800 dark:text-amber-200',
+      }
+    : null;
 const II_CANISTER_ID = getEnvVar('CANISTER_ID_INTERNET_IDENTITY');
 
 export const IDENTITY_PROVIDER = IS_LOCAL
