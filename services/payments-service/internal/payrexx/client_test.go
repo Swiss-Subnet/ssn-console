@@ -124,6 +124,41 @@ func TestDo_POST_signsFormBody(t *testing.T) {
 	}
 }
 
+// `instance` is a URL query param, never part of the signed POST payload.
+// If it leaked into the body, every signed request would mismatch Payrexx's
+// recomputation.
+func TestDo_POST_instanceNotInSignedBody(t *testing.T) {
+	var (
+		gotBody  string
+		gotQuery url.Values
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		raw, _ := io.ReadAll(r.Body)
+		gotBody = string(raw)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	c := NewClient(srv.URL, testInstance, testSecret)
+	form := make(url.Values)
+	form.Set("amount", "1000")
+	if _, _, err := c.Do(context.Background(), http.MethodPost, "/Gateway/", form); err != nil {
+		t.Fatalf("Do: %v", err)
+	}
+
+	if got := gotQuery.Get("instance"); got != testInstance {
+		t.Errorf("instance query = %q, want %q", got, testInstance)
+	}
+	parsed, err := url.ParseQuery(gotBody)
+	if err != nil {
+		t.Fatalf("parse body: %v", err)
+	}
+	if got, ok := parsed["instance"]; ok {
+		t.Errorf("body contains instance=%v, want absent (instance is a query param)", got)
+	}
+}
+
 // Hard-coded so a change in how production builds the signed payload
 // can't silently co-vary with a test that recomputes it the same way.
 func TestDo_POST_pinnedSignature(t *testing.T) {

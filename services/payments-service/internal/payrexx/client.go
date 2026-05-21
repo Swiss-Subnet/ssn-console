@@ -37,12 +37,6 @@ func NewClient(baseURL, instanceName, apiSecret string) *Client {
 	}
 }
 
-// WithHTTPClient lets tests substitute a transport.
-func (c *Client) WithHTTPClient(h *http.Client) *Client {
-	c.httpClient = h
-	return c
-}
-
 // Do issues a signed request to {baseURL}/{path} with the given form body.
 // path must start with a slash, e.g. "/SignatureCheck/". Body may be nil
 // for requests with no payload.
