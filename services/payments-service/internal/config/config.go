@@ -1,19 +1,3 @@
-// Package config loads the service's runtime configuration from process
-// environment variables.
-//
-// Required:
-//
-//	PAYREXX_INSTANCE_NAME   merchant instance name
-//	PAYREXX_API_SECRET      API secret for that instance
-//
-// Optional:
-//
-//	PORT                    listen port (default 3001)
-//	PAYREXX_BASE_URL        Payrexx API base (default https://api.payrexx.com/v1.0)
-//
-// Locally, source `.env.local` via `just services::run payments-service`.
-// In production these are injected by the systemd quadlet. Never commit
-// `.env`-style files containing the API secret.
 package config
 
 import (
@@ -27,30 +11,34 @@ type Config struct {
 	PayrexxBaseURL      string
 	PayrexxInstanceName string
 	PayrexxAPISecret    string
+
+	GrafanaEnvironment string
 }
 
 func Load() (*Config, error) {
-	port, err := parsePort(getOptional("PORT", "3001"))
+	instance, err := required("PAYREXX_INSTANCE_NAME")
 	if err != nil {
 		return nil, err
 	}
-	instance, err := getRequired("PAYREXX_INSTANCE_NAME")
+	secret, err := required("PAYREXX_API_SECRET")
 	if err != nil {
 		return nil, err
 	}
-	secret, err := getRequired("PAYREXX_API_SECRET")
+	port, err := optionalPort("PORT", 3001)
 	if err != nil {
 		return nil, err
 	}
+
 	return &Config{
 		Port:                port,
-		PayrexxBaseURL:      getOptional("PAYREXX_BASE_URL", "https://api.payrexx.com/v1.0"),
+		PayrexxBaseURL:      optional("PAYREXX_BASE_URL", "https://api.payrexx.com/v1.0"),
 		PayrexxInstanceName: instance,
 		PayrexxAPISecret:    secret,
+		GrafanaEnvironment:  os.Getenv("GRAFANA_ENVIRONMENT"),
 	}, nil
 }
 
-func getRequired(name string) (string, error) {
+func required(name string) (string, error) {
 	v := os.Getenv(name)
 	if v == "" {
 		return "", fmt.Errorf("missing required environment variable: %s", name)
@@ -58,17 +46,21 @@ func getRequired(name string) (string, error) {
 	return v, nil
 }
 
-func getOptional(name, def string) string {
+func optional(name, def string) string {
 	if v := os.Getenv(name); v != "" {
 		return v
 	}
 	return def
 }
 
-func parsePort(s string) (int, error) {
-	n, err := strconv.Atoi(s)
-	if err != nil || n < 1 || n > 65535 {
-		return 0, fmt.Errorf("invalid PORT: must be 1..65535, got %q", s)
+func optionalPort(name string, def int) (int, error) {
+	raw := os.Getenv(name)
+	if raw == "" {
+		return def, nil
 	}
-	return n, nil
+	p, err := strconv.Atoi(raw)
+	if err != nil || p < 1 || p > 65535 {
+		return 0, fmt.Errorf("invalid %s: must be a valid port number between 1 and 65535", name)
+	}
+	return p, nil
 }

@@ -2,67 +2,78 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/swiss-subnet/ssn-console/services/payments-service/internal/config"
 	"github.com/swiss-subnet/ssn-console/services/payments-service/internal/payrexx"
+	"github.com/swiss-subnet/ssn-console/services/payments-service/internal/server"
+	"github.com/swiss-subnet/ssn-console/services/payments-service/internal/telemetry"
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatalf("payments-service: %v", err)
+	}
+}
+
+func run() error {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("config: %v", err)
+		return err
 	}
 
-	client := payrexx.NewClient(cfg.PayrexxBaseURL, cfg.PayrexxInstanceName, cfg.PayrexxAPISecret)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /status", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("ok"))
+	shutdownTelemetry, err := telemetry.Setup(ctx, telemetry.Config{
+		ServiceName:        "payments-service",
+		ServiceNamespace:   "ssn",
+		GrafanaEnvironment: cfg.GrafanaEnvironment,
 	})
-	mux.Handle("POST /v1.0/payrexx/signature-check", signatureCheckHandler(client))
+	if err != nil {
+		return fmt.Errorf("telemetry: %w", err)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := shutdownTelemetry(shutdownCtx); err != nil {
+			log.Printf("telemetry shutdown: %v", err)
+		}
+	}()
+
+	paymentsServer := server.New(server.Deps{
+		Payrexx: payrexx.NewClient(cfg.PayrexxBaseURL, cfg.PayrexxInstanceName, cfg.PayrexxAPISecret),
+	})
 
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%d", cfg.Port),
-		Handler:           mux,
+		Addr:              "0.0.0.0:" + strconv.Itoa(cfg.Port),
+		Handler:           paymentsServer,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {
-		log.Printf("payments-service listening on :%d", cfg.Port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %v", err)
+		log.Printf("payments-service listening on %s", srv.Addr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("listen: %v", err)
+			stop()
 		}
 	}()
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-	<-stop
+	<-ctx.Done()
+	log.Println("shutting down")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("shutdown: %v", err)
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		return err
 	}
-}
-
-func signatureCheckHandler(c *payrexx.Client) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		status, err := c.SignatureCheck(r.Context())
-		w.Header().Set("Content-Type", "application/json")
-		if err != nil {
-			w.WriteHeader(http.StatusBadGateway)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]int{"payrexx_status": status})
-	}
+	return nil
 }
