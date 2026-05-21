@@ -1,0 +1,152 @@
+package payrexx
+
+import (
+	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
+)
+
+const (
+	testInstance = "testshop"
+	testSecret   = "shhh-very-secret"
+)
+
+func expectedSig(t *testing.T, payload string) string {
+	t.Helper()
+	mac := hmac.New(sha256.New, []byte(testSecret))
+	mac.Write([]byte(payload))
+	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
+}
+
+func TestSignatureCheck_GET_signsEmptyPayload(t *testing.T) {
+	var (
+		gotMethod string
+		gotPath   string
+		gotQuery  url.Values
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
+		gotPath = r.URL.Path
+		gotQuery = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	c := NewClient(srv.URL, testInstance, testSecret)
+	status, err := c.SignatureCheck(context.Background())
+	if err != nil {
+		t.Fatalf("SignatureCheck: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("status = %d, want 200", status)
+	}
+	if gotMethod != http.MethodGet {
+		t.Errorf("method = %q, want GET", gotMethod)
+	}
+	if gotPath != "/SignatureCheck/" {
+		t.Errorf("path = %q, want /SignatureCheck/", gotPath)
+	}
+	if got := gotQuery.Get("instance"); got != testInstance {
+		t.Errorf("instance query = %q, want %q", got, testInstance)
+	}
+	if got, want := gotQuery.Get("ApiSignature"), expectedSig(t, ""); got != want {
+		t.Errorf("ApiSignature = %q, want %q (HMAC of empty payload)", got, want)
+	}
+}
+
+func TestDo_POST_signsFormBody(t *testing.T) {
+	var (
+		gotContentType string
+		gotBody        string
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotContentType = r.Header.Get("Content-Type")
+		raw, _ := io.ReadAll(r.Body)
+		gotBody = string(raw)
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"status":"success"}`))
+	}))
+	defer srv.Close()
+
+	c := NewClient(srv.URL, testInstance, testSecret)
+
+	form := url.Values{}
+	form.Set("amount", "1000")
+	form.Set("currency", "CHF")
+
+	body, status, err := c.Do(context.Background(), http.MethodPost, "/Gateway/", form)
+	if err != nil {
+		t.Fatalf("Do: %v", err)
+	}
+	if status != http.StatusCreated {
+		t.Fatalf("status = %d, want 201", status)
+	}
+	if !strings.Contains(string(body), `"status":"success"`) {
+		t.Errorf("body = %q, want success payload", string(body))
+	}
+
+	if gotContentType != "application/x-www-form-urlencoded" {
+		t.Errorf("Content-Type = %q, want application/x-www-form-urlencoded", gotContentType)
+	}
+
+	parsed, err := url.ParseQuery(gotBody)
+	if err != nil {
+		t.Fatalf("parse received body: %v", err)
+	}
+	if parsed.Get("amount") != "1000" || parsed.Get("currency") != "CHF" {
+		t.Errorf("body fields = %v, want amount=1000 currency=CHF", parsed)
+	}
+
+	gotSig := parsed.Get("ApiSignature")
+	if gotSig == "" {
+		t.Fatalf("ApiSignature missing from body")
+	}
+	// The signature must be over the unsigned form body (form fields only,
+	// in the order url.Values.Encode produces). Reconstruct and compare.
+	signed := url.Values{}
+	for k, vs := range parsed {
+		if k == "ApiSignature" {
+			continue
+		}
+		for _, v := range vs {
+			signed.Add(k, v)
+		}
+	}
+	if want := expectedSig(t, signed.Encode()); gotSig != want {
+		t.Errorf("ApiSignature = %q, want %q", gotSig, want)
+	}
+}
+
+func TestDo_GET_appendsExtraFormValuesToQuery(t *testing.T) {
+	var gotQuery url.Values
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	c := NewClient(srv.URL, testInstance, testSecret)
+	form := url.Values{}
+	form.Set("status", "confirmed")
+
+	_, _, err := c.Do(context.Background(), http.MethodGet, "/Transaction/", form)
+	if err != nil {
+		t.Fatalf("Do: %v", err)
+	}
+	if got := gotQuery.Get("status"); got != "confirmed" {
+		t.Errorf("status query = %q, want confirmed", got)
+	}
+	if got := gotQuery.Get("instance"); got != testInstance {
+		t.Errorf("instance query = %q, want %q", got, testInstance)
+	}
+	if gotQuery.Get("ApiSignature") == "" {
+		t.Errorf("ApiSignature missing from query")
+	}
+}
