@@ -6,25 +6,43 @@ on:
     types:
       - completed
 
-permissions:
-  pull-requests: write
+permissions: {}
 
 jobs:
   post-comment:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
 
-      - uses: dawidd6/action-download-artifact@v8
+      - uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
           run_id: ${{ github.event.workflow_run.id }}
+          allow_forks: false
 
       - id: build-comment
         run: bash ./scripts/ci-download-canbench-artifacts.sh
 
       - name: Post comment
-        uses: thollander/actions-comment-pull-request@v3
+        uses: actions/github-script@v8
+        env:
+          PR_NUMBER: ${{ steps.build-comment.outputs.pr_number }}
+          COMMENT_FILE: ${{ steps.build-comment.outputs.comment_file }}
         with:
-          file-path: ${{ steps.build-comment.outputs.comment_file }}
-          comment-tag: canbench_results
-          pr-number: ${{ steps.build-comment.outputs.pr_number }}
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- canbench_results -->';
+            const prNumber = Number(process.env.PR_NUMBER);
+            const body = `${marker}\n${fs.readFileSync(process.env.COMMENT_FILE, 'utf8')}`;
+            const { owner, repo } = context.repo;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: prNumber, per_page: 100,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body });
+            }

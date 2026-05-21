@@ -2,6 +2,9 @@ name: Deploy Production
 
 on: workflow_dispatch
 
+permissions:
+  contents: read
+
 concurrency:
   group: production
   cancel-in-progress: false
@@ -46,6 +49,7 @@ jobs:
         uses: ./.github/actions/update-cycles-monitor-env-vars
         with:
           network: production
+          public_key: ${{ secrets.PUBLIC_KEY }}
 
       - name: Deploy to production
         run: dfx deploy --network production
