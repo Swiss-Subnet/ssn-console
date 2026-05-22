@@ -3,6 +3,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { selectOrgMap, selectProjectMap, useAppStore } from '@/lib/store';
 import { CanisterGrid } from '@/routes/canisters/canister-grid';
 import { CreateCanisterButton } from '@/routes/canisters/create-canister-button';
+import { DownloadProjectButton } from '@/routes/canisters/download-project-button';
 import { useEffect, useMemo, type FC } from 'react';
 import { CanisterSkeleton } from '@/routes/canisters/canister-skeleton';
 import { isNil } from '@/lib/nil';
@@ -59,9 +60,18 @@ const Canisters: FC = () => {
       ) : (
         <>
           <CanisterGrid className="mt-8" canisters={projectCanisters} />
-          {project?.yourPermissions.canisterManage && (
-            <CreateCanisterButton className="mt-4" />
-          )}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {project?.yourPermissions.canisterManage && (
+              <CreateCanisterButton />
+            )}
+            {project && (
+              <DownloadProjectButton
+                projectId={projectId}
+                projectName={project.name}
+                canisters={projectCanisters}
+              />
+            )}
+          </div>
         </>
       )}
     </>
