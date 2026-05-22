@@ -1,0 +1,54 @@
+default:
+    @just --list
+
+# go fmt across every service module
+fmt:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for svc in */; do
+        [ -f "${svc}go.mod" ] || continue
+        (cd "$svc" && go fmt ./...)
+    done
+
+# go vet + gofmt check across every service module
+check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for svc in */; do
+        [ -f "${svc}go.mod" ] || continue
+        (cd "$svc" && go vet ./...)
+        unformatted=$(cd "$svc" && gofmt -l .)
+        if [ -n "$unformatted" ]; then
+            echo "unformatted files in $svc:"; echo "$unformatted"; exit 1
+        fi
+    done
+
+# Run tests across every service module; args forwarded to `go test`
+test *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for svc in */; do
+        [ -f "${svc}go.mod" ] || continue
+        (cd "$svc" && go test ./... {{args}})
+    done
+
+# Build every service into services/<name>/bin/<name>
+build:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for svc in */; do
+        name="${svc%/}"
+        [ -f "$name/go.mod" ] || continue
+        echo "building $name"
+        (cd "$name" && go build -o "bin/$name" "./cmd/$name")
+    done
+
+# Run a service locally with env loaded from ../.env.local
+# Usage: just services::run auth-service
+run svc:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd ..
+    set -a; . .env.local; set +a
+    cd services/{{svc}}
+    go run ./cmd/{{svc}}

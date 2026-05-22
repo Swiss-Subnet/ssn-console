@@ -82,6 +82,9 @@ bun run scripts/generate-verify-token.ts <your-email>
 Visit `http://localhost:5173/verify?token=<output>` in the same
 browser where you are signed in.
 
+To exercise the real `auth-service` HTTP + SMTP path against a local
+Mailpit instance, see [services/README.md](./services/README.md#auth-service-end-to-end-testing).
+
 ### Local User Activation
 
 New users start with `Pending` status. Activating via dfx is
