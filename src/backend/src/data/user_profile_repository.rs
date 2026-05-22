@@ -157,6 +157,11 @@ pub fn set_principal_name(user_id: Uuid, principal: Principal, name: Option<Stri
     })
 }
 
+pub fn get_user_id_by_verified_email(email: &Email) -> Option<Uuid> {
+    let key = VerifiedEmailKey::from(email.clone());
+    with_state(|s| s.verified_email_index.get(&key))
+}
+
 pub fn claim_verified_email(user_id: Uuid, email: Email) -> ApiResult {
     let key = VerifiedEmailKey::from(email);
     mutate_state(|s| match s.verified_email_index.get(&key) {
@@ -702,6 +707,44 @@ mod tests {
                     .email_verified
             );
         }
+    }
+
+    #[test]
+    fn get_user_id_by_verified_email_returns_owner_after_claim() {
+        let user_id = seed_user(principal(120));
+        claim_verified_email(user_id, email("lookup-hit@example.com")).unwrap();
+
+        let found = get_user_id_by_verified_email(&email("lookup-hit@example.com"));
+        assert_eq!(found, Some(user_id));
+    }
+
+    #[test]
+    fn get_user_id_by_verified_email_normalizes_input() {
+        let user_id = seed_user(principal(121));
+        claim_verified_email(user_id, email("Lookup-Normalize@Example.COM")).unwrap();
+
+        let found = get_user_id_by_verified_email(&email("  lookup-normalize@example.com  "));
+        assert_eq!(found, Some(user_id));
+    }
+
+    #[test]
+    fn get_user_id_by_verified_email_returns_none_when_unclaimed() {
+        assert_eq!(
+            get_user_id_by_verified_email(&email("nobody-has-claimed@example.com")),
+            None
+        );
+    }
+
+    #[test]
+    fn get_user_id_by_verified_email_returns_none_after_release() {
+        let user_id = seed_user(principal(122));
+        claim_verified_email(user_id, email("lookup-release@example.com")).unwrap();
+        release_verified_email(user_id, "lookup-release@example.com");
+
+        assert_eq!(
+            get_user_id_by_verified_email(&email("lookup-release@example.com")),
+            None
+        );
     }
 
     #[test]

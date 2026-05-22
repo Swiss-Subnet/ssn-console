@@ -99,3 +99,11 @@ pub struct AdminListLinkedPrincipalsRequest {
 pub struct AdminListLinkedPrincipalsResponse {
     pub principals: Vec<Principal>,
 }
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct RecoverAccountByEmailRequest {
+    pub token: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct RecoverAccountByEmailResponse {}

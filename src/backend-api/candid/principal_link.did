@@ -99,6 +99,15 @@ type AdminListLinkedPrincipalsResponse = variant {
   Err : ApiError;
 };
 
+type RecoverAccountByEmailRequest = record {
+  token : text;
+};
+
+type RecoverAccountByEmailResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
 service : {
   register_link_code : (RegisterLinkCodeRequest) -> (RegisterLinkCodeResponse);
   link_my_principal : (LinkMyPrincipalRequest) -> (LinkMyPrincipalResponse);
@@ -110,4 +119,5 @@ service : {
   admin_link_principal_to_user : (AdminLinkPrincipalRequest) -> (AdminLinkPrincipalResponse);
   admin_unlink_principal_from_user : (AdminUnlinkPrincipalRequest) -> (AdminUnlinkPrincipalResponse);
   admin_list_linked_principals : (AdminListLinkedPrincipalsRequest) -> (AdminListLinkedPrincipalsResponse) query;
+  recover_account_by_email : (RecoverAccountByEmailRequest) -> (RecoverAccountByEmailResponse);
 };

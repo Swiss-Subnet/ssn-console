@@ -7,8 +7,11 @@
 // At most one pending code per user; registering replaces any existing one.
 
 use crate::data::{user_profile_repository, LinkedPrincipal, StaffPermissions};
+use crate::env;
+use crate::jwt::{extract_ed25519_public_key_from_pem, verify_jwt};
 use crate::service::access_control_service;
-use crate::validation::validate_optional_principal_name;
+use crate::service::user_profile_service::{Claims, PURPOSE_ACCOUNT_RECOVERY};
+use crate::validation::{validate_optional_principal_name, Email};
 use candid::Principal;
 use canister_utils::{now_nanos, ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
@@ -200,6 +203,31 @@ pub fn admin_list_linked_principals(
 ) -> ApiResult<Vec<Principal>> {
     access_control_service::assert_staff_perm(caller, StaffPermissions::MANAGE_USERS)?;
     Ok(user_profile_repository::get_principals_by_user_id(user_id))
+}
+
+pub fn recover_account_by_email(caller: &Principal, token: String) -> ApiResult {
+    let pub_key_str = env::get_public_key();
+    let pub_key_bytes = extract_ed25519_public_key_from_pem(&pub_key_str)
+        .map_err(|e| ApiError::internal_error(format!("Failed to parse public key: {}", e)))?;
+    let claims: Claims = verify_jwt(&token, &pub_key_bytes)?;
+
+    recover_with_claims(caller, claims)
+}
+
+fn recover_with_claims(caller: &Principal, claims: Claims) -> ApiResult {
+    if claims.purpose.as_deref() != Some(PURPOSE_ACCOUNT_RECOVERY) {
+        return Err(ApiError::client_error(
+            "Token cannot be used to recover an account.".to_string(),
+        ));
+    }
+
+    let email = Email::try_from(claims.email)?;
+    let user_id =
+        user_profile_repository::get_user_id_by_verified_email(&email).ok_or_else(|| {
+            ApiError::client_error("No verified account found for this email.".to_string())
+        })?;
+
+    user_profile_repository::link_principal_to_user(user_id, *caller)
 }
 
 fn validate_code_format(code: &str) -> ApiResult {
@@ -489,6 +517,25 @@ mod tests {
         assert!(err.message().contains("64 characters"));
     }
 
+    use crate::service::user_profile_service::PURPOSE_EMAIL_VERIFICATION;
+
+    fn fresh_user_with_verified_email(byte: u8, raw_email: &str) -> Principal {
+        let p = principal(byte);
+        let user_id = create_user_profile(p, UserProfile::default());
+        let email = Email::try_from(raw_email.to_string()).unwrap();
+        user_profile_repository::claim_verified_email(user_id, email).unwrap();
+        p
+    }
+
+    fn recovery_claims(email: &str) -> Claims {
+        Claims {
+            email: email.to_string(),
+            exp: 0,
+            iat: 0,
+            purpose: Some(PURPOSE_ACCOUNT_RECOVERY.to_string()),
+        }
+    }
+
     #[test]
     fn admin_link_principal_attaches_to_target_user() {
         let (staff, _) = fresh_staff_user(70, StaffPermissions::MANAGE_USERS);
@@ -600,5 +647,105 @@ mod tests {
 
         let principals = user_profile_repository::get_principals_by_user_id(target_user_id);
         assert!(principals.contains(&extra));
+    }
+
+    #[test]
+    fn recover_links_new_principal_to_account_with_verified_email() {
+        let _existing = fresh_user_with_verified_email(200, "recover-ok@example.com");
+        let new_principal = principal(201);
+
+        recover_with_claims(&new_principal, recovery_claims("recover-ok@example.com")).unwrap();
+
+        let listed = user_profile_repository::get_user_profile_by_principal(&new_principal);
+        assert!(
+            listed.is_some(),
+            "new principal should resolve to the account"
+        );
+    }
+
+    #[test]
+    fn recover_normalizes_email_in_claim() {
+        let _existing = fresh_user_with_verified_email(202, "recover-norm@example.com");
+        let new_principal = principal(203);
+
+        recover_with_claims(
+            &new_principal,
+            recovery_claims("  Recover-Norm@Example.COM  "),
+        )
+        .unwrap();
+
+        assert!(user_profile_repository::get_user_profile_by_principal(&new_principal).is_some());
+    }
+
+    #[test]
+    fn recover_rejects_email_with_no_verified_account() {
+        let new_principal = principal(204);
+
+        let err =
+            recover_with_claims(&new_principal, recovery_claims("nobody@example.com")).unwrap_err();
+        assert!(err.message().contains("No verified account"));
+    }
+
+    #[test]
+    fn recover_rejects_unverified_email_even_when_profile_has_it() {
+        let p = principal(205);
+        create_user_profile(
+            p,
+            UserProfile {
+                email: Some("unverified@example.com".to_string()),
+                email_verified: false,
+                ..UserProfile::default()
+            },
+        );
+        let new_principal = principal(206);
+
+        let err = recover_with_claims(&new_principal, recovery_claims("unverified@example.com"))
+            .unwrap_err();
+        assert!(err.message().contains("No verified account"));
+    }
+
+    #[test]
+    fn recover_rejects_wrong_purpose_claim() {
+        let _existing = fresh_user_with_verified_email(207, "recover-purpose@example.com");
+        let new_principal = principal(208);
+
+        let mut claims = recovery_claims("recover-purpose@example.com");
+        claims.purpose = Some(PURPOSE_EMAIL_VERIFICATION.to_string());
+
+        let err = recover_with_claims(&new_principal, claims).unwrap_err();
+        assert!(err.message().contains("recover an account"));
+    }
+
+    #[test]
+    fn recover_rejects_legacy_claim_without_purpose() {
+        let _existing = fresh_user_with_verified_email(212, "recover-legacy@example.com");
+        let new_principal = principal(213);
+
+        let mut claims = recovery_claims("recover-legacy@example.com");
+        claims.purpose = None;
+
+        let err = recover_with_claims(&new_principal, claims).unwrap_err();
+        assert!(err.message().contains("recover an account"));
+    }
+
+    #[test]
+    fn recover_rejects_when_caller_principal_already_linked_elsewhere() {
+        let _existing = fresh_user_with_verified_email(209, "recover-clash@example.com");
+        let other_account_principal = fresh_user(210);
+
+        let err = recover_with_claims(
+            &other_account_principal,
+            recovery_claims("recover-clash@example.com"),
+        )
+        .unwrap_err();
+        assert_eq!(err.message(), "Principal cannot be linked.");
+    }
+
+    #[test]
+    fn recover_rejects_malformed_email_in_claim() {
+        let new_principal = principal(211);
+
+        let err = recover_with_claims(&new_principal, recovery_claims("not-an-email")).unwrap_err();
+        assert!(err.message().contains("'@'"));
     }
 }

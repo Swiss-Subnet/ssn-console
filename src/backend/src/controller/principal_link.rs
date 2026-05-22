@@ -5,9 +5,10 @@ use crate::{
         AdminUnlinkPrincipalResponse, GetMyPendingLinkCodeRequest, GetMyPendingLinkCodeResponse,
         LinkMyPrincipalRequest, LinkMyPrincipalResponse, LinkedPrincipalDto,
         ListMyLinkedPrincipalsRequest, ListMyLinkedPrincipalsResponse, PendingLinkCodeDto,
-        RegisterLinkCodeRequest, RegisterLinkCodeResponse, RevokeMyLinkCodeRequest,
-        RevokeMyLinkCodeResponse, SetMyPrincipalNameRequest, SetMyPrincipalNameResponse,
-        UnlinkMyPrincipalRequest, UnlinkMyPrincipalResponse,
+        RecoverAccountByEmailRequest, RecoverAccountByEmailResponse, RegisterLinkCodeRequest,
+        RegisterLinkCodeResponse, RevokeMyLinkCodeRequest, RevokeMyLinkCodeResponse,
+        SetMyPrincipalNameRequest, SetMyPrincipalNameResponse, UnlinkMyPrincipalRequest,
+        UnlinkMyPrincipalResponse,
     },
     service::principal_link_service,
 };
@@ -181,5 +182,19 @@ fn admin_list_linked_principals(
 
     principal_link_service::admin_list_linked_principals(&caller, user_id)
         .map(|principals| AdminListLinkedPrincipalsResponse { principals })
+        .into()
+}
+
+#[update]
+fn recover_account_by_email(
+    req: RecoverAccountByEmailRequest,
+) -> ApiResultDto<RecoverAccountByEmailResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    principal_link_service::recover_account_by_email(&caller, req.token)
+        .map(|()| RecoverAccountByEmailResponse {})
         .into()
 }
