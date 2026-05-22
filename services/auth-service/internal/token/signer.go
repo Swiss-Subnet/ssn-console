@@ -44,16 +44,35 @@ func NewSigner(opts Options) (*Signer, error) {
 	return &Signer{signer: signer, now: now}, nil
 }
 
-// SignEmailVerification mints a short-lived JWT carrying the email claim.
+// Embedded in minted tokens so the canister can refuse to apply an
+// email-verification token to an account-recovery action and vice versa.
+const (
+	PurposeEmailVerification = "email_verification"
+	PurposeAccountRecovery   = "account_recovery"
+)
+
+// SignEmailVerification mints a short-lived JWT for verifying an email
+// address against the caller's existing profile.
 func (s *Signer) SignEmailVerification(email string, ttl time.Duration) (string, error) {
+	return s.signPurposed(email, PurposeEmailVerification, ttl)
+}
+
+// SignAccountRecovery mints a short-lived JWT for re-binding a principal
+// to an existing account by proving control of a verified email.
+func (s *Signer) SignAccountRecovery(email string, ttl time.Duration) (string, error) {
+	return s.signPurposed(email, PurposeAccountRecovery, ttl)
+}
+
+func (s *Signer) signPurposed(email, purpose string, ttl time.Duration) (string, error) {
 	now := s.now()
 	claims := jwt.Claims{
 		IssuedAt: jwt.NewNumericDate(now),
 		Expiry:   jwt.NewNumericDate(now.Add(ttl)),
 	}
 	private := struct {
-		Email string `json:"email"`
-	}{Email: email}
+		Email   string `json:"email"`
+		Purpose string `json:"purpose"`
+	}{Email: email, Purpose: purpose}
 
 	return jwt.Signed(s.signer).Claims(claims).Claims(private).Serialize()
 }

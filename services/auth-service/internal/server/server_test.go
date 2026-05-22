@@ -138,7 +138,8 @@ func TestEmailVerification_HappyPath(t *testing.T) {
 	}
 	var claims jwt.Claims
 	var private struct {
-		Email string `json:"email"`
+		Email   string `json:"email"`
+		Purpose string `json:"purpose"`
 	}
 	if err := parsed.Claims(f.publicKey, &claims, &private); err != nil {
 		t.Fatalf("verify claims: %v", err)
@@ -146,12 +147,109 @@ func TestEmailVerification_HappyPath(t *testing.T) {
 	if private.Email != email {
 		t.Errorf("email claim: got %q want %q", private.Email, email)
 	}
+	if private.Purpose != "email_verification" {
+		t.Errorf("purpose claim: got %q want %q", private.Purpose, "email_verification")
+	}
 	if claims.IssuedAt == nil || claims.IssuedAt.Time().Unix() != f.now.Unix() {
 		t.Errorf("iat: got %v want %v", claims.IssuedAt, f.now.Unix())
 	}
 	wantExp := f.now.Add(15 * time.Minute)
 	if claims.Expiry == nil || claims.Expiry.Time().Unix() != wantExp.Unix() {
 		t.Errorf("exp: got %v want %v", claims.Expiry, wantExp.Unix())
+	}
+}
+
+func TestAccountRecovery_HappyPath(t *testing.T) {
+	f := newFixture(t)
+	const email = "test@example.com"
+
+	rr := f.post(t, "/v1.0/auth/account-recovery", map[string]string{"email": email})
+	if rr.Code != http.StatusAccepted {
+		t.Fatalf("status: got %d want 202", rr.Code)
+	}
+
+	f.drain(t)
+
+	sent, ok := f.mailer.LastSent()
+	if !ok {
+		t.Fatal("no email sent")
+	}
+	if sent.To != email {
+		t.Errorf("to: got %q want %q", sent.To, email)
+	}
+	if !strings.Contains(sent.HTML, "recover?token=") {
+		t.Errorf("html missing recover link: %q", sent.HTML)
+	}
+	if sent.Subject != "Swiss Subnet Account Recovery" {
+		t.Errorf("subject: got %q want %q", sent.Subject, "Swiss Subnet Account Recovery")
+	}
+
+	re := regexp.MustCompile(`recover\?token=([^"]+)`)
+	m := re.FindStringSubmatch(sent.HTML)
+	if len(m) != 2 {
+		t.Fatalf("could not extract token from html: %q", sent.HTML)
+	}
+	parsed, err := jwt.ParseSigned(m[1], []jose.SignatureAlgorithm{jose.EdDSA})
+	if err != nil {
+		t.Fatalf("parse jwt: %v", err)
+	}
+	var claims jwt.Claims
+	var private struct {
+		Email   string `json:"email"`
+		Purpose string `json:"purpose"`
+	}
+	if err := parsed.Claims(f.publicKey, &claims, &private); err != nil {
+		t.Fatalf("verify claims: %v", err)
+	}
+	if private.Email != email {
+		t.Errorf("email claim: got %q want %q", private.Email, email)
+	}
+	if private.Purpose != "account_recovery" {
+		t.Errorf("purpose claim: got %q want %q", private.Purpose, "account_recovery")
+	}
+	wantExp := f.now.Add(15 * time.Minute)
+	if claims.Expiry == nil || claims.Expiry.Time().Unix() != wantExp.Unix() {
+		t.Errorf("exp: got %v want %v", claims.Expiry, wantExp.Unix())
+	}
+}
+
+// A verification request must not consume a recovery request's throttle
+// budget for the same address (and vice versa). Both endpoints fire and
+// both send mail.
+func TestThrottleIsPerPurpose(t *testing.T) {
+	f := newFixture(t)
+	const email = "test@example.com"
+
+	rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{"email": email})
+	if rr.Code != http.StatusAccepted {
+		t.Fatalf("verify status: got %d want 202", rr.Code)
+	}
+	rr = f.post(t, "/v1.0/auth/account-recovery", map[string]string{"email": email})
+	if rr.Code != http.StatusAccepted {
+		t.Fatalf("recover status: got %d want 202", rr.Code)
+	}
+
+	f.drain(t)
+
+	if got := len(f.mailer.Sent); got != 2 {
+		t.Fatalf("sent count: got %d want 2", got)
+	}
+	subjects := []string{f.mailer.Sent[0].Subject, f.mailer.Sent[1].Subject}
+	want := map[string]bool{
+		"Swiss Subnet Email Verification": false,
+		"Swiss Subnet Account Recovery":   false,
+	}
+	for _, s := range subjects {
+		if _, ok := want[s]; !ok {
+			t.Errorf("unexpected subject: %q", s)
+			continue
+		}
+		want[s] = true
+	}
+	for s, seen := range want {
+		if !seen {
+			t.Errorf("missing subject: %q (got %v)", s, subjects)
+		}
 	}
 }
 
