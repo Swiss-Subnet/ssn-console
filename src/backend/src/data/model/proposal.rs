@@ -7,12 +7,14 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Proposal {
     pub project_id: Uuid,
+    // `#[serde(default)]` so proposals serialized before proposer_id was
+    // introduced still deserialize post-upgrade. Legacy rows decode as the
+    // nil UUID; `migrate_proposals_proposer_id` normalizes on-disk CBOR and
+    // the FE maps nil to "—".
+    #[serde(default)]
     pub proposer_id: Uuid,
     pub status: ProposalStatus,
     pub operation: ProposalOperation,
-    // `Option` so proposals serialized before timestamps were introduced still
-    // deserialize cleanly post-upgrade. `None` means the data predates the
-    // field; the FE renders that as "—".
     #[serde(default)]
     pub created_at_nanos: Option<u64>,
     #[serde(default)]

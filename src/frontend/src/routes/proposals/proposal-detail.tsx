@@ -233,7 +233,9 @@ const ProposalDetail: FC = () => {
               <dl className="grid gap-2">
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">Proposer</dt>
-                  <dd className="font-mono text-xs">{proposal.proposerId}</dd>
+                  <dd className="font-mono text-xs">
+                    {proposal.proposerId ?? '—'}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">ID</dt>

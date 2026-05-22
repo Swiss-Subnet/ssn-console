@@ -85,10 +85,15 @@ export type ProposalOperation =
       controllerId: string;
     };
 
+// Backend returns the nil UUID for proposals created before proposer_id was
+// tracked; we map that to `null` so the FE can render "—" like other
+// migration-driven optional fields.
+const NIL_PROPOSER_ID = '00000000-0000-0000-0000-000000000000';
+
 export type Proposal = {
   id: string;
   projectId: string;
-  proposerId: string;
+  proposerId: string | null;
   status: ProposalStatus | null;
   operation: ProposalOperation | null;
   // Nanoseconds. `null` for proposals created before timestamps were added.
@@ -200,7 +205,7 @@ export function mapProposalResponse(res: ApiProposal): Proposal {
   return {
     id: res.id,
     projectId: res.project_id,
-    proposerId: res.proposer_id,
+    proposerId: res.proposer_id === NIL_PROPOSER_ID ? null : res.proposer_id,
     status: statusOpt ? mapProposalStatus(statusOpt) : null,
     operation: operationOpt ? mapProposalOperation(operationOpt) : null,
     createdAtNanos: fromCandidOpt(res.created_at_nanos),
