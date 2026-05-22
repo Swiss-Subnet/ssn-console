@@ -177,6 +177,17 @@ To top up cycles for a canister, use the following command:
 dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
 ```
 
+### Project export (icp-cli zip)
+
+The Canisters page has a "Download project" button that emits a zip wired up for [icp-cli](https://github.com/dfinity/icp-cli). The zip contains:
+
+- `icp.yaml` with one entry per canister, each using the `@dfinity/asset-canister` recipe
+- `src/<canister>/dist/index.html` -- a Swiss-Subnet-branded placeholder page per canister
+- `.icp/data/mappings/ic.ids.json` pinning the canister principals to mainnet
+- A `README.md` showing how to swap a canister to Rust or Motoko by editing `icp.yaml`
+
+Users unzip and run `icp deploy -e ic` to upgrade their canisters on mainnet -- no toolchain beyond `icp-cli` needed for the default asset path. Implementation lives in [src/frontend/src/lib/project-export/](src/frontend/src/lib/project-export/).
+
 ### Canisters CSV Export
 
 To export a CSV of all canisters tracked by the Console:

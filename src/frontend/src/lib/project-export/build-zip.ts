@@ -14,14 +14,26 @@ export type BuildProjectZipInput = {
 
 export type ExportedCanister = {
   name: string;
-  crate: string;
   principal: string;
+  accent: string;
 };
 
 const CANISTER_PATH_MARKER = '__CANISTER__';
-const TOKEN_PROJECT = '__PROJECT__';
-const TOKEN_CANISTER = '__CANISTER__';
-const TOKEN_CANISTER_CRATE = '__CANISTER_CRATE__';
+const TOKEN_PROJECT = '{{PROJECT}}';
+const TOKEN_CANISTER = '{{CANISTER}}';
+const TOKEN_CANISTER_PRINCIPAL = '{{CANISTER_PRINCIPAL}}';
+const TOKEN_ACCENT = '{{ACCENT}}';
+
+const ASSET_RECIPE = '@dfinity/asset-canister@v2.1.0';
+
+const ACCENT_PALETTE = [
+  '#29A3DA',
+  '#E51E79',
+  '#E95A24',
+  '#F3A83B',
+  '#522780',
+  '#e22f30',
+];
 
 export function slugifyProjectName(name: string): string {
   const base = name
@@ -31,16 +43,12 @@ export function slugifyProjectName(name: string): string {
   return base || 'project';
 }
 
-function slugifyCanisterName(name: string): string {
+export function slugifyCanisterName(name: string): string {
   const base = name
     .toLowerCase()
     .replace(/[^a-z0-9_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
   return base || 'canister';
-}
-
-function crateName(slug: string): string {
-  return slug.replace(/-/g, '_');
 }
 
 export function resolveCanisterNames(
@@ -49,6 +57,7 @@ export function resolveCanisterNames(
   const exported: ExportedCanister[] = [];
   const usedNames = new Set<string>();
 
+  let i = 0;
   for (const c of canisters) {
     if (c.state.availability === CanisterAvailability.Deleted) continue;
 
@@ -60,7 +69,12 @@ export function resolveCanisterNames(
       name = `${base}-${suffix++}`;
     }
     usedNames.add(name);
-    exported.push({ name, crate: crateName(name), principal: c.principal });
+    exported.push({
+      name,
+      principal: c.principal,
+      accent: ACCENT_PALETTE[i % ACCENT_PALETTE.length]!,
+    });
+    i++;
   }
 
   return exported;
@@ -97,18 +111,18 @@ export function buildProjectZip(input: BuildProjectZipInput): Uint8Array {
   return zipSync(files);
 }
 
-// Map template paths to the names they should have in the zip. The template
-// stores its gitignore as `gitignore` (no dot) so the file isn't shadowed by
-// the repo's own ignore rules; restore the dot at export time.
+// Template stores `gitignore` (no dot) and `assets/` (not `dist/`) so the
+// repo's own gitignore doesn't shadow them during dev; restore both at export.
 function rewritePlainPath(relPath: string): string {
   if (relPath === 'gitignore') return '.gitignore';
   return relPath;
 }
 
 function rewriteCanisterPath(relPath: string, canisterName: string): string {
-  return rewritePlainPath(relPath)
+  const named = rewritePlainPath(relPath)
     .split(CANISTER_PATH_MARKER)
     .join(canisterName);
+  return named.replace(`${canisterName}/assets/`, `${canisterName}/dist/`);
 }
 
 function renderContent(
@@ -119,8 +133,10 @@ function renderContent(
   let out = content.split(TOKEN_PROJECT).join(input.projectName);
   if (canister !== null) {
     out = out
-      .split(TOKEN_CANISTER_CRATE)
-      .join(canister.crate)
+      .split(TOKEN_CANISTER_PRINCIPAL)
+      .join(canister.principal)
+      .split(TOKEN_ACCENT)
+      .join(canister.accent)
       .split(TOKEN_CANISTER)
       .join(canister.name);
   }
@@ -131,15 +147,24 @@ function renderIcpYaml(canisters: ExportedCanister[]): string {
   const entries = canisters
     .map(
       c => `  - name: ${c.name}
-    build:
-      steps:
-        - type: script
-          commands:
-            - cargo build --target wasm32-unknown-unknown --release -p ${c.crate}
-            - cp target/wasm32-unknown-unknown/release/${c.crate}.wasm "$ICP_WASM_OUTPUT_PATH"`,
+    recipe:
+      type: "${ASSET_RECIPE}"
+      configuration:
+        dir: src/${c.name}/dist`,
     )
     .join('\n');
-  return `canisters:\n${entries}\n`;
+  // Explicit local network on a non-standard port; the default 8000 frequently
+  // collides with dfx/pocket-ic from other projects.
+  return `networks:
+  - name: local
+    mode: managed
+    gateway:
+      bind: 127.0.0.1
+      port: 8765
+
+canisters:
+${entries}
+`;
 }
 
 function renderIdsJson(canisters: ExportedCanister[]): string {

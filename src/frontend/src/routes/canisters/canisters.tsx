@@ -55,6 +55,9 @@ const Canisters: FC = () => {
         ]}
       />
       <H1 className="mt-3">Canisters</H1>
+      <div className="text-muted-foreground mt-1 font-mono text-xs">
+        project {projectId}
+      </div>
       {isCanistersLoading || isNil(projectCanisters) ? (
         <CanisterSkeleton className="mt-8" />
       ) : (
