@@ -97,14 +97,13 @@ jobs:
           go-version-file: services/go.work
           cache-dependency-path: services/**/go.sum
 
-      # Installs golangci-lint and adds it to PATH; we invoke it ourselves
-      # below so the same binary runs against every service module.
+      # Install only; we invoke golangci-lint ourselves below so the same
+      # binary runs against every service module.
       - name: Install golangci-lint
         uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
         with:
           version: v2.12.2
-          install-mode: binary
-          args: --version
+          install-only: true
 
       - name: Format check
         run: golangci-lint fmt --diff
