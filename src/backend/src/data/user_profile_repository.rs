@@ -3,15 +3,18 @@ use super::{
         init_user_profile_principal_index, init_user_profiles, init_user_stats, UserProfileMemory,
         UserProfilePrincipalIndexMemory, UserStatsMemory,
     },
-    LinkedPrincipal, UserProfile, UserStatsData,
+    LinkedPrincipal, UserProfile, UserStatsData, VerifiedEmailKey,
 };
 use crate::data::memory::{
-    init_user_principal_names, init_user_profile_id_principal_index, UserPrincipalNameMemory,
-    UserProfileIdPrincipalIndexMemory,
+    init_user_principal_names, init_user_profile_id_principal_index,
+    init_user_profile_verified_email_index, UserPrincipalNameMemory,
+    UserProfileIdPrincipalIndexMemory, UserProfileVerifiedEmailIndexMemory,
 };
+use crate::validation::Email;
 use candid::Principal;
 use canister_utils::{ApiError, ApiResult, Uuid, MAX_PRINCIPAL, MIN_PRINCIPAL};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 
 pub fn list_user_profiles() -> Vec<(Uuid, UserProfile, Vec<Principal>)> {
     with_state(|s| {
@@ -154,6 +157,80 @@ pub fn set_principal_name(user_id: Uuid, principal: Principal, name: Option<Stri
     })
 }
 
+pub fn claim_verified_email(user_id: Uuid, email: Email) -> ApiResult {
+    let key = VerifiedEmailKey::from(email);
+    mutate_state(|s| match s.verified_email_index.get(&key) {
+        Some(existing) if existing == user_id => Ok(()),
+        Some(_) => Err(ApiError::client_error(
+            "Email is already verified on another account.".to_string(),
+        )),
+        None => {
+            s.verified_email_index.insert(key, user_id);
+            Ok(())
+        }
+    })
+}
+
+// Silent no-op when the entry is owned by another user: the caller's
+// view is stale and we must not clobber someone else's claim. Accepts
+// a raw string so callers don't have to construct the internal key.
+pub fn release_verified_email(user_id: Uuid, raw_email: &str) {
+    let Some(key) = VerifiedEmailKey::from_legacy_storage_unchecked(raw_email) else {
+        return;
+    };
+    mutate_state(|s| {
+        if s.verified_email_index.get(&key) == Some(user_id) {
+            s.verified_email_index.remove(&key);
+        }
+    });
+}
+
+// Pre-uniqueness data may have multiple verified rows claiming the same
+// address. Index only addresses with exactly one claimant; for any
+// collided address, drop every affected user's `email_verified` flag
+// so the profile flag and the index stay consistent — affected users
+// must re-verify to re-establish the claim under the going-forward
+// uniqueness rule.
+pub fn migrate_verified_email_index() {
+    mutate_state(|s| {
+        let mut claimants: BTreeMap<VerifiedEmailKey, Vec<Uuid>> = BTreeMap::new();
+
+        for (user_id, profile) in s.profiles.iter().map(|e| e.into_pair()) {
+            if !profile.email_verified {
+                continue;
+            }
+            let Some(raw) = profile.email else { continue };
+            let Some(key) = VerifiedEmailKey::from_legacy_storage_unchecked(&raw) else {
+                continue;
+            };
+            claimants.entry(key).or_default().push(user_id);
+        }
+
+        let mut indexed: u32 = 0;
+        let mut collisions: u32 = 0;
+        let mut users_reset: u32 = 0;
+        for (key, users) in claimants {
+            if users.len() == 1 {
+                s.verified_email_index.insert(key, users[0]);
+                indexed += 1;
+            } else {
+                collisions += 1;
+                for user_id in users {
+                    if let Some(mut profile) = s.profiles.get(&user_id) {
+                        profile.email_verified = false;
+                        s.profiles.insert(user_id, profile);
+                        users_reset += 1;
+                    }
+                }
+            }
+        }
+
+        ic_cdk::println!(
+            "migrate_verified_email_index: indexed={indexed} collided_addresses={collisions} users_reset={users_reset}"
+        );
+    });
+}
+
 pub fn update_user_profile(user_id: Uuid, user_profile: UserProfile) -> ApiResult {
     mutate_state(|s| {
         if !s.profiles.contains_key(&user_id) {
@@ -208,6 +285,7 @@ struct UserProfileState {
     principal_index: UserProfilePrincipalIndexMemory,
     id_principal_index: UserProfileIdPrincipalIndexMemory,
     principal_names: UserPrincipalNameMemory,
+    verified_email_index: UserProfileVerifiedEmailIndexMemory,
     stats: UserStatsMemory,
 }
 
@@ -218,6 +296,7 @@ impl Default for UserProfileState {
             principal_index: init_user_profile_principal_index(),
             id_principal_index: init_user_profile_id_principal_index(),
             principal_names: init_user_principal_names(),
+            verified_email_index: init_user_profile_verified_email_index(),
             stats: init_user_stats(),
         }
     }
@@ -468,5 +547,176 @@ mod tests {
             .any(|e| e.principal == p2));
         link_principal_to_user(user_id, p2).unwrap();
         assert_eq!(name_for(user_id, p2), None);
+    }
+
+    fn lookup_index(key: &VerifiedEmailKey) -> Option<Uuid> {
+        with_state(|s| s.verified_email_index.get(key))
+    }
+
+    fn key(s: &str) -> VerifiedEmailKey {
+        VerifiedEmailKey::from_legacy_storage_unchecked(s).unwrap()
+    }
+
+    fn email(s: &str) -> Email {
+        Email::try_from(s.to_string()).unwrap()
+    }
+
+    #[test]
+    fn claim_verified_email_records_owner() {
+        let user_id = seed_user(principal(100));
+
+        claim_verified_email(user_id, email("claim-records@example.com")).unwrap();
+
+        assert_eq!(
+            lookup_index(&key("claim-records@example.com")),
+            Some(user_id)
+        );
+    }
+
+    #[test]
+    fn claim_verified_email_is_idempotent_for_same_user() {
+        let user_id = seed_user(principal(101));
+
+        claim_verified_email(user_id, email("claim-idempotent@example.com")).unwrap();
+        claim_verified_email(user_id, email("claim-idempotent@example.com")).unwrap();
+
+        assert_eq!(
+            lookup_index(&key("claim-idempotent@example.com")),
+            Some(user_id)
+        );
+    }
+
+    #[test]
+    fn claim_verified_email_refuses_other_owner() {
+        let user_a = seed_user(principal(102));
+        let user_b = seed_user(principal(103));
+
+        claim_verified_email(user_a, email("claim-conflict@example.com")).unwrap();
+        let err = claim_verified_email(user_b, email("claim-conflict@example.com")).unwrap_err();
+        assert_eq!(
+            err.message(),
+            "Email is already verified on another account."
+        );
+        assert_eq!(
+            lookup_index(&key("claim-conflict@example.com")),
+            Some(user_a)
+        );
+    }
+
+    #[test]
+    fn release_verified_email_clears_own_claim() {
+        let user_id = seed_user(principal(104));
+        claim_verified_email(user_id, email("release-own@example.com")).unwrap();
+
+        release_verified_email(user_id, "release-own@example.com");
+
+        assert_eq!(lookup_index(&key("release-own@example.com")), None);
+    }
+
+    #[test]
+    fn release_verified_email_ignores_other_owner() {
+        let user_a = seed_user(principal(105));
+        let user_b = seed_user(principal(106));
+        claim_verified_email(user_a, email("release-other@example.com")).unwrap();
+
+        release_verified_email(user_b, "release-other@example.com");
+
+        assert_eq!(
+            lookup_index(&key("release-other@example.com")),
+            Some(user_a)
+        );
+    }
+
+    #[test]
+    fn release_verified_email_normalizes_raw_input() {
+        let user_id = seed_user(principal(107));
+        claim_verified_email(user_id, email("Release-Normalize@Example.COM")).unwrap();
+
+        release_verified_email(user_id, "  Release-Normalize@Example.COM  ");
+
+        assert_eq!(lookup_index(&key("release-normalize@example.com")), None);
+    }
+
+    // Bypasses claim_verified_email so we can synthesize the pre-migration
+    // state of two profiles holding the same verified address.
+    fn seed_verified_profile_directly(p: Principal, email: &str) -> Uuid {
+        create_user_profile(
+            p,
+            UserProfile {
+                email: Some(email.to_string()),
+                email_verified: true,
+                ..UserProfile::default()
+            },
+        )
+    }
+
+    #[test]
+    fn migrate_indexes_unique_verified_emails() {
+        let user_id = seed_verified_profile_directly(principal(110), "Migrate-Unique@Example.COM");
+
+        migrate_verified_email_index();
+
+        assert_eq!(
+            lookup_index(&key("migrate-unique@example.com")),
+            Some(user_id)
+        );
+        assert!(
+            get_user_profile_by_user_id(&user_id)
+                .unwrap()
+                .email_verified
+        );
+    }
+
+    #[test]
+    fn migrate_drops_collided_verified_emails() {
+        let a = seed_verified_profile_directly(principal(111), "dup@example.com");
+        let b = seed_verified_profile_directly(principal(112), "dup@example.com");
+        let unique =
+            seed_verified_profile_directly(principal(113), "unique-among-dups@example.com");
+
+        migrate_verified_email_index();
+
+        assert_eq!(lookup_index(&key("dup@example.com")), None);
+        assert!(!get_user_profile_by_user_id(&a).unwrap().email_verified);
+        assert!(!get_user_profile_by_user_id(&b).unwrap().email_verified);
+        assert_eq!(
+            lookup_index(&key("unique-among-dups@example.com")),
+            Some(unique)
+        );
+        assert!(get_user_profile_by_user_id(&unique).unwrap().email_verified);
+    }
+
+    #[test]
+    fn migrate_drops_three_way_collisions_entirely() {
+        let a = seed_verified_profile_directly(principal(114), "triple@example.com");
+        let b = seed_verified_profile_directly(principal(115), "triple@example.com");
+        let c = seed_verified_profile_directly(principal(116), "triple@example.com");
+
+        migrate_verified_email_index();
+
+        assert_eq!(lookup_index(&key("triple@example.com")), None);
+        for user_id in [a, b, c] {
+            assert!(
+                !get_user_profile_by_user_id(&user_id)
+                    .unwrap()
+                    .email_verified
+            );
+        }
+    }
+
+    #[test]
+    fn migrate_skips_unverified_emails() {
+        let _user_id = create_user_profile(
+            principal(117),
+            UserProfile {
+                email: Some("unverified@example.com".to_string()),
+                email_verified: false,
+                ..UserProfile::default()
+            },
+        );
+
+        migrate_verified_email_index();
+
+        assert_eq!(lookup_index(&key("unverified@example.com")), None);
     }
 }

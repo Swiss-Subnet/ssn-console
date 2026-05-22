@@ -73,3 +73,4 @@ pub(super) const ORPHANED_CANISTER_PARENT_CHILD_INDEX_MEMORY_ID: MemoryId = Memo
 pub(super) const PRINCIPAL_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(38);
 
 pub(super) const USER_PRINCIPAL_NAME_MEMORY_ID: MemoryId = MemoryId::new(39);
+pub(super) const USER_PROFILE_VERIFIED_EMAIL_INDEX_MEMORY_ID: MemoryId = MemoryId::new(40);

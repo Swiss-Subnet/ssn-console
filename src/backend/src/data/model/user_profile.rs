@@ -1,4 +1,5 @@
 use super::StaffPermissions;
+use crate::validation::Email;
 use candid::Principal;
 use canister_utils::{deserialize_cbor, serialize_cbor};
 use ic_stable_structures::{storable::Bound, Storable};
@@ -43,6 +44,48 @@ impl Default for UserProfile {
             staff_permissions: None,
         }
     }
+}
+
+// Unbounded because ic_stable_structures forbids raising a Bounded
+// max_size in place; oversize is already rejected by validation::Email.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct VerifiedEmailKey(String);
+
+impl VerifiedEmailKey {
+    // Migration-only: legacy rows weren't normalized at write time, so
+    // we re-normalize here rather than going through Email::try_from,
+    // which would reject otherwise-recoverable malformed addresses.
+    // Skips shape validation — never call on user-supplied input.
+    pub(crate) fn from_legacy_storage_unchecked(raw: &str) -> Option<Self> {
+        let normalized = raw.trim().to_lowercase();
+        if normalized.is_empty() {
+            None
+        } else {
+            Some(Self(normalized))
+        }
+    }
+}
+
+impl From<Email> for VerifiedEmailKey {
+    fn from(email: Email) -> Self {
+        Self(email.into_inner())
+    }
+}
+
+impl Storable for VerifiedEmailKey {
+    fn into_bytes(self) -> Vec<u8> {
+        self.0.into_bytes()
+    }
+
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
+        Cow::Borrowed(self.0.as_bytes())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Self(String::from_utf8(bytes.into_owned()).expect("verified email key must be valid UTF-8"))
+    }
+
+    const BOUND: Bound = Bound::Unbounded;
 }
 
 impl Storable for UserProfile {
