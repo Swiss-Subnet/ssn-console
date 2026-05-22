@@ -4,6 +4,7 @@ type StaffPermissions = record {
   read_all_orgs : bool;
   write_billing : bool;
   manage_users : bool;
+  read_metrics : bool;
 };
 
 type GrantStaffPermissionsRequest = record {

@@ -255,6 +255,20 @@ pub fn get_user_stats() -> UserStatsData {
     with_state(|s| s.stats.get().clone())
 }
 
+pub fn metrics_counts() -> Vec<(&'static str, u64)> {
+    with_state(|s| {
+        vec![
+            ("user_profiles", s.profiles.len()),
+            ("user_profile_principal_index", s.principal_index.len()),
+            (
+                "user_profile_id_principal_index",
+                s.id_principal_index.len(),
+            ),
+            ("user_principal_names", s.principal_names.len()),
+        ]
+    })
+}
+
 pub fn increment_user_count(is_active: bool) {
     mutate_state(|s| {
         let mut stats = s.stats.get().clone();
