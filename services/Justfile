@@ -1,26 +1,27 @@
 default:
     @just --list
 
-# go fmt across every service module
+# Format every service module (gofumpt + goimports via golangci-lint)
 fmt:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    for svc in */; do
-        [ -f "${svc}go.mod" ] || continue
-        (cd "$svc" && go fmt ./...)
-    done
+    golangci-lint fmt
 
-# go vet + gofmt check across every service module
+# Verify formatting + vet across every service module
 check:
     #!/usr/bin/env bash
     set -euo pipefail
+    golangci-lint fmt --diff
     for svc in */; do
         [ -f "${svc}go.mod" ] || continue
         (cd "$svc" && go vet ./...)
-        unformatted=$(cd "$svc" && gofmt -l .)
-        if [ -n "$unformatted" ]; then
-            echo "unformatted files in $svc:"; echo "$unformatted"; exit 1
-        fi
+    done
+
+# Run golangci-lint across every service module
+lint:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for svc in */; do
+        [ -f "${svc}go.mod" ] || continue
+        (cd "$svc" && golangci-lint run ./...)
     done
 
 # Run tests across every service module; args forwarded to `go test`

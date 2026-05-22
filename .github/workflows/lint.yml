@@ -17,6 +17,7 @@ jobs:
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
       typescript: ${{ steps.filter.outputs.typescript }}
+      go: ${{ steps.filter.outputs.go }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -41,6 +42,15 @@ jobs:
               - 'prettier.config.cjs'
               - 'package.json'
               - 'bun.lock'
+            go:
+              - 'services/**/*.go'
+              - 'services/**/go.mod'
+              - 'services/**/go.sum'
+              - 'services/go.work'
+              - 'services/go.work.sum'
+              - 'services/.golangci.yml'
+              - 'services/Justfile'
+              - '.github/workflows/lint.yml'
 
   lint_rust:
     name: Lint Rust
@@ -68,3 +78,43 @@ jobs:
 
       - name: Check TypeScript formatting
         run: bun format:check
+
+  lint_go:
+    name: Lint Go
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: services/go.work
+          cache-dependency-path: services/**/go.sum
+
+      # Installs golangci-lint and adds it to PATH; we invoke it ourselves
+      # below so the same binary runs against every service module.
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
+        with:
+          version: v2.12.2
+          install-mode: binary
+          args: --version
+
+      - name: Format check
+        run: golangci-lint fmt --diff
+
+      - name: go vet + golangci-lint per service
+        run: |
+          set -euo pipefail
+          for svc in */; do
+            [ -f "${svc}go.mod" ] || continue
+            echo "::group::$svc"
+            (cd "$svc" && go vet ./... && golangci-lint run ./...)
+            echo "::endgroup::"
+          done

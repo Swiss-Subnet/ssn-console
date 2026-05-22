@@ -23,9 +23,11 @@ const tokenTTL = 15 * time.Minute
 // 202 before the send starts, so this is independent of the HTTP request.
 const backgroundSendTimeout = 30 * time.Second
 
-const maxInFlightSends = 32
-const perEmailThrottle = 60 * time.Second
-const throttleSweepThreshold = 4096
+const (
+	maxInFlightSends       = 32
+	perEmailThrottle       = 60 * time.Second
+	throttleSweepThreshold = 4096
+)
 
 // Signer mints purpose-tagged tokens. Kept as an interface so tests can
 // stub it the same way the mailer is stubbed.

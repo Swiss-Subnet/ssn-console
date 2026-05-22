@@ -107,7 +107,7 @@ func (m *smtpMailer) Send(ctx context.Context, msg Message) error {
 }
 
 func sendVia(c smtpClient, cfg SMTPConfig, msg Message, body []byte) error {
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	// On the submissions port the connection is already TLS (implicit);
 	// otherwise upgrade via STARTTLS when the server advertises it.
