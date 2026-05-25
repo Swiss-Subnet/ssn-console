@@ -5,6 +5,7 @@ export * from './error';
 export * from './invite';
 export * from './management-canister';
 export * from './organization';
+export * from './organization-billing-plan';
 export * from './permissions';
 export * from './principal-link';
 export * from './project';

@@ -1,6 +1,7 @@
 import { generateRandomIdentity } from '@dfinity/pic';
 import type { Identity } from '@icp-sdk/core/agent';
 import {
+  canisterQuotaExceededError,
   inactiveUserError,
   latestTermsAndConditionsError,
   noProfileError,
@@ -329,6 +330,25 @@ describe('Canisters', () => {
       });
       const [canister] = extractOkResponse(canisterRes);
       await expectCanister(canister!);
+    });
+
+    // Free-tier orgs are capped at MAX_FREE_CANISTERS (3 at time of
+    // writing). The cap fires at proposal-create time so users get
+    // immediate feedback and no zombie proposals queue up.
+    it('should reject a 4th canister proposal on a Free-tier org', async () => {
+      const [aliceIdentity] = await driver.users.createUser();
+      driver.actor.setIdentity(aliceIdentity);
+
+      const project = await driver.getDefaultProject();
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+      await driver.proposals.createCanister(aliceIdentity, project.id);
+
+      const res = await driver.actor.create_proposal({
+        project_id: project.id,
+        operation: [{ CreateCanister: {} }],
+      });
+      expect(res).toEqual(canisterQuotaExceededError(project.org_id, 3));
     });
 
     it('should create a canister for a user who has accepted the latest terms and conditions', async () => {

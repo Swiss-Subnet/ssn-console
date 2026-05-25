@@ -65,6 +65,14 @@ export const createOrganizationsSlice: AppStateCreator<OrganizationsSlice> = (
   async loadOrgUsers(orgId: string) {
     return get().organizationApi.listOrgUsers({ orgId });
   },
+
+  async loadOrgBillingPlan(orgId: string) {
+    return get().organizationApi.getOrgBillingPlan({ orgId });
+  },
+
+  async loadMyOrgBillingPlans() {
+    return get().organizationApi.listMyOrgBillingPlans();
+  },
 });
 
 function selectOrgs(state: AppSlice): Organization[] {

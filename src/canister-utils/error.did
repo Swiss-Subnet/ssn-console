@@ -9,4 +9,5 @@ type ApiErrorCode = variant {
   DependencyError : record {};
   InternalError : record {};
   ClientError : record {};
+  QuotaExceeded : record {};
 };

@@ -83,7 +83,18 @@ describe('list_all_canisters', () => {
       const numAliceProjects = 5;
       const numBobProjects = 3;
 
-      [aliceIdentity, aliceProfile] = await driver.users.createUser();
+      let aliceOrg;
+      [aliceIdentity, aliceProfile, aliceOrg] = await driver.users.createUser();
+      // Alice exceeds the Free 3-canister cap, so promote her org to Pro
+      // before the fixture loop. Bob stays Free (3 canisters fits).
+      driver.actor.setIdentity(controllerIdentity);
+      extractOkResponse(
+        await driver.actor.set_org_billing_plan({
+          org_id: aliceOrg.id,
+          tier: { Pro: null },
+        }),
+      );
+
       driver.actor.setIdentity(aliceIdentity);
       await driver.actor.update_my_user_profile({ email: [aliceEmail] });
       const aliceProject = await driver.getDefaultProject();

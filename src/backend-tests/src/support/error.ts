@@ -119,3 +119,15 @@ export function noProjectTeamLinkError(
     },
   };
 }
+
+export function canisterQuotaExceededError(
+  orgId: string,
+  limit: number,
+): ApiErrorResponse {
+  return {
+    Err: {
+      code: [{ QuotaExceeded: {} }],
+      message: `Organization ${orgId} has reached its plan limit of ${limit} canisters.`,
+    },
+  };
+}

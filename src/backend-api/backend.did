@@ -5,6 +5,7 @@ import service "./candid/http.did";
 import service "./candid/invite.did";
 import service "./candid/metrics.did";
 import service "./candid/organization.did";
+import service "./candid/organization_billing_plan.did";
 import service "./candid/principal_link.did";
 import service "./candid/project.did";
 import service "./candid/proposal.did";

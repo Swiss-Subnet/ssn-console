@@ -1,8 +1,9 @@
 use crate::{
     constants::{DEFAULT_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT, MIN_PAGINATION_LIMIT},
     data::{
-        approval_policy_repository, proposal_repository, proposal_repository::VoteOutcome,
-        OperationType, PolicyType, ProjectPermissions, Proposal, ProposalOperation, ProposalStatus,
+        approval_policy_repository, project_repository, proposal_repository,
+        proposal_repository::VoteOutcome, OperationType, PolicyType, ProjectPermissions, Proposal,
+        ProposalOperation, ProposalStatus,
     },
     dto::{
         CancelProposalRequest, CancelProposalResponse, CreateProposalRequest,
@@ -29,6 +30,12 @@ pub async fn create_proposal(
     let (project_id, operation) = map_create_proposal_request(req)?;
 
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROPOSAL_CREATE)?;
+
+    // Enforce per-operation quotas before a proposal row is persisted, so
+    // exhausted orgs get a fast NO and don't accumulate dead proposals.
+    if let ProposalOperation::CreateCanister = operation {
+        canister_service::enforce_canister_quota(auth.org_id())?;
+    }
 
     let proposal = Proposal {
         project_id,
@@ -131,6 +138,19 @@ async fn process_proposal(project_id: Uuid, proposal_id: Uuid, proposal: Proposa
     }
 }
 
+// Re-checks the canister quota at execution time. The same check runs at
+// proposal-create time, but under FixedQuorum a proposal can sit pending
+// while other proposals execute and consume the remaining headroom, so the
+// authoritative check is here. Returns a String error so it slots into the
+// existing `set_proposal_failed(message)` flow; the proposal lands in
+// Failed rather than blowing past the plan limit.
+fn enforce_canister_quota_for_project(project_id: Uuid) -> Result<(), String> {
+    let org_id = project_repository::get_project(&project_id)
+        .ok_or_else(|| format!("Project {project_id} no longer exists."))?
+        .org_id;
+    canister_service::enforce_canister_quota(org_id).map_err(|err| err.message().to_string())
+}
+
 fn operation_type_of(operation: &ProposalOperation) -> OperationType {
     match operation {
         ProposalOperation::CreateCanister => OperationType::CreateCanister,
@@ -146,7 +166,10 @@ async fn execute_operation(
     proposal_repository::set_proposal_executing(proposal_id)?;
 
     let result = match operation {
-        ProposalOperation::CreateCanister => canister_service::create_my_canister(project_id).await,
+        ProposalOperation::CreateCanister => match enforce_canister_quota_for_project(project_id) {
+            Ok(()) => canister_service::create_my_canister(project_id).await,
+            Err(err) => Err(err),
+        },
         ProposalOperation::AddCanisterController {
             canister_id,
             controller_id,

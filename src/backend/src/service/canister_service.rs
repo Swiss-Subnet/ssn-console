@@ -4,8 +4,9 @@ use crate::{
         MIN_PAGINATION_LIMIT, MIN_PAGINATION_PAGE,
     },
     data::{
-        canister_repository, organization_repository, orphaned_canister_repository,
-        project_repository, team_repository, user_profile_repository, Canister, ProjectPermissions,
+        canister_repository, organization_billing_plan_repository, organization_repository,
+        orphaned_canister_repository, project_repository, team_repository, user_profile_repository,
+        Canister, ProjectPermissions,
     },
     dto::{
         self, CanisterState, ListMyCanistersRequest, ListMyCanistersResponse,
@@ -313,4 +314,32 @@ pub async fn add_child_canisters(
     }
 
     Ok(AddChildCanistersResponse {})
+}
+
+// Active canisters across every project in the org. Soft-deleted ones
+// don't consume cycles so they're excluded; same definition the quota
+// uses, exposed for read endpoints.
+pub fn count_active_canisters_for_org(org_id: Uuid) -> usize {
+    project_repository::list_org_projects(org_id)
+        .into_iter()
+        .map(|(project_id, _)| {
+            canister_repository::list_active_canisters_by_project(project_id).len()
+        })
+        .sum()
+}
+
+// Returns Err with code QuotaExceeded if the org has already reached the
+// `max_canisters` limit of its billing plan. Plan is read via
+// `get_or_default`, so orgs with no persisted plan record are treated as
+// Free without requiring a backfill.
+pub fn enforce_canister_quota(org_id: Uuid) -> ApiResult {
+    let plan = organization_billing_plan_repository::get_or_default(org_id);
+    let limit = plan.limits.max_canisters as usize;
+
+    if count_active_canisters_for_org(org_id) >= limit {
+        return Err(ApiError::quota_exceeded(format!(
+            "Organization {org_id} has reached its plan limit of {limit} canisters."
+        )));
+    }
+    Ok(())
 }

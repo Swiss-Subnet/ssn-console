@@ -10,6 +10,11 @@ import {
   mapDeleteOrganizationResponse,
   mapListOrgUsersRequest,
   mapListOrgUsersResponse,
+  mapGetOrgBillingPlanRequest,
+  mapGetOrgBillingPlanResponse,
+  mapListMyOrgBillingPlansResponse,
+  mapSetOrgBillingPlanRequest,
+  mapSetOrgBillingPlanResponse,
   type ListMyOrganizationsResponse,
   type CreateOrganizationRequest,
   type OrganizationResponse,
@@ -18,6 +23,10 @@ import {
   type DeleteOrganizationRequest,
   type ListOrgUsersRequest,
   type OrgUser,
+  type GetOrgBillingPlanRequest,
+  type MyOrgBillingPlan,
+  type OrgBillingPlan,
+  type SetOrgBillingPlanRequest,
 } from '@/lib/api-models';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
 import type { _SERVICE } from '@ssn/backend-api';
@@ -69,5 +78,26 @@ export class OrganizationApi {
   public async listOrgUsers(req: ListOrgUsersRequest): Promise<OrgUser[]> {
     const res = await this.actor.list_org_users(mapListOrgUsersRequest(req));
     return mapListOrgUsersResponse(res);
+  }
+
+  public async getOrgBillingPlan(
+    req: GetOrgBillingPlanRequest,
+  ): Promise<OrgBillingPlan> {
+    const res = await this.actor.get_org_billing_plan(
+      mapGetOrgBillingPlanRequest(req),
+    );
+    return mapGetOrgBillingPlanResponse(res);
+  }
+
+  public async setOrgBillingPlan(req: SetOrgBillingPlanRequest): Promise<void> {
+    const res = await this.actor.set_org_billing_plan(
+      mapSetOrgBillingPlanRequest(req),
+    );
+    mapSetOrgBillingPlanResponse(res);
+  }
+
+  public async listMyOrgBillingPlans(): Promise<MyOrgBillingPlan[]> {
+    const res = await this.actor.list_my_org_billing_plans();
+    return mapListMyOrgBillingPlansResponse(res);
   }
 }
