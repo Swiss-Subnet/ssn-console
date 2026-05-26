@@ -1,8 +1,8 @@
 use crate::{
     data::{
         approval_policy_repository, organization_repository, project_repository, team_repository,
-        user_profile_repository, ApprovalPolicy, OperationType, PolicyType, ProjectPermissions,
-        UserProfile, UserStatus,
+        user_profile_repository, ApprovalPolicy, OperationType, PolicyType, ProjectId,
+        ProjectPermissions, UserId, UserProfile, UserStatus,
     },
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
@@ -20,7 +20,7 @@ use crate::{
     validation::Email,
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,7 +43,7 @@ pub fn get_user_profiles_by_principals(
     caller: &Principal,
     req: GetUserProfilesByPrincipalsRequest,
 ) -> ApiResult<GetUserProfilesByPrincipalsResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
 
     let lookups = req
@@ -62,7 +62,7 @@ pub fn get_user_profiles_by_principals(
 }
 
 pub fn update_user_profile(req: UpdateUserProfileRequest) -> ApiResult {
-    let user_id = Uuid::try_from(req.user_id.as_str())?;
+    let user_id = UserId::try_from(req.user_id.as_str())?;
     let mut current_user_profile = user_profile_repository::get_user_profile_by_user_id(&user_id)
         .ok_or_else(|| {
         ApiError::client_error(format!(

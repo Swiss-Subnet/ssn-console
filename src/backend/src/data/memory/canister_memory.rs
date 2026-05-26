@@ -4,16 +4,16 @@ use crate::data::{
         CANISTER_PROJECT_INDEX_MEMORY_ID, DELETED_PROJECT_CANISTER_INDEX_MEMORY_ID,
         PRINCIPAL_CANISTER_INDEX_MEMORY_ID,
     },
-    Canister,
+    Canister, ProjectId,
 };
 use candid::Principal;
 use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
 pub type CanisterMemory = BTreeMap<Uuid, Canister, Memory>;
-pub type ActiveProjectCanisterIndexMemory = BTreeSet<(Uuid, Uuid), Memory>;
-pub type DeletedProjectCanisterIndexMemory = BTreeSet<(Uuid, Uuid), Memory>;
-pub type CanisterProjectIndexMemory = BTreeMap<Uuid, Uuid, Memory>;
+pub type ActiveProjectCanisterIndexMemory = BTreeSet<(ProjectId, Uuid), Memory>;
+pub type DeletedProjectCanisterIndexMemory = BTreeSet<(ProjectId, Uuid), Memory>;
+pub type CanisterProjectIndexMemory = BTreeMap<Uuid, ProjectId, Memory>;
 pub type PrincipalCanisterIndexMemory = BTreeMap<Principal, Uuid, Memory>;
 
 pub fn init_canisters() -> CanisterMemory {

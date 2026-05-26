@@ -1,5 +1,5 @@
 use crate::{
-    data::{approval_policy_repository, ApprovalPolicy, ProjectPermissions},
+    data::{approval_policy_repository, ApprovalPolicy, ProjectId, ProjectPermissions},
     dto::{
         ListProjectApprovalPoliciesRequest, ListProjectApprovalPoliciesResponse,
         UpsertApprovalPolicyRequest, UpsertApprovalPolicyResponse,
@@ -11,13 +11,13 @@ use crate::{
     service::access_control_service::ProjectAuth,
 };
 use candid::Principal;
-use canister_utils::{ApiResult, Uuid};
+use canister_utils::ApiResult;
 
 pub fn list_project_approval_policies(
     caller: &Principal,
     request: ListProjectApprovalPoliciesRequest,
 ) -> ApiResult<ListProjectApprovalPoliciesResponse> {
-    let project_id = Uuid::try_from(request.project_id.as_str())?;
+    let project_id = ProjectId::try_from(request.project_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
 
     let policies = approval_policy_repository::list_project_approval_policies(auth.project_id());

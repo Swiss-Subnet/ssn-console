@@ -5,17 +5,16 @@ use super::{
 };
 use crate::data::{
     memory::{get_memory, USER_PROFILE_ID_PRINCIPAL_INDEX_MEMORY_ID},
-    UserProfile, UserStatsData, VerifiedEmailKey,
+    UserId, UserProfile, UserStatsData, VerifiedEmailKey,
 };
 use candid::Principal;
-use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet, StableCell};
 
-pub type UserProfileMemory = BTreeMap<Uuid, UserProfile, Memory>;
-pub type UserProfilePrincipalIndexMemory = BTreeMap<Principal, Uuid, Memory>;
-pub type UserProfileIdPrincipalIndexMemory = BTreeSet<(Uuid, Principal), Memory>;
-pub type UserPrincipalNameMemory = BTreeMap<(Uuid, Principal), String, Memory>;
-pub type UserProfileVerifiedEmailIndexMemory = BTreeMap<VerifiedEmailKey, Uuid, Memory>;
+pub type UserProfileMemory = BTreeMap<UserId, UserProfile, Memory>;
+pub type UserProfilePrincipalIndexMemory = BTreeMap<Principal, UserId, Memory>;
+pub type UserProfileIdPrincipalIndexMemory = BTreeSet<(UserId, Principal), Memory>;
+pub type UserPrincipalNameMemory = BTreeMap<(UserId, Principal), String, Memory>;
+pub type UserProfileVerifiedEmailIndexMemory = BTreeMap<VerifiedEmailKey, UserId, Memory>;
 pub type UserStatsMemory = StableCell<UserStatsData, Memory>;
 
 pub fn init_user_profiles() -> UserProfileMemory {

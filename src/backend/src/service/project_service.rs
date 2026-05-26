@@ -1,7 +1,7 @@
 use crate::{
     data::{
-        canister_repository, project_repository, team_repository, user_profile_repository,
-        OrgPermissions, Project, ProjectPermissions, TeamId,
+        canister_repository, project_repository, team_repository, user_profile_repository, OrgId,
+        OrgPermissions, Project, ProjectId, ProjectPermissions, TeamId,
     },
     dto::{
         AddTeamToProjectRequest, AddTeamToProjectResponse, CreateProjectRequest,
@@ -21,7 +21,7 @@ use crate::{
     validation::ProjectName,
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 const MAX_PROJECTS_PER_ORG: usize = 50;
 
@@ -44,7 +44,7 @@ pub fn list_org_projects(
     caller: &Principal,
     req: ListOrgProjectsRequest,
 ) -> ApiResult<ListOrgProjectsResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
     let team_ids = team_repository::list_user_team_ids(auth.user_id());
@@ -63,7 +63,7 @@ pub fn create_project(
     caller: &Principal,
     req: CreateProjectRequest,
 ) -> ApiResult<CreateProjectResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::PROJECT_CREATE)?;
     let name = ProjectName::try_from(req.name)?;
 
@@ -98,7 +98,7 @@ pub fn create_project(
 }
 
 pub fn get_project(caller: &Principal, req: GetProjectRequest) -> ApiResult<GetProjectResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
     let project = project_repository::get_project(&auth.project_id())
         .expect("project must exist after ProjectAuth");
@@ -114,7 +114,7 @@ pub fn update_project(
     caller: &Principal,
     req: UpdateProjectRequest,
 ) -> ApiResult<UpdateProjectResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROJECT_SETTINGS)?;
     let name = ProjectName::try_from(req.name)?;
 
@@ -135,7 +135,7 @@ pub fn delete_project(
     caller: &Principal,
     req: DeleteProjectRequest,
 ) -> ApiResult<DeleteProjectResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROJECT_ADMIN)?;
 
     if !project_repository::has_at_least_n_org_projects(auth.org_id(), 2) {
@@ -160,7 +160,7 @@ pub fn list_project_teams(
     caller: &Principal,
     req: ListProjectTeamsRequest,
 ) -> ApiResult<ListProjectTeamsResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
 
     let teams = project_repository::list_project_team_ids(auth.project_id())
@@ -179,7 +179,7 @@ pub fn add_team_to_project(
     caller: &Principal,
     req: AddTeamToProjectRequest,
 ) -> ApiResult<AddTeamToProjectResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let team_id = TeamId::try_from(req.team_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROJECT_ADMIN)?;
 
@@ -205,7 +205,7 @@ pub fn remove_team_from_project(
     caller: &Principal,
     req: RemoveTeamFromProjectRequest,
 ) -> ApiResult<RemoveTeamFromProjectResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let team_id = TeamId::try_from(req.team_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROJECT_ADMIN)?;
 
@@ -228,7 +228,7 @@ pub fn update_team_project_permissions(
     caller: &Principal,
     req: UpdateTeamProjectPermissionsRequest,
 ) -> ApiResult<UpdateTeamProjectPermissionsResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let team_id = TeamId::try_from(req.team_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROJECT_ADMIN)?;
 

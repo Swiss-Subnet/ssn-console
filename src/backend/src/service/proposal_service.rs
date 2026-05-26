@@ -2,8 +2,8 @@ use crate::{
     constants::{DEFAULT_PAGINATION_LIMIT, MAX_PAGINATION_LIMIT, MIN_PAGINATION_LIMIT},
     data::{
         approval_policy_repository, project_repository, proposal_repository,
-        proposal_repository::VoteOutcome, OperationType, PolicyType, ProjectPermissions, Proposal,
-        ProposalOperation, ProposalStatus,
+        proposal_repository::VoteOutcome, OperationType, PolicyType, ProjectId, ProjectPermissions,
+        Proposal, ProposalOperation, ProposalStatus,
     },
     dto::{
         CancelProposalRequest, CancelProposalResponse, CreateProposalRequest,
@@ -75,7 +75,7 @@ pub fn list_project_proposals(
     caller: &Principal,
     req: ListProjectProposalsRequest,
 ) -> ApiResult<ListProjectProposalsResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
 
     let after = req.after.as_deref().map(Uuid::try_from).transpose()?;
@@ -102,7 +102,11 @@ pub fn list_project_proposals(
     Ok(map_list_project_proposals_response(proposals, next_cursor))
 }
 
-async fn process_proposal(project_id: Uuid, proposal_id: Uuid, proposal: Proposal) -> ApiResult {
+async fn process_proposal(
+    project_id: ProjectId,
+    proposal_id: Uuid,
+    proposal: Proposal,
+) -> ApiResult {
     let approval_policy =
         approval_policy_repository::get_project_approval_policy_by_operation_type(
             project_id,
@@ -144,7 +148,7 @@ async fn process_proposal(project_id: Uuid, proposal_id: Uuid, proposal: Proposa
 // authoritative check is here. Returns a String error so it slots into the
 // existing `set_proposal_failed(message)` flow; the proposal lands in
 // Failed rather than blowing past the plan limit.
-fn enforce_canister_quota_for_project(project_id: Uuid) -> Result<(), String> {
+fn enforce_canister_quota_for_project(project_id: ProjectId) -> Result<(), String> {
     let org_id = project_repository::get_project(&project_id)
         .ok_or_else(|| format!("Project {project_id} no longer exists."))?
         .org_id;
@@ -159,7 +163,7 @@ fn operation_type_of(operation: &ProposalOperation) -> OperationType {
 }
 
 async fn execute_operation(
-    project_id: Uuid,
+    project_id: ProjectId,
     proposal_id: Uuid,
     operation: ProposalOperation,
 ) -> ApiResult {

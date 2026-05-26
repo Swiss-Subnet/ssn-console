@@ -1,5 +1,6 @@
+use crate::data::{OrgId, UserId};
 use candid::Principal;
-use canister_utils::{deserialize_cbor, serialize_cbor, Uuid};
+use canister_utils::{deserialize_cbor, serialize_cbor};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -7,7 +8,7 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum InviteTarget {
     Email(String),
-    UserId(Uuid),
+    UserId(UserId),
     Principal(Principal),
 }
 
@@ -32,8 +33,8 @@ impl InviteStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrgInvite {
-    pub org_id: Uuid,
-    pub created_by: Uuid,
+    pub org_id: OrgId,
+    pub created_by: UserId,
     pub created_at_ns: u64,
     pub expires_at_ns: u64,
     pub target: InviteTarget,

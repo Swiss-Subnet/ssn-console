@@ -1,12 +1,11 @@
 use crate::{
-    data::{self, TeamId},
+    data::{self, TeamId, UserId},
     dto::{
         ListOrgTeamsResponse, ListProjectTeamsResponse, ListTeamUsersResponse, ListTeamsResponse,
         OrgTeam, ProjectTeam, Team, TeamResponse, TeamUser,
     },
     mapping::{map_org_permissions, map_project_permissions},
 };
-use canister_utils::Uuid;
 
 pub fn map_list_teams_response(teams: Vec<(TeamId, data::Team)>) -> ListTeamsResponse {
     teams
@@ -67,7 +66,7 @@ pub fn map_team_to_response(team_id: TeamId, team: data::Team) -> TeamResponse {
 }
 
 pub fn map_list_team_users_response(
-    users: Vec<(Uuid, data::UserProfile)>,
+    users: Vec<(UserId, data::UserProfile)>,
 ) -> ListTeamUsersResponse {
     users
         .into_iter()

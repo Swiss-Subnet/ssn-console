@@ -6,22 +6,22 @@
 //
 // At most one pending code per user; registering replaces any existing one.
 
-use crate::data::{user_profile_repository, LinkedPrincipal, StaffPermissions};
+use crate::data::{user_profile_repository, LinkedPrincipal, StaffPermissions, UserId};
 use crate::env;
 use crate::jwt::{extract_ed25519_public_key_from_pem, verify_jwt};
 use crate::service::access_control_service;
 use crate::service::user_profile_service::{Claims, PURPOSE_ACCOUNT_RECOVERY};
 use crate::validation::{validate_optional_principal_name, Email};
 use candid::Principal;
-use canister_utils::{now_nanos, ApiError, ApiResult, Uuid};
+use canister_utils::{now_nanos, ApiError, ApiResult};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 const LINK_CODE_TTL_NANOS: u64 = 15 * 60 * 1_000_000_000;
 const LINK_CODE_LEN: usize = 8;
 
 thread_local! {
-    static PENDING_LINK_CODES: RefCell<HashMap<Uuid, PendingLinkCode>> = RefCell::new(HashMap::new());
+    static PENDING_LINK_CODES: RefCell<BTreeMap<UserId, PendingLinkCode>> = RefCell::new(BTreeMap::new());
 }
 
 #[derive(Clone)]
@@ -168,7 +168,7 @@ pub fn revoke_my_link_code(caller: &Principal) -> ApiResult {
 // staff role.
 pub fn admin_link_principal_to_user(
     caller: &Principal,
-    user_id: Uuid,
+    user_id: UserId,
     principal: Principal,
 ) -> ApiResult {
     access_control_service::assert_staff_perm(caller, StaffPermissions::MANAGE_USERS)?;
@@ -187,7 +187,7 @@ pub fn admin_link_principal_to_user(
 // user's last principal" guard so a staff action cannot orphan an account.
 pub fn admin_unlink_principal_from_user(
     caller: &Principal,
-    user_id: Uuid,
+    user_id: UserId,
     principal: Principal,
 ) -> ApiResult {
     access_control_service::assert_staff_perm(caller, StaffPermissions::MANAGE_USERS)?;
@@ -199,7 +199,7 @@ pub fn admin_unlink_principal_from_user(
 // that needs to render and act on another user's principals.
 pub fn admin_list_linked_principals(
     caller: &Principal,
-    user_id: Uuid,
+    user_id: UserId,
 ) -> ApiResult<Vec<Principal>> {
     access_control_service::assert_staff_perm(caller, StaffPermissions::MANAGE_USERS)?;
     Ok(user_profile_repository::get_principals_by_user_id(user_id))
@@ -252,7 +252,6 @@ mod tests {
     use super::*;
     use crate::data::user_profile_repository::create_user_profile;
     use crate::data::{UserProfile, UserStatus};
-    use canister_utils::Uuid;
 
     fn principal(byte: u8) -> Principal {
         let mut bytes = [0u8; 29];
@@ -269,7 +268,7 @@ mod tests {
     // Active user with the given staff permissions. Returns (principal, user_id)
     // so tests can use the principal for caller-side checks and the user_id as
     // the admin-call target.
-    fn fresh_staff_user(byte: u8, perms: StaffPermissions) -> (Principal, Uuid) {
+    fn fresh_staff_user(byte: u8, perms: StaffPermissions) -> (Principal, UserId) {
         let p = principal(byte);
         let user_id = create_user_profile(
             p,
@@ -282,7 +281,7 @@ mod tests {
         (p, user_id)
     }
 
-    fn user_id_of(p: Principal) -> Uuid {
+    fn user_id_of(p: Principal) -> UserId {
         user_profile_repository::assert_user_id_by_principal(&p).unwrap()
     }
 

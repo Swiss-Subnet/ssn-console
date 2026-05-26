@@ -1,5 +1,5 @@
 use crate::{
-    data::{self, user_profile_repository},
+    data::{self, user_profile_repository, UserId},
     dto::{
         GetMyStaffPermissionsResponse, GrantStaffPermissionsRequest, ListStaffResponse,
         RevokeStaffPermissionsRequest,
@@ -7,7 +7,7 @@ use crate::{
     mapping::{map_list_staff_response, map_staff_permissions, map_staff_permissions_from_dto},
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 // Replace a user's staff permission set. Caller authorisation lives in
 // the controller layer (controller key required); this service trusts
@@ -32,7 +32,7 @@ pub fn grant_staff_permissions(req: GrantStaffPermissionsRequest) -> ApiResult {
         ));
     }
 
-    let user_id = Uuid::try_from(req.user_id.as_str())?;
+    let user_id = UserId::try_from(req.user_id.as_str())?;
     let mut profile =
         user_profile_repository::get_user_profile_by_user_id(&user_id).ok_or_else(|| {
             ApiError::client_error(format!("User profile with id {user_id} does not exist."))
@@ -42,7 +42,7 @@ pub fn grant_staff_permissions(req: GrantStaffPermissionsRequest) -> ApiResult {
 }
 
 pub fn revoke_staff_permissions(req: RevokeStaffPermissionsRequest) -> ApiResult {
-    let user_id = Uuid::try_from(req.user_id.as_str())?;
+    let user_id = UserId::try_from(req.user_id.as_str())?;
     let mut profile =
         user_profile_repository::get_user_profile_by_user_id(&user_id).ok_or_else(|| {
             ApiError::client_error(format!("User profile with id {user_id} does not exist."))

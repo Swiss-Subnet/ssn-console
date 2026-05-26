@@ -1,14 +1,13 @@
 use super::{ORGANIZATION_USER_INDEX_MEMORY_ID, USER_ORGANIZATION_INDEX_MEMORY_ID};
 use crate::data::{
     memory::{get_memory, Memory, ORGANIZATION_MEMORY_ID},
-    Organization,
+    OrgId, Organization, UserId,
 };
-use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
-pub type OrganizationMemory = BTreeMap<Uuid, Organization, Memory>;
-pub type OrganizationUserIndexMemory = BTreeSet<(Uuid, Uuid), Memory>;
-pub type UserOrganizationIndexMemory = BTreeSet<(Uuid, Uuid), Memory>;
+pub type OrganizationMemory = BTreeMap<OrgId, Organization, Memory>;
+pub type OrganizationUserIndexMemory = BTreeSet<(OrgId, UserId), Memory>;
+pub type UserOrganizationIndexMemory = BTreeSet<(UserId, OrgId), Memory>;
 
 pub fn init_organizations() -> OrganizationMemory {
     OrganizationMemory::init(get_organization_memory())

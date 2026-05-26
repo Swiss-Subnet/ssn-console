@@ -1,5 +1,5 @@
 use crate::{
-    data,
+    data::{self, ProjectId},
     dto::{
         ApprovalPolicy, ListProjectApprovalPoliciesResponse, OperationType, PolicyType,
         UpsertApprovalPolicyRequest,
@@ -30,8 +30,8 @@ pub fn map_approval_policy_response(
 
 pub fn map_upsert_approval_policy_request(
     req: UpsertApprovalPolicyRequest,
-) -> ApiResult<(Uuid, data::OperationType, data::ApprovalPolicy)> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+) -> ApiResult<(ProjectId, data::OperationType, data::ApprovalPolicy)> {
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let operation_type = map_operation_type_in(req.operation_type);
     let policy_type = map_policy_type_in(req.policy_type)?;
     Ok((

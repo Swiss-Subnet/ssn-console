@@ -6,13 +6,13 @@ use crate::{
             init_project_usage, CanisterAbsoluteUsageMemory, CanisterMonthProjectIndexMemory,
             CanisterUsageMemory, ProjectUsageMemory,
         },
-        BillingMonth, Usage,
+        BillingMonth, ProjectId, Usage,
     },
     dto,
     mapping::usage::map_canister_usage_data,
 };
 use candid::Principal;
-use canister_utils::{Uuid, MAX_PRINCIPAL, MIN_PRINCIPAL};
+use canister_utils::{MAX_PRINCIPAL, MIN_PRINCIPAL};
 use std::cell::RefCell;
 
 struct State {
@@ -167,7 +167,7 @@ pub fn upsert_canister_usages(billing_month: String, usages: Vec<dto::CanisterUs
 }
 
 pub fn list_canister_usages_for_project(
-    project_id: Uuid,
+    project_id: ProjectId,
     billing_month: &BillingMonth,
 ) -> Vec<(Principal, Usage)> {
     STATE.with(|s| {
@@ -183,7 +183,7 @@ pub fn list_canister_usages_for_project(
     })
 }
 
-pub fn get_project_usage(project_id: Uuid, billing_month: &BillingMonth) -> Usage {
+pub fn get_project_usage(project_id: ProjectId, billing_month: &BillingMonth) -> Usage {
     STATE.with(|s| {
         s.borrow()
             .project_usage

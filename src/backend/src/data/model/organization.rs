@@ -1,7 +1,9 @@
-use canister_utils::{deserialize_cbor, serialize_cbor};
+use canister_utils::{deserialize_cbor, serialize_cbor, Id};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+
+pub type OrgId = Id<Organization>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Organization {
