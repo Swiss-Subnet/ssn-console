@@ -1,7 +1,8 @@
+import "./ids.did";
 import "../../canister-utils/error.did";
 
 type CreateProposalRequest = record {
-  project_id : text;
+  project_id : ProjectId;
   operation : opt ProposalOperation;
 };
 
@@ -20,7 +21,7 @@ type GetProposalResponse = variant {
 };
 
 type ListProjectProposalsRequest = record {
-  project_id : text;
+  project_id : ProjectId;
   status_filter : opt vec ProposalStatusFilter;
   after : opt text;
   limit : opt nat64;
@@ -62,8 +63,8 @@ type CancelProposalResponse = variant {
 
 type Proposal = record {
   id : text;
-  project_id : text;
-  proposer_id : text;
+  project_id : ProjectId;
+  proposer_id : UserId;
   status : opt ProposalStatus;
   operation : opt ProposalOperation;
   created_at_nanos : opt nat64;

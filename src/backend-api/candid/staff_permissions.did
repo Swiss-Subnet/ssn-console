@@ -1,3 +1,4 @@
+import "./ids.did";
 import "../../canister-utils/error.did";
 
 type StaffPermissions = record {
@@ -8,7 +9,7 @@ type StaffPermissions = record {
 };
 
 type GrantStaffPermissionsRequest = record {
-  user_id : text;
+  user_id : UserId;
   permissions : StaffPermissions;
 };
 
@@ -18,7 +19,7 @@ type GrantStaffPermissionsResponse = variant {
 };
 
 type RevokeStaffPermissionsRequest = record {
-  user_id : text;
+  user_id : UserId;
 };
 
 type RevokeStaffPermissionsResponse = variant {
@@ -41,7 +42,7 @@ type ListStaffResponse = variant {
 };
 
 type StaffMember = record {
-  user_id : text;
+  user_id : UserId;
   email : opt text;
   email_verified : bool;
   status : UserStatus;

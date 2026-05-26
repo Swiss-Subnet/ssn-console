@@ -1,8 +1,9 @@
+import "./ids.did";
 import "../../canister-utils/error.did";
 
 type InviteTarget = variant {
   Email : text;
-  UserId : text;
+  UserId : UserId;
   Principal : principal;
 };
 
@@ -15,9 +16,9 @@ type InviteStatus = variant {
 
 type OrgInvite = record {
   id : text;
-  org_id : text;
+  org_id : OrgId;
   org_name : text;
-  created_by : text;
+  created_by : UserId;
   created_at_ns : nat64;
   expires_at_ns : nat64;
   target : InviteTarget;
@@ -25,7 +26,7 @@ type OrgInvite = record {
 };
 
 type CreateOrgInviteRequest = record {
-  org_id : text;
+  org_id : OrgId;
   target : InviteTarget;
 };
 
@@ -37,7 +38,7 @@ type CreateOrgInviteResponse = variant {
 };
 
 type ListOrgInvitesRequest = record {
-  org_id : text;
+  org_id : OrgId;
 };
 
 type ListOrgInvitesResponse = variant {

@@ -1,3 +1,4 @@
+import "./ids.did";
 import "../../canister-utils/error.did";
 
 type RegisterLinkCodeRequest = record {
@@ -71,7 +72,7 @@ type RevokeMyLinkCodeResponse = variant {
 };
 
 type AdminLinkPrincipalRequest = record {
-  user_id : text;
+  user_id : UserId;
   "principal" : principal;
 };
 
@@ -81,7 +82,7 @@ type AdminLinkPrincipalResponse = variant {
 };
 
 type AdminUnlinkPrincipalRequest = record {
-  user_id : text;
+  user_id : UserId;
   "principal" : principal;
 };
 
@@ -91,7 +92,7 @@ type AdminUnlinkPrincipalResponse = variant {
 };
 
 type AdminListLinkedPrincipalsRequest = record {
-  user_id : text;
+  user_id : UserId;
 };
 
 type AdminListLinkedPrincipalsResponse = variant {
