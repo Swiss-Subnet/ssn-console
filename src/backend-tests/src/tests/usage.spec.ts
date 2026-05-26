@@ -5,7 +5,7 @@ import {
   projectNotFoundOrNoAccessError,
   unauthenticatedError,
 } from '../support';
-import { anonymousIdentity, extractOkResponse } from '@ssn/test-utils';
+import { anonymousIdentity, controllerIdentity, extractOkResponse } from '@ssn/test-utils';
 import type { Identity } from '@icp-sdk/core/agent';
 import { Principal } from '@icp-sdk/core/principal';
 import type { CanisterUsage, GetUsageResponseData } from '@ssn/backend-api';
@@ -125,6 +125,15 @@ describe('Usage Metrics', () => {
       const orgsList = extractOkResponse(defaultOrgRes);
       const orgId = orgsList[0]!.id;
 
+      driver.actor.setIdentity(controllerIdentity);
+      extractOkResponse(
+        await driver.actor.set_org_billing_plan({
+          org_id: orgId,
+          tier: { Pro: null },
+        }),
+      );
+
+      driver.actor.setIdentity(userIdentity);
       const project2Res = await driver.actor.create_project({
         org_id: orgId,
         name: 'Project 2',
