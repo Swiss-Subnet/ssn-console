@@ -1,5 +1,5 @@
 use crate::{
-    data::{self},
+    data::{self, UserId},
     dto::{self},
 };
 use canister_utils::Uuid;
@@ -8,8 +8,8 @@ pub fn map_invite_target_to_data(target: dto::InviteTarget) -> Result<data::Invi
     match target {
         dto::InviteTarget::Email(email) => Ok(data::InviteTarget::Email(email)),
         dto::InviteTarget::UserId(id) => {
-            let uuid = Uuid::try_from(id.as_str()).map_err(|e| e.message().to_string())?;
-            Ok(data::InviteTarget::UserId(uuid))
+            let user_id = UserId::try_from(id.as_str()).map_err(|e| e.message().to_string())?;
+            Ok(data::InviteTarget::UserId(user_id))
         }
         dto::InviteTarget::Principal(p) => Ok(data::InviteTarget::Principal(p)),
     }
@@ -18,7 +18,7 @@ pub fn map_invite_target_to_data(target: dto::InviteTarget) -> Result<data::Invi
 pub fn map_invite_target_to_dto(target: data::InviteTarget) -> dto::InviteTarget {
     match target {
         data::InviteTarget::Email(email) => dto::InviteTarget::Email(email),
-        data::InviteTarget::UserId(uuid) => dto::InviteTarget::UserId(uuid.to_string()),
+        data::InviteTarget::UserId(user_id) => dto::InviteTarget::UserId(user_id.to_string()),
         data::InviteTarget::Principal(p) => dto::InviteTarget::Principal(p),
     }
 }

@@ -6,7 +6,7 @@ use crate::{
     data::{
         canister_repository, organization_billing_plan_repository, organization_repository,
         orphaned_canister_repository, project_repository, team_repository, user_profile_repository,
-        Canister, ProjectPermissions,
+        Canister, OrgId, ProjectId, ProjectPermissions,
     },
     dto::{
         self, CanisterState, ListMyCanistersRequest, ListMyCanistersResponse,
@@ -203,7 +203,7 @@ pub fn list_all_canisters(
     })
 }
 
-pub async fn create_my_canister(project_id: Uuid) -> Result<(), String> {
+pub async fn create_my_canister(project_id: ProjectId) -> Result<(), String> {
     let create_canister_args = CreateCanisterArgs {
         settings: Some(CanisterSettings {
             controllers: Some(vec![canister_self()]),
@@ -319,7 +319,7 @@ pub async fn add_child_canisters(
 // Active canisters across every project in the org. Soft-deleted ones
 // don't consume cycles so they're excluded; same definition the quota
 // uses, exposed for read endpoints.
-pub fn count_active_canisters_for_org(org_id: Uuid) -> usize {
+pub fn count_active_canisters_for_org(org_id: OrgId) -> usize {
     project_repository::list_org_projects(org_id)
         .into_iter()
         .map(|(project_id, _)| {
@@ -332,7 +332,7 @@ pub fn count_active_canisters_for_org(org_id: Uuid) -> usize {
 // `max_canisters` limit of its billing plan. Plan is read via
 // `get_or_default`, so orgs with no persisted plan record are treated as
 // Free without requiring a backfill.
-pub fn enforce_canister_quota(org_id: Uuid) -> ApiResult {
+pub fn enforce_canister_quota(org_id: OrgId) -> ApiResult {
     let plan = organization_billing_plan_repository::get_or_default(org_id);
     let limit = plan.limits.max_canisters as usize;
 

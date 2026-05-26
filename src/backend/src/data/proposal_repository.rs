@@ -3,7 +3,7 @@ use crate::data::{
     memory::{
         init_project_proposal_index, init_proposals, ProjectProposalIndexMemory, ProposalMemory,
     },
-    ProposalStatus, Vote,
+    ProjectId, ProposalStatus, Vote,
 };
 use candid::Principal;
 use canister_utils::{now_nanos, ApiError, ApiResult, Uuid};
@@ -17,7 +17,7 @@ pub enum VoteOutcome {
     StillPending,
 }
 
-pub fn create_proposal(project_id: Uuid, mut proposal: Proposal) -> Uuid {
+pub fn create_proposal(project_id: ProjectId, mut proposal: Proposal) -> Uuid {
     let proposal_id = Uuid::new();
     let now = now_nanos();
     proposal.created_at_nanos = Some(now);
@@ -40,7 +40,7 @@ pub fn get_proposal(proposal_id: &Uuid) -> Option<Proposal> {
 // up to `limit` matches. Filtering happens before `take` so a sparse filter
 // still fills the page; the cursor advances by matched id, not scan position.
 pub fn list_project_proposals<F>(
-    project_id: Uuid,
+    project_id: ProjectId,
     after: Option<Uuid>,
     limit: usize,
     filter: F,
@@ -251,19 +251,19 @@ fn mutate_state<R>(f: impl FnOnce(&mut ProposalState) -> R) -> R {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::ProposalOperation;
+    use crate::data::{ProposalOperation, UserId};
 
     fn principal(byte: u8) -> Principal {
         Principal::from_slice(&[byte])
     }
 
     fn seed_pending_proposal(threshold: u32, approvers: Vec<Principal>) -> Uuid {
-        let project_id = Uuid::new();
+        let project_id = ProjectId::new();
         let proposal_id = create_proposal(
             project_id,
             Proposal {
                 project_id,
-                proposer_id: Uuid::new(),
+                proposer_id: UserId::new(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
                 created_at_nanos: None,
@@ -377,12 +377,12 @@ mod tests {
 
     #[test]
     fn vote_on_non_pending_proposal_is_rejected() {
-        let project_id = Uuid::new();
+        let project_id = ProjectId::new();
         let id = create_proposal(
             project_id,
             Proposal {
                 project_id,
-                proposer_id: Uuid::new(),
+                proposer_id: UserId::new(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
                 created_at_nanos: None,

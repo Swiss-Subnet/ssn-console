@@ -3,12 +3,12 @@ use super::{
         init_invite_status_index, init_org_invites, init_organization_invite_index,
         InviteStatusIndexMemory, OrgInviteMemory, OrganizationInviteIndexMemory,
     },
-    InviteStatus, OrgInvite,
+    InviteStatus, OrgId, OrgInvite, UserId,
 };
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
 
-fn org_index_key(inv: &OrgInvite, invite_id: Uuid) -> (Uuid, (u8, u64), Uuid) {
+fn org_index_key(inv: &OrgInvite, invite_id: Uuid) -> (OrgId, (u8, u64), Uuid) {
     (
         inv.org_id,
         (inv.status.as_u8(), inv.expires_at_ns),
@@ -55,8 +55,8 @@ pub fn update_invite(invite_id: Uuid, invite: OrgInvite) -> ApiResult {
 }
 
 pub fn list_org_invites_by_creator(
-    org_id: Uuid,
-    created_by: Uuid,
+    org_id: OrgId,
+    created_by: UserId,
     now_ns: u64,
 ) -> Vec<(Uuid, OrgInvite)> {
     with_state(|s| {
@@ -83,7 +83,7 @@ pub fn list_pending_invites(now_ns: u64) -> Vec<(Uuid, OrgInvite)> {
     })
 }
 
-pub fn count_pending_invites_for_org(org_id: Uuid, now_ns: u64) -> usize {
+pub fn count_pending_invites_for_org(org_id: OrgId, now_ns: u64) -> usize {
     let pending = InviteStatus::Pending.as_u8();
     with_state(|s| {
         s.organization_invite_index
@@ -94,7 +94,7 @@ pub fn count_pending_invites_for_org(org_id: Uuid, now_ns: u64) -> usize {
     })
 }
 
-pub fn sweep_expired_org_invites(org_id: Uuid, now_ns: u64) {
+pub fn sweep_expired_org_invites(org_id: OrgId, now_ns: u64) {
     let pending = InviteStatus::Pending.as_u8();
     mutate_state(|s| {
         let expired: Vec<_> = s

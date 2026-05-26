@@ -5,7 +5,7 @@ use crate::data::{
         TermsAndConditionsCreatedAtIndexMemory, TermsAndConditionsDecisionMemory,
         TermsAndConditionsDecisionUserIndexMemory, TermsAndConditionsMemory,
     },
-    TermsAndConditions, TermsAndConditionsDecision, TermsAndConditionsDecisionType,
+    TermsAndConditions, TermsAndConditionsDecision, TermsAndConditionsDecisionType, UserId,
 };
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
@@ -22,7 +22,9 @@ pub fn list_terms_and_conditions() -> Vec<(Uuid, TermsAndConditions)> {
     })
 }
 
-pub fn get_latest_terms_and_conditions(user_id: Uuid) -> Option<(Uuid, TermsAndConditions, bool)> {
+pub fn get_latest_terms_and_conditions(
+    user_id: UserId,
+) -> Option<(Uuid, TermsAndConditions, bool)> {
     let latest_id = get_latest_terms_and_condition_id()?;
 
     let has_accepted = has_accepted_terms_and_conditions(user_id, latest_id);
@@ -34,7 +36,7 @@ pub fn get_latest_terms_and_conditions(user_id: Uuid) -> Option<(Uuid, TermsAndC
     })
 }
 
-pub fn has_accepted_latest_terms_and_conditions(user_id: Uuid) -> bool {
+pub fn has_accepted_latest_terms_and_conditions(user_id: UserId) -> bool {
     let Some(latest_id) = get_latest_terms_and_condition_id() else {
         return true;
     };
@@ -50,7 +52,7 @@ fn get_latest_terms_and_condition_id() -> Option<Uuid> {
     })
 }
 
-fn has_accepted_terms_and_conditions(user_id: Uuid, terms_and_conditions_id: Uuid) -> bool {
+fn has_accepted_terms_and_conditions(user_id: UserId, terms_and_conditions_id: Uuid) -> bool {
     with_state(|s| {
         s.terms_and_conditions_decisions_user_index
             .get(&(user_id, terms_and_conditions_id))
@@ -171,7 +173,7 @@ mod tests {
             content: format!("content-{created_at}"),
             comment: format!("comment-{created_at}"),
             created_at,
-            created_by: Uuid::new(),
+            created_by: UserId::new(),
         })
     }
 

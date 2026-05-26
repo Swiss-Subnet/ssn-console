@@ -1,7 +1,7 @@
 use crate::{
     data::{
         organization_billing_plan_repository, organization_repository, user_profile_repository,
-        OrgPermissions, OrganizationBillingPlan, PlanTier as ModelPlanTier,
+        OrgId, OrgPermissions, OrganizationBillingPlan, PlanTier as ModelPlanTier,
     },
     dto::{
         self, GetOrgBillingPlanRequest, GetOrgBillingPlanResponse, ListMyOrgBillingPlansResponse,
@@ -10,10 +10,10 @@ use crate::{
     service::{access_control_service::OrgAuth, canister_service},
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 pub fn set_org_plan(req: SetOrgBillingPlanRequest) -> ApiResult {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
 
     if organization_repository::get_org(org_id).is_none() {
         return Err(ApiError::client_error(format!(
@@ -41,7 +41,7 @@ pub fn get_org_billing_plan(
     caller: &Principal,
     req: GetOrgBillingPlanRequest,
 ) -> ApiResult<GetOrgBillingPlanResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let _auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
     let plan = organization_billing_plan_repository::get_or_default(org_id);

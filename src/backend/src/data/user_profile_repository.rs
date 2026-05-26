@@ -3,7 +3,7 @@ use super::{
         init_user_profile_principal_index, init_user_profiles, init_user_stats, UserProfileMemory,
         UserProfilePrincipalIndexMemory, UserStatsMemory,
     },
-    LinkedPrincipal, UserProfile, UserStatsData, VerifiedEmailKey,
+    LinkedPrincipal, UserId, UserProfile, UserStatsData, VerifiedEmailKey,
 };
 use crate::data::memory::{
     init_user_principal_names, init_user_profile_id_principal_index,
@@ -12,11 +12,11 @@ use crate::data::memory::{
 };
 use crate::validation::Email;
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid, MAX_PRINCIPAL, MIN_PRINCIPAL};
+use canister_utils::{ApiError, ApiResult, MAX_PRINCIPAL, MIN_PRINCIPAL};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 
-pub fn list_user_profiles() -> Vec<(Uuid, UserProfile, Vec<Principal>)> {
+pub fn list_user_profiles() -> Vec<(UserId, UserProfile, Vec<Principal>)> {
     with_state(|s| {
         s.profiles
             .iter()
@@ -30,17 +30,17 @@ pub fn list_user_profiles() -> Vec<(Uuid, UserProfile, Vec<Principal>)> {
     })
 }
 
-pub fn get_user_profile_by_principal(principal: &Principal) -> Option<(Uuid, UserProfile)> {
+pub fn get_user_profile_by_principal(principal: &Principal) -> Option<(UserId, UserProfile)> {
     get_user_id_by_principal(principal).and_then(|user_id| {
         get_user_profile_by_user_id(&user_id).map(|user_profile| (user_id, user_profile))
     })
 }
 
-pub fn get_user_profile_by_user_id(user_id: &Uuid) -> Option<UserProfile> {
+pub fn get_user_profile_by_user_id(user_id: &UserId) -> Option<UserProfile> {
     with_state(|s| s.profiles.get(user_id))
 }
 
-pub fn assert_user_id_by_principal(principal: &Principal) -> ApiResult<Uuid> {
+pub fn assert_user_id_by_principal(principal: &Principal) -> ApiResult<UserId> {
     get_user_id_by_principal(principal).ok_or_else(|| {
         ApiError::client_error(format!(
             "User profile for principal {principal} does not exist."
@@ -48,11 +48,11 @@ pub fn assert_user_id_by_principal(principal: &Principal) -> ApiResult<Uuid> {
     })
 }
 
-pub fn get_user_id_by_principal(principal: &Principal) -> Option<Uuid> {
+pub fn get_user_id_by_principal(principal: &Principal) -> Option<UserId> {
     with_state(|s| s.principal_index.get(principal))
 }
 
-pub fn get_principals_by_user_id(user_id: Uuid) -> Vec<Principal> {
+pub fn get_principals_by_user_id(user_id: UserId) -> Vec<Principal> {
     with_state(|s| {
         s.id_principal_index
             .range((user_id, MIN_PRINCIPAL)..=(user_id, MAX_PRINCIPAL))
@@ -61,8 +61,8 @@ pub fn get_principals_by_user_id(user_id: Uuid) -> Vec<Principal> {
     })
 }
 
-pub fn create_user_profile(caller: Principal, user_profile: UserProfile) -> Uuid {
-    let id = Uuid::new();
+pub fn create_user_profile(caller: Principal, user_profile: UserProfile) -> UserId {
+    let id = UserId::new();
 
     mutate_state(|s| {
         s.profiles.insert(id, user_profile);
@@ -78,7 +78,7 @@ pub fn create_user_profile(caller: Principal, user_profile: UserProfile) -> Uuid
 /// Returns a generic error on any failure (missing user, principal already
 /// claimed) so this cannot be used as an existence oracle. Caller must have
 /// proven control of `principal`; that gate lives in the service layer.
-pub fn link_principal_to_user(user_id: Uuid, principal: Principal) -> ApiResult {
+pub fn link_principal_to_user(user_id: UserId, principal: Principal) -> ApiResult {
     mutate_state(|s| {
         if !s.profiles.contains_key(&user_id) {
             return Err(ApiError::client_error(
@@ -98,7 +98,7 @@ pub fn link_principal_to_user(user_id: Uuid, principal: Principal) -> ApiResult 
 
 /// Unlinks a principal from a user. Refuses to remove a user's last
 /// principal — that would orphan the account; deletion is a separate flow.
-pub fn unlink_principal_from_user(user_id: Uuid, principal: Principal) -> ApiResult {
+pub fn unlink_principal_from_user(user_id: UserId, principal: Principal) -> ApiResult {
     mutate_state(|s| {
         if s.principal_index.get(&principal) != Some(user_id) {
             return Err(ApiError::client_error(
@@ -123,7 +123,7 @@ pub fn unlink_principal_from_user(user_id: Uuid, principal: Principal) -> ApiRes
     })
 }
 
-pub fn get_principals_with_names_by_user_id(user_id: Uuid) -> Vec<LinkedPrincipal> {
+pub fn get_principals_with_names_by_user_id(user_id: UserId) -> Vec<LinkedPrincipal> {
     with_state(|s| {
         s.id_principal_index
             .range((user_id, MIN_PRINCIPAL)..=(user_id, MAX_PRINCIPAL))
@@ -138,7 +138,11 @@ pub fn get_principals_with_names_by_user_id(user_id: Uuid) -> Vec<LinkedPrincipa
 /// Sets or clears the display name a user has assigned to one of their own
 /// linked principals. `name = None` clears the entry. Caller-supplied input
 /// must be validated by `validation::validate_optional_principal_name` first.
-pub fn set_principal_name(user_id: Uuid, principal: Principal, name: Option<String>) -> ApiResult {
+pub fn set_principal_name(
+    user_id: UserId,
+    principal: Principal,
+    name: Option<String>,
+) -> ApiResult {
     mutate_state(|s| {
         if !s.id_principal_index.contains(&(user_id, principal)) {
             return Err(ApiError::client_error(
@@ -157,12 +161,12 @@ pub fn set_principal_name(user_id: Uuid, principal: Principal, name: Option<Stri
     })
 }
 
-pub fn get_user_id_by_verified_email(email: &Email) -> Option<Uuid> {
+pub fn get_user_id_by_verified_email(email: &Email) -> Option<UserId> {
     let key = VerifiedEmailKey::from(email.clone());
     with_state(|s| s.verified_email_index.get(&key))
 }
 
-pub fn claim_verified_email(user_id: Uuid, email: Email) -> ApiResult {
+pub fn claim_verified_email(user_id: UserId, email: Email) -> ApiResult {
     let key = VerifiedEmailKey::from(email);
     mutate_state(|s| match s.verified_email_index.get(&key) {
         Some(existing) if existing == user_id => Ok(()),
@@ -179,7 +183,7 @@ pub fn claim_verified_email(user_id: Uuid, email: Email) -> ApiResult {
 // Silent no-op when the entry is owned by another user: the caller's
 // view is stale and we must not clobber someone else's claim. Accepts
 // a raw string so callers don't have to construct the internal key.
-pub fn release_verified_email(user_id: Uuid, raw_email: &str) {
+pub fn release_verified_email(user_id: UserId, raw_email: &str) {
     let Some(key) = VerifiedEmailKey::from_legacy_storage_unchecked(raw_email) else {
         return;
     };
@@ -198,7 +202,7 @@ pub fn release_verified_email(user_id: Uuid, raw_email: &str) {
 // uniqueness rule.
 pub fn migrate_verified_email_index() {
     mutate_state(|s| {
-        let mut claimants: BTreeMap<VerifiedEmailKey, Vec<Uuid>> = BTreeMap::new();
+        let mut claimants: BTreeMap<VerifiedEmailKey, Vec<UserId>> = BTreeMap::new();
 
         for (user_id, profile) in s.profiles.iter().map(|e| e.into_pair()) {
             if !profile.email_verified {
@@ -236,7 +240,7 @@ pub fn migrate_verified_email_index() {
     });
 }
 
-pub fn update_user_profile(user_id: Uuid, user_profile: UserProfile) -> ApiResult {
+pub fn update_user_profile(user_id: UserId, user_profile: UserProfile) -> ApiResult {
     mutate_state(|s| {
         if !s.profiles.contains_key(&user_id) {
             return Err(ApiError::client_error(format!(
@@ -391,7 +395,7 @@ mod tests {
         Principal::from_slice(&bytes)
     }
 
-    fn seed_user(initial_principal: Principal) -> Uuid {
+    fn seed_user(initial_principal: Principal) -> UserId {
         create_user_profile(initial_principal, UserProfile::default())
     }
 
@@ -434,7 +438,7 @@ mod tests {
     #[test]
     fn link_principal_rejects_unknown_user() {
         let p1 = principal(40);
-        let unknown_user = Uuid::new();
+        let unknown_user = UserId::new();
 
         let err = link_principal_to_user(unknown_user, p1).unwrap_err();
         assert_eq!(err.message(), "Principal cannot be linked.");
@@ -487,7 +491,7 @@ mod tests {
         assert_eq!(err.message(), "Principal cannot be unlinked.");
     }
 
-    fn name_for(user_id: Uuid, principal: Principal) -> Option<String> {
+    fn name_for(user_id: UserId, principal: Principal) -> Option<String> {
         with_state(|s| s.principal_names.get(&(user_id, principal)))
     }
 
@@ -568,7 +572,7 @@ mod tests {
         assert_eq!(name_for(user_id, p2), None);
     }
 
-    fn lookup_index(key: &VerifiedEmailKey) -> Option<Uuid> {
+    fn lookup_index(key: &VerifiedEmailKey) -> Option<UserId> {
         with_state(|s| s.verified_email_index.get(key))
     }
 
@@ -658,7 +662,7 @@ mod tests {
 
     // Bypasses claim_verified_email so we can synthesize the pre-migration
     // state of two profiles holding the same verified address.
-    fn seed_verified_profile_directly(p: Principal, email: &str) -> Uuid {
+    fn seed_verified_profile_directly(p: Principal, email: &str) -> UserId {
         create_user_profile(
             p,
             UserProfile {

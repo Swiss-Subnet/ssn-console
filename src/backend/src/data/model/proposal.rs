@@ -1,13 +1,14 @@
+use crate::data::{ProjectId, UserId};
 use candid::Principal;
-use canister_utils::{deserialize_cbor, serialize_cbor, Uuid};
+use canister_utils::{deserialize_cbor, serialize_cbor};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Proposal {
-    pub project_id: Uuid,
-    pub proposer_id: Uuid,
+    pub project_id: ProjectId,
+    pub proposer_id: UserId,
     pub status: ProposalStatus,
     pub operation: ProposalOperation,
     // `Option` so proposals serialized before timestamps were introduced still

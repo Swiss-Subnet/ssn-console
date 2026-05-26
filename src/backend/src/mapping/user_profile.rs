@@ -1,17 +1,16 @@
 use crate::{
     data,
-    data::UserStatsData,
+    data::{UserId, UserStatsData},
     dto::{
         GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListUserProfilesResponse,
         UserProfile, UserProfileBrief, UserProfileByPrincipal, UserStatus,
     },
 };
 use candid::Principal;
-use canister_utils::Uuid;
 use ic_cdk::api::is_controller;
 
 pub fn map_list_user_profiles_response(
-    profiles: Vec<(Uuid, data::UserProfile, Vec<Principal>)>,
+    profiles: Vec<(UserId, data::UserProfile, Vec<Principal>)>,
 ) -> ListUserProfilesResponse {
     profiles
         .into_iter()
@@ -26,7 +25,7 @@ pub fn map_list_user_profiles_response(
 }
 
 pub fn map_get_my_user_profile_response(
-    id: Uuid,
+    id: UserId,
     principal: &Principal,
     profile: data::UserProfile,
 ) -> UserProfile {
@@ -41,7 +40,7 @@ pub fn map_get_my_user_profile_response(
 }
 
 pub fn map_create_my_user_profile_response(
-    id: Uuid,
+    id: UserId,
     principal: &Principal,
     profile: data::UserProfile,
 ) -> UserProfile {
@@ -63,7 +62,7 @@ pub fn map_user_status_response(status: data::UserStatus) -> UserStatus {
 }
 
 pub fn map_get_user_profiles_by_principals_response(
-    lookups: Vec<(Principal, Option<(Uuid, data::UserProfile)>)>,
+    lookups: Vec<(Principal, Option<(UserId, data::UserProfile)>)>,
 ) -> GetUserProfilesByPrincipalsResponse {
     GetUserProfilesByPrincipalsResponse {
         profiles: lookups

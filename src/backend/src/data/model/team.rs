@@ -1,4 +1,5 @@
-use canister_utils::{deserialize_cbor, serialize_cbor, Id, Uuid};
+use crate::data::OrgId;
+use canister_utils::{deserialize_cbor, serialize_cbor, Id};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -7,7 +8,7 @@ pub type TeamId = Id<Team>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Team {
-    pub org_id: Uuid,
+    pub org_id: OrgId,
     pub name: String,
 }
 

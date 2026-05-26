@@ -2,7 +2,7 @@ use crate::{
     data::{
         self, approval_policy_repository, organization_billing_plan_repository,
         organization_repository, project_repository, team_repository, user_profile_repository,
-        ApprovalPolicy, OperationType, OrgPermissions, Organization, PolicyType, TeamId,
+        ApprovalPolicy, OperationType, OrgId, OrgPermissions, Organization, PolicyType, TeamId,
     },
     dto::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
@@ -18,7 +18,7 @@ use crate::{
     validation::OrgName,
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 const MAX_ORGS_PER_USER: usize = 20;
 
@@ -39,7 +39,7 @@ pub fn list_org_users(
     caller: &Principal,
     req: ListOrgUsersRequest,
 ) -> ApiResult<ListOrgUsersResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
     // Team membership and admin status leak organizational structure, so
@@ -48,14 +48,14 @@ pub fn list_org_users(
     let can_see_details = auth.perms().contains(OrgPermissions::MEMBER_MANAGE);
 
     // Resolve every team in the org once, so per-user enrichment is lookups.
-    let org_teams: std::collections::HashMap<TeamId, (data::Team, OrgPermissions)> =
+    let org_teams: std::collections::BTreeMap<TeamId, (data::Team, OrgPermissions)> =
         if can_see_details {
             team_repository::list_org_teams_with_permissions(org_id)
                 .into_iter()
                 .map(|(team_id, team, perms)| (team_id, (team, perms)))
                 .collect()
         } else {
-            std::collections::HashMap::new()
+            std::collections::BTreeMap::new()
         };
 
     let users = organization_repository::list_org_users(org_id)
@@ -133,7 +133,7 @@ pub fn get_organization(
     caller: &Principal,
     req: GetOrganizationRequest,
 ) -> ApiResult<GetOrganizationResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
     let org =
@@ -150,7 +150,7 @@ pub fn update_organization(
     caller: &Principal,
     req: UpdateOrganizationRequest,
 ) -> ApiResult<UpdateOrganizationResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::ORG_ADMIN)?;
     let name = OrgName::try_from(req.name)?;
 
@@ -174,7 +174,7 @@ pub fn delete_organization(
     caller: &Principal,
     req: DeleteOrganizationRequest,
 ) -> ApiResult<DeleteOrganizationResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::ORG_ADMIN)?;
 
     if !organization_repository::has_at_least_n_user_orgs(auth.user_id(), 2) {

@@ -1,15 +1,14 @@
 use crate::{
-    data::{self, TeamId},
+    data::{self, OrgId, TeamId, UserId},
     dto::{
         ListMyOrganizationsResponse, ListOrgUsersResponse, OrgUser, Organization,
         OrganizationResponse,
     },
     mapping::{map_org_permissions, map_team},
 };
-use canister_utils::Uuid;
 
 pub fn map_list_my_organizations_response(
-    organizations: Vec<(Uuid, data::Organization, data::OrgPermissions)>,
+    organizations: Vec<(OrgId, data::Organization, data::OrgPermissions)>,
 ) -> ListMyOrganizationsResponse {
     organizations
         .into_iter()
@@ -18,7 +17,7 @@ pub fn map_list_my_organizations_response(
 }
 
 pub fn map_organization_response(
-    (id, org, your_permissions): (Uuid, data::Organization, data::OrgPermissions),
+    (id, org, your_permissions): (OrgId, data::Organization, data::OrgPermissions),
 ) -> Organization {
     Organization {
         id: id.to_string(),
@@ -28,7 +27,7 @@ pub fn map_organization_response(
 }
 
 pub fn map_organization_to_response(
-    id: Uuid,
+    id: OrgId,
     org: data::Organization,
     your_permissions: data::OrgPermissions,
 ) -> OrganizationResponse {
@@ -37,7 +36,7 @@ pub fn map_organization_to_response(
     }
 }
 
-pub type OrgUserEntry = (Uuid, data::UserProfile, Vec<(TeamId, data::Team)>, bool);
+pub type OrgUserEntry = (UserId, data::UserProfile, Vec<(TeamId, data::Team)>, bool);
 
 pub fn map_list_org_users_response(users: Vec<OrgUserEntry>) -> ListOrgUsersResponse {
     users
