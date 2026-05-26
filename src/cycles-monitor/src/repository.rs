@@ -93,6 +93,7 @@ pub fn list_snapshots_after(
     })
 }
 
+#[cfg(feature = "mock-metrics")]
 pub fn get_latest_snapshot(canister_id: Principal) -> Option<CyclesMetricsSnapshot> {
     with_state(|s| s.latest_cycles_metrics_snapshots.get(&canister_id))
 }
@@ -128,7 +129,6 @@ fn mutate_state<R>(f: impl FnOnce(&mut CyclesMonitorState) -> R) -> R {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::Principal;
     use canister_utils::CanisterId;
 
     fn clear_state() {
@@ -198,9 +198,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "mock-metrics")]
     fn test_get_latest_snapshot() {
         clear_state();
-        let canister_id = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+        let canister_id = candid::Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
 
         assert!(get_latest_snapshot(canister_id).is_none());
 
