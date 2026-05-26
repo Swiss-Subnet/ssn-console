@@ -14,4 +14,5 @@ mod staff_permissions;
 mod team;
 mod terms_and_conditions;
 mod trusted_partner;
+mod usage;
 mod user_profile;

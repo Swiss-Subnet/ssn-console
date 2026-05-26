@@ -26,7 +26,14 @@ import { Principal } from '@icp-sdk/core/principal';
 
 const TIMESTAMP_FILE = '/data/.last-cycles-monitor-timestamp';
 
-export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
+export type ExtractedCanisterMetrics = {
+  timestamp_ns: bigint;
+  canister_id: Principal;
+} & Record<BaseMetricName | DerivedMetricName, bigint>;
+
+export async function syncCyclesMonitorMetrics(
+  agent: HttpAgent,
+): Promise<ExtractedCanisterMetrics[]> {
   const actor = Actor.createActor<_SERVICE>(idlFactory, {
     agent,
     canisterId: env.CANISTER_ID_CYCLES_MONITOR,
@@ -48,7 +55,8 @@ export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
   const minPrincipal = Principal.fromUint8Array(new Uint8Array(29));
   let cursor: Cursor = [startTimestampNs, minPrincipal];
   let totalPushed = 0;
-  const previousSnapshots = new Map<string, CyclesMetricsSnapshotDto>();
+
+  const latestUsages = new Map<string, ExtractedCanisterMetrics>();
 
   while (true) {
     const metricsRes: ListMetricsAfterResponse = await actor.list_metrics_after(
@@ -64,14 +72,19 @@ export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
       console.log(
         `🏗️ Retrieved ${metricsRes.Ok.snapshots.length} data points. Constructing OTLP payload...`,
       );
-      const otlpPayload = buildOtlpPayload(
-        metricsRes.Ok.snapshots,
-        previousSnapshots,
-      );
+      const [usages, otlpPayload] = buildOtlpPayload(metricsRes.Ok.snapshots);
 
       console.log(`✉️ Pushing metrics to Grafana Alloy...`);
       await pushMetrics(otlpPayload);
       totalPushed += metricsRes.Ok.snapshots.length;
+
+      for (const usage of usages) {
+        const existing = latestUsages.get(usage.canister_id.toString());
+
+        if (!existing || usage.timestamp_ns >= existing.timestamp_ns) {
+          latestUsages.set(usage.canister_id.toString(), usage);
+        }
+      }
     }
 
     const nextCursor: Cursor | undefined = metricsRes.Ok.next_cursor[0];
@@ -87,6 +100,8 @@ export async function syncCyclesMonitorMetrics(agent: HttpAgent) {
   } else {
     console.log(`✅ Successfully pushed ${totalPushed} metrics to Alloy.`);
   }
+
+  return Array.from(latestUsages.values());
 }
 
 type MetricKey = Exclude<
@@ -94,33 +109,41 @@ type MetricKey = Exclude<
   'timestamp_ns' | 'canister_id'
 >;
 
+export type BaseMetricName =
+  | 'ic_canister_memory_cycles_total'
+  | 'ic_canister_compute_allocation_cycles_total'
+  | 'ic_canister_ingress_induction_cycles_total'
+  | 'ic_canister_instructions_cycles_total'
+  | 'ic_canister_request_response_transmission_cycles_total'
+  | 'ic_canister_uninstall_cycles_total'
+  | 'ic_canister_http_outcalls_cycles_total'
+  | 'ic_canister_burned_cycles_total';
+
+export type DerivedMetricName =
+  | 'ic_canister_memory_bytes'
+  | 'ic_canister_compute_allocation_percent'
+  | 'ic_canister_ingress_induction_bytes_total'
+  | 'ic_canister_compute_time_seconds_total'
+  | 'ic_canister_transmission_bytes_total'
+  | 'ic_canister_uninstalls_total';
+
 type BaseMetricBucket = {
-  name: string;
+  name: BaseMetricName;
   description: string;
   dataPoints: DataPoint<number>[];
 };
 
 type DerivedMetricBucket = {
-  name: string;
+  name: DerivedMetricName;
   description: string;
   unit: string;
-  valueType: ValueType;
   dataPoints: DataPoint<number>[];
-};
-
-type CounterDerivedMetricBucket = DerivedMetricBucket & {
-  type: DataPointType.SUM;
   formula: (cycles: bigint) => bigint;
-};
-
-type GaugeDerivedMetricBucket = DerivedMetricBucket & {
-  type: DataPointType.GAUGE;
-  formula: (deltaCycles: bigint, deltaSeconds: bigint) => bigint;
 };
 
 type MetricBucket = {
   base: BaseMetricBucket;
-  derived?: CounterDerivedMetricBucket | GaugeDerivedMetricBucket;
+  derived?: DerivedMetricBucket;
 };
 
 type BaseMetrics = Record<MetricKey, MetricBucket>;
@@ -147,8 +170,7 @@ const BYTES_PER_GB = 1_024n * 1_024n * 1_024n;
 
 function buildOtlpPayload(
   snapshots: CyclesMetricsSnapshotDto[],
-  previousSnapshots: Map<string, CyclesMetricsSnapshotDto>,
-): ResourceMetrics {
+): [ExtractedCanisterMetrics[], ResourceMetrics] {
   const metricBuckets: BaseMetrics = {
     memory: {
       base: {
@@ -159,13 +181,9 @@ function buildOtlpPayload(
       derived: {
         name: 'ic_canister_memory_bytes',
         description: 'Canister memory in bytes',
-        type: DataPointType.GAUGE,
-        unit: 'By',
-        valueType: ValueType.INT,
+        unit: 'byte-seconds',
         dataPoints: [],
-        formula: (deltaCycles, deltaSeconds) =>
-          (deltaCycles * BYTES_PER_GB) /
-          (deltaSeconds * CYCLES_PER_GB_PER_SECOND),
+        formula: cycles => (cycles * BYTES_PER_GB) / CYCLES_PER_GB_PER_SECOND,
       },
     },
     compute_allocation: {
@@ -177,12 +195,9 @@ function buildOtlpPayload(
       derived: {
         name: 'ic_canister_compute_allocation_percent',
         description: 'Canister compute allocation percentage',
-        type: DataPointType.GAUGE,
-        unit: '%',
-        valueType: ValueType.INT,
+        unit: 'percent-seconds',
         dataPoints: [],
-        formula: (deltaCycles, deltaSeconds) =>
-          deltaCycles / (deltaSeconds * CYCLES_PER_PERCENT_COMPUTE_PER_SECOND),
+        formula: cycles => cycles / CYCLES_PER_PERCENT_COMPUTE_PER_SECOND,
       },
     },
     ingress_induction: {
@@ -195,9 +210,7 @@ function buildOtlpPayload(
         name: 'ic_canister_ingress_induction_bytes_total',
         description:
           'Total bytes of ingress induction including the base price represented as bytes',
-        type: DataPointType.SUM,
-        unit: 'By',
-        valueType: ValueType.INT,
+        unit: 'bytes',
         dataPoints: [],
         formula: cycles => cycles / CYCLES_PER_INGRESS_BYTE,
       },
@@ -211,9 +224,7 @@ function buildOtlpPayload(
       derived: {
         name: 'ic_canister_compute_time_seconds_total',
         description: 'Total compute time in seconds (2b instructions = 1s)',
-        type: DataPointType.SUM,
-        unit: 's',
-        valueType: ValueType.INT,
+        unit: 'seconds',
         dataPoints: [],
         formula: cycles => cycles / CYCLES_PER_SECOND_OF_COMPUTE,
       },
@@ -229,9 +240,7 @@ function buildOtlpPayload(
         name: 'ic_canister_transmission_bytes_total',
         description:
           'Total bytes of request and response transmission including the base price represented as bytes',
-        type: DataPointType.SUM,
-        unit: 'By',
-        valueType: ValueType.INT,
+        unit: 'bytes',
         dataPoints: [],
         formula: cycles => cycles / CYCLES_PER_TRANSMISSION_BYTE,
       },
@@ -245,9 +254,7 @@ function buildOtlpPayload(
       derived: {
         name: 'ic_canister_uninstalls_total',
         description: 'Total uninstalls',
-        type: DataPointType.SUM,
-        unit: '{uninstalls}',
-        valueType: ValueType.INT,
+        unit: 'count',
         dataPoints: [],
         formula: cycles => cycles / CYCLES_PER_UNINSTALL,
       },
@@ -268,18 +275,39 @@ function buildOtlpPayload(
     },
   };
 
+  const usages: ExtractedCanisterMetrics[] = [];
+
   for (const point of snapshots) {
     const canisterId = point.canister_id.toString();
-    const prev = previousSnapshots.get(canisterId);
 
     const startTime = toHrTime(0n);
     const endTime = toHrTime(point.timestamp_ns);
     const attributes: Attributes = { canister_id: canisterId };
 
+    const usage: ExtractedCanisterMetrics = {
+      timestamp_ns: point.timestamp_ns,
+      canister_id: point.canister_id,
+      ic_canister_memory_cycles_total: 0n,
+      ic_canister_memory_bytes: 0n,
+      ic_canister_compute_allocation_cycles_total: 0n,
+      ic_canister_compute_allocation_percent: 0n,
+      ic_canister_ingress_induction_cycles_total: 0n,
+      ic_canister_ingress_induction_bytes_total: 0n,
+      ic_canister_instructions_cycles_total: 0n,
+      ic_canister_compute_time_seconds_total: 0n,
+      ic_canister_request_response_transmission_cycles_total: 0n,
+      ic_canister_transmission_bytes_total: 0n,
+      ic_canister_uninstall_cycles_total: 0n,
+      ic_canister_uninstalls_total: 0n,
+      ic_canister_http_outcalls_cycles_total: 0n,
+      ic_canister_burned_cycles_total: 0n,
+    };
+
     for (const [key, bucket] of objectEntries(metricBuckets)) {
       const cycles = BigInt(point[key]);
       const cyclesNum = Number(cycles);
 
+      usage[bucket.base.name] = cycles;
       bucket.base.dataPoints.push({
         startTime,
         endTime,
@@ -288,40 +316,19 @@ function buildOtlpPayload(
       });
 
       if (bucket.derived) {
-        if (bucket.derived.type === DataPointType.SUM) {
-          bucket.derived.dataPoints.push({
-            startTime,
-            endTime,
-            attributes,
-            value: Number(bucket.derived.formula(cycles)),
-          });
-        } else {
-          // this results in one 5-minute metric missing per sync
-          // for low frequency polling (currently one hour), this results in
-          // very low data loss that will be imperceptible on a monthly basis
-          if (prev) {
-            const deltaNs = point.timestamp_ns - prev.timestamp_ns;
-            const deltaSeconds = deltaNs / 1_000_000_000n;
+        const derivedValue = bucket.derived.formula(cycles);
+        usage[bucket.derived.name] = derivedValue;
 
-            if (deltaSeconds > 0) {
-              const prevCycles = prev[key];
-              const deltaCycles = cycles - prevCycles;
-
-              bucket.derived.dataPoints.push({
-                startTime: toHrTime(prev.timestamp_ns),
-                endTime,
-                attributes,
-                value: Number(
-                  bucket.derived.formula(deltaCycles, deltaSeconds),
-                ),
-              });
-            }
-          }
-        }
+        bucket.derived.dataPoints.push({
+          startTime,
+          endTime,
+          attributes,
+          value: Number(derivedValue),
+        });
       }
     }
 
-    previousSnapshots.set(canisterId, point);
+    usages.push(usage);
   }
 
   const generatedMetrics: MetricData[] = [];
@@ -342,33 +349,37 @@ function buildOtlpPayload(
 
     if (derived) {
       generatedMetrics.push({
-        dataPointType: derived.type,
+        dataPointType: DataPointType.SUM,
         aggregationTemporality: AggregationTemporality.CUMULATIVE,
-        isMonotonic: derived.type === DataPointType.SUM,
+        isMonotonic: true,
         dataPoints: derived.dataPoints,
         descriptor: {
           name: derived.name,
           description: derived.description,
           unit: derived.unit,
-          valueType: derived.valueType,
+          valueType: ValueType.INT,
         },
       });
     }
   });
 
-  return {
-    resource: resourceFromAttributes({
-      [ATTR_SERVICE_NAMESPACE]: 'ssn',
-      [ATTR_SERVICE_NAME]: 'canister-otlp-syncer',
-      [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: process.env['GRAFANA_ENVIRONMENT'],
-    }),
-    scopeMetrics: [
-      {
-        scope: { name: 'canister-otlp-syncer' },
-        metrics: generatedMetrics,
-      },
-    ],
-  };
+  return [
+    usages,
+    {
+      resource: resourceFromAttributes({
+        [ATTR_SERVICE_NAMESPACE]: 'ssn',
+        [ATTR_SERVICE_NAME]: 'canister-otlp-syncer',
+        [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]:
+          process.env['GRAFANA_ENVIRONMENT'],
+      }),
+      scopeMetrics: [
+        {
+          scope: { name: 'canister-otlp-syncer' },
+          metrics: generatedMetrics,
+        },
+      ],
+    },
+  ];
 }
 
 function objectEntries<T extends {}, K extends keyof T = keyof T>(

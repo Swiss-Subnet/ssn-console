@@ -2,6 +2,7 @@ import { HttpAgent } from '@icp-sdk/core/agent';
 import { ECDSAKeyIdentity } from '@icp-sdk/core/identity';
 import * as crypto from 'node:crypto';
 import { syncCyclesMonitorMetrics } from './sync-cycles-monitor-metrics';
+import { syncCanisterUsage } from './sync-canister-usage';
 import { env } from './env';
 
 async function main() {
@@ -41,9 +42,10 @@ async function main() {
   const agent = HttpAgent.createSync({ host: env.HTTP_GATEWAY, identity });
 
   try {
-    await syncCyclesMonitorMetrics(agent);
+    const usages = await syncCyclesMonitorMetrics(agent);
+    await syncCanisterUsage(agent, usages);
   } catch (error) {
-    console.error('💢 Error syncing cycles monitor metrics', error);
+    console.error('💢 Error syncing metrics', error);
     process.exit(1);
   }
 }

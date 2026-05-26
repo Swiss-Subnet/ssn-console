@@ -1,0 +1,65 @@
+import "../../canister-utils/error.did";
+
+type CanisterUsage = record {
+  canister_id : principal;
+  memory : nat64;
+  memory_bytes : nat64;
+  compute_allocation : nat64;
+  compute_allocation_percent : nat64;
+  ingress_induction : nat64;
+  ingress_induction_bytes_total : nat64;
+  instructions : nat64;
+  compute_time_seconds_total : nat64;
+  request_and_response_transmission : nat64;
+  transmission_bytes_total : nat64;
+  uninstall : nat64;
+  uninstalls_total : nat64;
+  http_outcalls : nat64;
+  burned_cycles : nat64;
+};
+
+type RecordUsageRequest = record {
+  usages : vec CanisterUsage;
+};
+
+type RecordUsageResponse = variant {
+  Ok : record {};
+  Err : ApiError;
+};
+
+type ProjectUsage = record {
+  memory : nat64;
+  memory_bytes : nat64;
+  compute_allocation : nat64;
+  compute_allocation_percent : nat64;
+  ingress_induction : nat64;
+  ingress_induction_bytes_total : nat64;
+  instructions : nat64;
+  compute_time_seconds_total : nat64;
+  request_and_response_transmission : nat64;
+  transmission_bytes_total : nat64;
+  uninstall : nat64;
+  uninstalls_total : nat64;
+  http_outcalls : nat64;
+  burned_cycles : nat64;
+};
+
+type GetUsageRequest = record {
+  project_id : text;
+  billing_month : opt text;
+};
+
+type GetUsageResponseData = record {
+  project : ProjectUsage;
+  canisters : vec CanisterUsage;
+};
+
+type GetUsageResponse = variant {
+  Ok : GetUsageResponseData;
+  Err : ApiError;
+};
+
+service : {
+  record_usage : (RecordUsageRequest) -> (RecordUsageResponse);
+  get_usage : (GetUsageRequest) -> (GetUsageResponse) query;
+};
