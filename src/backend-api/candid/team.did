@@ -1,4 +1,5 @@
 import "../../canister-utils/error.did";
+import "./ids.did";
 import "./permissions.did";
 
 type ListTeamsResponse = variant {
@@ -17,7 +18,7 @@ type ListProjectTeamsResponse = variant {
 };
 
 type CreateTeamRequest = record {
-  org_id : text;
+  org_id : OrgId;
   name : text;
 };
 
@@ -29,7 +30,7 @@ type CreateTeamResponse = variant {
 };
 
 type GetTeamRequest = record {
-  team_id : text;
+  team_id : TeamId;
 };
 
 type GetTeamResponse = variant {
@@ -40,15 +41,15 @@ type GetTeamResponse = variant {
 };
 
 type ListOrgTeamsRequest = record {
-  org_id : text;
+  org_id : OrgId;
 };
 
 type ListProjectTeamsRequest = record {
-  project_id : text;
+  project_id : ProjectId;
 };
 
 type UpdateTeamRequest = record {
-  team_id : text;
+  team_id : TeamId;
   name : text;
 };
 
@@ -60,7 +61,7 @@ type UpdateTeamResponse = variant {
 };
 
 type DeleteTeamRequest = record {
-  team_id : text;
+  team_id : TeamId;
 };
 
 type DeleteTeamResponse = variant {
@@ -69,8 +70,8 @@ type DeleteTeamResponse = variant {
 };
 
 type AddUserToTeamRequest = record {
-  team_id : text;
-  user_id : text;
+  team_id : TeamId;
+  user_id : UserId;
 };
 
 type AddUserToTeamResponse = variant {
@@ -79,7 +80,7 @@ type AddUserToTeamResponse = variant {
 };
 
 type ListTeamUsersRequest = record {
-  team_id : text;
+  team_id : TeamId;
 };
 
 type TeamUser = record {
@@ -94,7 +95,7 @@ type ListTeamUsersResponse = variant {
 };
 
 type UpdateTeamOrgPermissionsRequest = record {
-  team_id : text;
+  team_id : TeamId;
   permissions : OrgPermissions;
 };
 

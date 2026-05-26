@@ -1,0 +1,11 @@
+// Type-only file. Candid `type` aliases are structural (UserId and OrgId
+// are wire-compatible with `text` and with each other), so these add no
+// runtime safety — they exist purely as documentation in the .did surface
+// and in generated client SDKs. The compile-time guarantee that a UserId
+// cannot be passed where an OrgId is expected lives on the Rust side via
+// `Id<T>` in `canister-utils`.
+
+type UserId = text;
+type OrgId = text;
+type TeamId = text;
+type ProjectId = text;

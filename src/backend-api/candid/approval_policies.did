@@ -1,3 +1,4 @@
+import "./ids.did";
 import "../../canister-utils/error.did";
 
 type ListProjectApprovalPoliciesResponse = variant {
@@ -8,11 +9,11 @@ type ListProjectApprovalPoliciesResponse = variant {
 };
 
 type ListProjectApprovalPoliciesRequest = record {
-  project_id : text;
+  project_id : ProjectId;
 };
 
 type UpsertApprovalPolicyRequest = record {
-  project_id : text;
+  project_id : ProjectId;
   operation_type : OperationType;
   policy_type : PolicyType;
 };
