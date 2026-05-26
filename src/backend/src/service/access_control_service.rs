@@ -1,7 +1,7 @@
 use crate::data::{
     organization_repository, project_repository, team_repository, terms_and_conditions_repository,
     trusted_partner_repository, user_profile_repository, OrgPermissions, Project,
-    ProjectPermissions, StaffPermissions, Team, UserProfile, UserStatus,
+    ProjectPermissions, StaffPermissions, Team, TeamId, UserProfile, UserStatus,
 };
 use candid::Principal;
 use canister_utils::{assert_authenticated, ApiError, ApiResult, Uuid};
@@ -36,7 +36,7 @@ pub fn project_not_found_or_no_access(project_id: Uuid) -> ApiError {
     ))
 }
 
-pub fn team_not_found_or_no_access(team_id: Uuid) -> ApiError {
+pub fn team_not_found_or_no_access(team_id: TeamId) -> ApiError {
     ApiError::client_error(format!(
         "Team with id {team_id} does not exist or you do not have access."
     ))
@@ -329,7 +329,7 @@ pub fn list_project_principals_with_permission(
 // map team ids to orgs.
 pub fn require_team_access(
     caller: &Principal,
-    team_id: Uuid,
+    team_id: TeamId,
     needed: OrgPermissions,
 ) -> ApiResult<(Team, OrgAuth)> {
     // Profile check first so that a caller without a profile still gets the
@@ -352,7 +352,7 @@ pub fn require_team_access(
 // called before the repository write — on the IC, returning Err after a
 // mutation does not roll back state, so a post-mutation check would leave
 // the org unadministrable on failure.
-pub fn assert_org_admin_populated_after_removing_team(org_id: Uuid, team_id: Uuid) -> ApiResult {
+pub fn assert_org_admin_populated_after_removing_team(org_id: Uuid, team_id: TeamId) -> ApiResult {
     if !team_repository::org_admin_is_populated_excluding_team(org_id, team_id) {
         return Err(ApiError::client_error(format!(
             "Organization with id {org_id} must retain at least one team with \

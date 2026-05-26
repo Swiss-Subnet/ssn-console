@@ -4,6 +4,7 @@ use crate::{
         self, approval_policy_repository, organization_billing_plan_repository,
         organization_repository, project_repository, team_repository, user_profile_repository,
         ApprovalPolicy, OperationType, OrgPermissions, Organization, PolicyType, StaffPermissions,
+        TeamId,
     },
     dto::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
@@ -81,7 +82,7 @@ pub fn list_org_users(
     let can_see_details = auth.perms().contains(OrgPermissions::MEMBER_MANAGE);
 
     // Resolve every team in the org once, so per-user enrichment is lookups.
-    let org_teams: std::collections::HashMap<Uuid, (data::Team, OrgPermissions)> =
+    let org_teams: std::collections::HashMap<TeamId, (data::Team, OrgPermissions)> =
         if can_see_details {
             team_repository::list_org_teams_with_permissions(org_id)
                 .into_iter()
@@ -102,7 +103,7 @@ pub fn list_org_users(
                 return (user_id, profile, Vec::new(), false);
             }
             let team_ids = team_repository::list_user_teams_in_org(user_id, org_id);
-            let teams: Vec<(Uuid, data::Team)> = team_ids
+            let teams: Vec<(TeamId, data::Team)> = team_ids
                 .iter()
                 .filter_map(|tid| org_teams.get(tid).map(|(t, _)| (*tid, t.clone())))
                 .collect();

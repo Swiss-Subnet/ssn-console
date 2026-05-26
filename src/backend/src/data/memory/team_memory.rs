@@ -4,16 +4,16 @@ use crate::data::{
         get_memory, Memory, ORGANIZATION_TEAM_INDEX_MEMORY_ID,
         ORGANIZATION_TEAM_PERMISSIONS_INDEX_MEMORY_ID, TEAM_MEMORY_ID,
     },
-    OrgPermissions, Team,
+    OrgPermissions, Team, TeamId,
 };
 use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
-pub type TeamMemory = BTreeMap<Uuid, Team, Memory>;
-pub type TeamUserIndexMemory = BTreeSet<(Uuid, Uuid), Memory>;
-pub type UserTeamIndexMemory = BTreeSet<(Uuid, Uuid), Memory>;
-pub type OrganizationTeamIndexMemory = BTreeSet<(Uuid, Uuid), Memory>;
-pub type OrganizationTeamPermissionsIndexMemory = BTreeMap<(Uuid, Uuid), OrgPermissions, Memory>;
+pub type TeamMemory = BTreeMap<TeamId, Team, Memory>;
+pub type TeamUserIndexMemory = BTreeSet<(TeamId, Uuid), Memory>;
+pub type UserTeamIndexMemory = BTreeSet<(Uuid, TeamId), Memory>;
+pub type OrganizationTeamIndexMemory = BTreeSet<(Uuid, TeamId), Memory>;
+pub type OrganizationTeamPermissionsIndexMemory = BTreeMap<(Uuid, TeamId), OrgPermissions, Memory>;
 
 pub fn init_teams() -> TeamMemory {
     TeamMemory::init(get_team_memory())

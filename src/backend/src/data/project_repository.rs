@@ -5,12 +5,12 @@ use super::{
         OrganizationProjectIndexMemory, ProjectMemory, ProjectTeamIndexMemory,
         ProjectTeamPermissionsIndexMemory, TeamProjectPermissionsIndexMemory,
     },
-    Project, ProjectPermissions,
+    Project, ProjectPermissions, TeamId,
 };
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::{cell::RefCell, collections::HashSet};
 
-pub fn add_default_project(team_id: Uuid, org_id: Uuid) -> Uuid {
+pub fn add_default_project(team_id: TeamId, org_id: Uuid) -> Uuid {
     let project = Project {
         org_id,
         name: "Default Project".to_string(),
@@ -33,12 +33,12 @@ pub fn create_project(org_id: Uuid, project: Project) -> Uuid {
     project_id
 }
 
-pub fn add_team_to_project(team_id: Uuid, project_id: Uuid) {
+pub fn add_team_to_project(team_id: TeamId, project_id: Uuid) {
     add_team_to_project_with_permissions(team_id, project_id, ProjectPermissions::ALL)
 }
 
 pub fn add_team_to_project_with_permissions(
-    team_id: Uuid,
+    team_id: TeamId,
     project_id: Uuid,
     permissions: ProjectPermissions,
 ) {
@@ -50,7 +50,7 @@ pub fn add_team_to_project_with_permissions(
     });
 }
 
-pub fn remove_team_from_project(team_id: Uuid, project_id: Uuid) {
+pub fn remove_team_from_project(team_id: TeamId, project_id: Uuid) {
     mutate_state(|s| {
         s.project_team_permissions_index
             .remove(&(project_id, team_id));
@@ -59,7 +59,7 @@ pub fn remove_team_from_project(team_id: Uuid, project_id: Uuid) {
     });
 }
 
-pub fn is_team_in_project(team_id: Uuid, project_id: Uuid) -> bool {
+pub fn is_team_in_project(team_id: TeamId, project_id: Uuid) -> bool {
     with_state(|s| {
         s.project_team_permissions_index
             .get(&(project_id, team_id))
@@ -67,7 +67,10 @@ pub fn is_team_in_project(team_id: Uuid, project_id: Uuid) -> bool {
     })
 }
 
-pub fn get_project_team_permissions(project_id: Uuid, team_id: Uuid) -> Option<ProjectPermissions> {
+pub fn get_project_team_permissions(
+    project_id: Uuid,
+    team_id: TeamId,
+) -> Option<ProjectPermissions> {
     with_state(|s| s.project_team_permissions_index.get(&(project_id, team_id)))
 }
 
@@ -78,7 +81,7 @@ pub fn get_project_team_permissions(project_id: Uuid, team_id: Uuid) -> Option<P
 // PROJECT_ADMIN counterpart to ORG_ADMIN.
 pub fn set_project_team_permissions(
     project_id: Uuid,
-    team_id: Uuid,
+    team_id: TeamId,
     permissions: ProjectPermissions,
 ) {
     mutate_state(|s| {
@@ -98,7 +101,7 @@ pub fn set_project_team_permissions(
 // Union ProjectPermissions of every team in `team_ids` that is linked to
 // `project_id`. Also returns whether any of those teams were linked.
 pub fn aggregate_team_project_permissions(
-    team_ids: &[Uuid],
+    team_ids: &[TeamId],
     project_id: Uuid,
 ) -> (ProjectPermissions, bool) {
     with_state(|s| {
@@ -117,10 +120,10 @@ pub fn aggregate_team_project_permissions(
     })
 }
 
-pub fn list_project_team_ids(project_id: Uuid) -> Vec<Uuid> {
+pub fn list_project_team_ids(project_id: Uuid) -> Vec<TeamId> {
     with_state(|s| {
         s.project_team_permissions_index
-            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .range((project_id, TeamId::MIN)..=(project_id, TeamId::MAX))
             .map(|entry| entry.key().1)
             .collect()
     })
@@ -129,7 +132,7 @@ pub fn list_project_team_ids(project_id: Uuid) -> Vec<Uuid> {
 pub fn project_team_count(project_id: Uuid) -> usize {
     with_state(|s| {
         s.project_team_permissions_index
-            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .range((project_id, TeamId::MIN)..=(project_id, TeamId::MAX))
             .count()
     })
 }
@@ -158,7 +161,7 @@ pub fn delete_project(project_id: Uuid, org_id: Uuid) -> ApiResult {
 
         let project_permissions = s
             .project_team_permissions_index
-            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .range((project_id, TeamId::MIN)..=(project_id, TeamId::MAX))
             .map(|entry| *entry.key())
             .collect::<Vec<_>>();
 
@@ -181,7 +184,7 @@ pub fn has_at_least_n_org_projects(org_id: Uuid, n: usize) -> bool {
     })
 }
 
-pub fn remove_team_project_links(team_id: Uuid) {
+pub fn remove_team_project_links(team_id: TeamId) {
     mutate_state(|s| {
         let project_permissions = s
             .team_project_permissions_index
@@ -213,21 +216,21 @@ pub fn list_org_projects(org_id: Uuid) -> Vec<(Uuid, Project)> {
     })
 }
 
-pub fn list_team_projects(team_ids: &[Uuid]) -> Vec<(Uuid, Project)> {
+pub fn list_team_projects(team_ids: &[TeamId]) -> Vec<(Uuid, Project)> {
     list_all_team_project_ids(team_ids)
         .into_iter()
         .filter_map(|project_id| get_project(&project_id).map(|project| (project_id, project)))
         .collect::<Vec<_>>()
 }
 
-fn list_all_team_project_ids(team_ids: &[Uuid]) -> HashSet<Uuid> {
+fn list_all_team_project_ids(team_ids: &[TeamId]) -> HashSet<Uuid> {
     team_ids
         .iter()
         .flat_map(|team_id| list_team_project_ids(*team_id))
         .collect()
 }
 
-pub fn list_team_project_ids(team_id: Uuid) -> Vec<Uuid> {
+pub fn list_team_project_ids(team_id: TeamId) -> Vec<Uuid> {
     with_state(|s| {
         s.team_project_permissions_index
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
@@ -236,7 +239,7 @@ pub fn list_team_project_ids(team_id: Uuid) -> Vec<Uuid> {
     })
 }
 
-pub fn team_has_projects(team_id: Uuid) -> bool {
+pub fn team_has_projects(team_id: TeamId) -> bool {
     with_state(|s| {
         s.team_project_permissions_index
             .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
@@ -300,9 +303,9 @@ thread_local! {
 
 pub fn migrate_project_team_permissions() {
     mutate_state(|s| {
-        let entries: Vec<(Uuid, Uuid)> = s
+        let entries: Vec<(Uuid, TeamId)> = s
             .project_team_index
-            .range((Uuid::MIN, Uuid::MIN)..=(Uuid::MAX, Uuid::MAX))
+            .range((Uuid::MIN, TeamId::MIN)..=(Uuid::MAX, TeamId::MAX))
             .collect();
 
         for (project_id, team_id) in entries {

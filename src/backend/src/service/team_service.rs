@@ -1,5 +1,7 @@
 use crate::{
-    data::{project_repository, team_repository, user_profile_repository, OrgPermissions, Team},
+    data::{
+        project_repository, team_repository, user_profile_repository, OrgPermissions, Team, TeamId,
+    },
     dto::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
         DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
@@ -61,14 +63,14 @@ pub fn create_team(caller: &Principal, req: CreateTeamRequest) -> ApiResult<Crea
 }
 
 pub fn get_team(caller: &Principal, req: GetTeamRequest) -> ApiResult<GetTeamResponse> {
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let (team, _auth) = require_team_access(caller, team_id, OrgPermissions::EMPTY)?;
 
     Ok(map_team_to_response(team_id, team))
 }
 
 pub fn update_team(caller: &Principal, req: UpdateTeamRequest) -> ApiResult<UpdateTeamResponse> {
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let (existing, _auth) = require_team_access(caller, team_id, OrgPermissions::TEAM_MANAGE)?;
     let name = TeamName::try_from(req.name)?;
 
@@ -82,7 +84,7 @@ pub fn update_team(caller: &Principal, req: UpdateTeamRequest) -> ApiResult<Upda
 }
 
 pub fn delete_team(caller: &Principal, req: DeleteTeamRequest) -> ApiResult<DeleteTeamResponse> {
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let (_team, auth) = require_team_access(caller, team_id, OrgPermissions::TEAM_MANAGE)?;
 
     if !team_repository::has_at_least_n_org_teams(auth.org_id(), 2) {
@@ -109,7 +111,7 @@ pub fn list_team_users(
     caller: &Principal,
     req: ListTeamUsersRequest,
 ) -> ApiResult<ListTeamUsersResponse> {
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let (_team, _auth) = require_team_access(caller, team_id, OrgPermissions::EMPTY)?;
 
     let users = team_repository::list_team_user_ids(team_id)
@@ -124,7 +126,7 @@ pub fn add_user_to_team(
     caller: &Principal,
     req: AddUserToTeamRequest,
 ) -> ApiResult<AddUserToTeamResponse> {
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let target_user_id = Uuid::try_from(req.user_id.as_str())?;
     let (_team, auth) = require_team_access(caller, team_id, OrgPermissions::MEMBER_MANAGE)?;
     auth.assert_member(target_user_id)?;
@@ -142,7 +144,7 @@ pub fn remove_user_from_team(
     caller: &Principal,
     req: RemoveUserFromTeamRequest,
 ) -> ApiResult<RemoveUserFromTeamResponse> {
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let target_user_id = Uuid::try_from(req.user_id.as_str())?;
     let (_team, auth) = require_team_access(caller, team_id, OrgPermissions::MEMBER_MANAGE)?;
 
@@ -176,7 +178,7 @@ pub fn update_team_org_permissions(
     caller: &Principal,
     req: UpdateTeamOrgPermissionsRequest,
 ) -> ApiResult<UpdateTeamOrgPermissionsResponse> {
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let (team, auth) = require_team_access(caller, team_id, OrgPermissions::ORG_ADMIN)?;
 
     let new_perms = map_org_permissions_from_dto(req.permissions);
