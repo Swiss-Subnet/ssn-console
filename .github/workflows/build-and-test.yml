@@ -84,6 +84,12 @@ jobs:
       - name: DFX build
         run: dfx build cycles-monitor --check
 
+      # Temporary™️ workaround until pocket ic supports the `canister_metrics` endpoint
+      - name: Build with mock-metrics for tests
+        run: |
+          cargo build --target wasm32-unknown-unknown --release -p cycles-monitor --locked --features mock-metrics
+          gzip -c target/wasm32-unknown-unknown/release/cycles_monitor.wasm > .dfx/local/canisters/cycles-monitor/cycles-monitor.wasm.gz
+
       - name: pic-js tests
         run: bun turbo -F cycles-monitor-tests test
 

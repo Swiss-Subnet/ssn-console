@@ -7,7 +7,9 @@ mod constants;
 mod controller;
 mod dto;
 mod env;
-mod management_canister_mock;
+mod management_canister;
+#[cfg(not(feature = "mock-metrics"))]
+mod management_canister_types;
 mod memory;
 mod memory_manager;
 mod model;

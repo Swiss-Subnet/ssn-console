@@ -1,6 +1,6 @@
 use crate::{
     dto::{ListMetricsAfterRequest, ListMetricsAfterResponse},
-    env, management_canister_mock, repository,
+    env, management_canister, repository,
 };
 use candid::Principal;
 use canister_history_api::{ListSubnetCanisterIdsRequest, ListSubnetCanisterIdsResponse};
@@ -58,7 +58,7 @@ pub async fn sync_canister_metrics() -> ApiResult<()> {
 async fn process_canister_metrics(canister_id: CanisterId) -> ApiResult<()> {
     let principal = Principal::from(canister_id);
 
-    let snapshot = management_canister_mock::get_canister_metrics(principal).await;
+    let snapshot = management_canister::get_canister_metrics(principal).await?;
     let now_nanos = ic_cdk::api::time();
     repository::insert_snapshot(now_nanos, principal, snapshot);
     Ok(())
