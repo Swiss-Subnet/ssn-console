@@ -5,7 +5,11 @@ import {
   projectNotFoundOrNoAccessError,
   unauthenticatedError,
 } from '../support';
-import { anonymousIdentity, controllerIdentity, extractOkResponse } from '@ssn/test-utils';
+import {
+  anonymousIdentity,
+  controllerIdentity,
+  extractOkResponse,
+} from '@ssn/test-utils';
 import type { Identity } from '@icp-sdk/core/agent';
 import { Principal } from '@icp-sdk/core/principal';
 import type { CanisterUsage, GetUsageResponseData } from '@ssn/backend-api';
