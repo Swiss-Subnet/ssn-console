@@ -1,5 +1,5 @@
 import { HttpAgent } from '@icp-sdk/core/agent';
-import { ECDSAKeyIdentity } from '@icp-sdk/core/identity';
+import { Ed25519KeyIdentity } from '@icp-sdk/core/identity';
 import * as crypto from 'node:crypto';
 import { syncCyclesMonitorMetrics } from './sync-cycles-monitor-metrics';
 import { syncCanisterUsage } from './sync-canister-usage';
@@ -11,39 +11,25 @@ async function main() {
   );
 
   const nodeKey = crypto.createPrivateKey(
-    env.PRIVATE_KEY.replace(/\\n/g, '\n'),
+    env.PRIVATE_KEY.replace(/^"|"$/g, '').replace(/\\n/g, '\n'),
   );
 
-  const privateKeyDer = nodeKey.export({ format: 'der', type: 'pkcs8' });
-  const privateKey = await crypto.subtle.importKey(
-    'pkcs8',
-    privateKeyDer,
-    { name: 'ECDSA', namedCurve: 'P-256' },
-    true,
-    ['sign'],
-  );
+  const jwk = nodeKey.export({ format: 'jwk' });
+  if (!jwk.d) {
+    throw new Error(
+      'Failed to extract secret seed from private key. Is it a valid Ed25519 key?',
+    );
+  }
+  const seed = Buffer.from(jwk.d, 'base64url');
 
-  const publicKeyDer = crypto
-    .createPublicKey(nodeKey)
-    .export({ format: 'der', type: 'spki' });
-  const publicKey = await crypto.subtle.importKey(
-    'spki',
-    publicKeyDer,
-    { name: 'ECDSA', namedCurve: 'P-256' },
-    true,
-    ['verify'],
-  );
-
-  const identity = await ECDSAKeyIdentity.fromKeyPair({
-    privateKey,
-    publicKey,
-  });
+  const identity = Ed25519KeyIdentity.generate(seed);
 
   const agent = HttpAgent.createSync({ host: env.HTTP_GATEWAY, identity });
 
   try {
     const usages = await syncCyclesMonitorMetrics(agent);
     await syncCanisterUsage(agent, usages);
+    console.log('✅ Metrics successfully synced!');
   } catch (error) {
     console.error('💢 Error syncing metrics', error);
     process.exit(1);
