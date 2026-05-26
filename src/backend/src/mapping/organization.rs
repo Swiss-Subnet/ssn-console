@@ -1,5 +1,5 @@
 use crate::{
-    data::{self},
+    data::{self, TeamId},
     dto::{
         ListMyOrganizationsResponse, ListOrgUsersResponse, OrgUser, Organization,
         OrganizationResponse,
@@ -37,7 +37,7 @@ pub fn map_organization_to_response(
     }
 }
 
-pub type OrgUserEntry = (Uuid, data::UserProfile, Vec<(Uuid, data::Team)>, bool);
+pub type OrgUserEntry = (Uuid, data::UserProfile, Vec<(TeamId, data::Team)>, bool);
 
 pub fn map_list_org_users_response(users: Vec<OrgUserEntry>) -> ListOrgUsersResponse {
     users

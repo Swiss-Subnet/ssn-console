@@ -1,7 +1,7 @@
 use crate::{
     data::{
         canister_repository, project_repository, team_repository, user_profile_repository,
-        OrgPermissions, Project, ProjectPermissions,
+        OrgPermissions, Project, ProjectPermissions, TeamId,
     },
     dto::{
         AddTeamToProjectRequest, AddTeamToProjectResponse, CreateProjectRequest,
@@ -180,7 +180,7 @@ pub fn add_team_to_project(
     req: AddTeamToProjectRequest,
 ) -> ApiResult<AddTeamToProjectResponse> {
     let project_id = Uuid::try_from(req.project_id.as_str())?;
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROJECT_ADMIN)?;
 
     // Collapse "team does not exist" and "team in another org" into the same
@@ -206,7 +206,7 @@ pub fn remove_team_from_project(
     req: RemoveTeamFromProjectRequest,
 ) -> ApiResult<RemoveTeamFromProjectResponse> {
     let project_id = Uuid::try_from(req.project_id.as_str())?;
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROJECT_ADMIN)?;
 
     if !project_repository::is_team_in_project(team_id, auth.project_id()) {
@@ -229,7 +229,7 @@ pub fn update_team_project_permissions(
     req: UpdateTeamProjectPermissionsRequest,
 ) -> ApiResult<UpdateTeamProjectPermissionsResponse> {
     let project_id = Uuid::try_from(req.project_id.as_str())?;
-    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let team_id = TeamId::try_from(req.team_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::PROJECT_ADMIN)?;
 
     let team = team_repository::get_team(team_id)
