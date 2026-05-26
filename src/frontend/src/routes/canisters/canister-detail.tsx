@@ -32,6 +32,7 @@ import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import type { UserProfileBrief } from '@/lib/api-models/user-profile';
 import { AddControllerForm } from '@/routes/canisters/add-controller-form';
 import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-canister-controller-cta';
+import { CanisterMetricsChart } from '@/routes/canisters/canister-metrics-chart';
 import { DeletedCanisterCta } from '@/routes/canisters/deleted-canister-cta';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
@@ -732,6 +733,7 @@ const CanisterDetail: FC = () => {
           ) : (
             <AddMissingCanisterControllerCta canisterId={canister.principal} />
           )}
+          <CanisterMetricsChart canisterPrincipal={canister.principal} />
           <CanisterHistory
             canisterPrincipal={canister.principal}
             canisterNames={controllerNames}

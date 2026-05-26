@@ -37,6 +37,7 @@ import type {
   ApprovalPolicyApi,
   CanisterApi,
   CanisterHistoryApi,
+  MetricsProxyApi,
   PrincipalLinkApi,
   ProposalApi,
   StaffPermissionsApi,
@@ -84,6 +85,7 @@ export type ApiSlice = {
   organizationApi: OrganizationApi;
   teamApi: TeamApi;
   inviteApi: InviteApi;
+  metricsProxyApi: MetricsProxyApi;
   approvalPolicyApi: ApprovalPolicyApi;
   proposalApi: ProposalApi;
   principalLinkApi: PrincipalLinkApi;

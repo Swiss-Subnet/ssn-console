@@ -69,6 +69,7 @@ const REGIONS: &[(&str, u8)] = &[
     ("principal_canister_index", 38),
     ("user_principal_names", 39),
     ("user_profile_verified_email_index", 40),
+    ("service_principal_permissions", 41),
 ];
 
 // Compile-time invariant: REGIONS is indexed by id. `REGIONS[N].1 == N`.
@@ -150,6 +151,7 @@ pub(super) const PRINCIPAL_CANISTER_INDEX_MEMORY_ID: MemoryId = region(38);
 
 pub(super) const USER_PRINCIPAL_NAME_MEMORY_ID: MemoryId = region(39);
 pub(super) const USER_PROFILE_VERIFIED_EMAIL_INDEX_MEMORY_ID: MemoryId = region(40);
+pub(super) const SERVICE_PRINCIPAL_PERMISSIONS_MEMORY_ID: MemoryId = region(41);
 
 pub(super) const CANISTER_USAGE_MEMORY_ID: MemoryId = MemoryId::new(41);
 pub(super) const PROJECT_USAGE_MEMORY_ID: MemoryId = MemoryId::new(42);

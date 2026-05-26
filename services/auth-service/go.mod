@@ -1,9 +1,10 @@
 module github.com/swiss-subnet/ssn-console/services/auth-service
 
-go 1.25.0
+go 1.25.5
 
 require (
 	github.com/go-jose/go-jose/v4 v4.1.4
+	github.com/swiss-subnet/ssn-console/services/httpsvc v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.43.0
@@ -31,3 +32,5 @@ require (
 	google.golang.org/grpc v1.81.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
+
+replace github.com/swiss-subnet/ssn-console/services/httpsvc => ../httpsvc

@@ -14,3 +14,4 @@ export * from './trusted-partner';
 export * from './user-profile';
 export * from './auth';
 export * from './usage';
+export * from './metrics-proxy';

@@ -1,18 +1,22 @@
 use crate::{
     dto::{
-        GetMyStaffPermissionsRequest, GetMyStaffPermissionsResponse, GrantStaffPermissionsRequest,
-        GrantStaffPermissionsResponse, ListStaffRequest, ListStaffResponse,
+        GetMyStaffPermissionsRequest, GetMyStaffPermissionsResponse,
+        GrantServicePrincipalPermissionsRequest, GrantServicePrincipalPermissionsResponse,
+        GrantStaffPermissionsRequest, GrantStaffPermissionsResponse, ListServicePrincipalsRequest,
+        ListServicePrincipalsResponse, ListStaffRequest, ListStaffResponse,
+        RevokeServicePrincipalPermissionsRequest, RevokeServicePrincipalPermissionsResponse,
         RevokeStaffPermissionsRequest, RevokeStaffPermissionsResponse,
     },
-    service::staff_permissions_service,
+    service::{service_principal_service, staff_permissions_service},
 };
 use canister_utils::{assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 // Self-introspection: returns the caller's own staff permission bits, or
-// None if they are not staff. Open to any authenticated principal because
-// it never reveals information about other users; non-staff callers get
-// None back, which is not sensitive.
+// None if they are not staff. Resolves both service principals and user
+// profiles, matching the runtime authority check. Open to any authenticated
+// principal because it never reveals information about other callers;
+// non-staff callers get None back, which is not sensitive.
 #[query]
 fn get_my_staff_permissions(
     _req: GetMyStaffPermissionsRequest,
@@ -68,4 +72,41 @@ fn list_staff(_req: ListStaffRequest) -> ApiResultDto<ListStaffResponse> {
     }
 
     ApiResultDto::Ok(staff_permissions_service::list_staff())
+}
+
+#[update]
+fn grant_service_principal_permissions(
+    req: GrantServicePrincipalPermissionsRequest,
+) -> ApiResultDto<GrantServicePrincipalPermissionsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
+    }
+    service_principal_service::grant_service_principal_permissions(req)
+        .map(|()| GrantServicePrincipalPermissionsResponse {})
+        .into()
+}
+
+#[update]
+fn revoke_service_principal_permissions(
+    req: RevokeServicePrincipalPermissionsRequest,
+) -> ApiResultDto<RevokeServicePrincipalPermissionsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
+    }
+    service_principal_service::revoke_service_principal_permissions(req)
+        .map(|()| RevokeServicePrincipalPermissionsResponse {})
+        .into()
+}
+
+#[query]
+fn list_service_principals(
+    _req: ListServicePrincipalsRequest,
+) -> ApiResultDto<ListServicePrincipalsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_controller(&caller) {
+        return ApiResultDto::Err(err);
+    }
+    ApiResultDto::Ok(service_principal_service::list_service_principals())
 }

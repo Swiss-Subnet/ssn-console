@@ -1,4 +1,6 @@
+use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::fmt;
 
 // Cross-org capability set held by a member of the business team. Distinct
@@ -80,6 +82,26 @@ impl StaffPermissions {
     pub const fn from_bits_truncate(bits: u64) -> Self {
         Self(bits)
     }
+}
+
+impl Storable for StaffPermissions {
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
+        Cow::Owned(self.0.to_le_bytes().to_vec())
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.0.to_le_bytes().to_vec()
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        let arr: [u8; 8] = bytes.as_ref().try_into().unwrap();
+        Self(u64::from_le_bytes(arr))
+    }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: 8,
+        is_fixed_size: true,
+    };
 }
 
 impl fmt::Display for StaffPermissions {

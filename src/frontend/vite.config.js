@@ -32,6 +32,12 @@ try {
       `Missing OFFCHAIN_SERVICE_URL in configuration for network '${network}' in ${envJsonPath}`,
     );
   }
+
+  if (!networkConfig.METRICS_PROXY_URL) {
+    throw new Error(
+      `Missing METRICS_PROXY_URL in configuration for network '${network}' in ${envJsonPath}`,
+    );
+  }
 } catch (e) {
   console.error(e);
   throw e;
@@ -50,6 +56,7 @@ export default defineConfig({
   },
   define: {
     'import.meta.env.OFFCHAIN_SERVICE_URL': `"${networkConfig.OFFCHAIN_SERVICE_URL}"`,
+    'import.meta.env.METRICS_PROXY_URL': `"${networkConfig.METRICS_PROXY_URL}"`,
   },
   server: {
     port: 4200,

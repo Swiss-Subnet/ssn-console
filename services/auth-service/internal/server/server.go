@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/swiss-subnet/ssn-console/services/auth-service/internal/mailer"
+	"github.com/swiss-subnet/ssn-console/services/httpsvc"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -71,36 +72,11 @@ func New(deps Deps) *Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /status", handleStatus)
 	mux.HandleFunc("POST /v1.0/auth/email-verification", s.handleMintAndMail(deps, emailVerificationFlow))
-	mux.HandleFunc("OPTIONS /v1.0/auth/email-verification", handlePreflight(deps.FrontendURL))
+	mux.HandleFunc("OPTIONS /v1.0/auth/email-verification", httpsvc.Preflight(httpsvc.PreflightOpts{AllowedOrigin: deps.FrontendURL, Methods: []string{http.MethodPost}}))
 	mux.HandleFunc("POST /v1.0/auth/account-recovery", s.handleMintAndMail(deps, accountRecoveryFlow))
-	mux.HandleFunc("OPTIONS /v1.0/auth/account-recovery", handlePreflight(deps.FrontendURL))
-	s.handler = otelhttp.NewHandler(withCORS(mux, deps.FrontendURL), "auth-service")
+	mux.HandleFunc("OPTIONS /v1.0/auth/account-recovery", httpsvc.Preflight(httpsvc.PreflightOpts{AllowedOrigin: deps.FrontendURL, Methods: []string{http.MethodPost}}))
+	s.handler = otelhttp.NewHandler(httpsvc.WithCORS(mux, deps.FrontendURL), "auth-service")
 	return s
-}
-
-func withCORS(next http.Handler, allowedOrigin string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Origin") == allowedOrigin {
-			w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
-			w.Header().Set("Vary", "Origin")
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func handlePreflight(allowedOrigin string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Origin") != allowedOrigin {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
-		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
-		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		w.Header().Set("Access-Control-Max-Age", "600")
-		w.Header().Set("Vary", "Origin")
-		w.WriteHeader(http.StatusNoContent)
-	}
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

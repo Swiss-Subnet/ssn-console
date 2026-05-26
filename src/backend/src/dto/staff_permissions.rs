@@ -1,5 +1,5 @@
 use crate::dto::UserStatus;
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::Deserialize;
 
 // Mirrors the OrgPermissions / ProjectPermissions DTO shape: each known
@@ -55,5 +55,36 @@ pub struct StaffMember {
     pub email: Option<String>,
     pub email_verified: bool,
     pub status: UserStatus,
+    pub permissions: StaffPermissions,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct GrantServicePrincipalPermissionsRequest {
+    pub service_principal: Principal,
+    pub permissions: StaffPermissions,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct GrantServicePrincipalPermissionsResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct RevokeServicePrincipalPermissionsRequest {
+    pub service_principal: Principal,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct RevokeServicePrincipalPermissionsResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListServicePrincipalsRequest {}
+
+#[derive(Debug, Clone, CandidType)]
+pub struct ListServicePrincipalsResponse {
+    pub service_principals: Vec<ServicePrincipalEntry>,
+}
+
+#[derive(Debug, Clone, CandidType)]
+pub struct ServicePrincipalEntry {
+    pub service_principal: Principal,
     pub permissions: StaffPermissions,
 }

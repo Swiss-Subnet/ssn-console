@@ -1,8 +1,8 @@
 use crate::data::{
-    organization_repository, project_repository, team_repository, terms_and_conditions_repository,
-    trusted_partner_repository, user_profile_repository, OrgId, OrgPermissions, Project, ProjectId,
-    ProjectPermissions, ProposalId, StaffPermissions, Team, TeamId, UserId, UserProfile,
-    UserStatus,
+    organization_repository, project_repository, service_principal_repository, team_repository,
+    terms_and_conditions_repository, trusted_partner_repository, user_profile_repository, OrgId,
+    OrgPermissions, Project, ProjectId, ProjectPermissions, ProposalId, StaffPermissions, Team,
+    TeamId, UserId, UserProfile, UserStatus,
 };
 use candid::Principal;
 use canister_utils::{assert_authenticated, ApiError, ApiResult};
@@ -76,10 +76,43 @@ pub fn assert_staff_perm(caller: &Principal, needed: StaffPermissions) -> ApiRes
         return Ok(());
     }
 
+    // Service principals: off-chain services (e.g. metrics-proxy) hold
+    // staff capabilities without being user accounts. Checked before the
+    // user-profile lookup so a service principal that doesn't have a
+    // profile doesn't fall through to "user not found".
+    if let Some(perms) = service_principal_repository::get_service_principal_permissions(caller) {
+        if perms.contains(needed) {
+            return Ok(());
+        }
+        return Err(ApiError::unauthorized(format!(
+            "Caller lacks required staff permissions: {needed}"
+        )));
+    }
+
     let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let profile = user_profile_repository::get_user_profile_by_user_id(&user_id)
         .ok_or_else(|| ApiError::unauthorized("User profile not found.".to_string()))?;
     check_profile_staff_perm(&profile, needed)
+}
+
+// Enforces the disjointness invariant between user-account principals and
+// service principals. `assert_staff_perm` short-circuits on a service-
+// principal match before consulting the user profile, so an overlap would
+// silently bypass the Inactive-user guard. Both write paths (grant a
+// service principal, create/link a user principal) call this so the
+// disjointness holds at every write.
+pub fn assert_principal_is_unclaimed(p: &Principal) -> ApiResult {
+    if service_principal_repository::get_service_principal_permissions(p).is_some() {
+        return Err(ApiError::client_error(
+            "Principal is already registered as a service principal.".to_string(),
+        ));
+    }
+    if user_profile_repository::get_user_id_by_principal(p).is_some() {
+        return Err(ApiError::client_error(
+            "Principal is already linked to a user account.".to_string(),
+        ));
+    }
+    Ok(())
 }
 
 // Pure predicate extracted so the failure-mode matrix is unit-testable
@@ -418,5 +451,51 @@ mod tests {
         let profile = profile_with(UserStatus::Active, Some(StaffPermissions::ALL));
         check_profile_staff_perm(&profile, StaffPermissions::READ_ALL_ORGS)
             .expect("ALL must cover READ_ALL_ORGS");
+    }
+
+    fn principal(byte: u8) -> Principal {
+        let mut bytes = [0u8; 29];
+        bytes[28] = byte;
+        Principal::from_slice(&bytes)
+    }
+
+    #[test]
+    fn service_principal_with_required_flag_is_allowed() {
+        let p = principal(7);
+        service_principal_repository::set_service_principal_permissions(
+            p,
+            StaffPermissions::READ_METRICS,
+        );
+        assert_staff_perm(&p, StaffPermissions::READ_METRICS)
+            .expect("service principal with READ_METRICS must be allowed");
+    }
+
+    #[test]
+    fn service_principal_missing_required_flag_is_denied() {
+        let p = principal(8);
+        service_principal_repository::set_service_principal_permissions(
+            p,
+            StaffPermissions::READ_METRICS,
+        );
+        assert_staff_perm(&p, StaffPermissions::WRITE_BILLING)
+            .expect_err("service principal without WRITE_BILLING must be denied");
+    }
+
+    #[test]
+    fn service_principal_short_circuit_skips_user_profile_lookup() {
+        // Principal has a service-principal entry but no user profile.
+        // The old code path would have returned "user profile not found";
+        // the new branch handles this case explicitly.
+        let p = principal(9);
+        service_principal_repository::set_service_principal_permissions(
+            p,
+            StaffPermissions::READ_METRICS,
+        );
+        assert!(
+            user_profile_repository::get_user_id_by_principal(&p).is_none(),
+            "test precondition: principal must have no user profile",
+        );
+        assert_staff_perm(&p, StaffPermissions::READ_METRICS)
+            .expect("service principal must short-circuit before the user-profile lookup");
     }
 }

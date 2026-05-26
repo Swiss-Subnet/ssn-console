@@ -43,3 +43,4 @@ export const DERIVATION_ORIGIN =
   IS_LOCAL || IS_TEST ? undefined : 'https://console.subnet.ch';
 
 export const OFFCHAIN_SERVICE_URL = getEnvVar('OFFCHAIN_SERVICE_URL');
+export const METRICS_PROXY_URL = getEnvVar('METRICS_PROXY_URL');

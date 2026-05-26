@@ -11,6 +11,7 @@ pub mod organization_repository;
 pub mod orphaned_canister_repository;
 pub mod project_repository;
 pub mod proposal_repository;
+pub mod service_principal_repository;
 pub mod team_repository;
 pub mod terms_and_conditions_repository;
 pub mod trusted_partner_repository;
