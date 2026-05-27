@@ -18,6 +18,12 @@ pub enum VoteOutcome {
 }
 
 pub fn create_proposal(project_id: Uuid, mut proposal: Proposal) -> Uuid {
+    // The nil UUID is reserved for legacy proposals predating proposer_id; new
+    // proposals always carry a real proposer (the authenticated caller).
+    debug_assert!(
+        proposal.proposer_id != Uuid::default(),
+        "create_proposal called with nil proposer_id"
+    );
     let proposal_id = Uuid::new();
     let now = now_nanos();
     proposal.created_at_nanos = Some(now);
@@ -293,6 +299,23 @@ mod tests {
         );
         set_proposal_pending_approval(proposal_id, threshold, approvers).unwrap();
         proposal_id
+    }
+
+    #[test]
+    #[should_panic(expected = "nil proposer_id")]
+    fn create_proposal_rejects_nil_proposer() {
+        let project_id = Uuid::new();
+        create_proposal(
+            project_id,
+            Proposal {
+                project_id,
+                proposer_id: Uuid::default(),
+                status: ProposalStatus::Open,
+                operation: ProposalOperation::CreateCanister,
+                created_at_nanos: None,
+                updated_at_nanos: None,
+            },
+        );
     }
 
     #[test]
