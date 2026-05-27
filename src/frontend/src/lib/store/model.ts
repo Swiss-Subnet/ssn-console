@@ -180,6 +180,8 @@ export type CanistersSlice = {
     projectId: string,
     name: string | null,
   ) => Promise<void>;
+  startCanister: (canisterRecordId: string, projectId: string) => Promise<void>;
+  stopCanister: (canisterRecordId: string, projectId: string) => Promise<void>;
 };
 
 export type TrustedPartnersSlice = {

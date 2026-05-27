@@ -155,6 +155,68 @@ const RenameCanisterCard: FC<RenameCanisterCardProps> = ({
   );
 };
 
+type CanisterPowerCardProps = {
+  canister: Canister;
+  status: CanisterStatus;
+  projectId: string;
+};
+
+const CanisterPowerCard: FC<CanisterPowerCardProps> = ({
+  canister,
+  status,
+  projectId,
+}) => {
+  const startCanister = useAppStore(s => s.startCanister);
+  const stopCanister = useAppStore(s => s.stopCanister);
+  const [isBusy, setIsBusy] = useState(false);
+
+  const isRunning = status === CanisterStatus.Running;
+  // Stopping is a transient state; acting on it would race the IC, so wait.
+  const isTransitioning = status === CanisterStatus.Stopping;
+
+  async function onToggle(): Promise<void> {
+    setIsBusy(true);
+    try {
+      if (isRunning) {
+        await stopCanister(canister.id, projectId);
+        showSuccessToast('Canister stopping');
+      } else {
+        await startCanister(canister.id, projectId);
+        showSuccessToast('Canister started');
+      }
+    } catch (err) {
+      showErrorToast(
+        isRunning ? 'Failed to stop canister' : 'Failed to start canister',
+        err,
+      );
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  return (
+    <SectionCard title="Power">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-muted-foreground text-xs">
+          {isRunning
+            ? 'Stop this canister to take it offline. It can be started again at any time.'
+            : isTransitioning
+              ? 'The canister is stopping; wait for it to finish before starting it again.'
+              : 'Start this canister to bring it back online.'}
+        </p>
+        <LoadingButton
+          variant={isRunning ? 'destructive' : 'default'}
+          isLoading={isBusy}
+          disabled={isTransitioning}
+          onClick={onToggle}
+        >
+          {isRunning ? 'Stop' : 'Start'}
+        </LoadingButton>
+      </div>
+    </SectionCard>
+  );
+};
+
 type CanisterInfoSectionsProps = {
   canisterPrincipal: string;
   projectPrincipal: string;
@@ -646,6 +708,14 @@ const CanisterDetail: FC = () => {
           </div>
 
           <RenameCanisterCard canister={canister} projectId={projectId} />
+
+          {canister.state.availability === CanisterAvailability.Accessible && (
+            <CanisterPowerCard
+              canister={canister}
+              status={canister.state.info.status}
+              projectId={projectId}
+            />
+          )}
 
           {canister.state.availability === CanisterAvailability.Accessible ? (
             <CanisterInfoSections

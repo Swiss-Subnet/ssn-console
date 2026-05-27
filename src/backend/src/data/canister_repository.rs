@@ -93,6 +93,10 @@ pub fn get_canister_project_id(canister_id: Uuid) -> Option<Uuid> {
     with_state(|s| s.canister_project_index.get(&canister_id))
 }
 
+pub fn get_canister(canister_id: Uuid) -> Option<Canister> {
+    with_state(|s| s.canisters.get(&canister_id))
+}
+
 pub fn soft_delete_canister(
     project_id: Uuid,
     canister_id: Uuid,

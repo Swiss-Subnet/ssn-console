@@ -75,6 +75,16 @@ pub struct UpdateMyCanisterNameRequest {
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct StartMyCanisterRequest {
+    pub canister_id: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct StopMyCanisterRequest {
+    pub canister_id: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct CanisterInfo {
     pub status: CanisterStatus,
     pub ready_for_migration: bool,

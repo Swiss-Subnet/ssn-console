@@ -2,7 +2,8 @@ use crate::{
     dto::{
         ListAllCanistersRequest, ListAllCanistersResponse, ListMyCanistersRequest,
         ListMyCanistersResponse, ListUserCanistersRequest, ListUserCanistersResponse,
-        RemoveMyCanisterRequest, UpdateMyCanisterNameRequest,
+        RemoveMyCanisterRequest, StartMyCanisterRequest, StopMyCanisterRequest,
+        UpdateMyCanisterNameRequest,
     },
     env,
     service::canister_service,
@@ -63,6 +64,38 @@ fn update_my_canister_name(request: UpdateMyCanisterNameRequest) -> ApiResultDto
     }
 
     canister_service::update_my_canister_name(caller, request).into()
+}
+
+#[update]
+async fn start_my_canister(request: StartMyCanisterRequest) -> ApiResultDto<()> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    let canister_id = match Uuid::try_from(request.canister_id.as_str()) {
+        Ok(id) => id,
+        Err(err) => return ApiResultDto::Err(err),
+    };
+    canister_service::start_my_canister(caller, canister_id)
+        .await
+        .into()
+}
+
+#[update]
+async fn stop_my_canister(request: StopMyCanisterRequest) -> ApiResultDto<()> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    let canister_id = match Uuid::try_from(request.canister_id.as_str()) {
+        Ok(id) => id,
+        Err(err) => return ApiResultDto::Err(err),
+    };
+    canister_service::stop_my_canister(caller, canister_id)
+        .await
+        .into()
 }
 
 #[query]
