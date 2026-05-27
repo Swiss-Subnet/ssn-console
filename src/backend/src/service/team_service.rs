@@ -4,8 +4,9 @@ use crate::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
         DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
         ListOrgTeamsRequest, ListOrgTeamsResponse, ListTeamUsersRequest, ListTeamUsersResponse,
-        ListTeamsResponse, UpdateTeamOrgPermissionsRequest, UpdateTeamOrgPermissionsResponse,
-        UpdateTeamRequest, UpdateTeamResponse,
+        ListTeamsResponse, RemoveUserFromTeamRequest, RemoveUserFromTeamResponse,
+        UpdateTeamOrgPermissionsRequest, UpdateTeamOrgPermissionsResponse, UpdateTeamRequest,
+        UpdateTeamResponse,
     },
     mapping::{
         map_list_org_teams_response, map_list_team_users_response, map_list_teams_response,
@@ -135,6 +136,35 @@ pub fn add_user_to_team(
     team_repository::add_user_to_team(target_user_id, team_id);
 
     Ok(AddUserToTeamResponse {})
+}
+
+pub fn remove_user_from_team(
+    caller: &Principal,
+    req: RemoveUserFromTeamRequest,
+) -> ApiResult<RemoveUserFromTeamResponse> {
+    let team_id = Uuid::try_from(req.team_id.as_str())?;
+    let target_user_id = Uuid::try_from(req.user_id.as_str())?;
+    let (_team, auth) = require_team_access(caller, team_id, OrgPermissions::MEMBER_MANAGE)?;
+
+    if !team_repository::is_user_in_team(target_user_id, team_id) {
+        return Ok(RemoveUserFromTeamResponse {});
+    }
+
+    if !team_repository::org_admin_is_populated_excluding_team_member(
+        auth.org_id(),
+        team_id,
+        target_user_id,
+    ) {
+        return Err(ApiError::client_error(format!(
+            "Organization with id {} must retain at least one team with \
+             ORG_ADMIN and at least one member.",
+            auth.org_id()
+        )));
+    }
+
+    team_repository::remove_user_from_team(target_user_id, team_id);
+
+    Ok(RemoveUserFromTeamResponse {})
 }
 
 // Overwrite the org permissions granted to a team. Requires ORG_ADMIN on

@@ -3,8 +3,9 @@ use crate::{
         AddUserToTeamRequest, AddUserToTeamResponse, CreateTeamRequest, CreateTeamResponse,
         DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse,
         ListOrgTeamsRequest, ListOrgTeamsResponse, ListTeamUsersRequest, ListTeamUsersResponse,
-        ListTeamsResponse, UpdateTeamOrgPermissionsRequest, UpdateTeamOrgPermissionsResponse,
-        UpdateTeamRequest, UpdateTeamResponse,
+        ListTeamsResponse, RemoveUserFromTeamRequest, RemoveUserFromTeamResponse,
+        UpdateTeamOrgPermissionsRequest, UpdateTeamOrgPermissionsResponse, UpdateTeamRequest,
+        UpdateTeamResponse,
     },
     service::team_service,
 };
@@ -79,6 +80,18 @@ fn add_user_to_team(req: AddUserToTeamRequest) -> ApiResultDto<AddUserToTeamResp
     }
 
     team_service::add_user_to_team(&caller, req).into()
+}
+
+#[update]
+fn remove_user_from_team(
+    req: RemoveUserFromTeamRequest,
+) -> ApiResultDto<RemoveUserFromTeamResponse> {
+    let caller = msg_caller();
+    if let Err(err) = assert_authenticated(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    team_service::remove_user_from_team(&caller, req).into()
 }
 
 #[query]

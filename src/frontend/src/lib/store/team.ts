@@ -63,6 +63,11 @@ export const createTeamsSlice: AppStateCreator<TeamsSlice> = (set, get) => ({
     await teamApi.addUserToTeam({ teamId, userId });
   },
 
+  async removeUserFromTeam(teamId: string, userId: string) {
+    const teamApi = get().teamApi;
+    await teamApi.removeUserFromTeam({ teamId, userId });
+  },
+
   async loadTeamUsers(teamId: string) {
     return get().teamApi.listTeamUsers({ teamId });
   },

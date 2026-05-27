@@ -21,6 +21,8 @@ import type {
   DeleteTeamResponse as ApiDeleteTeamResponse,
   AddUserToTeamRequest as ApiAddUserToTeamRequest,
   AddUserToTeamResponse as ApiAddUserToTeamResponse,
+  RemoveUserFromTeamRequest as ApiRemoveUserFromTeamRequest,
+  RemoveUserFromTeamResponse as ApiRemoveUserFromTeamResponse,
   ListTeamUsersRequest as ApiListTeamUsersRequest,
   ListTeamUsersResponse as ApiListTeamUsersResponse,
   Team as ApiTeam,
@@ -87,6 +89,11 @@ export type DeleteTeamRequest = {
 };
 
 export type AddUserToTeamRequest = {
+  teamId: string;
+  userId: string;
+};
+
+export type RemoveUserFromTeamRequest = {
   teamId: string;
   userId: string;
 };
@@ -208,6 +215,18 @@ export function mapAddUserToTeamRequest(
 }
 
 export function mapAddUserToTeamResponse(res: ApiAddUserToTeamResponse): void {
+  mapOkResponse(res);
+}
+
+export function mapRemoveUserFromTeamRequest(
+  req: RemoveUserFromTeamRequest,
+): ApiRemoveUserFromTeamRequest {
+  return { team_id: req.teamId, user_id: req.userId };
+}
+
+export function mapRemoveUserFromTeamResponse(
+  res: ApiRemoveUserFromTeamResponse,
+): void {
   mapOkResponse(res);
 }
 

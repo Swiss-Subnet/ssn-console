@@ -55,6 +55,7 @@ const TeamSettings: FC = () => {
     loadOrgTeams,
     loadTeamUsers,
     addUserToTeam,
+    removeUserFromTeam,
     updateTeamOrgPermissions,
   } = useAppStore();
   const teamMap = useAppStore(selectTeamMap);
@@ -83,6 +84,7 @@ const TeamSettings: FC = () => {
   const [orgTeam, setOrgTeam] = useState<OrgTeam | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const refreshOrgMembers = useCallback(async () => {
@@ -163,6 +165,19 @@ const TeamSettings: FC = () => {
       showErrorToast('Failed to add member', err);
     } finally {
       setIsAdding(false);
+    }
+  }
+
+  async function onRemoveMember(userId: string): Promise<void> {
+    setRemovingUserId(userId);
+    try {
+      await removeUserFromTeam(teamId!, userId);
+      showSuccessToast('Member removed from team');
+      await refreshTeamMembers();
+    } catch (err) {
+      showErrorToast('Failed to remove member', err);
+    } finally {
+      setRemovingUserId(null);
     }
   }
 
@@ -277,6 +292,9 @@ const TeamSettings: FC = () => {
                   <TableRow>
                     <TableHead>Email</TableHead>
                     <TableHead>User ID</TableHead>
+                    {canMemberManage && (
+                      <TableHead className="text-right">Actions</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -297,6 +315,19 @@ const TeamSettings: FC = () => {
                       <TableCell className="font-mono text-xs">
                         {m.id}
                       </TableCell>
+                      {canMemberManage && (
+                        <TableCell className="text-right">
+                          <LoadingButton
+                            variant="destructive"
+                            size="sm"
+                            isLoading={removingUserId === m.id}
+                            disabled={removingUserId !== null}
+                            onClick={() => onRemoveMember(m.id)}
+                          >
+                            Remove
+                          </LoadingButton>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

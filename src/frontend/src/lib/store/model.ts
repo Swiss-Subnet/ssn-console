@@ -281,6 +281,7 @@ export type TeamsSlice = {
   updateTeam: (teamId: string, name: string) => Promise<Team>;
   deleteTeam: (teamId: string) => Promise<void>;
   addUserToTeam: (teamId: string, userId: string) => Promise<void>;
+  removeUserFromTeam: (teamId: string, userId: string) => Promise<void>;
   loadTeamUsers: (
     teamId: string,
   ) => Promise<import('@/lib/api-models').TeamUser[]>;

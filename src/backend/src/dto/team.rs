@@ -77,6 +77,15 @@ pub struct AddUserToTeamRequest {
 pub struct AddUserToTeamResponse {}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct RemoveUserFromTeamRequest {
+    pub team_id: String,
+    pub user_id: String,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct RemoveUserFromTeamResponse {}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct UpdateTeamOrgPermissionsRequest {
     pub team_id: String,
     pub permissions: OrgPermissions,
