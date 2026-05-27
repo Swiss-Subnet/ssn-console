@@ -64,6 +64,20 @@ export class CanisterApi {
     mapOkResponse(res);
   }
 
+  public async startCanister(canisterId: string): Promise<void> {
+    const res = await this.actor.start_my_canister({
+      canister_id: canisterId,
+    });
+    mapOkResponse(res);
+  }
+
+  public async stopCanister(canisterId: string): Promise<void> {
+    const res = await this.actor.stop_my_canister({
+      canister_id: canisterId,
+    });
+    mapOkResponse(res);
+  }
+
   public async addCanisterController(
     canisterId: string,
     controllerId: string,

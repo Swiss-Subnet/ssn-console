@@ -24,7 +24,8 @@ use ic_cdk::{
     api::{canister_self, time},
     call::Error as CallError,
     management_canister::{
-        self, CanisterSettings, CanisterStatusArgs, CreateCanisterArgs, UpdateSettingsArgs,
+        self, CanisterSettings, CanisterStatusArgs, CreateCanisterArgs, StartCanisterArgs,
+        StopCanisterArgs, UpdateSettingsArgs,
     },
 };
 
@@ -140,6 +141,43 @@ pub fn update_my_canister_name(
         .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
 
     Ok(())
+}
+
+// Resolves an SSN canister record to its IC principal after confirming the
+// caller may manage the canister's project. Shared by start/stop so the
+// auth + lookup is identical and synchronously testable (the management call
+// itself is exercised by integration tests).
+fn resolve_managed_canister_principal(
+    caller: Principal,
+    canister_id: Uuid,
+) -> ApiResult<Principal> {
+    let project_id = canister_repository::get_canister_project_id(canister_id)
+        .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
+
+    let _auth = ProjectAuth::require(&caller, project_id, ProjectPermissions::CANISTER_MANAGE)?;
+
+    let canister = canister_repository::get_canister(canister_id)
+        .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
+
+    Ok(canister.principal)
+}
+
+pub async fn start_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
+    let principal = resolve_managed_canister_principal(caller, canister_id)?;
+    management_canister::start_canister(&StartCanisterArgs {
+        canister_id: principal,
+    })
+    .await
+    .map_err(|err| ApiError::internal_error(format!("Failed to start canister {principal}: {err}")))
+}
+
+pub async fn stop_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
+    let principal = resolve_managed_canister_principal(caller, canister_id)?;
+    management_canister::stop_canister(&StopCanisterArgs {
+        canister_id: principal,
+    })
+    .await
+    .map_err(|err| ApiError::internal_error(format!("Failed to stop canister {principal}: {err}")))
 }
 
 pub fn remove_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
@@ -342,4 +380,21 @@ pub fn enforce_canister_quota(org_id: Uuid) -> ApiResult {
         )));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn principal(byte: u8) -> Principal {
+        let mut bytes = [0u8; 29];
+        bytes[28] = byte;
+        Principal::from_slice(&bytes)
+    }
+
+    #[test]
+    fn resolve_managed_canister_principal_unknown_canister_is_not_found() {
+        let err = resolve_managed_canister_principal(principal(1), Uuid::new()).unwrap_err();
+        assert!(err.message().contains("not found"));
+    }
 }
