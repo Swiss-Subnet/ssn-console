@@ -1,3 +1,4 @@
+import { createAdminOrgsSlice } from '@/lib/store/admin-orgs';
 import { createApiSlice } from '@/lib/store/api';
 import { createApprovalPoliciesSlice } from '@/lib/store/approval-policy';
 import { createAuthSlice } from '@/lib/store/auth';
@@ -24,6 +25,7 @@ export const useAppStore = create<AppSlice>()((...a) => ({
   ...createCanistersSlice(...a),
   ...createTrustedPartnerSlice(...a),
   ...createStaffSlice(...a),
+  ...createAdminOrgsSlice(...a),
   ...createTermsAndConditionsSlice(...a),
   ...createProjectsSlice(...a),
   ...createOrganizationsSlice(...a),

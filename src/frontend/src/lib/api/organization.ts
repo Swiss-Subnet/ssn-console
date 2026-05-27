@@ -10,12 +10,16 @@ import {
   mapDeleteOrganizationResponse,
   mapListOrgUsersRequest,
   mapListOrgUsersResponse,
+  mapListOrganizationsRequest,
+  mapListOrganizationsResponse,
   mapGetOrgBillingPlanRequest,
   mapGetOrgBillingPlanResponse,
   mapListMyOrgBillingPlansResponse,
   mapSetOrgBillingPlanRequest,
   mapSetOrgBillingPlanResponse,
   type ListMyOrganizationsResponse,
+  type ListOrganizationsRequest,
+  type ListOrganizationsResponse,
   type CreateOrganizationRequest,
   type OrganizationResponse,
   type GetOrganizationRequest,
@@ -37,6 +41,15 @@ export class OrganizationApi {
   public async listMyOrganizations(): Promise<ListMyOrganizationsResponse> {
     const res = await this.actor.list_my_organizations();
     return mapListMyOrganizationsResponse(res);
+  }
+
+  public async listOrganizations(
+    req: ListOrganizationsRequest,
+  ): Promise<ListOrganizationsResponse> {
+    const res = await this.actor.list_organizations(
+      mapListOrganizationsRequest(req),
+    );
+    return mapListOrganizationsResponse(res);
   }
 
   public async createOrganization(

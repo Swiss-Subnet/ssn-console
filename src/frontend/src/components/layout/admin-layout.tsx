@@ -15,6 +15,7 @@ const TABS: AdminTab[] = [
   { to: '/admin/trusted-partners', label: 'Trusted Partners' },
   { to: '/admin/terms-and-conditions', label: 'Terms & Conditions' },
   { to: '/admin/staff', label: 'Staff Permissions' },
+  { to: '/admin/organizations', label: 'Organizations' },
 ];
 
 export const AdminLayout: FC = () => (

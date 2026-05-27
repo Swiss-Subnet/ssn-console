@@ -7,6 +7,7 @@ use super::{
 };
 use canister_utils::{ApiError, ApiResult, Uuid};
 use std::cell::RefCell;
+use std::ops::Bound::{Excluded, Included};
 
 pub fn create_org(user_id: Uuid, org: Organization) -> Uuid {
     let org_id = Uuid::new();
@@ -88,6 +89,23 @@ pub fn list_user_orgs(user_id: Uuid) -> Vec<(Uuid, Organization)> {
     })
 }
 
+// Staff-side full scan over every org, ordered by id, starting strictly after
+// the `after` cursor (or from the beginning when None) and returning up to
+// `limit`. The cursor is the last id returned; pass it back for the next page.
+pub fn list_all_orgs(after: Option<Uuid>, limit: usize) -> Vec<(Uuid, Organization)> {
+    with_state(|s| {
+        let start = match after {
+            Some(cursor) => Excluded(cursor),
+            None => Included(Uuid::MIN),
+        };
+        s.organizations
+            .range((start, Included(Uuid::MAX)))
+            .take(limit)
+            .map(|e| e.into_pair())
+            .collect()
+    })
+}
+
 pub fn list_org_users(org_id: Uuid) -> Vec<Uuid> {
     with_state(|s| {
         s.organization_user_index
@@ -149,4 +167,63 @@ fn with_state<R>(f: impl FnOnce(&OrganizationState) -> R) -> R {
 
 fn mutate_state<R>(f: impl FnOnce(&mut OrganizationState) -> R) -> R {
     STATE.with(|s| f(&mut s.borrow_mut()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn seed(name: &str) -> Uuid {
+        let user = Uuid::new();
+        create_org(
+            user,
+            Organization {
+                name: name.to_string(),
+            },
+        )
+    }
+
+    // Walk every page from the given cursor, collecting ids, so assertions
+    // hold regardless of orgs seeded by other tests sharing the global STATE.
+    fn drain_from(after: Option<Uuid>, page: usize) -> Vec<Uuid> {
+        let mut out = Vec::new();
+        let mut cursor = after;
+        loop {
+            let chunk = list_all_orgs(cursor, page);
+            if chunk.is_empty() {
+                break;
+            }
+            cursor = Some(chunk.last().unwrap().0);
+            out.extend(chunk.into_iter().map(|(id, _)| id));
+        }
+        out
+    }
+
+    #[test]
+    fn list_all_orgs_returns_seeded_orgs_in_id_order() {
+        let mut seeded: Vec<Uuid> = (0..5).map(|i| seed(&format!("order-{i}"))).collect();
+        seeded.sort();
+
+        let all = drain_from(None, 2);
+        let got: Vec<Uuid> = all.into_iter().filter(|id| seeded.contains(id)).collect();
+        assert_eq!(got, seeded);
+    }
+
+    #[test]
+    fn list_all_orgs_honors_limit() {
+        for i in 0..4 {
+            seed(&format!("limit-{i}"));
+        }
+        assert_eq!(list_all_orgs(None, 2).len(), 2);
+    }
+
+    #[test]
+    fn list_all_orgs_cursor_excludes_itself() {
+        let mut seeded: Vec<Uuid> = (0..3).map(|i| seed(&format!("cursor-{i}"))).collect();
+        seeded.sort();
+
+        let after_first = drain_from(Some(seeded[0]), 10);
+        assert!(!after_first.contains(&seeded[0]));
+        assert!(after_first.contains(&seeded[1]));
+    }
 }
