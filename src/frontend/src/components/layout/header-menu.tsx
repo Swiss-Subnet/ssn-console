@@ -24,7 +24,8 @@ import { useMemo, type FC } from 'react';
 import { NavLink } from 'react-router';
 
 export const HeaderMenu: FC = () => {
-  const { identity, logout, termsAndConditions, myInvites } = useAppStore();
+  const { identity, logout, termsAndConditions, myInvites, profile } =
+    useAppStore();
   const isActive = useAppStore(selectIsActive);
   const isAdmin = useAppStore(selectIsAdmin);
   const pendingInviteCount = myInvites.length;
@@ -34,10 +35,19 @@ export const HeaderMenu: FC = () => {
     [identity],
   );
 
+  const userId = profile?.id;
+
   async function onPrincipalClicked(): Promise<void> {
     if (principal) {
       await navigator.clipboard.writeText(principal);
       showSuccessToast('Principal copied to clipboard!');
+    }
+  }
+
+  async function onUserIdClicked(): Promise<void> {
+    if (userId) {
+      await navigator.clipboard.writeText(userId);
+      showSuccessToast('User ID copied to clipboard!');
     }
   }
 
@@ -67,6 +77,18 @@ export const HeaderMenu: FC = () => {
             <ClipboardIcon />
           </DropdownMenuItem>
         </DropdownMenuGroup>
+
+        {userId && (
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Your User ID</DropdownMenuLabel>
+
+            <DropdownMenuItem onClick={() => onUserIdClicked()}>
+              <p className="truncate">{userId}</p>
+
+              <ClipboardIcon />
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        )}
 
         <DropdownMenuSeparator />
 
