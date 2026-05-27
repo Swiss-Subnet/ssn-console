@@ -196,7 +196,9 @@ const OrganizationSettings: FC = () => {
           </CardContent>
         </Card>
 
-        {billingPlan && <OrganizationBillingPlan plan={billingPlan} />}
+        {billingPlan && (
+          <OrganizationBillingPlan plan={billingPlan} orgId={orgId} />
+        )}
 
         <OrganizationTeams
           orgId={orgId}

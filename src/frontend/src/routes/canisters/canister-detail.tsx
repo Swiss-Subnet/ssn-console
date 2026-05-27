@@ -35,6 +35,8 @@ import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-
 import { DeletedCanisterCta } from '@/routes/canisters/deleted-canister-cta';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { UsageMetricsGrid } from '@/components/usage-metrics-grid';
+import { type ProjectUsage } from '@/lib/api-models';
 import { useEffect, useMemo, useState, type FC } from 'react';
 
 function statusBadgeVariant(
@@ -155,12 +157,14 @@ const RenameCanisterCard: FC<RenameCanisterCardProps> = ({
 
 type CanisterInfoSectionsProps = {
   canisterPrincipal: string;
+  projectPrincipal: string;
   info: CanisterInfo;
   controllerNames: Map<string, string>;
 };
 
 const CanisterInfoSections: FC<CanisterInfoSectionsProps> = ({
   canisterPrincipal,
+  projectPrincipal,
   info,
   controllerNames,
 }) => {
@@ -274,6 +278,11 @@ const CanisterInfoSections: FC<CanisterInfoSectionsProps> = ({
           value={info.readyForMigration ? 'Yes' : 'No'}
         />
       </SectionCard>
+
+      <CanisterUsageMetrics
+        projectId={projectPrincipal}
+        canisterId={canisterPrincipal}
+      />
 
       <SectionCard title="Memory">
         <StatRow label="Total" value={formatBytes(info.memorySize)} />
@@ -433,6 +442,67 @@ const CanisterHistory: FC<CanisterHistoryProps> = ({
   );
 };
 
+const CanisterUsageMetrics: FC<{ projectId: string; canisterId: string }> = ({
+  projectId,
+  canisterId,
+}) => {
+  const { usageApi } = useAppStore();
+  const [usage, setUsage] = useState<ProjectUsage | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    usageApi
+      .getUsage({ projectId, billingMonth: null })
+      .then(res => {
+        const cUsage = res.canisters.find(c => c.canisterId === canisterId);
+        if (cUsage) {
+          setUsage({
+            memory: cUsage.memory,
+            memoryBytes: cUsage.memoryBytes,
+            computeAllocation: cUsage.computeAllocation,
+            computeAllocationPercent: cUsage.computeAllocationPercent,
+            ingressInduction: cUsage.ingressInduction,
+            ingressInductionBytesTotal: cUsage.ingressInductionBytesTotal,
+            instructions: cUsage.instructions,
+            computeTimeSecondsTotal: cUsage.computeTimeSecondsTotal,
+            requestAndResponseTransmission:
+              cUsage.requestAndResponseTransmission,
+            transmissionBytesTotal: cUsage.transmissionBytesTotal,
+            uninstall: cUsage.uninstall,
+            uninstallsTotal: cUsage.uninstallsTotal,
+            httpOutcalls: cUsage.httpOutcalls,
+            burnedCycles: cUsage.burnedCycles,
+          });
+        } else {
+          setUsage(null);
+        }
+      })
+      .catch(err => {
+        showErrorToast('Failed to load canister usage metrics', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [projectId, canisterId, usageApi]);
+
+  return (
+    <SectionCard title="Usage Metrics">
+      {isLoading ? (
+        <div className="flex justify-center py-4">
+          <RefreshCw className="text-muted-foreground h-5 w-5 animate-spin" />
+        </div>
+      ) : usage ? (
+        <UsageMetricsGrid usage={usage} />
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          No usage metrics available for this canister.
+        </p>
+      )}
+    </SectionCard>
+  );
+};
+
 const CanisterDetail: FC = () => {
   const {
     isCanistersLoading,
@@ -580,6 +650,7 @@ const CanisterDetail: FC = () => {
           {canister.state.availability === CanisterAvailability.Accessible ? (
             <CanisterInfoSections
               canisterPrincipal={canister.principal}
+              projectPrincipal={projectId}
               info={canister.state.info}
               controllerNames={controllerNames}
             />

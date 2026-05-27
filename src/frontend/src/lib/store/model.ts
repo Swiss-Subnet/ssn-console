@@ -30,6 +30,8 @@ import type {
   Team,
   LinkedPrincipal,
   PendingLinkCode,
+  ProjectUsage,
+  GetUsageResponse,
 } from '@/lib/api-models';
 import type {
   ApprovalPolicyApi,
@@ -47,6 +49,7 @@ import type {
   TeamApi,
   InviteApi,
   AuthApi,
+  UsageApi,
 } from '@/lib/api';
 import type { ActorSubclass, HttpAgent, Identity } from '@icp-sdk/core/agent';
 import type { AuthClient } from '@icp-sdk/auth/client';
@@ -84,6 +87,7 @@ export type ApiSlice = {
   approvalPolicyApi: ApprovalPolicyApi;
   proposalApi: ProposalApi;
   principalLinkApi: PrincipalLinkApi;
+  usageApi: UsageApi;
 
   setAgentIdentity: (identity: Identity) => void;
 };
@@ -290,6 +294,14 @@ export type TeamsSlice = {
   ) => Promise<OrgTeam>;
 };
 
+export type UsageSlice = {
+  loadProjectUsage: (
+    projectId: string,
+    billingMonth?: string,
+  ) => Promise<GetUsageResponse>;
+  loadOrgUsage: (orgId: string, billingMonth?: string) => Promise<ProjectUsage>;
+};
+
 export type AppSlice = AuthSlice &
   ApiSlice &
   UserProfileSlice &
@@ -304,6 +316,7 @@ export type AppSlice = AuthSlice &
   InvitesSlice &
   ApprovalPoliciesSlice &
   ProposalsSlice &
-  PrincipalLinkSlice;
+  PrincipalLinkSlice &
+  UsageSlice;
 
 export type AppStateCreator<T> = StateCreator<AppSlice, [], [], T>;

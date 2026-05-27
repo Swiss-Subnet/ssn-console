@@ -14,6 +14,7 @@ import { createTermsAndConditionsSlice } from '@/lib/store/terms-and-conditions'
 import { createTrustedPartnerSlice } from '@/lib/store/trusted-partner';
 import { createUserProfileSlice } from '@/lib/store/user-profile';
 import { createUsersSlice } from '@/lib/store/users';
+import { createUsageSlice } from '@/lib/store/usage';
 import { create } from 'zustand';
 
 export const useAppStore = create<AppSlice>()((...a) => ({
@@ -32,4 +33,5 @@ export const useAppStore = create<AppSlice>()((...a) => ({
   ...createApprovalPoliciesSlice(...a),
   ...createProposalsSlice(...a),
   ...createPrincipalLinkSlice(...a),
+  ...createUsageSlice(...a),
 }));

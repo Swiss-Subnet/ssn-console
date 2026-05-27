@@ -19,6 +19,7 @@ import {
   TeamApi,
   InviteApi,
   AuthApi,
+  UsageApi,
 } from '@/lib/api';
 import { OFFCHAIN_SERVICE_URL } from '@/env';
 import { isNil } from '@/lib/nil';
@@ -77,6 +78,7 @@ const authApi = new AuthApi(OFFCHAIN_SERVICE_URL);
 const approvalPolicyApi = new ApprovalPolicyApi(actor);
 const proposalApi = new ProposalApi(actor);
 const principalLinkApi = new PrincipalLinkApi(actor);
+const usageApi = new UsageApi(actor);
 
 export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
   agent,
@@ -96,6 +98,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
   approvalPolicyApi,
   proposalApi,
   principalLinkApi,
+  usageApi,
 
   setAgentIdentity: identity => {
     const { agent } = get();

@@ -5,7 +5,8 @@
   "scripts": {
     "fetch-subnet-canister-ranges": "bun run ./src/fetch-subnet-canister-ranges.ts",
     "fetch-local-subnet-canister-ranges": "bun run ./src/fetch-local-subnet-canister-ranges.ts",
-    "fetch-canisters-csv": "bun run ./src/fetch-canisters-csv.ts"
+    "fetch-canisters-csv": "bun run ./src/fetch-canisters-csv.ts",
+    "mock-canister-usage": "bun run ./src/mock-canister-usage.ts"
   },
   "dependencies": {
     "@ssn/backend-api": "workspace:*",
