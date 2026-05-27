@@ -91,9 +91,11 @@ New users start with `Pending` status. Activating via dfx is
 sufficient to use the app locally -- email verification is optional:
 
 ```shell
-dfx canister call backend list_user_profiles '(record {})'
-dfx canister call backend update_user_profile '(record { user_id = "<id>"; status = opt variant { Active } })'
+just activate-user
 ```
+
+This lists local users, lets you pick one from a menu, and sets it
+`Active`.
 
 ### Granting Staff Permissions Locally
 

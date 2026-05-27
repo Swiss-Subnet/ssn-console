@@ -37,5 +37,17 @@ test-backend *args: build-backend
 retest-backend *args:
     cd src/backend-tests && bun run test {{args}}
 
+# List local users, pick one from a menu, and set it Active
+activate-user:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    json=$(dfx canister call backend list_user_profiles '(record {})' --output json)
+    mapfile -t lines < <(echo "$json" | jq -r '.Ok[] | "\(.id)\t\(.email[0] // "no-email")\t\(.status | keys[0])"')
+    if [ ${#lines[@]} -eq 0 ]; then echo "No user profiles found."; exit 0; fi
+    echo "Select a user to activate:"
+    select line in "${lines[@]}"; do [ -n "${line:-}" ] && break; done
+    id=${line%%$'\t'*}
+    dfx canister call backend update_user_profile "(record { user_id = \"$id\"; status = opt variant { Active } })"
+
 # Go microservices live under services/; see `just services::` for recipes
 mod services
