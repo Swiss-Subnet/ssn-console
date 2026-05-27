@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "vite",
-    "build": "tsc && vite build"
+    "build": "tsc && vite build",
+    "test": "vitest run"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
@@ -16,6 +17,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.3.1",
+    "fflate": "^0.8.2",
     "lucide-react": "^0.562.0",
     "micromark": "^4.0.2",
     "next-themes": "^0.4.6",

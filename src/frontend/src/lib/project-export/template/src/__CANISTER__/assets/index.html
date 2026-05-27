@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="{{CANISTER}} -- an asset canister of {{PROJECT}}, deployed on the Internet Computer via the Swiss Subnet Console."
+    />
+    <meta name="theme-color" content="{{ACCENT}}" />
+    <meta property="og:title" content="{{PROJECT}} / {{CANISTER}}" />
+    <meta
+      property="og:description"
+      content="An asset canister deployed on the Internet Computer via the Swiss Subnet Console."
+    />
+    <title>{{PROJECT}} / {{CANISTER}}</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fafaf9;
+        --fg: #1d1d1d;
+        --muted: #6b6b6b;
+        --rule: rgba(29, 29, 29, 0.1);
+        --accent: {{ACCENT}};
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0a0a0a;
+          --fg: #fafaf9;
+          --muted: #8a8a8a;
+          --rule: rgba(250, 250, 249, 0.1);
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+      header, main, footer {
+        padding: 2rem clamp(1.5rem, 6vw, 4rem);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .mark {
+        width: 1.75rem;
+        height: 1.75rem;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2rem;
+        max-width: 64rem;
+      }
+      .eyebrow {
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(2.5rem, 7vw, 5rem);
+        font-weight: 500;
+        line-height: 0.95;
+        letter-spacing: -0.02em;
+      }
+      h1 .canister {
+        display: block;
+        color: var(--accent);
+      }
+      .meta {
+        border-top: 1px solid var(--rule);
+        padding-top: 1.5rem;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.5rem 2rem;
+        font-size: 0.85rem;
+      }
+      .meta dt {
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        align-self: center;
+      }
+      .meta dd { margin: 0; word-break: break-all; }
+      footer {
+        font-size: 0.75rem;
+        color: var(--muted);
+        border-top: 1px solid var(--rule);
+      }
+      footer a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+      footer a:hover { color: var(--fg); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <svg
+        class="mark"
+        viewBox="0 0 40 40"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="Swiss Subnet"
+      >
+        <rect width="40" height="40" fill="#e22f30" />
+        <polygon
+          points="33.4 15.98 23.74 15.98 23.74 6.33 15.98 6.33 15.98 15.98 6.33 15.98 6.33 23.74 15.98 23.74 15.98 33.4 23.74 33.4 23.74 23.74 33.4 23.74 33.4 15.98"
+          fill="#fff"
+        />
+      </svg>
+      <span class="mono">Swiss Subnet</span>
+    </header>
+
+    <main>
+      <div>
+        <div class="eyebrow mono">{{PROJECT}}</div>
+        <h1>
+          Hello.
+          <span class="canister mono">{{CANISTER}}</span>
+        </h1>
+      </div>
+
+      <dl class="meta mono">
+        <dt>Canister</dt>
+        <dd>{{CANISTER}}</dd>
+        <dt>Principal</dt>
+        <dd>{{CANISTER_PRINCIPAL}}</dd>
+      </dl>
+    </main>
+
+    <footer class="mono">
+      Deployed with <a href="https://github.com/dfinity/icp-cli">icp-cli</a> on
+      the Internet Computer &middot; <a href="https://subnet.ch">subnet.ch</a>
+    </footer>
+  </body>
+</html>

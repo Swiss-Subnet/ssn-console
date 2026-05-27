@@ -75,11 +75,50 @@
               chmod +x $out/bin/dfx
             '';
           };
+
+        icpCliVersion = "0.2.7";
+        icp-cli = let
+          platformMap = {
+            "x86_64-linux" = {
+              triple = "x86_64-unknown-linux-gnu";
+              hash = "sha256-vGJy/AAE0XU4xlDPyLrO3UZK6GUn7+Fy7TtJmj4Pd5g=";
+            };
+            "aarch64-linux" = {
+              triple = "aarch64-unknown-linux-gnu";
+              hash = "sha256-8FLrrasFLsTmzLpOiifiss1BXXWt9ok9HxFxBtOVBPE=";
+            };
+            "x86_64-darwin" = {
+              triple = "x86_64-apple-darwin";
+              hash = "sha256-97lHcvwiNaNpnJib1TySNyLwJf40N1w1aHK1ie4Rvng=";
+            };
+            "aarch64-darwin" = {
+              triple = "aarch64-apple-darwin";
+              hash = "sha256-J5YFalOpgwVYs1O3AsFocd2rMFr35ztkH5vNp5Xhz74=";
+            };
+          };
+          platformInfo = platformMap.${system};
+        in
+          pkgs.stdenv.mkDerivation {
+            pname = "icp-cli";
+            version = icpCliVersion;
+            src = pkgs.fetchurl {
+              url = "https://github.com/dfinity/icp-cli/releases/download/v${icpCliVersion}/icp-cli-${platformInfo.triple}.tar.xz";
+              hash = platformInfo.hash;
+            };
+            # Release tarball nests the binary under icp-cli-<triple>/icp.
+            sourceRoot = "icp-cli-${platformInfo.triple}";
+            installPhase = ''
+              mkdir -p $out/bin
+              cp icp $out/bin/
+              chmod +x $out/bin/icp
+            '';
+          };
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = [
             rustToolchain
             dfx
+            icp-cli
             canbench
 
             pkgs.bun
@@ -91,7 +130,7 @@
 
           shellHook = ''
             if [ -t 1 ]; then
-              echo "SSN Console: rust ${rustToolchain.version or "$(rustc --version)"} | bun ${pkgs.bun.version} | node ${pkgs.nodejs_22.version} | dfx ${dfxVersion} | ssl ${pkgs.openssl.version} | just ${pkgs.just.version} | canbench ${canbenchVersion} | go ${pkgs.go.version}"
+              echo "SSN Console: rust ${rustToolchain.version or "$(rustc --version)"} | bun ${pkgs.bun.version} | node ${pkgs.nodejs_22.version} | dfx ${dfxVersion} | icp-cli ${icpCliVersion} | ssl ${pkgs.openssl.version} | just ${pkgs.just.version} | canbench ${canbenchVersion} | go ${pkgs.go.version}"
             fi
           '';
         };

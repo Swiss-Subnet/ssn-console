@@ -18,6 +18,7 @@ import {
 } from '@/lib/api-models';
 import { formatBytes, formatCycles } from '@/lib/format';
 import { useRequireProjectId } from '@/lib/params';
+import { slugifyCanisterName } from '@/lib/project-export/build-zip';
 import { Link } from 'react-router';
 
 export type CanisterGridEntryProps = {
@@ -43,17 +44,26 @@ export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
     canister.state.availability === CanisterAvailability.Accessible
       ? canister.state.info
       : null;
+  const displayName = canister.name ?? 'Canister';
+  const exportSlug = canister.name ? slugifyCanisterName(canister.name) : null;
+  const showSlug = exportSlug !== null && exportSlug !== canister.name;
 
   return (
     <>
       <Card size="sm">
         <CardHeader>
-          <CardTitle className="truncate">
-            {canister.name ?? 'Canister'}
-          </CardTitle>
+          <CardTitle className="truncate">{displayName}</CardTitle>
           <CardDescription className="truncate font-mono">
             {canister.principal}
           </CardDescription>
+          {showSlug && (
+            <CardDescription
+              className="text-muted-foreground/70 truncate font-mono text-xs"
+              title="Folder name used by the project export"
+            >
+              src/{exportSlug}/
+            </CardDescription>
+          )}
           {accessibleInfo && (
             <CardAction>
               <Badge variant={statusBadgeVariant(accessibleInfo.status)}>
