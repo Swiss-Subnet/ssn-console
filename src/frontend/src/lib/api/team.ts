@@ -12,6 +12,8 @@ import {
   mapDeleteTeamResponse,
   mapAddUserToTeamRequest,
   mapAddUserToTeamResponse,
+  mapRemoveUserFromTeamRequest,
+  mapRemoveUserFromTeamResponse,
   mapListTeamUsersRequest,
   mapListTeamUsersResponse,
   mapUpdateTeamOrgPermissionsRequest,
@@ -25,6 +27,7 @@ import {
   type UpdateTeamRequest,
   type DeleteTeamRequest,
   type AddUserToTeamRequest,
+  type RemoveUserFromTeamRequest,
   type ListTeamUsersRequest,
   type TeamUser,
   type UpdateTeamOrgPermissionsRequest,
@@ -71,6 +74,15 @@ export class TeamApi {
   public async addUserToTeam(req: AddUserToTeamRequest): Promise<void> {
     const res = await this.actor.add_user_to_team(mapAddUserToTeamRequest(req));
     mapAddUserToTeamResponse(res);
+  }
+
+  public async removeUserFromTeam(
+    req: RemoveUserFromTeamRequest,
+  ): Promise<void> {
+    const res = await this.actor.remove_user_from_team(
+      mapRemoveUserFromTeamRequest(req),
+    );
+    mapRemoveUserFromTeamResponse(res);
   }
 
   public async listTeamUsers(req: ListTeamUsersRequest): Promise<TeamUser[]> {

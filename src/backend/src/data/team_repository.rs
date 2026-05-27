@@ -185,6 +185,41 @@ pub fn add_user_to_team(user_id: Uuid, team_id: Uuid) {
     });
 }
 
+// No-op if the link is absent.
+pub fn remove_user_from_team(user_id: Uuid, team_id: Uuid) {
+    mutate_state(|s| {
+        s.team_user_index.remove(&(team_id, user_id));
+        s.user_team_index.remove(&(user_id, team_id));
+    });
+}
+
+// Invariant predicate: would the org still have at least one team holding
+// ORG_ADMIN with at least one member if `user_id` were removed from
+// `from_team_id`? Like `org_admin_is_populated_excluding_team`, this is a
+// pre-mutation check — on the IC a post-mutation Err does not roll back the
+// write. Unlike that helper, the team is not excluded; instead its membership
+// is evaluated as if `user_id` had already left, so removing the sole member
+// of the only ORG_ADMIN team is rejected.
+pub fn org_admin_is_populated_excluding_team_member(
+    org_id: Uuid,
+    from_team_id: Uuid,
+    user_id: Uuid,
+) -> bool {
+    with_state(|s| {
+        s.organization_team_permissions_index
+            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .any(|entry| {
+                let (_, team_id) = *entry.key();
+                if !entry.value().contains(OrgPermissions::ORG_ADMIN) {
+                    return false;
+                }
+                s.team_user_index
+                    .range((team_id, Uuid::MIN)..=(team_id, Uuid::MAX))
+                    .any(|(_, member_id)| !(team_id == from_team_id && member_id == user_id))
+            })
+    })
+}
+
 pub fn list_org_teams_with_permissions(org_id: Uuid) -> Vec<(Uuid, Team, OrgPermissions)> {
     with_state(|s| {
         s.organization_team_permissions_index
