@@ -95,11 +95,11 @@ export function buildProjectZip(input: BuildProjectZipInput): Uint8Array {
     if (relPath.includes(CANISTER_PATH_MARKER)) {
       for (const canister of exported) {
         const path = root + rewriteCanisterPath(relPath, canister.name);
-        files[path] = strToU8(renderContent(content, canister, input));
+        files[path] = strToU8(renderContent(content, path, canister, input));
       }
     } else {
       const path = root + rewritePlainPath(relPath);
-      files[path] = strToU8(renderContent(content, null, input));
+      files[path] = strToU8(renderContent(content, path, null, input));
     }
   }
 
@@ -125,12 +125,29 @@ function rewriteCanisterPath(relPath: string, canisterName: string): string {
   return named.replace(`${canisterName}/assets/`, `${canisterName}/dist/`);
 }
 
+// `.md` is included because Markdown viewers render raw HTML, so an unescaped
+// project name is an injection vector there too. Canister name/principal are
+// already constrained to a safe alphabet by the slugifiers.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function renderContent(
   content: string,
+  path: string,
   canister: ExportedCanister | null,
   input: BuildProjectZipInput,
 ): string {
-  let out = content.split(TOKEN_PROJECT).join(input.projectName);
+  const rendersHtml = path.endsWith('.html') || path.endsWith('.md');
+  const projectName = rendersHtml
+    ? escapeHtml(input.projectName)
+    : input.projectName;
+  let out = content.split(TOKEN_PROJECT).join(projectName);
   if (canister !== null) {
     out = out
       .split(TOKEN_CANISTER_PRINCIPAL)
