@@ -1,10 +1,17 @@
 import { mapOkResponse } from '@/lib/api-models/error';
 import {
+  mapPlanTier,
+  type PlanTier,
+} from '@/lib/api-models/organization-billing-plan';
+import {
   mapOrgPermissions,
   type OrgPermissions,
 } from '@/lib/api-models/permissions';
 import type {
   ListMyOrganizationsResponse as ApiListMyOrganizationsResponse,
+  ListOrganizationsRequest as ApiListOrganizationsRequest,
+  ListOrganizationsResponse as ApiListOrganizationsResponse,
+  AdminOrganization as ApiAdminOrganization,
   CreateOrganizationRequest as ApiCreateOrganizationRequest,
   CreateOrganizationResponse as ApiCreateOrganizationResponse,
   GetOrganizationRequest as ApiGetOrganizationRequest,
@@ -65,6 +72,51 @@ export function mapListMyOrganizationsResponse(
 
   return {
     organizations: okRes.map(mapOrganizationResponse),
+  };
+}
+
+export type AdminOrganization = {
+  id: string;
+  name: string;
+  tier: PlanTier;
+  memberCount: number;
+};
+
+export type ListOrganizationsRequest = {
+  after: string | null;
+  limit: number | null;
+};
+
+export type ListOrganizationsResponse = {
+  organizations: AdminOrganization[];
+  nextCursor: string | null;
+};
+
+export function mapListOrganizationsRequest(
+  req: ListOrganizationsRequest,
+): ApiListOrganizationsRequest {
+  return {
+    after: req.after === null ? [] : [req.after],
+    limit: req.limit === null ? [] : [req.limit],
+  };
+}
+
+function mapAdminOrganization(org: ApiAdminOrganization): AdminOrganization {
+  return {
+    id: org.id,
+    name: org.name,
+    tier: mapPlanTier(org.tier),
+    memberCount: org.member_count,
+  };
+}
+
+export function mapListOrganizationsResponse(
+  res: ApiListOrganizationsResponse,
+): ListOrganizationsResponse {
+  const ok = mapOkResponse(res);
+  return {
+    organizations: ok.organizations.map(mapAdminOrganization),
+    nextCursor: ok.next_cursor[0] ?? null,
   };
 }
 

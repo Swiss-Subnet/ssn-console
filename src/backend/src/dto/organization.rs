@@ -1,8 +1,32 @@
-use super::{OrgPermissions, Team};
+use super::{OrgPermissions, PlanTier, Team};
 use candid::CandidType;
 use serde::Deserialize;
 
 pub type ListMyOrganizationsResponse = Vec<Organization>;
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListOrganizationsRequest {
+    // Exclusive cursor: the id of the last org from the previous page.
+    pub after: Option<String>,
+    pub limit: Option<u32>,
+}
+
+// Staff-side projection of an org with its billing tier and member count.
+// Distinct from `Organization` (member-scoped) so it never leaks through
+// member-gated endpoints. Always staff-gated (READ_ALL_ORGS).
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct AdminOrganization {
+    pub id: String,
+    pub name: String,
+    pub tier: PlanTier,
+    pub member_count: u32,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListOrganizationsResponse {
+    pub organizations: Vec<AdminOrganization>,
+    pub next_cursor: Option<String>,
+}
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct Organization {

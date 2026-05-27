@@ -204,6 +204,20 @@ export type StaffSlice = {
   revokeStaffPermissions: (userId: string) => Promise<void>;
 };
 
+export type AdminOrgsSlice = {
+  isAdminOrgsInitialized: boolean;
+  adminOrgs: import('@/lib/api-models').AdminOrganization[] | null;
+  adminOrgsNextCursor: string | null;
+
+  initializeAdminOrgs: () => Promise<void>;
+  loadMoreAdminOrgs: () => Promise<void>;
+  clearAdminOrgs: () => void;
+  setAdminOrgPlan: (
+    orgId: string,
+    tier: import('@/lib/api-models').PlanTier,
+  ) => Promise<void>;
+};
+
 export type TermsAndConditionsSlice = {
   isTermsAndConditionsInitialized: boolean;
   termsAndConditions: TermsAndConditions | null;
@@ -310,6 +324,7 @@ export type AppSlice = AuthSlice &
   CanistersSlice &
   TrustedPartnersSlice &
   StaffSlice &
+  AdminOrgsSlice &
   TermsAndConditionsSlice &
   ProjectsSlice &
   OrganizationsSlice &

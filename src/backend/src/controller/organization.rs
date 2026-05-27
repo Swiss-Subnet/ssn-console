@@ -3,7 +3,8 @@ use crate::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
         DeleteOrganizationResponse, GetOrganizationRequest, GetOrganizationResponse,
         ListMyOrganizationsResponse, ListOrgUsersRequest, ListOrgUsersResponse,
-        UpdateOrganizationRequest, UpdateOrganizationResponse,
+        ListOrganizationsRequest, ListOrganizationsResponse, UpdateOrganizationRequest,
+        UpdateOrganizationResponse,
     },
     service::organization_service,
 };
@@ -18,6 +19,14 @@ fn list_my_organizations() -> ApiResultDto<ListMyOrganizationsResponse> {
     }
 
     organization_service::list_my_organizations(&caller).into()
+}
+
+// Staff-side listing of every org with billing tier + member count. The
+// READ_ALL_ORGS gate lives in the service (via assert_staff_perm).
+#[query]
+fn list_organizations(req: ListOrganizationsRequest) -> ApiResultDto<ListOrganizationsResponse> {
+    let caller = msg_caller();
+    organization_service::list_organizations(&caller, req).into()
 }
 
 #[update]

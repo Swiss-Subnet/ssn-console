@@ -6,6 +6,26 @@ type ListMyOrganizationsResponse = variant {
   Err : ApiError;
 };
 
+type ListOrganizationsRequest = record {
+  after : opt text;
+  limit : opt nat32;
+};
+
+type AdminOrganization = record {
+  id : text;
+  name : text;
+  tier : PlanTier;
+  member_count : nat32;
+};
+
+type ListOrganizationsResponse = variant {
+  Ok : record {
+    organizations : vec AdminOrganization;
+    next_cursor : opt text;
+  };
+  Err : ApiError;
+};
+
 type CreateOrganizationRequest = record {
   name : text;
 };
@@ -74,6 +94,7 @@ type Organization = record {
 
 service : {
   list_my_organizations : () -> (ListMyOrganizationsResponse) query;
+  list_organizations : (ListOrganizationsRequest) -> (ListOrganizationsResponse) query;
   create_organization : (CreateOrganizationRequest) -> (CreateOrganizationResponse);
   get_organization : (GetOrganizationRequest) -> (GetOrganizationResponse) query;
   update_organization : (UpdateOrganizationRequest) -> (UpdateOrganizationResponse);

@@ -120,6 +120,21 @@ export function noProjectTeamLinkError(
   };
 }
 
+// Returned by staff-gated endpoints when the caller is authenticated but
+// lacks the required StaffPermissions bit. `permissions` must match the
+// Display formatting of the required StaffPermissions value, e.g.
+// "WRITE_BILLING".
+export function lacksStaffPermissionError(
+  permissions: string,
+): ApiErrorResponse {
+  return {
+    Err: {
+      code: [{ Unauthorized: {} }],
+      message: `Caller lacks required staff permissions: ${permissions}`,
+    },
+  };
+}
+
 export function canisterQuotaExceededError(
   orgId: string,
   limit: number,

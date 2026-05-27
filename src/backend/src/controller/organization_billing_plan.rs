@@ -1,17 +1,23 @@
 use crate::{
+    data::StaffPermissions,
     dto::{
         GetOrgBillingPlanRequest, GetOrgBillingPlanResponse, ListMyOrgBillingPlansResponse,
         SetOrgBillingPlanRequest, SetOrgBillingPlanResponse,
     },
-    service::organization_billing_plan_service,
+    service::{access_control_service, organization_billing_plan_service},
 };
-use canister_utils::{assert_authenticated, assert_controller, ApiResultDto};
+use canister_utils::{assert_authenticated, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
+// Staff-gated on WRITE_BILLING (canister controllers are auto-allowed via
+// assert_staff_perm). The off-chain billing gateway and staff operators
+// driving manual plan changes from the admin view both hit this path.
 #[update]
 fn set_org_billing_plan(req: SetOrgBillingPlanRequest) -> ApiResultDto<SetOrgBillingPlanResponse> {
     let caller = msg_caller();
-    if let Err(err) = assert_controller(&caller) {
+    if let Err(err) =
+        access_control_service::assert_staff_perm(&caller, StaffPermissions::WRITE_BILLING)
+    {
         return ApiResultDto::Err(err);
     }
 

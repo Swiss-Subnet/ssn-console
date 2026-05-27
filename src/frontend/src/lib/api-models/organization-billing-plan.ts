@@ -15,7 +15,7 @@ export enum PlanTier {
   Enterprise = 'Enterprise',
 }
 
-function mapPlanTier(tier: ApiPlanTier): PlanTier {
+export function mapPlanTier(tier: ApiPlanTier): PlanTier {
   if ('Free' in tier) return PlanTier.Free;
   if ('Pro' in tier) return PlanTier.Pro;
   return PlanTier.Enterprise;

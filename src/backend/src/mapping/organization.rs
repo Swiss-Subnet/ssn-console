@@ -1,12 +1,40 @@
 use crate::{
-    data::{self},
+    data::{self, PlanTier as ModelPlanTier},
     dto::{
-        ListMyOrganizationsResponse, ListOrgUsersResponse, OrgUser, Organization,
-        OrganizationResponse,
+        AdminOrganization, ListMyOrganizationsResponse, ListOrgUsersResponse,
+        ListOrganizationsResponse, OrgUser, Organization, OrganizationResponse, PlanTier,
     },
     mapping::{map_org_permissions, map_team},
 };
 use canister_utils::Uuid;
+
+fn map_plan_tier(tier: ModelPlanTier) -> PlanTier {
+    match tier {
+        ModelPlanTier::Free => PlanTier::Free,
+        ModelPlanTier::Pro => PlanTier::Pro,
+        ModelPlanTier::Enterprise => PlanTier::Enterprise,
+    }
+}
+
+pub type AdminOrgEntry = (Uuid, data::Organization, ModelPlanTier, u32);
+
+pub fn map_list_organizations_response(
+    entries: Vec<AdminOrgEntry>,
+    next_cursor: Option<Uuid>,
+) -> ListOrganizationsResponse {
+    ListOrganizationsResponse {
+        organizations: entries
+            .into_iter()
+            .map(|(id, org, tier, member_count)| AdminOrganization {
+                id: id.to_string(),
+                name: org.name,
+                tier: map_plan_tier(tier),
+                member_count,
+            })
+            .collect(),
+        next_cursor: next_cursor.map(|id| id.to_string()),
+    }
+}
 
 pub fn map_list_my_organizations_response(
     organizations: Vec<(Uuid, data::Organization, data::OrgPermissions)>,
