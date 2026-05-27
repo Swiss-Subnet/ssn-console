@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
+import { AdminEmail } from '@/routes/admin/admin-email';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, type FC } from 'react';
 import { useForm } from 'react-hook-form';
@@ -277,9 +278,11 @@ const ConfirmPanel: FC<ConfirmPanelProps> = ({
               {targetUser ? (
                 <>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">
-                      {targetUser.email ?? 'No email on file'}
-                    </span>
+                    <AdminEmail
+                      email={targetUser.email}
+                      fallback="No email on file"
+                      className="font-medium"
+                    />
                     {targetUser.email && (
                       <Badge
                         variant={

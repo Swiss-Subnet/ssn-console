@@ -14,6 +14,7 @@ import { UserStatus, type UserProfile } from '@/lib/api-models';
 import { useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
+import { AdminEmail } from '@/routes/admin/admin-email';
 import { UserStatusBadge } from '@/routes/admin/user-status-badge';
 import { UserStatusToggle } from '@/routes/admin/user-status-toggle';
 import {
@@ -292,7 +293,7 @@ export const UserTable: FC<UserTableProps> = ({ className }) => {
 
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <span>{user.email ?? 'None provided'}</span>
+                    <AdminEmail email={user.email} />
                     {user.email && (
                       <Badge
                         variant={user.emailVerified ? 'success' : 'secondary'}

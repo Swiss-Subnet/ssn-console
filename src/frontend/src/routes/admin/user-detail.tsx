@@ -14,8 +14,10 @@ import {
   type Canister,
   type ListUserCanistersResponse,
 } from '@/lib/api-models';
-import { useAppStore } from '@/lib/store';
+import { maskEmail } from '@/lib/format';
+import { useAdminPrivacyStore, useAppStore } from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
+import { AdminEmail } from '@/routes/admin/admin-email';
 import { UserCanisterCard } from '@/routes/admin/user-canister-card';
 import { UserLinkedPrincipals } from '@/routes/admin/user-linked-principals';
 import { UserStatusBadge } from '@/routes/admin/user-status-badge';
@@ -26,10 +28,13 @@ import { useParams } from 'react-router';
 const UserDetail: FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { users, canisterApi } = useAppStore();
+  const censorEmails = useAdminPrivacyStore(s => s.censorEmails);
   const [canisters, setCanisters] = useState<Canister[] | null>(null);
   const [isLoadingCanisters, setIsLoadingCanisters] = useState(true);
 
   const user = users?.find(u => u.id === userId) ?? null;
+  const breadcrumbEmail =
+    user?.email != null && censorEmails ? maskEmail(user.email) : user?.email;
 
   const fetchCanisters = useCallback(() => {
     if (!userId) return Promise.resolve();
@@ -58,7 +63,7 @@ const UserDetail: FC = () => {
         items={[
           { label: 'Admin', to: '/admin' },
           { label: 'Users', to: '/admin/users' },
-          { label: user?.email ?? userId ?? 'User' },
+          { label: breadcrumbEmail ?? userId ?? 'User' },
         ]}
       />
 
@@ -85,7 +90,7 @@ const UserDetail: FC = () => {
               <div>
                 <p className="text-muted-foreground text-xs">Email</p>
                 <div className="mt-1 flex items-center gap-2">
-                  <span>{user.email ?? 'None provided'}</span>
+                  <AdminEmail email={user.email} />
                   {user.email && (
                     <Badge
                       variant={user.emailVerified ? 'success' : 'secondary'}

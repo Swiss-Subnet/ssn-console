@@ -55,6 +55,19 @@ export function formatDuration(seconds: bigint): string {
   return `${s} s`;
 }
 
+export function maskEmail(email: string): string {
+  const at = email.indexOf('@');
+  if (at < 1 || at === email.length - 1) return email;
+
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const dot = domain.lastIndexOf('.');
+  const maskedDomain =
+    dot < 1 ? `${domain[0]}***` : `${domain[0]}***${domain.slice(dot)}`;
+
+  return `${local[0]}***@${maskedDomain}`;
+}
+
 export function formatHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map(b => b.toString(16).padStart(2, '0'))

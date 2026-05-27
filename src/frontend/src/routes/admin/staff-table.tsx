@@ -8,6 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAppStore } from '@/lib/store';
+import { AdminEmail } from '@/routes/admin/admin-email';
 import { StaffPermissionBadges } from '@/routes/admin/staff-permission-badges';
 import { StaffRevokeButton } from '@/routes/admin/staff-revoke-button';
 import type { FC } from 'react';
@@ -48,7 +49,7 @@ export const StaffTable: FC<StaffTableProps> = ({ className }) => {
 
             <TableCell>
               <div className="flex items-center gap-2">
-                <span>{member.email ?? 'None provided'}</span>
+                <AdminEmail email={member.email} />
                 {member.email && (
                   <Badge
                     variant={member.emailVerified ? 'success' : 'secondary'}
