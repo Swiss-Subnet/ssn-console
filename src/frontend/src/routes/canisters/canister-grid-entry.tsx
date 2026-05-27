@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import { useEffect, useRef, useState, type FC } from 'react';
 import {
   Card,
   CardAction,
@@ -9,6 +9,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { AddMissingCanisterControllerCta } from '@/routes/canisters/add-missing-canister-controller-cta';
 import { DeletedCanisterCta } from '@/routes/canisters/deleted-canister-cta';
 import {
@@ -19,10 +21,14 @@ import {
 import { formatBytes, formatCycles } from '@/lib/format';
 import { useRequireProjectId } from '@/lib/params';
 import { slugifyCanisterName } from '@/lib/project-export/build-zip';
+import { useAppStore } from '@/lib/store';
+import { showErrorToast, showSuccessToast } from '@/lib/toast';
+import { Check, LoaderIcon, Pencil, X } from 'lucide-react';
 import { Link } from 'react-router';
 
 export type CanisterGridEntryProps = {
   canister: Canister;
+  canEdit: boolean;
 };
 
 function statusBadgeVariant(
@@ -38,7 +44,106 @@ function statusBadgeVariant(
   }
 }
 
-export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
+type EditableCanisterNameProps = { canister: Canister; projectId: string };
+
+const EditableCanisterName: FC<EditableCanisterNameProps> = ({
+  canister,
+  projectId,
+}) => {
+  const updateCanisterName = useAppStore(s => s.updateCanisterName);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(canister.name ?? '');
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing) inputRef.current?.select();
+  }, [isEditing]);
+
+  function startEditing(): void {
+    setDraft(canister.name ?? '');
+    setIsEditing(true);
+  }
+
+  async function onSave(): Promise<void> {
+    const trimmed = draft.trim();
+    const next = trimmed.length > 0 ? trimmed : null;
+    if (next === canister.name) {
+      setIsEditing(false);
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await updateCanisterName(canister.id, projectId, next);
+      showSuccessToast(
+        next ? 'Canister name updated' : 'Canister name cleared',
+      );
+      setIsEditing(false);
+    } catch (err) {
+      showErrorToast('Failed to update canister name', err);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-1">
+        <Input
+          ref={inputRef}
+          value={draft}
+          placeholder="Unnamed canister"
+          maxLength={100}
+          autoFocus
+          disabled={isSaving}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') void onSave();
+            if (e.key === 'Escape') setIsEditing(false);
+          }}
+        />
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          disabled={isSaving}
+          aria-label="Save name"
+          onClick={() => void onSave()}
+        >
+          {isSaving ? <LoaderIcon className="animate-spin" /> : <Check />}
+        </Button>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          disabled={isSaving}
+          aria-label="Cancel"
+          onClick={() => setIsEditing(false)}
+        >
+          <X />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group/name flex items-center gap-1">
+      <CardTitle className="truncate">{canister.name ?? 'Canister'}</CardTitle>
+      <Button
+        size="icon-sm"
+        variant="ghost"
+        aria-label="Rename canister"
+        className="opacity-0 transition-opacity group-hover/name:opacity-100 focus-visible:opacity-100"
+        onClick={startEditing}
+      >
+        <Pencil />
+      </Button>
+    </div>
+  );
+};
+
+export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({
+  canister,
+  canEdit,
+}) => {
   const projectId = useRequireProjectId();
   const accessibleInfo =
     canister.state.availability === CanisterAvailability.Accessible
@@ -52,7 +157,12 @@ export const CanisterGridEntry: FC<CanisterGridEntryProps> = ({ canister }) => {
     <>
       <Card size="sm">
         <CardHeader>
-          <CardTitle className="truncate">{displayName}</CardTitle>
+          {canEdit &&
+          canister.state.availability !== CanisterAvailability.Deleted ? (
+            <EditableCanisterName canister={canister} projectId={projectId} />
+          ) : (
+            <CardTitle className="truncate">{displayName}</CardTitle>
+          )}
           <CardDescription className="truncate font-mono">
             {canister.principal}
           </CardDescription>

@@ -62,7 +62,11 @@ const Canisters: FC = () => {
         <CanisterSkeleton className="mt-8" />
       ) : (
         <>
-          <CanisterGrid className="mt-8" canisters={projectCanisters} />
+          <CanisterGrid
+            className="mt-8"
+            canisters={projectCanisters}
+            canEdit={project?.yourPermissions.canisterManage ?? false}
+          />
           <div className="mt-4 flex flex-wrap gap-2">
             {project?.yourPermissions.canisterManage && (
               <CreateCanisterButton />

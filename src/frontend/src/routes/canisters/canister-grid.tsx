@@ -6,16 +6,22 @@ import { type FC } from 'react';
 export type CanisterGridProps = {
   className?: string;
   canisters: Canister[];
+  canEdit: boolean;
 };
 
 export const CanisterGrid: FC<CanisterGridProps> = ({
   className,
   canisters,
+  canEdit,
 }) => {
   return (
     <div className={cn('grid grid-cols-1 gap-4', className)}>
       {canisters.map(canister => (
-        <CanisterGridEntry key={canister.id} canister={canister} />
+        <CanisterGridEntry
+          key={canister.id}
+          canister={canister}
+          canEdit={canEdit}
+        />
       ))}
     </div>
   );
