@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   TestDriver,
   canisterQuotaExceededError,
+  lacksStaffPermissionError,
   noOrgError,
   unauthenticatedError,
-  unauthorizedError,
 } from '../support';
 import {
   anonymousIdentity,
@@ -35,7 +35,7 @@ describe('set_org_billing_plan', () => {
     expect(res).toEqual(unauthenticatedError);
   });
 
-  it('should return an error for a non-controller caller', async () => {
+  it('should return an error for a caller without WRITE_BILLING staff permission', async () => {
     const [aliceIdentity, , org] = await driver.users.createUser();
 
     driver.actor.setIdentity(aliceIdentity);
@@ -43,7 +43,7 @@ describe('set_org_billing_plan', () => {
       org_id: org.id,
       tier: { Pro: null },
     });
-    expect(res).toEqual(unauthorizedError);
+    expect(res).toEqual(lacksStaffPermissionError('WRITE_BILLING'));
   });
 
   it('should return an error when the org does not exist', async () => {
