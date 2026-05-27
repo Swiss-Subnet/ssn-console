@@ -15,3 +15,4 @@ export * from './team';
 export * from './terms-and-conditions';
 export * from './trusted-partner';
 export * from './user-profile';
+export * from './usage';
