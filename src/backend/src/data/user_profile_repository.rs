@@ -388,12 +388,7 @@ mod benches {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn principal(byte: u8) -> Principal {
-        let mut bytes = [0u8; 29];
-        bytes[28] = byte;
-        Principal::from_slice(&bytes)
-    }
+    use crate::test_support::fresh_principal;
 
     fn seed_user(initial_principal: Principal) -> UserId {
         create_user_profile(initial_principal, UserProfile::default())
@@ -401,8 +396,8 @@ mod tests {
 
     #[test]
     fn link_principal_attaches_to_user() {
-        let p1 = principal(10);
-        let p2 = principal(11);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_id = seed_user(p1);
 
         link_principal_to_user(user_id, p2).unwrap();
@@ -416,8 +411,8 @@ mod tests {
 
     #[test]
     fn link_principal_rejects_already_claimed() {
-        let p1 = principal(20);
-        let p2 = principal(21);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_a = seed_user(p1);
         let user_b = seed_user(p2);
 
@@ -428,7 +423,7 @@ mod tests {
 
     #[test]
     fn link_principal_rejects_relinking_own_principal() {
-        let p1 = principal(30);
+        let p1 = fresh_principal();
         let user_id = seed_user(p1);
 
         let err = link_principal_to_user(user_id, p1).unwrap_err();
@@ -437,7 +432,7 @@ mod tests {
 
     #[test]
     fn link_principal_rejects_unknown_user() {
-        let p1 = principal(40);
+        let p1 = fresh_principal();
         let unknown_user = UserId::new();
 
         let err = link_principal_to_user(unknown_user, p1).unwrap_err();
@@ -447,8 +442,8 @@ mod tests {
 
     #[test]
     fn unlink_principal_removes_link() {
-        let p1 = principal(50);
-        let p2 = principal(51);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_id = seed_user(p1);
         link_principal_to_user(user_id, p2).unwrap();
 
@@ -461,7 +456,7 @@ mod tests {
 
     #[test]
     fn unlink_principal_refuses_last_principal() {
-        let p1 = principal(60);
+        let p1 = fresh_principal();
         let user_id = seed_user(p1);
 
         let err = unlink_principal_from_user(user_id, p1).unwrap_err();
@@ -471,8 +466,8 @@ mod tests {
 
     #[test]
     fn unlink_principal_rejects_principal_not_owned_by_user() {
-        let p1 = principal(70);
-        let p2 = principal(71);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_a = seed_user(p1);
         let user_b = seed_user(p2);
 
@@ -483,8 +478,8 @@ mod tests {
 
     #[test]
     fn unlink_principal_rejects_unlinked_principal() {
-        let p1 = principal(80);
-        let p2 = principal(81);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_id = seed_user(p1);
 
         let err = unlink_principal_from_user(user_id, p2).unwrap_err();
@@ -497,8 +492,8 @@ mod tests {
 
     #[test]
     fn set_principal_name_stores_and_lists_name() {
-        let p1 = principal(90);
-        let p2 = principal(91);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_id = seed_user(p1);
         link_principal_to_user(user_id, p2).unwrap();
 
@@ -513,8 +508,8 @@ mod tests {
 
     #[test]
     fn set_principal_name_with_none_clears() {
-        let p1 = principal(100);
-        let p2 = principal(101);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_id = seed_user(p1);
         link_principal_to_user(user_id, p2).unwrap();
         set_principal_name(user_id, p2, Some("Laptop".to_string())).unwrap();
@@ -526,8 +521,8 @@ mod tests {
 
     #[test]
     fn set_principal_name_rejects_principal_not_owned_by_user() {
-        let p1 = principal(110);
-        let p2 = principal(111);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_a = seed_user(p1);
         seed_user(p2);
 
@@ -541,8 +536,8 @@ mod tests {
         // Ownership is by user, not by caller principal: P1 setting P2's name
         // is the same operation as P2 setting it. The controller resolves the
         // caller's user_id and passes it in here.
-        let p1 = principal(120);
-        let p2 = principal(121);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_id = seed_user(p1);
         link_principal_to_user(user_id, p2).unwrap();
 
@@ -555,8 +550,8 @@ mod tests {
 
     #[test]
     fn unlink_principal_clears_its_name() {
-        let p1 = principal(130);
-        let p2 = principal(131);
+        let p1 = fresh_principal();
+        let p2 = fresh_principal();
         let user_id = seed_user(p1);
         link_principal_to_user(user_id, p2).unwrap();
         set_principal_name(user_id, p2, Some("Old device".to_string())).unwrap();
@@ -586,7 +581,7 @@ mod tests {
 
     #[test]
     fn claim_verified_email_records_owner() {
-        let user_id = seed_user(principal(100));
+        let user_id = seed_user(fresh_principal());
 
         claim_verified_email(user_id, email("claim-records@example.com")).unwrap();
 
@@ -598,7 +593,7 @@ mod tests {
 
     #[test]
     fn claim_verified_email_is_idempotent_for_same_user() {
-        let user_id = seed_user(principal(101));
+        let user_id = seed_user(fresh_principal());
 
         claim_verified_email(user_id, email("claim-idempotent@example.com")).unwrap();
         claim_verified_email(user_id, email("claim-idempotent@example.com")).unwrap();
@@ -611,8 +606,8 @@ mod tests {
 
     #[test]
     fn claim_verified_email_refuses_other_owner() {
-        let user_a = seed_user(principal(102));
-        let user_b = seed_user(principal(103));
+        let user_a = seed_user(fresh_principal());
+        let user_b = seed_user(fresh_principal());
 
         claim_verified_email(user_a, email("claim-conflict@example.com")).unwrap();
         let err = claim_verified_email(user_b, email("claim-conflict@example.com")).unwrap_err();
@@ -628,7 +623,7 @@ mod tests {
 
     #[test]
     fn release_verified_email_clears_own_claim() {
-        let user_id = seed_user(principal(104));
+        let user_id = seed_user(fresh_principal());
         claim_verified_email(user_id, email("release-own@example.com")).unwrap();
 
         release_verified_email(user_id, "release-own@example.com");
@@ -638,8 +633,8 @@ mod tests {
 
     #[test]
     fn release_verified_email_ignores_other_owner() {
-        let user_a = seed_user(principal(105));
-        let user_b = seed_user(principal(106));
+        let user_a = seed_user(fresh_principal());
+        let user_b = seed_user(fresh_principal());
         claim_verified_email(user_a, email("release-other@example.com")).unwrap();
 
         release_verified_email(user_b, "release-other@example.com");
@@ -652,7 +647,7 @@ mod tests {
 
     #[test]
     fn release_verified_email_normalizes_raw_input() {
-        let user_id = seed_user(principal(107));
+        let user_id = seed_user(fresh_principal());
         claim_verified_email(user_id, email("Release-Normalize@Example.COM")).unwrap();
 
         release_verified_email(user_id, "  Release-Normalize@Example.COM  ");
@@ -675,7 +670,8 @@ mod tests {
 
     #[test]
     fn migrate_indexes_unique_verified_emails() {
-        let user_id = seed_verified_profile_directly(principal(110), "Migrate-Unique@Example.COM");
+        let user_id =
+            seed_verified_profile_directly(fresh_principal(), "Migrate-Unique@Example.COM");
 
         migrate_verified_email_index();
 
@@ -692,10 +688,10 @@ mod tests {
 
     #[test]
     fn migrate_drops_collided_verified_emails() {
-        let a = seed_verified_profile_directly(principal(111), "dup@example.com");
-        let b = seed_verified_profile_directly(principal(112), "dup@example.com");
+        let a = seed_verified_profile_directly(fresh_principal(), "dup@example.com");
+        let b = seed_verified_profile_directly(fresh_principal(), "dup@example.com");
         let unique =
-            seed_verified_profile_directly(principal(113), "unique-among-dups@example.com");
+            seed_verified_profile_directly(fresh_principal(), "unique-among-dups@example.com");
 
         migrate_verified_email_index();
 
@@ -711,9 +707,9 @@ mod tests {
 
     #[test]
     fn migrate_drops_three_way_collisions_entirely() {
-        let a = seed_verified_profile_directly(principal(114), "triple@example.com");
-        let b = seed_verified_profile_directly(principal(115), "triple@example.com");
-        let c = seed_verified_profile_directly(principal(116), "triple@example.com");
+        let a = seed_verified_profile_directly(fresh_principal(), "triple@example.com");
+        let b = seed_verified_profile_directly(fresh_principal(), "triple@example.com");
+        let c = seed_verified_profile_directly(fresh_principal(), "triple@example.com");
 
         migrate_verified_email_index();
 
@@ -729,7 +725,7 @@ mod tests {
 
     #[test]
     fn get_user_id_by_verified_email_returns_owner_after_claim() {
-        let user_id = seed_user(principal(120));
+        let user_id = seed_user(fresh_principal());
         claim_verified_email(user_id, email("lookup-hit@example.com")).unwrap();
 
         let found = get_user_id_by_verified_email(&email("lookup-hit@example.com"));
@@ -738,7 +734,7 @@ mod tests {
 
     #[test]
     fn get_user_id_by_verified_email_normalizes_input() {
-        let user_id = seed_user(principal(121));
+        let user_id = seed_user(fresh_principal());
         claim_verified_email(user_id, email("Lookup-Normalize@Example.COM")).unwrap();
 
         let found = get_user_id_by_verified_email(&email("  lookup-normalize@example.com  "));
@@ -755,7 +751,7 @@ mod tests {
 
     #[test]
     fn get_user_id_by_verified_email_returns_none_after_release() {
-        let user_id = seed_user(principal(122));
+        let user_id = seed_user(fresh_principal());
         claim_verified_email(user_id, email("lookup-release@example.com")).unwrap();
         release_verified_email(user_id, "lookup-release@example.com");
 
@@ -768,7 +764,7 @@ mod tests {
     #[test]
     fn migrate_skips_unverified_emails() {
         let _user_id = create_user_profile(
-            principal(117),
+            fresh_principal(),
             UserProfile {
                 email: Some("unverified@example.com".to_string()),
                 email_verified: false,
