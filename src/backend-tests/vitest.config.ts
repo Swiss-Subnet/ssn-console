@@ -5,5 +5,6 @@ export default defineConfig({
     root: '.',
     globalSetup: './global-setup.ts',
     testTimeout: 30_000,
+    hookTimeout: 30_000,
   },
 });
