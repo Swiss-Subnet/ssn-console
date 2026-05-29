@@ -13,6 +13,8 @@ mod env;
 mod jwt;
 mod mapping;
 mod service;
+#[cfg(test)]
+mod test_support;
 mod validation;
 
 #[macro_use]

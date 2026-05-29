@@ -252,15 +252,10 @@ mod tests {
     use super::*;
     use crate::data::user_profile_repository::create_user_profile;
     use crate::data::{UserProfile, UserStatus};
+    use crate::test_support::fresh_principal;
 
-    fn principal(byte: u8) -> Principal {
-        let mut bytes = [0u8; 29];
-        bytes[28] = byte;
-        Principal::from_slice(&bytes)
-    }
-
-    fn fresh_user(byte: u8) -> Principal {
-        let p = principal(byte);
+    fn fresh_user() -> Principal {
+        let p = fresh_principal();
         create_user_profile(p, UserProfile::default());
         p
     }
@@ -268,8 +263,8 @@ mod tests {
     // Active user with the given staff permissions. Returns (principal, user_id)
     // so tests can use the principal for caller-side checks and the user_id as
     // the admin-call target.
-    fn fresh_staff_user(byte: u8, perms: StaffPermissions) -> (Principal, UserId) {
-        let p = principal(byte);
+    fn fresh_staff_user(perms: StaffPermissions) -> (Principal, UserId) {
+        let p = fresh_principal();
         let user_id = create_user_profile(
             p,
             UserProfile {
@@ -307,38 +302,38 @@ mod tests {
 
     #[test]
     fn link_my_principal_rejects_unknown_code() {
-        let p = principal(200);
+        let p = fresh_principal();
         let err = link_my_principal(&p, "NOTACODE".to_string()).unwrap_err();
         assert_eq!(err.message(), "Invalid or expired link code.");
     }
 
     #[test]
     fn register_link_code_returns_expiry_at_ttl() {
-        let owner = fresh_user(10);
-        let target = principal(110);
+        let owner = fresh_user();
+        let target = fresh_principal();
         let out = register_link_code(&owner, "REGEXPRY".to_string(), target).unwrap();
         assert_eq!(out.expires_at_nanos, LINK_CODE_TTL_NANOS);
     }
 
     #[test]
     fn register_link_code_rejects_invalid_format() {
-        let owner = fresh_user(11);
-        let target = principal(111);
+        let owner = fresh_user();
+        let target = fresh_principal();
         let err = register_link_code(&owner, "lowercas".to_string(), target).unwrap_err();
         assert!(err.message().contains("uppercase"));
     }
 
     #[test]
     fn register_link_code_rejects_unknown_caller() {
-        let stranger = principal(12);
-        let target = principal(112);
+        let stranger = fresh_principal();
+        let target = fresh_principal();
         let err = register_link_code(&stranger, "STRANGER".to_string(), target).unwrap_err();
         assert!(!err.message().is_empty());
     }
 
     #[test]
     fn register_link_code_rejects_anonymous_target() {
-        let owner = fresh_user(16);
+        let owner = fresh_user();
         let err =
             register_link_code(&owner, "ANONTGT1".to_string(), Principal::anonymous()).unwrap_err();
         assert!(err.message().contains("anonymous"));
@@ -346,8 +341,8 @@ mod tests {
 
     #[test]
     fn register_link_code_replaces_existing_pending_code() {
-        let owner = fresh_user(13);
-        let target = principal(113);
+        let owner = fresh_user();
+        let target = fresh_principal();
         register_link_code(&owner, "FIRSTOWN".to_string(), target).unwrap();
         register_link_code(&owner, "SECONDOW".to_string(), target).unwrap();
 
@@ -360,8 +355,8 @@ mod tests {
 
     #[test]
     fn link_my_principal_attaches_new_principal_and_consumes_code() {
-        let owner = fresh_user(20);
-        let new_p = principal(21);
+        let owner = fresh_user();
+        let new_p = fresh_principal();
         register_link_code(&owner, "LINKOK01".to_string(), new_p).unwrap();
 
         link_my_principal(&new_p, "LINKOK01".to_string()).unwrap();
@@ -375,9 +370,9 @@ mod tests {
 
     #[test]
     fn link_my_principal_rejects_caller_other_than_target_without_burning_code() {
-        let owner = fresh_user(22);
-        let target = principal(23);
-        let attacker = principal(24);
+        let owner = fresh_user();
+        let target = fresh_principal();
+        let attacker = fresh_principal();
         register_link_code(&owner, "BINDONLY".to_string(), target).unwrap();
 
         let err = link_my_principal(&attacker, "BINDONLY".to_string()).unwrap_err();
@@ -393,10 +388,10 @@ mod tests {
 
     #[test]
     fn get_my_pending_link_code_returns_only_callers_code() {
-        let owner = fresh_user(40);
-        let other = fresh_user(41);
-        let target_owner = principal(140);
-        let target_other = principal(141);
+        let owner = fresh_user();
+        let other = fresh_user();
+        let target_owner = fresh_principal();
+        let target_other = fresh_principal();
         register_link_code(&owner, "MINECODE".to_string(), target_owner).unwrap();
         register_link_code(&other, "THEIRSAA".to_string(), target_other).unwrap();
 
@@ -407,8 +402,8 @@ mod tests {
 
     #[test]
     fn revoke_my_link_code_removes_pending_code() {
-        let owner = fresh_user(50);
-        let target = principal(150);
+        let owner = fresh_user();
+        let target = fresh_principal();
         register_link_code(&owner, "REVOKEME".to_string(), target).unwrap();
 
         revoke_my_link_code(&owner).unwrap();
@@ -419,9 +414,9 @@ mod tests {
 
     #[test]
     fn revoke_my_link_code_errors_when_caller_has_none() {
-        let owner = fresh_user(60);
-        let attacker = fresh_user(61);
-        let target = principal(160);
+        let owner = fresh_user();
+        let attacker = fresh_user();
+        let target = fresh_principal();
         register_link_code(&owner, "OWNCODE1".to_string(), target).unwrap();
 
         let err = revoke_my_link_code(&attacker).unwrap_err();
@@ -435,8 +430,8 @@ mod tests {
 
     #[test]
     fn unlink_my_principal_removes_from_list() {
-        let owner = fresh_user(30);
-        let extra = principal(31);
+        let owner = fresh_user();
+        let extra = fresh_principal();
         register_link_code(&owner, "UNLINK01".to_string(), extra).unwrap();
         link_my_principal(&extra, "UNLINK01".to_string()).unwrap();
 
@@ -448,8 +443,8 @@ mod tests {
 
     #[test]
     fn set_my_principal_name_persists_via_listing() {
-        let owner = fresh_user(70);
-        let extra = principal(71);
+        let owner = fresh_user();
+        let extra = fresh_principal();
         register_link_code(&owner, "NAMEABLE".to_string(), extra).unwrap();
         link_my_principal(&extra, "NAMEABLE".to_string()).unwrap();
 
@@ -465,8 +460,8 @@ mod tests {
         // P1 (caller `owner`) sets a name for P2 (`extra`), then P2 sets a
         // name for P1. Both must succeed because authorization is by user
         // account, not by which specific principal is making the call.
-        let owner = fresh_user(80);
-        let extra = principal(81);
+        let owner = fresh_user();
+        let extra = fresh_principal();
         register_link_code(&owner, "SIBLINGS".to_string(), extra).unwrap();
         link_my_principal(&extra, "SIBLINGS".to_string()).unwrap();
 
@@ -482,8 +477,8 @@ mod tests {
 
     #[test]
     fn set_my_principal_name_rejects_principal_owned_by_other_account() {
-        let owner = fresh_user(90);
-        let stranger = fresh_user(91);
+        let owner = fresh_user();
+        let stranger = fresh_user();
 
         let err = set_my_principal_name(&owner, stranger, Some("Mine!".to_string())).unwrap_err();
         assert_eq!(err.message(), "Principal cannot be renamed.");
@@ -491,8 +486,8 @@ mod tests {
 
     #[test]
     fn set_my_principal_name_with_empty_string_clears() {
-        let owner = fresh_user(100);
-        let extra = principal(101);
+        let owner = fresh_user();
+        let extra = fresh_principal();
         register_link_code(&owner, "CLEAR001".to_string(), extra).unwrap();
         link_my_principal(&extra, "CLEAR001".to_string()).unwrap();
         set_my_principal_name(&owner, extra, Some("Old".to_string())).unwrap();
@@ -506,8 +501,8 @@ mod tests {
 
     #[test]
     fn set_my_principal_name_rejects_oversized_name() {
-        let owner = fresh_user(110);
-        let extra = principal(111);
+        let owner = fresh_user();
+        let extra = fresh_principal();
         register_link_code(&owner, "TOOLONG1".to_string(), extra).unwrap();
         link_my_principal(&extra, "TOOLONG1".to_string()).unwrap();
 
@@ -518,8 +513,8 @@ mod tests {
 
     use crate::service::user_profile_service::PURPOSE_EMAIL_VERIFICATION;
 
-    fn fresh_user_with_verified_email(byte: u8, raw_email: &str) -> Principal {
-        let p = principal(byte);
+    fn fresh_user_with_verified_email(raw_email: &str) -> Principal {
+        let p = fresh_principal();
         let user_id = create_user_profile(p, UserProfile::default());
         let email = Email::try_from(raw_email.to_string()).unwrap();
         user_profile_repository::claim_verified_email(user_id, email).unwrap();
@@ -537,10 +532,10 @@ mod tests {
 
     #[test]
     fn admin_link_principal_attaches_to_target_user() {
-        let (staff, _) = fresh_staff_user(70, StaffPermissions::MANAGE_USERS);
-        let target_owner = fresh_user(71);
+        let (staff, _) = fresh_staff_user(StaffPermissions::MANAGE_USERS);
+        let target_owner = fresh_user();
         let target_user_id = user_id_of(target_owner);
-        let new_principal = principal(72);
+        let new_principal = fresh_principal();
 
         admin_link_principal_to_user(&staff, target_user_id, new_principal).unwrap();
 
@@ -552,10 +547,10 @@ mod tests {
     fn admin_link_principal_rejects_caller_without_manage_users() {
         // Has WRITE_BILLING but not MANAGE_USERS — the permission gate must
         // discriminate flag-by-flag, not just "is staff at all".
-        let (staff, _) = fresh_staff_user(73, StaffPermissions::WRITE_BILLING);
-        let target_owner = fresh_user(74);
+        let (staff, _) = fresh_staff_user(StaffPermissions::WRITE_BILLING);
+        let target_owner = fresh_user();
         let target_user_id = user_id_of(target_owner);
-        let new_principal = principal(75);
+        let new_principal = fresh_principal();
 
         let err = admin_link_principal_to_user(&staff, target_user_id, new_principal).unwrap_err();
         assert!(err.message().contains("staff permissions"));
@@ -566,10 +561,10 @@ mod tests {
 
     #[test]
     fn admin_link_principal_rejects_non_staff_caller() {
-        let stranger = fresh_user(76);
-        let target_owner = fresh_user(77);
+        let stranger = fresh_user();
+        let target_owner = fresh_user();
         let target_user_id = user_id_of(target_owner);
-        let new_principal = principal(78);
+        let new_principal = fresh_principal();
 
         let err =
             admin_link_principal_to_user(&stranger, target_user_id, new_principal).unwrap_err();
@@ -581,8 +576,8 @@ mod tests {
 
     #[test]
     fn admin_link_principal_rejects_anonymous_target() {
-        let (staff, _) = fresh_staff_user(79, StaffPermissions::MANAGE_USERS);
-        let target_owner = fresh_user(80);
+        let (staff, _) = fresh_staff_user(StaffPermissions::MANAGE_USERS);
+        let target_owner = fresh_user();
         let target_user_id = user_id_of(target_owner);
 
         let err = admin_link_principal_to_user(&staff, target_user_id, Principal::anonymous())
@@ -595,9 +590,9 @@ mod tests {
         // Repository-level guard surfaces through the admin path: an admin
         // cannot silently steal a principal already linked to a different
         // user.
-        let (staff, _) = fresh_staff_user(81, StaffPermissions::MANAGE_USERS);
-        let other_owner = fresh_user(82);
-        let target_owner = fresh_user(83);
+        let (staff, _) = fresh_staff_user(StaffPermissions::MANAGE_USERS);
+        let other_owner = fresh_user();
+        let target_owner = fresh_user();
         let target_user_id = user_id_of(target_owner);
 
         let err = admin_link_principal_to_user(&staff, target_user_id, other_owner).unwrap_err();
@@ -606,10 +601,10 @@ mod tests {
 
     #[test]
     fn admin_unlink_principal_removes_link() {
-        let (staff, _) = fresh_staff_user(84, StaffPermissions::MANAGE_USERS);
-        let target_owner = fresh_user(85);
+        let (staff, _) = fresh_staff_user(StaffPermissions::MANAGE_USERS);
+        let target_owner = fresh_user();
         let target_user_id = user_id_of(target_owner);
-        let extra = principal(86);
+        let extra = fresh_principal();
         user_profile_repository::link_principal_to_user(target_user_id, extra).unwrap();
 
         admin_unlink_principal_from_user(&staff, target_user_id, extra).unwrap();
@@ -624,8 +619,8 @@ mod tests {
         // The repository's "do not orphan an account" guard must apply to
         // staff actions too; a staff member with MANAGE_USERS can still not
         // remove a user's only remaining principal.
-        let (staff, _) = fresh_staff_user(87, StaffPermissions::MANAGE_USERS);
-        let target_owner = fresh_user(88);
+        let (staff, _) = fresh_staff_user(StaffPermissions::MANAGE_USERS);
+        let target_owner = fresh_user();
         let target_user_id = user_id_of(target_owner);
 
         let err =
@@ -635,10 +630,10 @@ mod tests {
 
     #[test]
     fn admin_unlink_principal_rejects_caller_without_manage_users() {
-        let (staff, _) = fresh_staff_user(89, StaffPermissions::READ_ALL_ORGS);
-        let target_owner = fresh_user(90);
+        let (staff, _) = fresh_staff_user(StaffPermissions::READ_ALL_ORGS);
+        let target_owner = fresh_user();
         let target_user_id = user_id_of(target_owner);
-        let extra = principal(91);
+        let extra = fresh_principal();
         user_profile_repository::link_principal_to_user(target_user_id, extra).unwrap();
 
         let err = admin_unlink_principal_from_user(&staff, target_user_id, extra).unwrap_err();
@@ -650,8 +645,8 @@ mod tests {
 
     #[test]
     fn recover_links_new_principal_to_account_with_verified_email() {
-        let _existing = fresh_user_with_verified_email(200, "recover-ok@example.com");
-        let new_principal = principal(201);
+        let _existing = fresh_user_with_verified_email("recover-ok@example.com");
+        let new_principal = fresh_principal();
 
         recover_with_claims(&new_principal, recovery_claims("recover-ok@example.com")).unwrap();
 
@@ -664,8 +659,8 @@ mod tests {
 
     #[test]
     fn recover_normalizes_email_in_claim() {
-        let _existing = fresh_user_with_verified_email(202, "recover-norm@example.com");
-        let new_principal = principal(203);
+        let _existing = fresh_user_with_verified_email("recover-norm@example.com");
+        let new_principal = fresh_principal();
 
         recover_with_claims(
             &new_principal,
@@ -678,7 +673,7 @@ mod tests {
 
     #[test]
     fn recover_rejects_email_with_no_verified_account() {
-        let new_principal = principal(204);
+        let new_principal = fresh_principal();
 
         let err =
             recover_with_claims(&new_principal, recovery_claims("nobody@example.com")).unwrap_err();
@@ -687,7 +682,7 @@ mod tests {
 
     #[test]
     fn recover_rejects_unverified_email_even_when_profile_has_it() {
-        let p = principal(205);
+        let p = fresh_principal();
         create_user_profile(
             p,
             UserProfile {
@@ -696,7 +691,7 @@ mod tests {
                 ..UserProfile::default()
             },
         );
-        let new_principal = principal(206);
+        let new_principal = fresh_principal();
 
         let err = recover_with_claims(&new_principal, recovery_claims("unverified@example.com"))
             .unwrap_err();
@@ -705,8 +700,8 @@ mod tests {
 
     #[test]
     fn recover_rejects_wrong_purpose_claim() {
-        let _existing = fresh_user_with_verified_email(207, "recover-purpose@example.com");
-        let new_principal = principal(208);
+        let _existing = fresh_user_with_verified_email("recover-purpose@example.com");
+        let new_principal = fresh_principal();
 
         let mut claims = recovery_claims("recover-purpose@example.com");
         claims.purpose = Some(PURPOSE_EMAIL_VERIFICATION.to_string());
@@ -717,8 +712,8 @@ mod tests {
 
     #[test]
     fn recover_rejects_legacy_claim_without_purpose() {
-        let _existing = fresh_user_with_verified_email(212, "recover-legacy@example.com");
-        let new_principal = principal(213);
+        let _existing = fresh_user_with_verified_email("recover-legacy@example.com");
+        let new_principal = fresh_principal();
 
         let mut claims = recovery_claims("recover-legacy@example.com");
         claims.purpose = None;
@@ -729,8 +724,8 @@ mod tests {
 
     #[test]
     fn recover_rejects_when_caller_principal_already_linked_elsewhere() {
-        let _existing = fresh_user_with_verified_email(209, "recover-clash@example.com");
-        let other_account_principal = fresh_user(210);
+        let _existing = fresh_user_with_verified_email("recover-clash@example.com");
+        let other_account_principal = fresh_user();
 
         let err = recover_with_claims(
             &other_account_principal,
@@ -742,7 +737,7 @@ mod tests {
 
     #[test]
     fn recover_rejects_malformed_email_in_claim() {
-        let new_principal = principal(211);
+        let new_principal = fresh_principal();
 
         let err = recover_with_claims(&new_principal, recovery_claims("not-an-email")).unwrap_err();
         assert!(err.message().contains("'@'"));
