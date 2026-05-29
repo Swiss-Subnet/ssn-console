@@ -92,13 +92,13 @@ pub fn get_my_user_profile(caller: Principal) -> GetMyUserProfileResponse {
 }
 
 pub fn create_my_user_profile(caller: Principal) -> ApiResult<CreateMyUserProfileResponse> {
-    access_control_service::assert_principal_is_unclaimed(&caller)?;
     if user_profile_repository::get_user_id_by_principal(&caller).is_some() {
         return Err(ApiError::client_error(format!(
             "User profile for principal {} already exists.",
             caller.to_text()
         )));
     }
+    access_control_service::assert_principal_is_unclaimed(&caller)?;
 
     let profile = UserProfile::default();
     let user_id = user_profile_repository::create_user_profile(caller, profile.clone());
