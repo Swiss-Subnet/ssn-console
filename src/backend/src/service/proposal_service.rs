@@ -3,7 +3,7 @@ use crate::{
     data::{
         approval_policy_repository, project_repository, proposal_repository,
         proposal_repository::VoteOutcome, OperationType, PolicyType, ProjectId, ProjectPermissions,
-        Proposal, ProposalOperation, ProposalStatus,
+        Proposal, ProposalId, ProposalOperation, ProposalStatus,
     },
     dto::{
         CancelProposalRequest, CancelProposalResponse, CreateProposalRequest,
@@ -21,7 +21,7 @@ use crate::{
     },
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 pub async fn create_proposal(
     caller: &Principal,
@@ -60,7 +60,7 @@ pub async fn create_proposal(
 }
 
 pub fn get_proposal(caller: &Principal, req: GetProposalRequest) -> ApiResult<GetProposalResponse> {
-    let proposal_id = Uuid::try_from(req.proposal_id.as_str())?;
+    let proposal_id = ProposalId::try_from(req.proposal_id.as_str())?;
 
     let proposal = proposal_repository::get_proposal(&proposal_id)
         .ok_or_else(|| proposal_not_found_or_no_access(proposal_id))?;
@@ -78,7 +78,7 @@ pub fn list_project_proposals(
     let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let auth = ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
 
-    let after = req.after.as_deref().map(Uuid::try_from).transpose()?;
+    let after = req.after.as_deref().map(ProposalId::try_from).transpose()?;
     let limit = req
         .limit
         .unwrap_or(DEFAULT_PAGINATION_LIMIT)
@@ -104,7 +104,7 @@ pub fn list_project_proposals(
 
 async fn process_proposal(
     project_id: ProjectId,
-    proposal_id: Uuid,
+    proposal_id: ProposalId,
     proposal: Proposal,
 ) -> ApiResult {
     let approval_policy =
@@ -164,7 +164,7 @@ fn operation_type_of(operation: &ProposalOperation) -> OperationType {
 
 async fn execute_operation(
     project_id: ProjectId,
-    proposal_id: Uuid,
+    proposal_id: ProposalId,
     operation: ProposalOperation,
 ) -> ApiResult {
     proposal_repository::set_proposal_executing(proposal_id)?;
@@ -224,7 +224,7 @@ pub fn cancel_proposal(
     caller: &Principal,
     req: CancelProposalRequest,
 ) -> ApiResult<CancelProposalResponse> {
-    let proposal_id = Uuid::try_from(req.proposal_id.as_str())?;
+    let proposal_id = ProposalId::try_from(req.proposal_id.as_str())?;
 
     let proposal = proposal_repository::get_proposal(&proposal_id)
         .ok_or_else(|| proposal_not_found_or_no_access(proposal_id))?;

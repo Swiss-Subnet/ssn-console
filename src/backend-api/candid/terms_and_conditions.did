@@ -1,3 +1,4 @@
+import "./ids.did";
 import "../../canister-utils/error.did";
 
 type GetLatestTermsAndConditionsResponse = variant {
@@ -11,7 +12,7 @@ type ListTermsAndConditionsResponse = variant {
 };
 
 type TermsAndConditions = record {
-  id : text;
+  id : TermsAndConditionsId;
   content : text;
   comment : text;
   created_at : nat64;
@@ -19,11 +20,11 @@ type TermsAndConditions = record {
 };
 
 type TermsAndConditionsListItem = record {
-  id : text;
+  id : TermsAndConditionsId;
   content : text;
   comment : text;
   created_at : nat64;
-  created_by : text;
+  created_by : UserId;
 };
 
 type CreateTermsAndConditionsRequest = record {
@@ -37,7 +38,7 @@ type CreateTermsAndConditionsResponse = variant {
 };
 
 type UpsertTermsAndConditionsDecisionRequest = record {
-  terms_and_conditions_id : text;
+  terms_and_conditions_id : TermsAndConditionsId;
   decision_type : TermsAndConditionsDecisionType;
 };
 

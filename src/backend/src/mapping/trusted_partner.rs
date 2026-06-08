@@ -1,12 +1,12 @@
 use crate::{
-    data::{self},
+    data::{self, TrustedPartnerId},
     dto::{CreateTrustedPartnerRequest, ListTrustedPartnersResponse, TrustedPartner},
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 pub fn map_list_trusted_partners_response(
-    trusted_partners: Vec<(Uuid, data::TrustedPartner)>,
+    trusted_partners: Vec<(TrustedPartnerId, data::TrustedPartner)>,
 ) -> ListTrustedPartnersResponse {
     trusted_partners
         .into_iter()
@@ -15,7 +15,7 @@ pub fn map_list_trusted_partners_response(
 }
 
 pub fn map_trusted_partner_response(
-    id: Uuid,
+    id: TrustedPartnerId,
     trusted_partner: data::TrustedPartner,
 ) -> TrustedPartner {
     TrustedPartner {

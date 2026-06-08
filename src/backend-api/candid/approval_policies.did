@@ -24,7 +24,7 @@ type UpsertApprovalPolicyResponse = variant {
 };
 
 type ApprovalPolicy = record {
-  id : text;
+  id : ApprovalPolicyId;
   operation_type : OperationType;
   policy_type : PolicyType;
 };

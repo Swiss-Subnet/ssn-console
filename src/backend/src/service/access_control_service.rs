@@ -1,10 +1,11 @@
 use crate::data::{
     organization_repository, project_repository, team_repository, terms_and_conditions_repository,
     trusted_partner_repository, user_profile_repository, OrgId, OrgPermissions, Project, ProjectId,
-    ProjectPermissions, StaffPermissions, Team, TeamId, UserId, UserProfile, UserStatus,
+    ProjectPermissions, ProposalId, StaffPermissions, Team, TeamId, UserId, UserProfile,
+    UserStatus,
 };
 use candid::Principal;
-use canister_utils::{assert_authenticated, ApiError, ApiResult, Uuid};
+use canister_utils::{assert_authenticated, ApiError, ApiResult};
 
 // `ic_cdk::api::is_controller` panics outside a real canister (it calls into
 // the replica's system API), which makes any function that consults it
@@ -42,7 +43,7 @@ pub fn team_not_found_or_no_access(team_id: TeamId) -> ApiError {
     ))
 }
 
-pub fn proposal_not_found_or_no_access(proposal_id: Uuid) -> ApiError {
+pub fn proposal_not_found_or_no_access(proposal_id: ProposalId) -> ApiError {
     ApiError::client_error(format!(
         "Proposal with id {proposal_id} does not exist or you do not have access."
     ))

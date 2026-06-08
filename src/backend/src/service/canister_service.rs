@@ -6,7 +6,7 @@ use crate::{
     data::{
         canister_repository, organization_billing_plan_repository, organization_repository,
         orphaned_canister_repository, project_repository, team_repository, user_profile_repository,
-        Canister, OrgId, ProjectId, ProjectPermissions,
+        Canister, CanisterId, OrgId, ProjectId, ProjectPermissions,
     },
     dto::{
         self, CanisterState, ListMyCanistersRequest, ListMyCanistersResponse,
@@ -18,7 +18,7 @@ use crate::{
 };
 use backend_api::{AddChildCanistersRequest, AddChildCanistersResponse};
 use candid::Principal;
-use canister_utils::{is_destination_invalid, ApiError, ApiResult, Uuid, MAX_CALLS_PER_BATCH};
+use canister_utils::{is_destination_invalid, ApiError, ApiResult, MAX_CALLS_PER_BATCH};
 use futures::future::join_all;
 use ic_cdk::{
     api::{canister_self, time},
@@ -65,7 +65,7 @@ pub async fn list_user_canisters(
 }
 
 async fn fetch_canisters_with_state(
-    project_canisters: Vec<(Uuid, Canister)>,
+    project_canisters: Vec<(CanisterId, Canister)>,
 ) -> Vec<dto::Canister> {
     let mut canisters = vec![];
 
@@ -126,7 +126,7 @@ pub fn update_my_canister_name(
     caller: Principal,
     request: UpdateMyCanisterNameRequest,
 ) -> ApiResult<()> {
-    let canister_id = Uuid::try_from(request.canister_id.as_str())?;
+    let canister_id = CanisterId::try_from(request.canister_id.as_str())?;
     let project_id = canister_repository::get_canister_project_id(canister_id)
         .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
 
@@ -149,7 +149,7 @@ pub fn update_my_canister_name(
 // itself is exercised by integration tests).
 fn resolve_managed_canister_principal(
     caller: Principal,
-    canister_id: Uuid,
+    canister_id: CanisterId,
 ) -> ApiResult<Principal> {
     let project_id = canister_repository::get_canister_project_id(canister_id)
         .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
@@ -162,7 +162,7 @@ fn resolve_managed_canister_principal(
     Ok(canister.principal)
 }
 
-pub async fn start_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
+pub async fn start_my_canister(caller: Principal, canister_id: CanisterId) -> ApiResult<()> {
     let principal = resolve_managed_canister_principal(caller, canister_id)?;
     management_canister::start_canister(&StartCanisterArgs {
         canister_id: principal,
@@ -171,7 +171,7 @@ pub async fn start_my_canister(caller: Principal, canister_id: Uuid) -> ApiResul
     .map_err(|err| ApiError::internal_error(format!("Failed to start canister {principal}: {err}")))
 }
 
-pub async fn stop_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
+pub async fn stop_my_canister(caller: Principal, canister_id: CanisterId) -> ApiResult<()> {
     let principal = resolve_managed_canister_principal(caller, canister_id)?;
     management_canister::stop_canister(&StopCanisterArgs {
         canister_id: principal,
@@ -180,7 +180,7 @@ pub async fn stop_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult
     .map_err(|err| ApiError::internal_error(format!("Failed to stop canister {principal}: {err}")))
 }
 
-pub fn remove_my_canister(caller: Principal, canister_id: Uuid) -> ApiResult<()> {
+pub fn remove_my_canister(caller: Principal, canister_id: CanisterId) -> ApiResult<()> {
     let project_id = canister_repository::get_canister_project_id(canister_id)
         .ok_or_else(|| ApiError::client_error(format!("Canister {canister_id} not found.")))?;
 
@@ -394,7 +394,7 @@ mod tests {
 
     #[test]
     fn resolve_managed_canister_principal_unknown_canister_is_not_found() {
-        let err = resolve_managed_canister_principal(principal(1), Uuid::new()).unwrap_err();
+        let err = resolve_managed_canister_principal(principal(1), CanisterId::new()).unwrap_err();
         assert!(err.message().contains("not found"));
     }
 }

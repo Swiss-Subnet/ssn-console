@@ -5,15 +5,16 @@ use crate::data::{
         TermsAndConditionsCreatedAtIndexMemory, TermsAndConditionsDecisionMemory,
         TermsAndConditionsDecisionUserIndexMemory, TermsAndConditionsMemory,
     },
-    TermsAndConditions, TermsAndConditionsDecision, TermsAndConditionsDecisionType, UserId,
+    TermsAndConditions, TermsAndConditionsDecision, TermsAndConditionsDecisionId,
+    TermsAndConditionsDecisionType, TermsAndConditionsId, UserId,
 };
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 use std::cell::RefCell;
 
 // Returns versions ordered ascending by created_at. ic_stable_structures'
 // BTreeSet iter is forward-only (no DoubleEndedIterator), so callers that
 // want newest-first reverse on their end.
-pub fn list_terms_and_conditions() -> Vec<(Uuid, TermsAndConditions)> {
+pub fn list_terms_and_conditions() -> Vec<(TermsAndConditionsId, TermsAndConditions)> {
     with_state(|s| {
         s.terms_and_conditions_created_at_index
             .iter()
@@ -24,7 +25,7 @@ pub fn list_terms_and_conditions() -> Vec<(Uuid, TermsAndConditions)> {
 
 pub fn get_latest_terms_and_conditions(
     user_id: UserId,
-) -> Option<(Uuid, TermsAndConditions, bool)> {
+) -> Option<(TermsAndConditionsId, TermsAndConditions, bool)> {
     let latest_id = get_latest_terms_and_condition_id()?;
 
     let has_accepted = has_accepted_terms_and_conditions(user_id, latest_id);
@@ -44,7 +45,7 @@ pub fn has_accepted_latest_terms_and_conditions(user_id: UserId) -> bool {
     has_accepted_terms_and_conditions(user_id, latest_id)
 }
 
-fn get_latest_terms_and_condition_id() -> Option<Uuid> {
+fn get_latest_terms_and_condition_id() -> Option<TermsAndConditionsId> {
     with_state(|s| {
         s.terms_and_conditions_created_at_index
             .last()
@@ -52,7 +53,10 @@ fn get_latest_terms_and_condition_id() -> Option<Uuid> {
     })
 }
 
-fn has_accepted_terms_and_conditions(user_id: UserId, terms_and_conditions_id: Uuid) -> bool {
+fn has_accepted_terms_and_conditions(
+    user_id: UserId,
+    terms_and_conditions_id: TermsAndConditionsId,
+) -> bool {
     with_state(|s| {
         s.terms_and_conditions_decisions_user_index
             .get(&(user_id, terms_and_conditions_id))
@@ -64,7 +68,7 @@ fn has_accepted_terms_and_conditions(user_id: UserId, terms_and_conditions_id: U
 
 pub fn upsert_terms_and_conditions_decision(
     terms_and_conditions_decision: TermsAndConditionsDecision,
-) -> ApiResult<Uuid> {
+) -> ApiResult<TermsAndConditionsDecisionId> {
     mutate_state(|s| {
         if !s
             .terms_and_conditions
@@ -82,7 +86,7 @@ pub fn upsert_terms_and_conditions_decision(
                 terms_and_conditions_decision.user_id,
                 terms_and_conditions_decision.terms_and_conditions_id,
             ))
-            .unwrap_or_else(Uuid::new);
+            .unwrap_or_else(TermsAndConditionsDecisionId::new);
 
         s.terms_and_conditions_decisions
             .insert(id, terms_and_conditions_decision.clone());
@@ -99,8 +103,10 @@ pub fn upsert_terms_and_conditions_decision(
     })
 }
 
-pub fn create_terms_and_conditions(terms_and_conditions: TermsAndConditions) -> Uuid {
-    let id = Uuid::new();
+pub fn create_terms_and_conditions(
+    terms_and_conditions: TermsAndConditions,
+) -> TermsAndConditionsId {
+    let id = TermsAndConditionsId::new();
 
     mutate_state(|s| {
         s.terms_and_conditions
@@ -168,7 +174,7 @@ fn mutate_state<R>(f: impl FnOnce(&mut TermsAndConditionsState) -> R) -> R {
 mod tests {
     use super::*;
 
-    fn seed(created_at: u64) -> Uuid {
+    fn seed(created_at: u64) -> TermsAndConditionsId {
         create_terms_and_conditions(TermsAndConditions {
             content: format!("content-{created_at}"),
             comment: format!("comment-{created_at}"),
@@ -183,7 +189,7 @@ mod tests {
         let oldest = seed(100);
         let newest = seed(300);
 
-        let ids: Vec<Uuid> = list_terms_and_conditions()
+        let ids: Vec<TermsAndConditionsId> = list_terms_and_conditions()
             .into_iter()
             .map(|(id, _)| id)
             .collect();

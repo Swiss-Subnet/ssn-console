@@ -3,10 +3,10 @@ use crate::data::{
     memory::{
         init_project_proposal_index, init_proposals, ProjectProposalIndexMemory, ProposalMemory,
     },
-    ProjectId, ProposalStatus, UserId, Vote,
+    ProjectId, ProposalId, ProposalStatus, UserId, Vote,
 };
 use candid::Principal;
-use canister_utils::{now_nanos, ApiError, ApiResult, Uuid};
+use canister_utils::{now_nanos, ApiError, ApiResult};
 use std::cell::RefCell;
 use std::ops::Bound::{Excluded, Included};
 
@@ -17,14 +17,14 @@ pub enum VoteOutcome {
     StillPending,
 }
 
-pub fn create_proposal(project_id: ProjectId, mut proposal: Proposal) -> Uuid {
+pub fn create_proposal(project_id: ProjectId, mut proposal: Proposal) -> ProposalId {
     // The nil UUID is reserved for legacy proposals predating proposer_id; new
     // proposals always carry a real proposer (the authenticated caller).
     debug_assert!(
         proposal.proposer_id != UserId::default(),
         "create_proposal called with nil proposer_id"
     );
-    let proposal_id = Uuid::new();
+    let proposal_id = ProposalId::new();
     let now = now_nanos();
     proposal.created_at_nanos = Some(now);
     proposal.updated_at_nanos = Some(now);
@@ -37,7 +37,7 @@ pub fn create_proposal(project_id: ProjectId, mut proposal: Proposal) -> Uuid {
     proposal_id
 }
 
-pub fn get_proposal(proposal_id: &Uuid) -> Option<Proposal> {
+pub fn get_proposal(proposal_id: &ProposalId) -> Option<Proposal> {
     with_state(|s| s.proposals.get(proposal_id))
 }
 
@@ -47,19 +47,19 @@ pub fn get_proposal(proposal_id: &Uuid) -> Option<Proposal> {
 // still fills the page; the cursor advances by matched id, not scan position.
 pub fn list_project_proposals<F>(
     project_id: ProjectId,
-    after: Option<Uuid>,
+    after: Option<ProposalId>,
     limit: usize,
     filter: F,
-) -> Vec<(Uuid, Proposal)>
+) -> Vec<(ProposalId, Proposal)>
 where
     F: Fn(&Proposal) -> bool,
 {
     with_state(|s| {
         let start = match after {
             Some(cursor) => Excluded((project_id, cursor)),
-            None => Included((project_id, Uuid::MIN)),
+            None => Included((project_id, ProposalId::MIN)),
         };
-        let end = Included((project_id, Uuid::MAX));
+        let end = Included((project_id, ProposalId::MAX));
         s.project_proposals_index
             .range((start, end))
             .filter_map(|(_, proposal_id)| {
@@ -74,7 +74,7 @@ where
 }
 
 pub fn set_proposal_pending_approval(
-    proposal_id: Uuid,
+    proposal_id: ProposalId,
     threshold: u32,
     approvers: Vec<Principal>,
 ) -> ApiResult {
@@ -104,7 +104,7 @@ pub fn set_proposal_pending_approval(
 }
 
 pub fn record_proposal_vote(
-    proposal_id: Uuid,
+    proposal_id: ProposalId,
     voter: Principal,
     vote: Vote,
 ) -> ApiResult<VoteOutcome> {
@@ -166,7 +166,7 @@ pub fn record_proposal_vote(
     })
 }
 
-pub fn cancel_proposal(proposal_id: Uuid) -> ApiResult {
+pub fn cancel_proposal(proposal_id: ProposalId) -> ApiResult {
     mutate_state(|s| {
         let mut proposal = s.proposals.get(&proposal_id).ok_or_else(|| {
             ApiError::client_error(format!(
@@ -191,19 +191,19 @@ pub fn cancel_proposal(proposal_id: Uuid) -> ApiResult {
     })
 }
 
-pub fn set_proposal_executing(proposal_id: Uuid) -> ApiResult {
+pub fn set_proposal_executing(proposal_id: ProposalId) -> ApiResult {
     set_proposal_status(proposal_id, ProposalStatus::Executing)
 }
 
-pub fn set_proposal_executed(proposal_id: Uuid) -> ApiResult {
+pub fn set_proposal_executed(proposal_id: ProposalId) -> ApiResult {
     set_proposal_status(proposal_id, ProposalStatus::Executed)
 }
 
-pub fn set_proposal_failed(proposal_id: Uuid, message: String) -> ApiResult {
+pub fn set_proposal_failed(proposal_id: ProposalId, message: String) -> ApiResult {
     set_proposal_status(proposal_id, ProposalStatus::Failed(message))
 }
 
-fn set_proposal_status(proposal_id: Uuid, status: ProposalStatus) -> ApiResult {
+fn set_proposal_status(proposal_id: ProposalId, status: ProposalStatus) -> ApiResult {
     mutate_state(|s| {
         let mut proposal = s.proposals.get(&proposal_id).ok_or_else(|| {
             ApiError::client_error(format!(
@@ -221,7 +221,7 @@ fn set_proposal_status(proposal_id: Uuid, status: ProposalStatus) -> ApiResult {
 
 pub fn migrate_proposals_proposer_id() {
     mutate_state(|s| {
-        let ids: Vec<Uuid> = s.proposals.iter().map(|e| e.into_pair().0).collect();
+        let ids: Vec<ProposalId> = s.proposals.iter().map(|e| e.into_pair().0).collect();
         let mut rewritten: u32 = 0;
         let mut legacy: u32 = 0;
         for id in ids {
@@ -281,7 +281,7 @@ mod tests {
     use crate::data::{ProposalOperation, UserId};
     use crate::test_support::fresh_principal;
 
-    fn seed_pending_proposal(threshold: u32, approvers: Vec<Principal>) -> Uuid {
+    fn seed_pending_proposal(threshold: u32, approvers: Vec<Principal>) -> ProposalId {
         let project_id = ProjectId::new();
         let proposal_id = create_proposal(
             project_id,
@@ -438,13 +438,18 @@ mod tests {
 
     #[test]
     fn vote_on_missing_proposal_is_rejected() {
-        let err = record_proposal_vote(Uuid::new(), fresh_principal(), Vote::Approve).unwrap_err();
+        let err =
+            record_proposal_vote(ProposalId::new(), fresh_principal(), Vote::Approve).unwrap_err();
         assert!(err.message().contains("does not exist"));
     }
 
     mod migration {
+        // The legacy on-disk struct is intentionally keyed by raw Uuid to
+        // reproduce the pre-Id<T> CBOR shape; the typed-id ban is for
+        // production code paths.
+        #![allow(clippy::disallowed_types)]
         use super::*;
-        use canister_utils::serialize_cbor;
+        use canister_utils::{serialize_cbor, Uuid};
         use ic_stable_structures::Storable;
         use serde::Serialize;
         use std::borrow::Cow;
@@ -461,7 +466,7 @@ mod tests {
         #[test]
         fn legacy_proposal_decodes_with_nil_proposer_and_survives_migration() {
             let project_id = ProjectId::new();
-            let proposal_id = Uuid::new();
+            let proposal_id = ProposalId::new();
             // Serialize via the raw Uuid-keyed legacy struct; Id<T> is
             // serde-transparent over Uuid so the bytes line up.
             let legacy_bytes = serialize_cbor(&LegacyProposal {

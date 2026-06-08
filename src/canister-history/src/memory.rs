@@ -5,19 +5,24 @@ use crate::{
         FAILED_CANISTER_MAPPINGS_MEMORY_ID, ORIGIN_TIMESTAMP_CHANGE_INDEX_MEMORY_ID,
         SUBNET_CANISTER_RANGES_MEMORY_ID,
     },
-    model::{CanisterChange, CanisterChangeInfo, FailedCanisterMapping, SubnetCanisterRangeInfo},
+    model::{
+        CanisterChange, CanisterChangeId, CanisterChangeInfo, FailedCanisterMapping,
+        FailedCanisterMappingId, SubnetCanisterRangeInfo,
+    },
 };
 use candid::Principal;
-use canister_utils::Uuid;
 use ic_stable_structures::BTreeMap;
 
 pub type SubnetCanisterRangeInfoMemory =
     ic_stable_structures::Cell<SubnetCanisterRangeInfo, Memory>;
 pub type CanisterInfoMemory = BTreeMap<Principal, CanisterChangeInfo, Memory>;
-pub type CanisterChangeMemory = BTreeMap<Uuid, CanisterChange, Memory>;
-pub type CanisterIdTimestampChangeIndexMemory = BTreeMap<(Principal, u64, Uuid), (), Memory>;
-pub type OriginTimestampChangeIndexMemory = BTreeMap<(Principal, u64, Uuid), (), Memory>;
-pub type FailedCanisterMappingsMemory = BTreeMap<Uuid, FailedCanisterMapping, Memory>;
+pub type CanisterChangeMemory = BTreeMap<CanisterChangeId, CanisterChange, Memory>;
+pub type CanisterIdTimestampChangeIndexMemory =
+    BTreeMap<(Principal, u64, CanisterChangeId), (), Memory>;
+pub type OriginTimestampChangeIndexMemory =
+    BTreeMap<(Principal, u64, CanisterChangeId), (), Memory>;
+pub type FailedCanisterMappingsMemory =
+    BTreeMap<FailedCanisterMappingId, FailedCanisterMapping, Memory>;
 
 pub fn init_subnet_canister_range_info() -> SubnetCanisterRangeInfoMemory {
     SubnetCanisterRangeInfoMemory::init(

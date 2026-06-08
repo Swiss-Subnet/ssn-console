@@ -1,8 +1,7 @@
 use crate::{
-    data::{self, UserId},
+    data::{self, InviteId, UserId},
     dto::{self},
 };
-use canister_utils::Uuid;
 
 pub fn map_invite_target_to_data(target: dto::InviteTarget) -> Result<data::InviteTarget, String> {
     match target {
@@ -33,7 +32,7 @@ pub fn map_invite_status_to_dto(status: data::InviteStatus) -> dto::InviteStatus
 }
 
 pub fn map_invite_to_dto(
-    invite_id: Uuid,
+    invite_id: InviteId,
     invite: data::OrgInvite,
     org_name: String,
 ) -> dto::OrgInvite {

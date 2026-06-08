@@ -1,3 +1,4 @@
+import "./ids.did";
 import "../../canister-utils/error.did";
 
 type ListTrustedPartnersResponse = variant {
@@ -16,7 +17,7 @@ type CreateTrustedPartnerResponse = variant {
 };
 
 type TrustedPartner = record {
-  id : text;
+  id : TrustedPartnerId;
   principal_id : text;
   name : text;
 };

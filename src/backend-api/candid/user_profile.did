@@ -22,7 +22,7 @@ type UserProfileByPrincipal = record {
 };
 
 type UserProfileBrief = record {
-  id : text;
+  id : UserId;
   email : opt text;
   email_verified : bool;
 };
@@ -57,7 +57,7 @@ type UpdateUserProfileResponse = variant {
 };
 
 type UserProfile = record {
-  id : text;
+  id : UserId;
   email : opt text;
   email_verified : bool;
   status : UserStatus;

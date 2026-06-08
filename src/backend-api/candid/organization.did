@@ -13,7 +13,7 @@ type ListOrganizationsRequest = record {
 };
 
 type AdminOrganization = record {
-  id : text;
+  id : OrgId;
   name : text;
   tier : PlanTier;
   member_count : nat32;
@@ -75,7 +75,7 @@ type ListOrgUsersRequest = record {
 };
 
 type OrgUser = record {
-  id : text;
+  id : UserId;
   email : opt text;
   email_verified : bool;
   teams : vec Team;
@@ -88,7 +88,7 @@ type ListOrgUsersResponse = variant {
 };
 
 type Organization = record {
-  id : text;
+  id : OrgId;
   name : text;
   your_permissions : OrgPermissions;
 };

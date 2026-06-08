@@ -1,4 +1,5 @@
 use crate::{
+    data::CanisterId,
     dto::{
         ListAllCanistersRequest, ListAllCanistersResponse, ListMyCanistersRequest,
         ListMyCanistersResponse, ListUserCanistersRequest, ListUserCanistersResponse,
@@ -9,14 +10,14 @@ use crate::{
     service::canister_service,
 };
 use backend_api::{AddChildCanistersRequest, AddChildCanistersResponse};
-use canister_utils::{assert_authenticated, assert_controller, ApiResult, ApiResultDto, Uuid};
+use canister_utils::{assert_authenticated, assert_controller, ApiResult, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 fn remove_my_canister_inner(
     caller: candid::Principal,
     request: RemoveMyCanisterRequest,
 ) -> ApiResult<()> {
-    let canister_id = Uuid::try_from(request.canister_id.as_str())?;
+    let canister_id = CanisterId::try_from(request.canister_id.as_str())?;
     canister_service::remove_my_canister(caller, canister_id)
 }
 
@@ -73,7 +74,7 @@ async fn start_my_canister(request: StartMyCanisterRequest) -> ApiResultDto<()> 
         return ApiResultDto::Err(err);
     }
 
-    let canister_id = match Uuid::try_from(request.canister_id.as_str()) {
+    let canister_id = match CanisterId::try_from(request.canister_id.as_str()) {
         Ok(id) => id,
         Err(err) => return ApiResultDto::Err(err),
     };
@@ -89,7 +90,7 @@ async fn stop_my_canister(request: StopMyCanisterRequest) -> ApiResultDto<()> {
         return ApiResultDto::Err(err);
     }
 
-    let canister_id = match Uuid::try_from(request.canister_id.as_str()) {
+    let canister_id = match CanisterId::try_from(request.canister_id.as_str()) {
         Ok(id) => id,
         Err(err) => return ApiResultDto::Err(err),
     };

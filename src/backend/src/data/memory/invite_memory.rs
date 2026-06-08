@@ -2,13 +2,12 @@ use super::{
     Memory, INVITE_STATUS_INDEX_MEMORY_ID, ORGANIZATION_INVITE_INDEX_MEMORY_ID,
     ORG_INVITE_MEMORY_ID,
 };
-use crate::data::{memory::get_memory, OrgId, OrgInvite};
-use canister_utils::Uuid;
+use crate::data::{memory::get_memory, InviteId, OrgId, OrgInvite};
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
-pub type OrgInviteMemory = BTreeMap<Uuid, OrgInvite, Memory>;
-pub type OrganizationInviteIndexMemory = BTreeSet<(OrgId, (u8, u64), Uuid), Memory>;
-pub type InviteStatusIndexMemory = BTreeSet<((u8, u64), Uuid), Memory>;
+pub type OrgInviteMemory = BTreeMap<InviteId, OrgInvite, Memory>;
+pub type OrganizationInviteIndexMemory = BTreeSet<(OrgId, (u8, u64), InviteId), Memory>;
+pub type InviteStatusIndexMemory = BTreeSet<((u8, u64), InviteId), Memory>;
 
 pub fn init_org_invites() -> OrgInviteMemory {
     OrgInviteMemory::init(get_org_invite_memory())

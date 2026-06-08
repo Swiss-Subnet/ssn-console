@@ -3,18 +3,17 @@ use crate::data::{
         init_trusted_partner_principal_index, init_trusted_partners, TrustedPartnerMemory,
         TrustedPartnerPrincipalIndexMemory,
     },
-    TrustedPartner,
+    TrustedPartner, TrustedPartnerId,
 };
 use candid::Principal;
-use canister_utils::Uuid;
 use std::cell::RefCell;
 
-pub fn list_trusted_partners() -> Vec<(Uuid, TrustedPartner)> {
+pub fn list_trusted_partners() -> Vec<(TrustedPartnerId, TrustedPartner)> {
     with_state(|s| s.trusted_partners.iter().map(|e| e.into_pair()).collect())
 }
 
-pub fn create_trusted_partner(trusted_partner: TrustedPartner) -> Uuid {
-    let id = Uuid::new();
+pub fn create_trusted_partner(trusted_partner: TrustedPartner) -> TrustedPartnerId {
+    let id = TrustedPartnerId::new();
 
     mutate_state(|s| {
         s.trusted_partners.insert(id, trusted_partner.clone());
@@ -25,7 +24,7 @@ pub fn create_trusted_partner(trusted_partner: TrustedPartner) -> Uuid {
     id
 }
 
-pub fn get_trusted_partner_id_by_principal(principal: &Principal) -> Option<Uuid> {
+pub fn get_trusted_partner_id_by_principal(principal: &Principal) -> Option<TrustedPartnerId> {
     with_state(|s| s.trusted_partner_principal_index.get(principal))
 }
 

@@ -1,11 +1,11 @@
 use crate::{
-    data::{self, ProjectId},
+    data::{self, ProjectId, ProposalId},
     dto::{
         CreateProposalRequest, ListProjectProposalsResponse, Proposal, ProposalOperation,
         ProposalStatus, ProposalStatusFilter, ProposalVote, Vote, VoteProposalRequest,
     },
 };
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 fn map_vote(vote: data::Vote) -> Vote {
     match vote {
@@ -14,8 +14,8 @@ fn map_vote(vote: data::Vote) -> Vote {
     }
 }
 
-pub fn map_vote_proposal_request(req: VoteProposalRequest) -> ApiResult<(Uuid, data::Vote)> {
-    let proposal_id = Uuid::try_from(req.proposal_id.as_str())?;
+pub fn map_vote_proposal_request(req: VoteProposalRequest) -> ApiResult<(ProposalId, data::Vote)> {
+    let proposal_id = ProposalId::try_from(req.proposal_id.as_str())?;
     let vote = match req.vote {
         Vote::Approve {} => data::Vote::Approve,
         Vote::Reject {} => data::Vote::Reject,
@@ -46,8 +46,8 @@ pub fn map_create_proposal_request(
 }
 
 pub fn map_list_project_proposals_response(
-    proposals: Vec<(Uuid, data::Proposal)>,
-    next_cursor: Option<Uuid>,
+    proposals: Vec<(ProposalId, data::Proposal)>,
+    next_cursor: Option<ProposalId>,
 ) -> ListProjectProposalsResponse {
     ListProjectProposalsResponse {
         proposals: proposals
@@ -92,7 +92,7 @@ pub fn proposal_matches_status_filter(
     )
 }
 
-pub fn map_proposal_response(proposal_id: Uuid, proposal: data::Proposal) -> Proposal {
+pub fn map_proposal_response(proposal_id: ProposalId, proposal: data::Proposal) -> Proposal {
     Proposal {
         id: proposal_id.to_string(),
         project_id: proposal.project_id.to_string(),

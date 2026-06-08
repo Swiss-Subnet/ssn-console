@@ -1,8 +1,8 @@
 use crate::{
     constants::{INVITE_TTL_NS, MAX_PENDING_INVITES_PER_ORG},
     data::{
-        self, invite_repository, organization_repository, user_profile_repository, InviteStatus,
-        OrgId, OrgInvite, OrgPermissions, UserId,
+        self, invite_repository, organization_repository, user_profile_repository, InviteId,
+        InviteStatus, OrgId, OrgInvite, OrgPermissions, UserId,
     },
     dto::{
         AcceptOrgInviteRequest, AcceptOrgInviteResponse, CreateOrgInviteRequest,
@@ -15,7 +15,7 @@ use crate::{
     validation::Email,
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 // Creates an org invite. Intentionally does not leak whether the target
 // (email / user_id / principal) refers to an existing user, so that
@@ -107,7 +107,7 @@ pub fn revoke_org_invite(
     caller: &Principal,
     req: RevokeOrgInviteRequest,
 ) -> ApiResult<RevokeOrgInviteResponse> {
-    let invite_id = Uuid::try_from(req.invite_id.as_str())?;
+    let invite_id = InviteId::try_from(req.invite_id.as_str())?;
 
     let mut invite = invite_repository::get_invite(invite_id).ok_or_else(|| {
         ApiError::client_error(format!("Invite with id {invite_id} does not exist."))
@@ -172,7 +172,7 @@ pub fn accept_org_invite(
     req: AcceptOrgInviteRequest,
     now_ns: u64,
 ) -> ApiResult<AcceptOrgInviteResponse> {
-    let invite_id = Uuid::try_from(req.invite_id.as_str())?;
+    let invite_id = InviteId::try_from(req.invite_id.as_str())?;
     let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let caller_profile = user_profile_repository::get_user_profile_by_user_id(&caller_user_id)
         .ok_or_else(|| {
@@ -213,7 +213,7 @@ pub fn decline_org_invite(
     req: DeclineOrgInviteRequest,
     now_ns: u64,
 ) -> ApiResult<DeclineOrgInviteResponse> {
-    let invite_id = Uuid::try_from(req.invite_id.as_str())?;
+    let invite_id = InviteId::try_from(req.invite_id.as_str())?;
     let caller_user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
     let caller_profile = user_profile_repository::get_user_profile_by_user_id(&caller_user_id)
         .ok_or_else(|| {
