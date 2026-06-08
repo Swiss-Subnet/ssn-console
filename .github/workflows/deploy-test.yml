@@ -24,7 +24,7 @@ jobs:
       DFX_WARNING: -mainnet_plaintext_identity
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
 
       - name: Setup Bun
         uses: ./.github/actions/setup-bun
