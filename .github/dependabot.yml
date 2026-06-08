@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 14
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch
+      actions-major:
+        update-types:
+          - major

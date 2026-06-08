@@ -127,11 +127,13 @@
             pkgs.just
             pkgs.go
             pkgs.jq
+            pkgs.actionlint
+            pkgs.shellcheck
           ];
 
           shellHook = ''
             if [ -t 1 ]; then
-              echo "SSN Console: rust ${rustToolchain.version or "$(rustc --version)"} | bun ${pkgs.bun.version} | node ${pkgs.nodejs_22.version} | dfx ${dfxVersion} | icp-cli ${icpCliVersion} | ssl ${pkgs.openssl.version} | just ${pkgs.just.version} | canbench ${canbenchVersion} | go ${pkgs.go.version} | jq ${pkgs.jq.version}"
+              echo "SSN Console: rust ${rustToolchain.version or "$(rustc --version)"} | bun ${pkgs.bun.version} | node ${pkgs.nodejs_22.version} | dfx ${dfxVersion} | icp-cli ${icpCliVersion} | ssl ${pkgs.openssl.version} | just ${pkgs.just.version} | canbench ${canbenchVersion} | go ${pkgs.go.version} | jq ${pkgs.jq.version} | actionlint ${pkgs.actionlint.version} | shellcheck ${pkgs.shellcheck.version}"
             fi
           '';
         };

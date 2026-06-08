@@ -13,6 +13,10 @@ check:
     bun --bun tsc --build
     just services::check
 
+# Lint GitHub Actions workflows (and embedded shell scripts via shellcheck)
+lint-actions:
+    actionlint
+
 # Verify each canister's exported candid interface still matches its .did file.
 # Fast feedback loop while iterating on .did files.
 check-candid:

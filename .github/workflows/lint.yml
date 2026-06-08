@@ -3,13 +3,49 @@ name: Lint
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: pr-${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      typescript: ${{ steps.filter.outputs.typescript }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            rust:
+              - '**/*.rs'
+              - 'rustfmt.toml'
+              - 'rust-toolchain.toml'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+            typescript:
+              - '**/*.ts'
+              - '**/*.tsx'
+              - '**/*.js'
+              - '**/*.jsx'
+              - '**/*.json'
+              - '**/*.md'
+              - 'prettier.config.cjs'
+              - 'package.json'
+              - 'bun.lock'
+
   lint_rust:
     name: Lint Rust
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -20,6 +56,8 @@ jobs:
 
   lint_typescript:
     name: Lint TypeScript
+    needs: changes
+    if: needs.changes.outputs.typescript == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

@@ -3,6 +3,9 @@ name: Run canister benchmarks
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: pr-${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
@@ -13,7 +16,32 @@ env:
   TERM: xterm-256color
 
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      benchmarks: ${{ steps.filter.outputs.benchmarks }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            benchmarks:
+              - '**/*.rs'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - 'benchmarks/**'
+              - 'scripts/ci-run-benchmark.sh'
+              - 'scripts/ci-post-run-benchmark.sh'
+              - '.github/workflows/run-benchmarks.yml'
+
   benchmark:
+    needs: changes
+    if: needs.changes.outputs.benchmarks == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -43,23 +71,19 @@ jobs:
           ref: main
           path: _canbench_baseline_branch
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-1
-
       - name: Install Rust
         run: |
-          rustup update ${RUST_VERSION} --no-self-update
-          rustup default ${RUST_VERSION}
+          rustup update "${RUST_VERSION}" --no-self-update
+          rustup default "${RUST_VERSION}"
           rustup target add wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          shared-key: benchmarks-${{ matrix.name }}
 
       - name: Benchmark
         run: |
-          bash ./scripts/ci-run-benchmark.sh $PROJECT_DIR ${{ matrix.name }}
+          bash ./scripts/ci-run-benchmark.sh "$PROJECT_DIR" "${{ matrix.name }}"
 
       - uses: actions/upload-artifact@v5
         with:
@@ -81,6 +105,8 @@ jobs:
           bash ./scripts/ci-post-run-benchmark.sh
 
   upload-pr-number:
+    needs: changes
+    if: needs.changes.outputs.benchmarks == 'true'
     runs-on: ubuntu-latest
 
     steps:

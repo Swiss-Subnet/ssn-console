@@ -5,6 +5,9 @@ inputs:
   network:
     description: The ICP network to update the canister env vars on
     required: true
+  public_key:
+    description: PUBLIC_KEY env var to set on the cycles-monitor canister
+    required: true
 
 runs:
   using: 'composite'
