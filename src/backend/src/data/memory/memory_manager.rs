@@ -69,7 +69,11 @@ const REGIONS: &[(&str, u8)] = &[
     ("principal_canister_index", 38),
     ("user_principal_names", 39),
     ("user_profile_verified_email_index", 40),
-    ("service_principal_permissions", 41),
+    ("canister_usage", 41),
+    ("project_usage", 42),
+    ("canister_month_project_index", 43),
+    ("canister_absolute_usage", 44),
+    ("service_principal_permissions", 45),
 ];
 
 // Compile-time invariant: REGIONS is indexed by id. `REGIONS[N].1 == N`.
@@ -151,12 +155,13 @@ pub(super) const PRINCIPAL_CANISTER_INDEX_MEMORY_ID: MemoryId = region(38);
 
 pub(super) const USER_PRINCIPAL_NAME_MEMORY_ID: MemoryId = region(39);
 pub(super) const USER_PROFILE_VERIFIED_EMAIL_INDEX_MEMORY_ID: MemoryId = region(40);
-pub(super) const SERVICE_PRINCIPAL_PERMISSIONS_MEMORY_ID: MemoryId = region(41);
 
-pub(super) const CANISTER_USAGE_MEMORY_ID: MemoryId = MemoryId::new(41);
-pub(super) const PROJECT_USAGE_MEMORY_ID: MemoryId = MemoryId::new(42);
-pub(super) const CANISTER_MONTH_PROJECT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(43);
-pub(super) const CANISTER_ABSOLUTE_USAGE_MEMORY_ID: MemoryId = MemoryId::new(44);
+pub(super) const CANISTER_USAGE_MEMORY_ID: MemoryId = region(41);
+pub(super) const PROJECT_USAGE_MEMORY_ID: MemoryId = region(42);
+pub(super) const CANISTER_MONTH_PROJECT_INDEX_MEMORY_ID: MemoryId = region(43);
+pub(super) const CANISTER_ABSOLUTE_USAGE_MEMORY_ID: MemoryId = region(44);
+
+pub(super) const SERVICE_PRINCIPAL_PERMISSIONS_MEMORY_ID: MemoryId = region(45);
 
 // Returns a size snapshot for every memory id in REGIONS.
 pub fn memory_metrics() -> Vec<MemoryRegionMetric> {
