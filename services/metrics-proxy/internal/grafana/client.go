@@ -87,7 +87,7 @@ func (c *HTTPClient) QueryRange(ctx context.Context, req QueryRangeRequest) ([]P
 	if err != nil {
 		return nil, fmt.Errorf("grafana: do request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode/100 != 2 {
 		return nil, fmt.Errorf("grafana: upstream status %d", resp.StatusCode)
