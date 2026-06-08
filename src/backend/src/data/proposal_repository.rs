@@ -18,6 +18,12 @@ pub enum VoteOutcome {
 }
 
 pub fn create_proposal(project_id: Uuid, mut proposal: Proposal) -> Uuid {
+    // The nil UUID is reserved for legacy proposals predating proposer_id; new
+    // proposals always carry a real proposer (the authenticated caller).
+    debug_assert!(
+        proposal.proposer_id != Uuid::default(),
+        "create_proposal called with nil proposer_id"
+    );
     let proposal_id = Uuid::new();
     let now = now_nanos();
     proposal.created_at_nanos = Some(now);
@@ -213,6 +219,27 @@ fn set_proposal_status(proposal_id: Uuid, status: ProposalStatus) -> ApiResult {
     })
 }
 
+pub fn migrate_proposals_proposer_id() {
+    mutate_state(|s| {
+        let ids: Vec<Uuid> = s.proposals.iter().map(|e| e.into_pair().0).collect();
+        let mut rewritten: u32 = 0;
+        let mut legacy: u32 = 0;
+        for id in ids {
+            let Some(proposal) = s.proposals.get(&id) else {
+                continue;
+            };
+            if proposal.proposer_id == Uuid::default() {
+                legacy += 1;
+            }
+            s.proposals.insert(id, proposal);
+            rewritten += 1;
+        }
+        ic_cdk::println!(
+            "migrate_proposals_proposer_id: rewritten={rewritten} legacy_nil_proposer={legacy}"
+        );
+    });
+}
+
 pub fn metrics_counts() -> Vec<(&'static str, u64)> {
     with_state(|s| {
         vec![
@@ -272,6 +299,23 @@ mod tests {
         );
         set_proposal_pending_approval(proposal_id, threshold, approvers).unwrap();
         proposal_id
+    }
+
+    #[test]
+    #[should_panic(expected = "nil proposer_id")]
+    fn create_proposal_rejects_nil_proposer() {
+        let project_id = Uuid::new();
+        create_proposal(
+            project_id,
+            Proposal {
+                project_id,
+                proposer_id: Uuid::default(),
+                status: ProposalStatus::Open,
+                operation: ProposalOperation::CreateCanister,
+                created_at_nanos: None,
+                updated_at_nanos: None,
+            },
+        );
     }
 
     #[test]
@@ -398,5 +442,49 @@ mod tests {
     fn vote_on_missing_proposal_is_rejected() {
         let err = record_proposal_vote(Uuid::new(), principal(1), Vote::Approve).unwrap_err();
         assert!(err.message().contains("does not exist"));
+    }
+
+    mod migration {
+        use super::*;
+        use canister_utils::serialize_cbor;
+        use ic_stable_structures::Storable;
+        use serde::Serialize;
+        use std::borrow::Cow;
+
+        // Pre-PR-#125 on-disk shape: no `proposer_id`. Field order/names must
+        // match `Proposal` so CBOR map keys line up.
+        #[derive(Serialize)]
+        struct LegacyProposal {
+            project_id: Uuid,
+            status: ProposalStatus,
+            operation: ProposalOperation,
+        }
+
+        #[test]
+        fn legacy_proposal_decodes_with_nil_proposer_and_survives_migration() {
+            let project_id = Uuid::new();
+            let proposal_id = Uuid::new();
+            let legacy_bytes = serialize_cbor(&LegacyProposal {
+                project_id,
+                status: ProposalStatus::Open,
+                operation: ProposalOperation::CreateCanister,
+            });
+
+            // Without `#[serde(default)]` on proposer_id this would panic.
+            let decoded = Proposal::from_bytes(Cow::Owned(legacy_bytes));
+            assert_eq!(decoded.proposer_id, Uuid::default());
+            assert_eq!(decoded.project_id, project_id);
+
+            mutate_state(|s| {
+                s.proposals.insert(proposal_id, decoded);
+                s.project_proposals_index.insert((project_id, proposal_id));
+            });
+
+            migrate_proposals_proposer_id();
+
+            let after = get_proposal(&proposal_id).unwrap();
+            assert_eq!(after.proposer_id, Uuid::default());
+            assert_eq!(after.project_id, project_id);
+        }
     }
 }

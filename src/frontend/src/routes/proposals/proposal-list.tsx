@@ -202,7 +202,7 @@ const ProposalList: FC = () => {
                   </TableCell>
                   <TableCell>{proposalOperationLabel(p.operation)}</TableCell>
                   <TableCell className="font-mono text-xs">
-                    {shorten(p.proposerId)}
+                    {p.proposerId !== null ? shorten(p.proposerId) : '—'}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-xs">
                     {p.createdAtNanos !== null
