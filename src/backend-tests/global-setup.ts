@@ -1,18 +1,16 @@
 import type { TestProject } from 'vitest/node';
-import { PocketIcServer } from '@dfinity/pic';
+import {
+  startPocketIcServer,
+  type PocketIcServerHandle,
+} from '@ssn/test-utils';
 
-let pic: PocketIcServer | undefined;
+let server: PocketIcServerHandle | undefined;
 
 export async function setup(project: TestProject): Promise<void> {
-  pic = await PocketIcServer.start({
-    showCanisterLogs: true,
-    showRuntimeLogs: true,
-  });
-  const url = pic.getUrl();
-
-  project.provide('PIC_URL', url);
+  server = await startPocketIcServer();
+  project.provide('PIC_URL', server.url);
 }
 
 export async function teardown(): Promise<void> {
-  await pic?.stop();
+  await server?.stop();
 }
