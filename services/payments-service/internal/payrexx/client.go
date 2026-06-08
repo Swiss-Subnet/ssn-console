@@ -99,7 +99,7 @@ func (c *Client) Do(ctx context.Context, method, path string, body url.Values) (
 	if err != nil {
 		return nil, 0, fmt.Errorf("payrexx: http: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {

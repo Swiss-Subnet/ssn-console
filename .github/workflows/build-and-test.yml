@@ -19,6 +19,7 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
       offchain: ${{ steps.filter.outputs.offchain }}
       otlp_syncer: ${{ steps.filter.outputs.otlp_syncer }}
+      go: ${{ steps.filter.outputs.go }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -51,6 +52,14 @@ jobs:
             otlp_syncer:
               - 'src/canister-otlp-syncer/**'
               - 'config/canister-otlp-syncer.containerfile'
+            go:
+              - 'services/**/*.go'
+              - 'services/**/go.mod'
+              - 'services/**/go.sum'
+              - 'services/go.work'
+              - 'services/go.work.sum'
+              - 'services/Justfile'
+              - '.github/workflows/build-and-test.yml'
 
   build_and_test_all_canisters:
     name: Build and Test All Canisters
@@ -221,3 +230,31 @@ jobs:
 
       - name: Build Container image
         run: docker build -f ./config/canister-otlp-syncer.containerfile -t canister-otlp-syncer .
+
+  build_and_test_services:
+    name: Build and Test Go Services
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: services/go.work
+          cache-dependency-path: services/**/go.sum
+
+      - name: Build and test per service
+        run: |
+          set -euo pipefail
+          for svc in */; do
+            [ -f "${svc}go.mod" ] || continue
+            echo "::group::$svc"
+            (cd "$svc" && go build ./... && go test ./...)
+            echo "::endgroup::"
+          done
