@@ -80,8 +80,8 @@ type AddUserToTeamResponse = variant {
 };
 
 type RemoveUserFromTeamRequest = record {
-  team_id : text;
-  user_id : text;
+  team_id : TeamId;
+  user_id : UserId;
 };
 
 type RemoveUserFromTeamResponse = variant {
@@ -94,7 +94,7 @@ type ListTeamUsersRequest = record {
 };
 
 type TeamUser = record {
-  id : text;
+  id : UserId;
   email : opt text;
   email_verified : bool;
 };
@@ -117,18 +117,18 @@ type UpdateTeamOrgPermissionsResponse = variant {
 };
 
 type Team = record {
-  id : text;
+  id : TeamId;
   name : text;
 };
 
 type OrgTeam = record {
-  id : text;
+  id : TeamId;
   name : text;
   permissions : OrgPermissions;
 };
 
 type ProjectTeam = record {
-  id : text;
+  id : TeamId;
   name : text;
   permissions : ProjectPermissions;
 };

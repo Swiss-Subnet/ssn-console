@@ -3,14 +3,13 @@ use crate::data::{
         get_memory, Memory, APPROVAL_POLICY_MEMORY_ID,
         PROJECT_OPERATION_TYPE_APPROVAL_POLICY_INDEX_MEMORY_ID,
     },
-    ApprovalPolicy, OperationType, ProjectId,
+    ApprovalPolicy, ApprovalPolicyId, OperationType, ProjectId,
 };
-use canister_utils::Uuid;
 use ic_stable_structures::BTreeMap;
 
-pub type ApprovalPolicyMemory = BTreeMap<Uuid, ApprovalPolicy, Memory>;
+pub type ApprovalPolicyMemory = BTreeMap<ApprovalPolicyId, ApprovalPolicy, Memory>;
 pub type ProjectOperationTypeApprovalPolicyIndexMemory =
-    BTreeMap<(ProjectId, OperationType), Uuid, Memory>;
+    BTreeMap<(ProjectId, OperationType), ApprovalPolicyId, Memory>;
 
 pub fn init_approval_policies() -> ApprovalPolicyMemory {
     ApprovalPolicyMemory::init(get_approval_policy_memory())

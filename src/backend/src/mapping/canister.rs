@@ -1,15 +1,14 @@
 use crate::{
-    data,
+    data::{self, CanisterId},
     dto::{
         Canister, CanisterInfo, CanisterSettings, CanisterState, CanisterStatus,
         EnvironmentVariable, LogVisibility, MemoryMetrics, QueryStats,
     },
 };
-use canister_utils::Uuid;
 use ic_cdk::management_canister::{self, CanisterStatusResult, CanisterStatusType};
 
 pub fn map_canister_response(
-    id: &Uuid,
+    id: &CanisterId,
     canister: &data::Canister,
     state: CanisterState,
 ) -> Canister {

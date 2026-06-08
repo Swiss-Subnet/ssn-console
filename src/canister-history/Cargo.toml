@@ -25,3 +25,6 @@ either = "1"
 
 [features]
 canbench-rs = []
+
+[lints]
+workspace = true

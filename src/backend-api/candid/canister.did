@@ -11,7 +11,7 @@ type ListMyCanistersResponse = variant {
 };
 
 type RemoveMyCanisterRequest = record {
-  canister_id : text;
+  canister_id : CanisterId;
 };
 
 type RemoveMyCanisterResponse = variant {
@@ -20,7 +20,7 @@ type RemoveMyCanisterResponse = variant {
 };
 
 type UpdateMyCanisterNameRequest = record {
-  canister_id : text;
+  canister_id : CanisterId;
   name : opt text;
 };
 
@@ -30,7 +30,7 @@ type UpdateMyCanisterNameResponse = variant {
 };
 
 type StartMyCanisterRequest = record {
-  canister_id : text;
+  canister_id : CanisterId;
 };
 
 type StartMyCanisterResponse = variant {
@@ -39,7 +39,7 @@ type StartMyCanisterResponse = variant {
 };
 
 type StopMyCanisterRequest = record {
-  canister_id : text;
+  canister_id : CanisterId;
 };
 
 type StopMyCanisterResponse = variant {
@@ -61,7 +61,7 @@ type ListAllCanistersResponse = variant {
 };
 
 type CanisterWithOwner = record {
-  id : text;
+  id : CanisterId;
   principal_id : text;
   user_id : UserId;
   email : opt text;
@@ -76,7 +76,7 @@ type PaginationMetaResponse = record {
 };
 
 type Canister = record {
-  id : text;
+  id : CanisterId;
   principal_id : text;
   name : opt text;
   state : CanisterState;

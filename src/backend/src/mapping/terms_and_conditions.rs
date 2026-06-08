@@ -1,15 +1,15 @@
 use crate::{
-    data::{self, UserId},
+    data::{self, TermsAndConditionsId, UserId},
     dto::{
         CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse,
         ListTermsAndConditionsResponse, TermsAndConditions, TermsAndConditionsDecisionType,
         TermsAndConditionsListItem, UpsertTermsAndConditionsDecisionRequest,
     },
 };
-use canister_utils::{ApiResult, Uuid};
+use canister_utils::ApiResult;
 
 pub fn map_get_latest_terms_and_conditions_response(
-    res: Option<(Uuid, data::TermsAndConditions, bool)>,
+    res: Option<(TermsAndConditionsId, data::TermsAndConditions, bool)>,
 ) -> GetLatestTermsAndConditionsResponse {
     res.map(|(id, res, has_accepted)| TermsAndConditions {
         id: id.to_string(),
@@ -21,7 +21,7 @@ pub fn map_get_latest_terms_and_conditions_response(
 }
 
 pub fn map_list_terms_and_conditions_response(
-    items: Vec<(Uuid, data::TermsAndConditions)>,
+    items: Vec<(TermsAndConditionsId, data::TermsAndConditions)>,
 ) -> ListTermsAndConditionsResponse {
     items
         .into_iter()
@@ -41,7 +41,9 @@ pub fn map_create_terms_and_conditions_decision_request(
     created_at: u64,
 ) -> ApiResult<data::TermsAndConditionsDecision> {
     Ok(data::TermsAndConditionsDecision {
-        terms_and_conditions_id: Uuid::try_from(req.terms_and_conditions_id.as_str())?,
+        terms_and_conditions_id: TermsAndConditionsId::try_from(
+            req.terms_and_conditions_id.as_str(),
+        )?,
         user_id,
         created_at,
         decision_type: match req.decision_type {

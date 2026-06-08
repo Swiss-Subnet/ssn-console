@@ -1,0 +1,5 @@
+disallowed-types = [
+    # Canonical definition path (not the canister_utils::Uuid re-export), so the
+    # path resolves in every crate; disallowed_types matches by def-id regardless.
+    { path = "canister_utils::uuid::Uuid", reason = "use a typed Id<T> alias (e.g. CanisterId, ProposalId) for entity ids; raw Uuid is an internal building block of Id<T>" },
+]

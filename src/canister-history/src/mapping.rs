@@ -1,15 +1,16 @@
 use crate::{
     dto,
     model::{
-        CanisterChange, CanisterChangeDetails, CanisterChangeOrigin, CodeDeploymentMode,
-        SnapshotSource,
+        CanisterChange, CanisterChangeDetails, CanisterChangeId, CanisterChangeOrigin,
+        CodeDeploymentMode, SnapshotSource,
     },
 };
 use candid::Principal;
-use canister_utils::Uuid;
 use ic_cdk::management_canister;
 
-pub fn map_canister_change_response((id, change): (Uuid, CanisterChange)) -> dto::CanisterChange {
+pub fn map_canister_change_response(
+    (id, change): (CanisterChangeId, CanisterChange),
+) -> dto::CanisterChange {
     dto::CanisterChange {
         id: id.to_string(),
         canister_id: change.canister_id,

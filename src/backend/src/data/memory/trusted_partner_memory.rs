@@ -2,14 +2,13 @@ use crate::data::{
     memory::{
         get_memory, Memory, TRUSTED_PARTNERS_MEMORY_ID, TRUSTED_PARTNER_PRINCIPAL_INDEX_MEMORY_ID,
     },
-    TrustedPartner,
+    TrustedPartner, TrustedPartnerId,
 };
 use candid::Principal;
-use canister_utils::Uuid;
 use ic_stable_structures::BTreeMap;
 
-pub type TrustedPartnerMemory = BTreeMap<Uuid, TrustedPartner, Memory>;
-pub type TrustedPartnerPrincipalIndexMemory = BTreeMap<Principal, Uuid, Memory>;
+pub type TrustedPartnerMemory = BTreeMap<TrustedPartnerId, TrustedPartner, Memory>;
+pub type TrustedPartnerPrincipalIndexMemory = BTreeMap<Principal, TrustedPartnerId, Memory>;
 
 pub fn init_trusted_partners() -> TrustedPartnerMemory {
     TrustedPartnerMemory::init(get_trusted_partners_memory())

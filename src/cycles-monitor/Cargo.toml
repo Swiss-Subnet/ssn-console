@@ -24,3 +24,6 @@ base64 = "0.22"
 [features]
 canbench-rs = []
 mock-metrics = []
+
+[lints]
+workspace = true

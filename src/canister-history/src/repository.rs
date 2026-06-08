@@ -7,13 +7,13 @@ use crate::{
         OriginTimestampChangeIndexMemory, SubnetCanisterRangeInfoMemory,
     },
     model::{
-        CanisterChange, CanisterChangeInfo, CanisterChangeOrigin, FailedCanisterMapping,
-        SubnetCanisterRangeInfo,
+        CanisterChange, CanisterChangeId, CanisterChangeInfo, CanisterChangeOrigin,
+        FailedCanisterMapping, FailedCanisterMappingId, SubnetCanisterRangeInfo,
     },
 };
 use backend_api::ParentChildMapping;
 use candid::Principal;
-use canister_utils::{CanisterId, Uuid};
+use canister_utils::CanisterId;
 use either::Either;
 use std::cell::RefCell;
 
@@ -28,8 +28,8 @@ pub fn list_subnet_canister_ranges() -> Vec<(Principal, Principal)> {
     with_state(|s| s.subnet_canister_range_info.get().clone().canister_ranges)
 }
 
-pub fn insert_change(change: CanisterChange) -> Uuid {
-    let id = Uuid::new();
+pub fn insert_change(change: CanisterChange) -> CanisterChangeId {
+    let id = CanisterChangeId::new();
 
     mutate_state(|s| {
         let origin = match change.origin {
@@ -115,11 +115,12 @@ pub fn list_canister_changes(
     reverse: bool,
     limit: usize,
     page: usize,
-) -> Vec<(Uuid, CanisterChange)> {
+) -> Vec<(CanisterChangeId, CanisterChange)> {
     with_state(|s| {
-        let range_iter = s
-            .canister_id_timestamp_change_index
-            .range((canister_id, u64::MIN, Uuid::MIN)..=(canister_id, u64::MAX, Uuid::MAX));
+        let range_iter = s.canister_id_timestamp_change_index.range(
+            (canister_id, u64::MIN, CanisterChangeId::MIN)
+                ..=(canister_id, u64::MAX, CanisterChangeId::MAX),
+        );
 
         let iter = if reverse {
             Either::Left(range_iter.rev())
@@ -147,7 +148,7 @@ pub fn add_failed_canister_mappings(new_mappings: Vec<ParentChildMapping>) {
     mutate_state(|s| {
         for mapping in new_mappings {
             s.failed_canister_mappings.insert(
-                Uuid::new(),
+                FailedCanisterMappingId::new(),
                 FailedCanisterMapping {
                     parent_canister_id: mapping.parent_canister_id,
                     child_canister_id: mapping.child_canister_id,

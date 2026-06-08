@@ -3,13 +3,12 @@ use crate::data::{
         get_memory, Memory, TERMS_AND_CONDITIONS_CREATED_AT_INDEX_MEMORY_ID,
         TERMS_AND_CONDITIONS_MEMORY_ID,
     },
-    TermsAndConditions,
+    TermsAndConditions, TermsAndConditionsId,
 };
-use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
-pub type TermsAndConditionsMemory = BTreeMap<Uuid, TermsAndConditions, Memory>;
-pub type TermsAndConditionsCreatedAtIndexMemory = BTreeSet<(u64, Uuid), Memory>;
+pub type TermsAndConditionsMemory = BTreeMap<TermsAndConditionsId, TermsAndConditions, Memory>;
+pub type TermsAndConditionsCreatedAtIndexMemory = BTreeSet<(u64, TermsAndConditionsId), Memory>;
 
 pub fn init_terms_and_conditions() -> TermsAndConditionsMemory {
     TermsAndConditionsMemory::init(get_terms_and_conditions_memory())

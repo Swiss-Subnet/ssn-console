@@ -15,7 +15,7 @@ type InviteStatus = variant {
 };
 
 type OrgInvite = record {
-  id : text;
+  id : InviteId;
   org_id : OrgId;
   org_name : text;
   created_by : UserId;
@@ -52,7 +52,7 @@ type ListMyInvitesResponse = variant {
 };
 
 type RevokeOrgInviteRequest = record {
-  invite_id : text;
+  invite_id : InviteId;
 };
 
 type RevokeOrgInviteResponse = variant {
@@ -61,7 +61,7 @@ type RevokeOrgInviteResponse = variant {
 };
 
 type AcceptOrgInviteRequest = record {
-  invite_id : text;
+  invite_id : InviteId;
 };
 
 type AcceptOrgInviteResponse = variant {
@@ -70,7 +70,7 @@ type AcceptOrgInviteResponse = variant {
 };
 
 type DeclineOrgInviteRequest = record {
-  invite_id : text;
+  invite_id : InviteId;
 };
 
 type DeclineOrgInviteResponse = variant {

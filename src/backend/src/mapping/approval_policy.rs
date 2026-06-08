@@ -1,14 +1,14 @@
 use crate::{
-    data::{self, ProjectId},
+    data::{self, ApprovalPolicyId, ProjectId},
     dto::{
         ApprovalPolicy, ListProjectApprovalPoliciesResponse, OperationType, PolicyType,
         UpsertApprovalPolicyRequest,
     },
 };
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 pub fn map_list_project_approval_policies_response(
-    policies: Vec<(Uuid, data::OperationType, data::ApprovalPolicy)>,
+    policies: Vec<(ApprovalPolicyId, data::OperationType, data::ApprovalPolicy)>,
 ) -> ListProjectApprovalPoliciesResponse {
     ListProjectApprovalPoliciesResponse {
         approval_policies: policies
@@ -19,7 +19,7 @@ pub fn map_list_project_approval_policies_response(
 }
 
 pub fn map_approval_policy_response(
-    (id, operation_type, policy): (Uuid, data::OperationType, data::ApprovalPolicy),
+    (id, operation_type, policy): (ApprovalPolicyId, data::OperationType, data::ApprovalPolicy),
 ) -> ApprovalPolicy {
     ApprovalPolicy {
         id: id.to_string(),
@@ -81,6 +81,9 @@ fn map_policy_type_in(policy: PolicyType) -> ApiResult<data::PolicyType> {
 
 #[cfg(test)]
 mod tests {
+    // Tests mint arbitrary id strings via raw Uuid; the typed-id ban is for
+    // production code paths.
+    #![allow(clippy::disallowed_types)]
     use super::*;
     use canister_utils::Uuid;
 

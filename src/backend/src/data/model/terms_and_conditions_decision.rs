@@ -1,12 +1,14 @@
-use crate::data::UserId;
-use canister_utils::{deserialize_cbor, serialize_cbor, Uuid};
+use crate::data::{TermsAndConditionsId, UserId};
+use canister_utils::{deserialize_cbor, serialize_cbor, Id};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+pub type TermsAndConditionsDecisionId = Id<TermsAndConditionsDecision>;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TermsAndConditionsDecision {
-    pub terms_and_conditions_id: Uuid,
+    pub terms_and_conditions_id: TermsAndConditionsId,
     pub user_id: UserId,
     pub created_at: u64,
     pub decision_type: TermsAndConditionsDecisionType,

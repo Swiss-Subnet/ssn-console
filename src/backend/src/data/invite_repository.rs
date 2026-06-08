@@ -3,12 +3,12 @@ use super::{
         init_invite_status_index, init_org_invites, init_organization_invite_index,
         InviteStatusIndexMemory, OrgInviteMemory, OrganizationInviteIndexMemory,
     },
-    InviteStatus, OrgId, OrgInvite, UserId,
+    InviteId, InviteStatus, OrgId, OrgInvite, UserId,
 };
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 use std::cell::RefCell;
 
-fn org_index_key(inv: &OrgInvite, invite_id: Uuid) -> (OrgId, (u8, u64), Uuid) {
+fn org_index_key(inv: &OrgInvite, invite_id: InviteId) -> (OrgId, (u8, u64), InviteId) {
     (
         inv.org_id,
         (inv.status.as_u8(), inv.expires_at_ns),
@@ -16,12 +16,12 @@ fn org_index_key(inv: &OrgInvite, invite_id: Uuid) -> (OrgId, (u8, u64), Uuid) {
     )
 }
 
-fn status_index_key(inv: &OrgInvite, invite_id: Uuid) -> ((u8, u64), Uuid) {
+fn status_index_key(inv: &OrgInvite, invite_id: InviteId) -> ((u8, u64), InviteId) {
     ((inv.status.as_u8(), inv.expires_at_ns), invite_id)
 }
 
-pub fn create_invite(invite: OrgInvite) -> Uuid {
-    let invite_id = Uuid::new();
+pub fn create_invite(invite: OrgInvite) -> InviteId {
+    let invite_id = InviteId::new();
     mutate_state(|s| {
         s.organization_invite_index
             .insert(org_index_key(&invite, invite_id));
@@ -32,11 +32,11 @@ pub fn create_invite(invite: OrgInvite) -> Uuid {
     invite_id
 }
 
-pub fn get_invite(invite_id: Uuid) -> Option<OrgInvite> {
+pub fn get_invite(invite_id: InviteId) -> Option<OrgInvite> {
     with_state(|s| s.invites.get(&invite_id))
 }
 
-pub fn update_invite(invite_id: Uuid, invite: OrgInvite) -> ApiResult {
+pub fn update_invite(invite_id: InviteId, invite: OrgInvite) -> ApiResult {
     mutate_state(|s| {
         let old = s.invites.get(&invite_id).ok_or_else(|| {
             ApiError::client_error(format!("Invite with id {invite_id} does not exist."))
@@ -58,11 +58,12 @@ pub fn list_org_invites_by_creator(
     org_id: OrgId,
     created_by: UserId,
     now_ns: u64,
-) -> Vec<(Uuid, OrgInvite)> {
+) -> Vec<(InviteId, OrgInvite)> {
     with_state(|s| {
         s.organization_invite_index
             .range(
-                (org_id, (u8::MIN, u64::MIN), Uuid::MIN)..=(org_id, (u8::MAX, u64::MAX), Uuid::MAX),
+                (org_id, (u8::MIN, u64::MIN), InviteId::MIN)
+                    ..=(org_id, (u8::MAX, u64::MAX), InviteId::MAX),
             )
             .filter_map(|(_, _, invite_id)| s.invites.get(&invite_id).map(|inv| (invite_id, inv)))
             .filter(|(_, inv)| inv.created_by == created_by)
@@ -73,11 +74,11 @@ pub fn list_org_invites_by_creator(
     })
 }
 
-pub fn list_pending_invites(now_ns: u64) -> Vec<(Uuid, OrgInvite)> {
+pub fn list_pending_invites(now_ns: u64) -> Vec<(InviteId, OrgInvite)> {
     let pending = InviteStatus::Pending.as_u8();
     with_state(|s| {
         s.invite_status_index
-            .range(((pending, now_ns), Uuid::MIN)..=((pending, u64::MAX), Uuid::MAX))
+            .range(((pending, now_ns), InviteId::MIN)..=((pending, u64::MAX), InviteId::MAX))
             .filter_map(|(_, invite_id)| s.invites.get(&invite_id).map(|inv| (invite_id, inv)))
             .collect()
     })
@@ -88,7 +89,8 @@ pub fn count_pending_invites_for_org(org_id: OrgId, now_ns: u64) -> usize {
     with_state(|s| {
         s.organization_invite_index
             .range(
-                (org_id, (pending, now_ns), Uuid::MIN)..=(org_id, (pending, u64::MAX), Uuid::MAX),
+                (org_id, (pending, now_ns), InviteId::MIN)
+                    ..=(org_id, (pending, u64::MAX), InviteId::MAX),
             )
             .count()
     })
@@ -100,7 +102,8 @@ pub fn sweep_expired_org_invites(org_id: OrgId, now_ns: u64) {
         let expired: Vec<_> = s
             .organization_invite_index
             .range(
-                (org_id, (pending, u64::MIN), Uuid::MIN)..=(org_id, (pending, now_ns), Uuid::MAX),
+                (org_id, (pending, u64::MIN), InviteId::MIN)
+                    ..=(org_id, (pending, now_ns), InviteId::MAX),
             )
             .collect();
         for key @ (_, (status, expires_at_ns), invite_id) in expired {

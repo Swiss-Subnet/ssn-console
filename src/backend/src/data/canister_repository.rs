@@ -5,15 +5,14 @@ use crate::data::{
         ActiveProjectCanisterIndexMemory, CanisterMemory, CanisterProjectIndexMemory,
         DeletedProjectCanisterIndexMemory, PrincipalCanisterIndexMemory,
     },
-    Canister, ProjectId,
+    Canister, CanisterId, ProjectId,
 };
 use candid::Principal;
-use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn project_has_canisters(project_id: ProjectId) -> bool {
     with_state(|s| {
-        let range = (project_id, Uuid::MIN)..=(project_id, Uuid::MAX);
+        let range = (project_id, CanisterId::MIN)..=(project_id, CanisterId::MAX);
         s.active_project_canister_index
             .range(range.clone())
             .any(|_| true)
@@ -21,10 +20,10 @@ pub fn project_has_canisters(project_id: ProjectId) -> bool {
     })
 }
 
-pub fn list_active_canisters_by_project(project_id: ProjectId) -> Vec<(Uuid, Canister)> {
+pub fn list_active_canisters_by_project(project_id: ProjectId) -> Vec<(CanisterId, Canister)> {
     with_state(|s| {
         s.active_project_canister_index
-            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX))
+            .range((project_id, CanisterId::MIN)..=(project_id, CanisterId::MAX))
             .filter_map(|(_, canister_id)| {
                 s.canisters
                     .get(&canister_id)
@@ -34,14 +33,16 @@ pub fn list_active_canisters_by_project(project_id: ProjectId) -> Vec<(Uuid, Can
     })
 }
 
-pub fn list_canisters_by_project_including_deleted(project_id: ProjectId) -> Vec<(Uuid, Canister)> {
+pub fn list_canisters_by_project_including_deleted(
+    project_id: ProjectId,
+) -> Vec<(CanisterId, Canister)> {
     with_state(|s| {
         let active = s
             .active_project_canister_index
-            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX));
+            .range((project_id, CanisterId::MIN)..=(project_id, CanisterId::MAX));
         let deleted = s
             .deleted_project_canister_index
-            .range((project_id, Uuid::MIN)..=(project_id, Uuid::MAX));
+            .range((project_id, CanisterId::MIN)..=(project_id, CanisterId::MAX));
 
         active
             .chain(deleted)
@@ -54,7 +55,10 @@ pub fn list_canisters_by_project_including_deleted(project_id: ProjectId) -> Vec
     })
 }
 
-pub fn list_canisters_with_project(limit: usize, page: usize) -> Vec<(Uuid, Canister, ProjectId)> {
+pub fn list_canisters_with_project(
+    limit: usize,
+    page: usize,
+) -> Vec<(CanisterId, Canister, ProjectId)> {
     with_state(|s| {
         s.canisters
             .iter()
@@ -70,8 +74,8 @@ pub fn list_canisters_with_project(limit: usize, page: usize) -> Vec<(Uuid, Cani
     })
 }
 
-pub fn create_canister(project_id: ProjectId, canister: Canister) -> Uuid {
-    let canister_id = Uuid::new();
+pub fn create_canister(project_id: ProjectId, canister: Canister) -> CanisterId {
+    let canister_id = CanisterId::new();
 
     mutate_state(|s| {
         s.canisters.insert(canister_id, canister.clone());
@@ -89,17 +93,17 @@ pub fn get_canister_count() -> u64 {
     with_state(|s| s.canisters.len())
 }
 
-pub fn get_canister_project_id(canister_id: Uuid) -> Option<ProjectId> {
+pub fn get_canister_project_id(canister_id: CanisterId) -> Option<ProjectId> {
     with_state(|s| s.canister_project_index.get(&canister_id))
 }
 
-pub fn get_canister(canister_id: Uuid) -> Option<Canister> {
+pub fn get_canister(canister_id: CanisterId) -> Option<Canister> {
     with_state(|s| s.canisters.get(&canister_id))
 }
 
 pub fn soft_delete_canister(
     project_id: ProjectId,
-    canister_id: Uuid,
+    canister_id: CanisterId,
     deleted_at: u64,
 ) -> Option<Canister> {
     mutate_state(|s| {
@@ -123,7 +127,7 @@ pub fn soft_delete_canister(
     })
 }
 
-pub fn get_canister_by_principal(principal: Principal) -> Option<Uuid> {
+pub fn get_canister_by_principal(principal: Principal) -> Option<CanisterId> {
     with_state(|s| s.principal_canister_index.get(&principal))
 }
 
@@ -136,7 +140,7 @@ pub fn migrate_principal_canister_index() {
     });
 }
 
-pub fn update_canister_name(canister_id: Uuid, name: Option<String>) -> Option<Canister> {
+pub fn update_canister_name(canister_id: CanisterId, name: Option<String>) -> Option<Canister> {
     mutate_state(|s| {
         let mut canister = s.canisters.get(&canister_id)?;
         canister.name = name;

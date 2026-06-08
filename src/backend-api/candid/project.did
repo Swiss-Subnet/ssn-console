@@ -91,7 +91,7 @@ type UpdateTeamProjectPermissionsResponse = variant {
 
 type Project = record {
   org_id : OrgId;
-  id : text;
+  id : ProjectId;
   name : text;
   your_permissions : ProjectPermissions;
 };

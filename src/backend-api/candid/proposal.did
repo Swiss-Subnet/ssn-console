@@ -12,7 +12,7 @@ type CreateProposalResponse = variant {
 };
 
 type GetProposalRequest = record {
-  proposal_id : text;
+  proposal_id : ProposalId;
 };
 
 type GetProposalResponse = variant {
@@ -23,12 +23,12 @@ type GetProposalResponse = variant {
 type ListProjectProposalsRequest = record {
   project_id : ProjectId;
   status_filter : opt vec ProposalStatusFilter;
-  after : opt text;
+  after : opt ProposalId;
   limit : opt nat64;
 };
 
 type ListProjectProposalsResponse = variant {
-  Ok : record { proposals : vec Proposal; next_cursor : opt text };
+  Ok : record { proposals : vec Proposal; next_cursor : opt ProposalId };
   Err : ApiError;
 };
 
@@ -43,7 +43,7 @@ type ProposalStatusFilter = variant {
 };
 
 type VoteProposalRequest = record {
-  proposal_id : text;
+  proposal_id : ProposalId;
   vote : Vote;
 };
 
@@ -53,7 +53,7 @@ type VoteProposalResponse = variant {
 };
 
 type CancelProposalRequest = record {
-  proposal_id : text;
+  proposal_id : ProposalId;
 };
 
 type CancelProposalResponse = variant {
@@ -62,7 +62,7 @@ type CancelProposalResponse = variant {
 };
 
 type Proposal = record {
-  id : text;
+  id : ProposalId;
   project_id : ProjectId;
   proposer_id : UserId;
   status : opt ProposalStatus;
