@@ -1,13 +1,13 @@
 use super::PROJECT_PROPOSAL_INDEX_MEMORY_ID;
 use crate::data::{
     memory::{get_memory, Memory, PROPOSAL_MEMORY_ID},
-    Proposal,
+    ProjectId, Proposal,
 };
 use canister_utils::Uuid;
 use ic_stable_structures::{BTreeMap, BTreeSet};
 
 pub type ProposalMemory = BTreeMap<Uuid, Proposal, Memory>;
-pub type ProjectProposalIndexMemory = BTreeSet<(Uuid, Uuid), Memory>;
+pub type ProjectProposalIndexMemory = BTreeSet<(ProjectId, Uuid), Memory>;
 
 pub fn init_proposals() -> ProposalMemory {
     ProposalMemory::init(get_proposal_memory())

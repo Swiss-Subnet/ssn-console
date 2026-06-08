@@ -1,3 +1,4 @@
+use crate::data::UserId;
 use crate::{
     dto::{
         AdminLinkPrincipalRequest, AdminLinkPrincipalResponse, AdminListLinkedPrincipalsRequest,
@@ -12,7 +13,7 @@ use crate::{
     },
     service::principal_link_service,
 };
-use canister_utils::{assert_authenticated, ApiResultDto, Uuid};
+use canister_utils::{assert_authenticated, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[update]
@@ -137,7 +138,7 @@ fn admin_link_principal_to_user(
         return ApiResultDto::Err(err);
     }
 
-    let user_id = match Uuid::try_from(req.user_id.as_str()) {
+    let user_id = match UserId::try_from(req.user_id.as_str()) {
         Ok(id) => id,
         Err(err) => return ApiResultDto::Err(err),
     };
@@ -156,7 +157,7 @@ fn admin_unlink_principal_from_user(
         return ApiResultDto::Err(err);
     }
 
-    let user_id = match Uuid::try_from(req.user_id.as_str()) {
+    let user_id = match UserId::try_from(req.user_id.as_str()) {
         Ok(id) => id,
         Err(err) => return ApiResultDto::Err(err),
     };
@@ -175,7 +176,7 @@ fn admin_list_linked_principals(
         return ApiResultDto::Err(err);
     }
 
-    let user_id = match Uuid::try_from(req.user_id.as_str()) {
+    let user_id = match UserId::try_from(req.user_id.as_str()) {
         Ok(id) => id,
         Err(err) => return ApiResultDto::Err(err),
     };

@@ -3,7 +3,7 @@ use crate::data::{
     memory::{
         init_project_proposal_index, init_proposals, ProjectProposalIndexMemory, ProposalMemory,
     },
-    ProposalStatus, Vote,
+    ProjectId, ProposalStatus, UserId, Vote,
 };
 use candid::Principal;
 use canister_utils::{now_nanos, ApiError, ApiResult, Uuid};
@@ -17,11 +17,11 @@ pub enum VoteOutcome {
     StillPending,
 }
 
-pub fn create_proposal(project_id: Uuid, mut proposal: Proposal) -> Uuid {
+pub fn create_proposal(project_id: ProjectId, mut proposal: Proposal) -> Uuid {
     // The nil UUID is reserved for legacy proposals predating proposer_id; new
     // proposals always carry a real proposer (the authenticated caller).
     debug_assert!(
-        proposal.proposer_id != Uuid::default(),
+        proposal.proposer_id != UserId::default(),
         "create_proposal called with nil proposer_id"
     );
     let proposal_id = Uuid::new();
@@ -46,7 +46,7 @@ pub fn get_proposal(proposal_id: &Uuid) -> Option<Proposal> {
 // up to `limit` matches. Filtering happens before `take` so a sparse filter
 // still fills the page; the cursor advances by matched id, not scan position.
 pub fn list_project_proposals<F>(
-    project_id: Uuid,
+    project_id: ProjectId,
     after: Option<Uuid>,
     limit: usize,
     filter: F,
@@ -228,7 +228,7 @@ pub fn migrate_proposals_proposer_id() {
             let Some(proposal) = s.proposals.get(&id) else {
                 continue;
             };
-            if proposal.proposer_id == Uuid::default() {
+            if proposal.proposer_id == UserId::default() {
                 legacy += 1;
             }
             s.proposals.insert(id, proposal);
@@ -278,19 +278,19 @@ fn mutate_state<R>(f: impl FnOnce(&mut ProposalState) -> R) -> R {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::ProposalOperation;
+    use crate::data::{ProposalOperation, UserId};
 
     fn principal(byte: u8) -> Principal {
         Principal::from_slice(&[byte])
     }
 
     fn seed_pending_proposal(threshold: u32, approvers: Vec<Principal>) -> Uuid {
-        let project_id = Uuid::new();
+        let project_id = ProjectId::new();
         let proposal_id = create_proposal(
             project_id,
             Proposal {
                 project_id,
-                proposer_id: Uuid::new(),
+                proposer_id: UserId::new(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
                 created_at_nanos: None,
@@ -304,12 +304,12 @@ mod tests {
     #[test]
     #[should_panic(expected = "nil proposer_id")]
     fn create_proposal_rejects_nil_proposer() {
-        let project_id = Uuid::new();
+        let project_id = ProjectId::new();
         create_proposal(
             project_id,
             Proposal {
                 project_id,
-                proposer_id: Uuid::default(),
+                proposer_id: UserId::default(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
                 created_at_nanos: None,
@@ -421,12 +421,12 @@ mod tests {
 
     #[test]
     fn vote_on_non_pending_proposal_is_rejected() {
-        let project_id = Uuid::new();
+        let project_id = ProjectId::new();
         let id = create_proposal(
             project_id,
             Proposal {
                 project_id,
-                proposer_id: Uuid::new(),
+                proposer_id: UserId::new(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
                 created_at_nanos: None,
@@ -462,17 +462,19 @@ mod tests {
 
         #[test]
         fn legacy_proposal_decodes_with_nil_proposer_and_survives_migration() {
-            let project_id = Uuid::new();
+            let project_id = ProjectId::new();
             let proposal_id = Uuid::new();
+            // Serialize via the raw Uuid-keyed legacy struct; Id<T> is
+            // serde-transparent over Uuid so the bytes line up.
             let legacy_bytes = serialize_cbor(&LegacyProposal {
-                project_id,
+                project_id: project_id.into_uuid(),
                 status: ProposalStatus::Open,
                 operation: ProposalOperation::CreateCanister,
             });
 
             // Without `#[serde(default)]` on proposer_id this would panic.
             let decoded = Proposal::from_bytes(Cow::Owned(legacy_bytes));
-            assert_eq!(decoded.proposer_id, Uuid::default());
+            assert_eq!(decoded.proposer_id, UserId::default());
             assert_eq!(decoded.project_id, project_id);
 
             mutate_state(|s| {
@@ -483,7 +485,7 @@ mod tests {
             migrate_proposals_proposer_id();
 
             let after = get_proposal(&proposal_id).unwrap();
-            assert_eq!(after.proposer_id, Uuid::default());
+            assert_eq!(after.proposer_id, UserId::default());
             assert_eq!(after.project_id, project_id);
         }
     }

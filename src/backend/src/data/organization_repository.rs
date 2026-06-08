@@ -3,14 +3,14 @@ use super::{
         init_organization_user_index, init_organizations, init_user_organization_index,
         OrganizationMemory, OrganizationUserIndexMemory, UserOrganizationIndexMemory,
     },
-    Organization,
+    OrgId, Organization, UserId,
 };
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 use std::cell::RefCell;
 use std::ops::Bound::{Excluded, Included};
 
-pub fn create_org(user_id: Uuid, org: Organization) -> Uuid {
-    let org_id = Uuid::new();
+pub fn create_org(user_id: UserId, org: Organization) -> OrgId {
+    let org_id = OrgId::new();
 
     mutate_state(|s| {
         s.organizations.insert(org_id, org);
@@ -21,7 +21,7 @@ pub fn create_org(user_id: Uuid, org: Organization) -> Uuid {
     org_id
 }
 
-pub fn add_default_org(user_id: Uuid) -> Uuid {
+pub fn add_default_org(user_id: UserId) -> OrgId {
     create_org(
         user_id,
         Organization {
@@ -30,11 +30,11 @@ pub fn add_default_org(user_id: Uuid) -> Uuid {
     )
 }
 
-pub fn get_org(org_id: Uuid) -> Option<Organization> {
+pub fn get_org(org_id: OrgId) -> Option<Organization> {
     with_state(|s| s.organizations.get(&org_id))
 }
 
-pub fn update_org(org_id: Uuid, org: Organization) -> ApiResult {
+pub fn update_org(org_id: OrgId, org: Organization) -> ApiResult {
     mutate_state(|s| {
         if !s.organizations.contains_key(&org_id) {
             return Err(ApiError::client_error(format!(
@@ -48,7 +48,7 @@ pub fn update_org(org_id: Uuid, org: Organization) -> ApiResult {
 
 // Deletes the org record and its user links. The caller (service layer)
 // must enforce guards: org has no projects, user has more than one org.
-pub fn delete_org(org_id: Uuid) -> ApiResult {
+pub fn delete_org(org_id: OrgId) -> ApiResult {
     mutate_state(|s| {
         if s.organizations.remove(&org_id).is_none() {
             return Err(ApiError::client_error(format!(
@@ -58,7 +58,7 @@ pub fn delete_org(org_id: Uuid) -> ApiResult {
 
         let org_users = s
             .organization_user_index
-            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .range((org_id, UserId::MIN)..=(org_id, UserId::MAX))
             .collect::<Vec<_>>();
 
         for (oid, uid) in org_users {
@@ -70,20 +70,20 @@ pub fn delete_org(org_id: Uuid) -> ApiResult {
     })
 }
 
-pub fn has_at_least_n_user_orgs(user_id: Uuid, n: usize) -> bool {
+pub fn has_at_least_n_user_orgs(user_id: UserId, n: usize) -> bool {
     with_state(|s| {
         s.user_organization_index
-            .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))
+            .range((user_id, OrgId::MIN)..=(user_id, OrgId::MAX))
             .take(n)
             .count()
             >= n
     })
 }
 
-pub fn list_user_orgs(user_id: Uuid) -> Vec<(Uuid, Organization)> {
+pub fn list_user_orgs(user_id: UserId) -> Vec<(OrgId, Organization)> {
     with_state(|s| {
         s.user_organization_index
-            .range((user_id, Uuid::MIN)..=(user_id, Uuid::MAX))
+            .range((user_id, OrgId::MIN)..=(user_id, OrgId::MAX))
             .filter_map(|(_, org_id)| s.organizations.get(&org_id).map(|org| (org_id, org)))
             .collect()
     })
@@ -92,30 +92,30 @@ pub fn list_user_orgs(user_id: Uuid) -> Vec<(Uuid, Organization)> {
 // Staff-side full scan over every org, ordered by id, starting strictly after
 // the `after` cursor (or from the beginning when None) and returning up to
 // `limit`. The cursor is the last id returned; pass it back for the next page.
-pub fn list_all_orgs(after: Option<Uuid>, limit: usize) -> Vec<(Uuid, Organization)> {
+pub fn list_all_orgs(after: Option<OrgId>, limit: usize) -> Vec<(OrgId, Organization)> {
     with_state(|s| {
         let start = match after {
             Some(cursor) => Excluded(cursor),
-            None => Included(Uuid::MIN),
+            None => Included(OrgId::MIN),
         };
         s.organizations
-            .range((start, Included(Uuid::MAX)))
+            .range((start, Included(OrgId::MAX)))
             .take(limit)
             .map(|e| e.into_pair())
             .collect()
     })
 }
 
-pub fn list_org_users(org_id: Uuid) -> Vec<Uuid> {
+pub fn list_org_users(org_id: OrgId) -> Vec<UserId> {
     with_state(|s| {
         s.organization_user_index
-            .range((org_id, Uuid::MIN)..=(org_id, Uuid::MAX))
+            .range((org_id, UserId::MIN)..=(org_id, UserId::MAX))
             .map(|(_, user_id)| user_id)
             .collect::<Vec<_>>()
     })
 }
 
-pub fn add_user_to_org(user_id: Uuid, org_id: Uuid) {
+pub fn add_user_to_org(user_id: UserId, org_id: OrgId) {
     mutate_state(|s| {
         s.organization_user_index.insert((org_id, user_id));
         s.user_organization_index.insert((user_id, org_id));
@@ -127,7 +127,7 @@ pub fn add_user_to_org(user_id: Uuid, org_id: Uuid) {
 // check produces a capability token rather than a bare bool. This function
 // is reserved for cases that are not themselves authorization decisions
 // (e.g. "is the invite target already a member" idempotency checks).
-pub fn is_user_in_org(user_id: Uuid, org_id: Uuid) -> bool {
+pub fn is_user_in_org(user_id: UserId, org_id: OrgId) -> bool {
     with_state(|s| s.organization_user_index.contains(&(org_id, user_id)))
 }
 
@@ -173,8 +173,8 @@ fn mutate_state<R>(f: impl FnOnce(&mut OrganizationState) -> R) -> R {
 mod tests {
     use super::*;
 
-    fn seed(name: &str) -> Uuid {
-        let user = Uuid::new();
+    fn seed(name: &str) -> OrgId {
+        let user = UserId::new();
         create_org(
             user,
             Organization {
@@ -185,7 +185,7 @@ mod tests {
 
     // Walk every page from the given cursor, collecting ids, so assertions
     // hold regardless of orgs seeded by other tests sharing the global STATE.
-    fn drain_from(after: Option<Uuid>, page: usize) -> Vec<Uuid> {
+    fn drain_from(after: Option<OrgId>, page: usize) -> Vec<OrgId> {
         let mut out = Vec::new();
         let mut cursor = after;
         loop {
@@ -201,11 +201,11 @@ mod tests {
 
     #[test]
     fn list_all_orgs_returns_seeded_orgs_in_id_order() {
-        let mut seeded: Vec<Uuid> = (0..5).map(|i| seed(&format!("order-{i}"))).collect();
+        let mut seeded: Vec<OrgId> = (0..5).map(|i| seed(&format!("order-{i}"))).collect();
         seeded.sort();
 
         let all = drain_from(None, 2);
-        let got: Vec<Uuid> = all.into_iter().filter(|id| seeded.contains(id)).collect();
+        let got: Vec<OrgId> = all.into_iter().filter(|id| seeded.contains(id)).collect();
         assert_eq!(got, seeded);
     }
 
@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn list_all_orgs_cursor_excludes_itself() {
-        let mut seeded: Vec<Uuid> = (0..3).map(|i| seed(&format!("cursor-{i}"))).collect();
+        let mut seeded: Vec<OrgId> = (0..3).map(|i| seed(&format!("cursor-{i}"))).collect();
         seeded.sort();
 
         let after_first = drain_from(Some(seeded[0]), 10);

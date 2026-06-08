@@ -3,13 +3,13 @@ use super::{
         init_approval_policies, init_project_operation_type_approval_policy_index,
         ApprovalPolicyMemory, ProjectOperationTypeApprovalPolicyIndexMemory,
     },
-    ApprovalPolicy, OperationType,
+    ApprovalPolicy, OperationType, ProjectId,
 };
 use canister_utils::Uuid;
 use std::cell::RefCell;
 
 pub fn list_project_approval_policies(
-    project_id: Uuid,
+    project_id: ProjectId,
 ) -> Vec<(Uuid, OperationType, ApprovalPolicy)> {
     with_state(|s| {
         s.project_operation_type_approval_policy_index
@@ -25,7 +25,7 @@ pub fn list_project_approval_policies(
 }
 
 pub fn get_project_approval_policy_by_operation_type(
-    project_id: Uuid,
+    project_id: ProjectId,
     operation_type: OperationType,
 ) -> Option<ApprovalPolicy> {
     with_state(|s| {
@@ -36,7 +36,7 @@ pub fn get_project_approval_policy_by_operation_type(
 }
 
 pub fn upsert_approval_policy(
-    project_id: Uuid,
+    project_id: ProjectId,
     operation_type: OperationType,
     approval_policy: ApprovalPolicy,
 ) -> Uuid {

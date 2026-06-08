@@ -1,12 +1,11 @@
 use crate::{
-    data::{self, PlanTier as ModelPlanTier},
+    data::{self, OrgId, PlanTier as ModelPlanTier, TeamId, UserId},
     dto::{
         AdminOrganization, ListMyOrganizationsResponse, ListOrgUsersResponse,
         ListOrganizationsResponse, OrgUser, Organization, OrganizationResponse, PlanTier,
     },
     mapping::{map_org_permissions, map_team},
 };
-use canister_utils::Uuid;
 
 fn map_plan_tier(tier: ModelPlanTier) -> PlanTier {
     match tier {
@@ -16,11 +15,11 @@ fn map_plan_tier(tier: ModelPlanTier) -> PlanTier {
     }
 }
 
-pub type AdminOrgEntry = (Uuid, data::Organization, ModelPlanTier, u32);
+pub type AdminOrgEntry = (OrgId, data::Organization, ModelPlanTier, u32);
 
 pub fn map_list_organizations_response(
     entries: Vec<AdminOrgEntry>,
-    next_cursor: Option<Uuid>,
+    next_cursor: Option<OrgId>,
 ) -> ListOrganizationsResponse {
     ListOrganizationsResponse {
         organizations: entries
@@ -37,7 +36,7 @@ pub fn map_list_organizations_response(
 }
 
 pub fn map_list_my_organizations_response(
-    organizations: Vec<(Uuid, data::Organization, data::OrgPermissions)>,
+    organizations: Vec<(OrgId, data::Organization, data::OrgPermissions)>,
 ) -> ListMyOrganizationsResponse {
     organizations
         .into_iter()
@@ -46,7 +45,7 @@ pub fn map_list_my_organizations_response(
 }
 
 pub fn map_organization_response(
-    (id, org, your_permissions): (Uuid, data::Organization, data::OrgPermissions),
+    (id, org, your_permissions): (OrgId, data::Organization, data::OrgPermissions),
 ) -> Organization {
     Organization {
         id: id.to_string(),
@@ -56,7 +55,7 @@ pub fn map_organization_response(
 }
 
 pub fn map_organization_to_response(
-    id: Uuid,
+    id: OrgId,
     org: data::Organization,
     your_permissions: data::OrgPermissions,
 ) -> OrganizationResponse {
@@ -65,7 +64,7 @@ pub fn map_organization_to_response(
     }
 }
 
-pub type OrgUserEntry = (Uuid, data::UserProfile, Vec<(Uuid, data::Team)>, bool);
+pub type OrgUserEntry = (UserId, data::UserProfile, Vec<(TeamId, data::Team)>, bool);
 
 pub fn map_list_org_users_response(users: Vec<OrgUserEntry>) -> ListOrgUsersResponse {
     users

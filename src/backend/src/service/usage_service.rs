@@ -1,11 +1,11 @@
 use crate::{
-    data::{usage_repository, BillingMonth, ProjectPermissions},
+    data::{usage_repository, BillingMonth, ProjectId, ProjectPermissions},
     dto,
     mapping::usage::{map_canister_usage_dto, map_project_usage_dto},
     service::access_control_service::ProjectAuth,
 };
 use candid::Principal;
-use canister_utils::{get_current_month, get_current_year, ApiResult, Uuid};
+use canister_utils::{get_current_month, get_current_year, ApiResult};
 
 pub fn record_usage(req: dto::RecordUsageRequest) -> ApiResult<dto::RecordUsageResponse> {
     let current_billing_month = get_current_billing_month();
@@ -16,7 +16,7 @@ pub fn record_usage(req: dto::RecordUsageRequest) -> ApiResult<dto::RecordUsageR
 }
 
 pub fn get_usage(caller: Principal, req: dto::GetUsageRequest) -> ApiResult<dto::GetUsageResponse> {
-    let project_id = Uuid::try_from(req.project_id.as_str())?;
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let _auth = ProjectAuth::require(&caller, project_id, ProjectPermissions::EMPTY)?;
 
     let billing_month_str = req.billing_month.unwrap_or_else(get_current_billing_month);

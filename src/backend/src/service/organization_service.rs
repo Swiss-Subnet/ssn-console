@@ -3,7 +3,8 @@ use crate::{
     data::{
         self, approval_policy_repository, organization_billing_plan_repository,
         organization_repository, project_repository, team_repository, user_profile_repository,
-        ApprovalPolicy, OperationType, OrgPermissions, Organization, PolicyType, StaffPermissions,
+        ApprovalPolicy, OperationType, OrgId, OrgPermissions, Organization, PolicyType,
+        StaffPermissions, TeamId,
     },
     dto::{
         CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationRequest,
@@ -20,7 +21,7 @@ use crate::{
     validation::OrgName,
 };
 use candid::Principal;
-use canister_utils::{ApiError, ApiResult, Uuid};
+use canister_utils::{ApiError, ApiResult};
 
 const MAX_ORGS_PER_USER: usize = 20;
 
@@ -30,7 +31,7 @@ pub fn list_organizations(
 ) -> ApiResult<ListOrganizationsResponse> {
     access_control_service::assert_staff_perm(caller, StaffPermissions::READ_ALL_ORGS)?;
 
-    let after = req.after.map(|c| Uuid::try_from(c.as_str())).transpose()?;
+    let after = req.after.map(|c| OrgId::try_from(c.as_str())).transpose()?;
     let limit = req
         .limit
         .map(u64::from)
@@ -72,7 +73,7 @@ pub fn list_org_users(
     caller: &Principal,
     req: ListOrgUsersRequest,
 ) -> ApiResult<ListOrgUsersResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
     // Team membership and admin status leak organizational structure, so
@@ -81,14 +82,14 @@ pub fn list_org_users(
     let can_see_details = auth.perms().contains(OrgPermissions::MEMBER_MANAGE);
 
     // Resolve every team in the org once, so per-user enrichment is lookups.
-    let org_teams: std::collections::HashMap<Uuid, (data::Team, OrgPermissions)> =
+    let org_teams: std::collections::BTreeMap<TeamId, (data::Team, OrgPermissions)> =
         if can_see_details {
             team_repository::list_org_teams_with_permissions(org_id)
                 .into_iter()
                 .map(|(team_id, team, perms)| (team_id, (team, perms)))
                 .collect()
         } else {
-            std::collections::HashMap::new()
+            std::collections::BTreeMap::new()
         };
 
     let users = organization_repository::list_org_users(org_id)
@@ -102,7 +103,7 @@ pub fn list_org_users(
                 return (user_id, profile, Vec::new(), false);
             }
             let team_ids = team_repository::list_user_teams_in_org(user_id, org_id);
-            let teams: Vec<(Uuid, data::Team)> = team_ids
+            let teams: Vec<(TeamId, data::Team)> = team_ids
                 .iter()
                 .filter_map(|tid| org_teams.get(tid).map(|(t, _)| (*tid, t.clone())))
                 .collect();
@@ -166,7 +167,7 @@ pub fn get_organization(
     caller: &Principal,
     req: GetOrganizationRequest,
 ) -> ApiResult<GetOrganizationResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
     let org =
@@ -183,7 +184,7 @@ pub fn update_organization(
     caller: &Principal,
     req: UpdateOrganizationRequest,
 ) -> ApiResult<UpdateOrganizationResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::ORG_ADMIN)?;
     let name = OrgName::try_from(req.name)?;
 
@@ -207,7 +208,7 @@ pub fn delete_organization(
     caller: &Principal,
     req: DeleteOrganizationRequest,
 ) -> ApiResult<DeleteOrganizationResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::ORG_ADMIN)?;
 
     if !organization_repository::has_at_least_n_user_orgs(auth.user_id(), 2) {
@@ -239,7 +240,7 @@ pub fn delete_organization(
 mod tests {
     use super::*;
     use crate::data::user_profile_repository::create_user_profile;
-    use crate::data::{OrganizationBillingPlan, UserProfile, UserStatus};
+    use crate::data::{OrganizationBillingPlan, UserId, UserProfile, UserStatus};
     use crate::dto::PlanTier;
 
     fn principal(byte: u8) -> Principal {
@@ -261,7 +262,7 @@ mod tests {
         p
     }
 
-    fn req(after: Option<Uuid>, limit: Option<u32>) -> ListOrganizationsRequest {
+    fn req(after: Option<OrgId>, limit: Option<u32>) -> ListOrganizationsRequest {
         ListOrganizationsRequest {
             after: after.map(|id| id.to_string()),
             limit,
@@ -280,14 +281,14 @@ mod tests {
 
     #[test]
     fn list_organizations_reports_tier_and_member_count() {
-        let owner = Uuid::new();
+        let owner = UserId::new();
         let org_id = organization_repository::create_org(
             owner,
             Organization {
                 name: "Acme".to_string(),
             },
         );
-        organization_repository::add_user_to_org(Uuid::new(), org_id);
+        organization_repository::add_user_to_org(UserId::new(), org_id);
         organization_billing_plan_repository::set_plan(
             org_id,
             OrganizationBillingPlan::pro_snapshot(),
@@ -310,7 +311,7 @@ mod tests {
         let admin = staff(13, StaffPermissions::READ_ALL_ORGS);
         for i in 0..3 {
             organization_repository::create_org(
-                Uuid::new(),
+                UserId::new(),
                 Organization {
                     name: format!("paged-{i}"),
                 },

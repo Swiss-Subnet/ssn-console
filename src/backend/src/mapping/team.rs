@@ -1,14 +1,13 @@
 use crate::{
-    data::{self},
+    data::{self, TeamId, UserId},
     dto::{
         ListOrgTeamsResponse, ListProjectTeamsResponse, ListTeamUsersResponse, ListTeamsResponse,
         OrgTeam, ProjectTeam, Team, TeamResponse, TeamUser,
     },
     mapping::{map_org_permissions, map_project_permissions},
 };
-use canister_utils::Uuid;
 
-pub fn map_list_teams_response(teams: Vec<(Uuid, data::Team)>) -> ListTeamsResponse {
+pub fn map_list_teams_response(teams: Vec<(TeamId, data::Team)>) -> ListTeamsResponse {
     teams
         .into_iter()
         .map(|(team_id, team)| map_team(team_id, team))
@@ -16,7 +15,7 @@ pub fn map_list_teams_response(teams: Vec<(Uuid, data::Team)>) -> ListTeamsRespo
 }
 
 pub fn map_list_org_teams_response(
-    teams: Vec<(Uuid, data::Team, data::OrgPermissions)>,
+    teams: Vec<(TeamId, data::Team, data::OrgPermissions)>,
 ) -> ListOrgTeamsResponse {
     teams
         .into_iter()
@@ -25,7 +24,7 @@ pub fn map_list_org_teams_response(
 }
 
 pub fn map_list_project_teams_response(
-    teams: Vec<(Uuid, data::Team, data::ProjectPermissions)>,
+    teams: Vec<(TeamId, data::Team, data::ProjectPermissions)>,
 ) -> ListProjectTeamsResponse {
     teams
         .into_iter()
@@ -33,14 +32,14 @@ pub fn map_list_project_teams_response(
         .collect()
 }
 
-pub fn map_team(team_id: Uuid, team: data::Team) -> Team {
+pub fn map_team(team_id: TeamId, team: data::Team) -> Team {
     Team {
         id: team_id.to_string(),
         name: team.name,
     }
 }
 
-pub fn map_org_team(team_id: Uuid, team: data::Team, perms: data::OrgPermissions) -> OrgTeam {
+pub fn map_org_team(team_id: TeamId, team: data::Team, perms: data::OrgPermissions) -> OrgTeam {
     OrgTeam {
         id: team_id.to_string(),
         name: team.name,
@@ -49,7 +48,7 @@ pub fn map_org_team(team_id: Uuid, team: data::Team, perms: data::OrgPermissions
 }
 
 pub fn map_project_team(
-    team_id: Uuid,
+    team_id: TeamId,
     team: data::Team,
     perms: data::ProjectPermissions,
 ) -> ProjectTeam {
@@ -60,14 +59,14 @@ pub fn map_project_team(
     }
 }
 
-pub fn map_team_to_response(team_id: Uuid, team: data::Team) -> TeamResponse {
+pub fn map_team_to_response(team_id: TeamId, team: data::Team) -> TeamResponse {
     TeamResponse {
         team: map_team(team_id, team),
     }
 }
 
 pub fn map_list_team_users_response(
-    users: Vec<(Uuid, data::UserProfile)>,
+    users: Vec<(UserId, data::UserProfile)>,
 ) -> ListTeamUsersResponse {
     users
         .into_iter()

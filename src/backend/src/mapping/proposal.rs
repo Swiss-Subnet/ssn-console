@@ -1,5 +1,5 @@
 use crate::{
-    data,
+    data::{self, ProjectId},
     dto::{
         CreateProposalRequest, ListProjectProposalsResponse, Proposal, ProposalOperation,
         ProposalStatus, ProposalStatusFilter, ProposalVote, Vote, VoteProposalRequest,
@@ -25,8 +25,8 @@ pub fn map_vote_proposal_request(req: VoteProposalRequest) -> ApiResult<(Uuid, d
 
 pub fn map_create_proposal_request(
     req: CreateProposalRequest,
-) -> ApiResult<(Uuid, data::ProposalOperation)> {
-    let project_uuid = Uuid::try_from(req.project_id.as_str())?;
+) -> ApiResult<(ProjectId, data::ProposalOperation)> {
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
     let operation = match req.operation {
         Some(ProposalOperation::CreateCanister {}) => data::ProposalOperation::CreateCanister,
         Some(ProposalOperation::AddCanisterController {
@@ -42,7 +42,7 @@ pub fn map_create_proposal_request(
             ))
         }
     };
-    Ok((project_uuid, operation))
+    Ok((project_id, operation))
 }
 
 pub fn map_list_project_proposals_response(

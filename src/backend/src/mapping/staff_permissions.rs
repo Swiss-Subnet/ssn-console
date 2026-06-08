@@ -1,12 +1,11 @@
 use crate::{
-    data,
+    data::{self, UserId},
     dto::{self, ListStaffResponse, StaffMember},
 };
-use canister_utils::Uuid;
 
 use super::map_user_status_response;
 
-pub fn map_list_staff_response(profiles: Vec<(Uuid, data::UserProfile)>) -> ListStaffResponse {
+pub fn map_list_staff_response(profiles: Vec<(UserId, data::UserProfile)>) -> ListStaffResponse {
     profiles
         .into_iter()
         .filter_map(|(id, profile)| {

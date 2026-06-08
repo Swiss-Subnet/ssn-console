@@ -2,7 +2,7 @@ use crate::{
     constants::{INVITE_TTL_NS, MAX_PENDING_INVITES_PER_ORG},
     data::{
         self, invite_repository, organization_repository, user_profile_repository, InviteStatus,
-        OrgInvite, OrgPermissions,
+        OrgId, OrgInvite, OrgPermissions, UserId,
     },
     dto::{
         AcceptOrgInviteRequest, AcceptOrgInviteResponse, CreateOrgInviteRequest,
@@ -25,7 +25,7 @@ pub fn create_org_invite(
     req: CreateOrgInviteRequest,
     now_ns: u64,
 ) -> ApiResult<CreateOrgInviteResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::MEMBER_MANAGE)?;
     let caller_user_id = auth.user_id();
 
@@ -84,7 +84,7 @@ pub fn list_org_invites(
     req: ListOrgInvitesRequest,
     now_ns: u64,
 ) -> ApiResult<ListOrgInvitesResponse> {
-    let org_id = Uuid::try_from(req.org_id.as_str())?;
+    let org_id = OrgId::try_from(req.org_id.as_str())?;
     let auth = OrgAuth::require(caller, org_id, OrgPermissions::EMPTY)?;
 
     let org_name = organization_repository::get_org(auth.org_id())
@@ -254,7 +254,7 @@ fn normalize_target(target: data::InviteTarget) -> ApiResult<data::InviteTarget>
 
 fn invite_matches_user(
     target: &data::InviteTarget,
-    user_id: Uuid,
+    user_id: UserId,
     principals: &[Principal],
     verified_email: Option<&str>,
     email_verified: bool,
@@ -271,7 +271,7 @@ fn invite_matches_user(
 
 fn assert_invite_is_actionable_by(
     invite: &OrgInvite,
-    user_id: Uuid,
+    user_id: UserId,
     principals: &[Principal],
     verified_email: Option<&str>,
     email_verified: bool,

@@ -1,7 +1,8 @@
+import "./ids.did";
 import "../../canister-utils/error.did";
 
 type ListMyCanistersRequest = record {
-  project_id : text;
+  project_id : ProjectId;
 };
 
 type ListMyCanistersResponse = variant {
@@ -62,7 +63,7 @@ type ListAllCanistersResponse = variant {
 type CanisterWithOwner = record {
   id : text;
   principal_id : text;
-  user_id : text;
+  user_id : UserId;
   email : opt text;
   deleted_at : opt nat64;
 };
@@ -150,7 +151,7 @@ type CanisterEnvironmentVariable = record {
 };
 
 type ListUserCanistersRequest = record {
-  user_id : text;
+  user_id : UserId;
 };
 
 type ListUserCanistersResponse = variant {

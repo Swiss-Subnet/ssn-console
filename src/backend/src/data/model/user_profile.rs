@@ -1,10 +1,12 @@
 use super::StaffPermissions;
 use crate::validation::Email;
 use candid::Principal;
-use canister_utils::{deserialize_cbor, serialize_cbor};
+use canister_utils::{deserialize_cbor, serialize_cbor, Id};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+
+pub type UserId = Id<UserProfile>;
 
 /// A principal linked to a user account, paired with its optional display
 /// name. Returned by the repository when listing all principals owned by a

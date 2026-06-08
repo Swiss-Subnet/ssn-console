@@ -1,7 +1,7 @@
 use crate::data::{
     organization_repository, project_repository, team_repository, terms_and_conditions_repository,
-    trusted_partner_repository, user_profile_repository, OrgPermissions, Project,
-    ProjectPermissions, StaffPermissions, Team, UserProfile, UserStatus,
+    trusted_partner_repository, user_profile_repository, OrgId, OrgPermissions, Project, ProjectId,
+    ProjectPermissions, StaffPermissions, Team, TeamId, UserId, UserProfile, UserStatus,
 };
 use candid::Principal;
 use canister_utils::{assert_authenticated, ApiError, ApiResult, Uuid};
@@ -30,13 +30,13 @@ fn is_controller(_principal: &Principal) -> bool {
 // whether the id refers to a real resource in another org or to a non-
 // existent id. This prevents probing for resource existence or mapping ids
 // to orgs by observing error messages.
-pub fn project_not_found_or_no_access(project_id: Uuid) -> ApiError {
+pub fn project_not_found_or_no_access(project_id: ProjectId) -> ApiError {
     ApiError::client_error(format!(
         "Project with id {project_id} does not exist or you do not have access."
     ))
 }
 
-pub fn team_not_found_or_no_access(team_id: Uuid) -> ApiError {
+pub fn team_not_found_or_no_access(team_id: TeamId) -> ApiError {
     ApiError::client_error(format!(
         "Team with id {team_id} does not exist or you do not have access."
     ))
@@ -134,13 +134,13 @@ pub fn assert_has_platform_access(caller: &Principal) -> ApiResult {
 // that require org membership but no specific capability.
 #[derive(Debug, Clone, Copy)]
 pub struct OrgAuth {
-    user_id: Uuid,
-    org_id: Uuid,
+    user_id: UserId,
+    org_id: OrgId,
     perms: OrgPermissions,
 }
 
 impl OrgAuth {
-    pub fn require(caller: &Principal, org_id: Uuid, needed: OrgPermissions) -> ApiResult<Self> {
+    pub fn require(caller: &Principal, org_id: OrgId, needed: OrgPermissions) -> ApiResult<Self> {
         let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
         Self::require_for_user(user_id, org_id, needed)
     }
@@ -149,7 +149,7 @@ impl OrgAuth {
     // because the caller has already resolved it. Used by helpers like
     // `require_team_access` that perform the lookup up front so they can
     // surface resource-specific errors before the membership check runs.
-    fn require_for_user(user_id: Uuid, org_id: Uuid, needed: OrgPermissions) -> ApiResult<Self> {
+    fn require_for_user(user_id: UserId, org_id: OrgId, needed: OrgPermissions) -> ApiResult<Self> {
         if !organization_repository::is_user_in_org(user_id, org_id) {
             return Err(ApiError::unauthorized(format!(
                 "User with id {user_id} does not belong to org with id {org_id}"
@@ -171,11 +171,11 @@ impl OrgAuth {
         })
     }
 
-    pub fn user_id(&self) -> Uuid {
+    pub fn user_id(&self) -> UserId {
         self.user_id
     }
 
-    pub fn org_id(&self) -> Uuid {
+    pub fn org_id(&self) -> OrgId {
         self.org_id
     }
 
@@ -187,7 +187,7 @@ impl OrgAuth {
     // authorizes. For use in endpoints that manipulate a peer user
     // (e.g. add_user_to_team) without re-deriving the org_id from the
     // peer's identity.
-    pub fn assert_member(&self, target_user_id: Uuid) -> ApiResult {
+    pub fn assert_member(&self, target_user_id: UserId) -> ApiResult {
         if !organization_repository::is_user_in_org(target_user_id, self.org_id) {
             return Err(ApiError::unauthorized(format!(
                 "User with id {target_user_id} does not belong to org with id {}",
@@ -208,16 +208,16 @@ impl OrgAuth {
 // endpoints that require project access but no specific capability.
 #[derive(Debug, Clone, Copy)]
 pub struct ProjectAuth {
-    user_id: Uuid,
-    project_id: Uuid,
-    org_id: Uuid,
+    user_id: UserId,
+    project_id: ProjectId,
+    org_id: OrgId,
     perms: ProjectPermissions,
 }
 
 impl ProjectAuth {
     pub fn require(
         caller: &Principal,
-        project_id: Uuid,
+        project_id: ProjectId,
         needed: ProjectPermissions,
     ) -> ApiResult<Self> {
         let user_id = user_profile_repository::assert_user_id_by_principal(caller)?;
@@ -228,8 +228,8 @@ impl ProjectAuth {
     // because the caller has already resolved it. Used when validating that
     // some other user (not the request caller) belongs to a project.
     pub fn for_user(
-        user_id: Uuid,
-        project_id: Uuid,
+        user_id: UserId,
+        project_id: ProjectId,
         needed: ProjectPermissions,
     ) -> ApiResult<Self> {
         // Collapse "project does not exist" and "caller is not in project's
@@ -269,15 +269,15 @@ impl ProjectAuth {
         })
     }
 
-    pub fn user_id(&self) -> Uuid {
+    pub fn user_id(&self) -> UserId {
         self.user_id
     }
 
-    pub fn project_id(&self) -> Uuid {
+    pub fn project_id(&self) -> ProjectId {
         self.project_id
     }
 
-    pub fn org_id(&self) -> Uuid {
+    pub fn org_id(&self) -> OrgId {
         self.org_id
     }
 
@@ -292,7 +292,7 @@ impl ProjectAuth {
 // registered against each member user. Used when snapshotting approvers onto
 // a proposal at the moment it transitions to PendingApproval.
 pub fn list_project_principals_with_permission(
-    project_id: Uuid,
+    project_id: ProjectId,
     needed: ProjectPermissions,
 ) -> Vec<Principal> {
     let mut principals = Vec::new();
@@ -329,7 +329,7 @@ pub fn list_project_principals_with_permission(
 // map team ids to orgs.
 pub fn require_team_access(
     caller: &Principal,
-    team_id: Uuid,
+    team_id: TeamId,
     needed: OrgPermissions,
 ) -> ApiResult<(Team, OrgAuth)> {
     // Profile check first so that a caller without a profile still gets the
@@ -352,7 +352,7 @@ pub fn require_team_access(
 // called before the repository write — on the IC, returning Err after a
 // mutation does not roll back state, so a post-mutation check would leave
 // the org unadministrable on failure.
-pub fn assert_org_admin_populated_after_removing_team(org_id: Uuid, team_id: Uuid) -> ApiResult {
+pub fn assert_org_admin_populated_after_removing_team(org_id: OrgId, team_id: TeamId) -> ApiResult {
     if !team_repository::org_admin_is_populated_excluding_team(org_id, team_id) {
         return Err(ApiError::client_error(format!(
             "Organization with id {org_id} must retain at least one team with \

@@ -1,5 +1,6 @@
-import "../../canister-utils/error.did";
+import "./ids.did";
 import "./permissions.did";
+import "../../canister-utils/error.did";
 
 type ListMyOrganizationsResponse = variant {
   Ok : vec Organization;
@@ -38,7 +39,7 @@ type CreateOrganizationResponse = variant {
 };
 
 type GetOrganizationRequest = record {
-  org_id : text;
+  org_id : OrgId;
 };
 
 type GetOrganizationResponse = variant {
@@ -49,7 +50,7 @@ type GetOrganizationResponse = variant {
 };
 
 type UpdateOrganizationRequest = record {
-  org_id : text;
+  org_id : OrgId;
   name : text;
 };
 
@@ -61,7 +62,7 @@ type UpdateOrganizationResponse = variant {
 };
 
 type DeleteOrganizationRequest = record {
-  org_id : text;
+  org_id : OrgId;
 };
 
 type DeleteOrganizationResponse = variant {
@@ -70,7 +71,7 @@ type DeleteOrganizationResponse = variant {
 };
 
 type ListOrgUsersRequest = record {
-  org_id : text;
+  org_id : OrgId;
 };
 
 type OrgUser = record {

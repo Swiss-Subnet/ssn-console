@@ -1,3 +1,4 @@
+import "./ids.did";
 import "../../canister-utils/error.did";
 
 type PlanTier = variant {
@@ -7,7 +8,7 @@ type PlanTier = variant {
 };
 
 type SetOrgBillingPlanRequest = record {
-  org_id : text;
+  org_id : OrgId;
   tier : PlanTier;
 };
 
@@ -17,7 +18,7 @@ type SetOrgBillingPlanResponse = variant {
 };
 
 type GetOrgBillingPlanRequest = record {
-  org_id : text;
+  org_id : OrgId;
 };
 
 type GetOrgBillingPlanResponseData = record {
@@ -33,7 +34,7 @@ type GetOrgBillingPlanResponse = variant {
 };
 
 type MyOrgBillingPlan = record {
-  org_id : text;
+  org_id : OrgId;
   tier : PlanTier;
   max_canisters : nat32;
   canisters_used : nat32;

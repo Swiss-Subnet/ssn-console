@@ -1,5 +1,5 @@
 use crate::{
-    data::{self},
+    data::{self, UserId},
     dto::{
         CreateTermsAndConditionsRequest, GetLatestTermsAndConditionsResponse,
         ListTermsAndConditionsResponse, TermsAndConditions, TermsAndConditionsDecisionType,
@@ -37,7 +37,7 @@ pub fn map_list_terms_and_conditions_response(
 
 pub fn map_create_terms_and_conditions_decision_request(
     req: UpsertTermsAndConditionsDecisionRequest,
-    user_id: Uuid,
+    user_id: UserId,
     created_at: u64,
 ) -> ApiResult<data::TermsAndConditionsDecision> {
     Ok(data::TermsAndConditionsDecision {
@@ -53,7 +53,7 @@ pub fn map_create_terms_and_conditions_decision_request(
 
 pub fn map_create_terms_and_conditions_request(
     req: CreateTermsAndConditionsRequest,
-    user_id: Uuid,
+    user_id: UserId,
     created_at: u64,
 ) -> ApiResult<data::TermsAndConditions> {
     Ok(data::TermsAndConditions {
