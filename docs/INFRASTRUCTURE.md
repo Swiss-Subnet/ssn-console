@@ -36,12 +36,7 @@ Create a `.env.test` and `.env.prod` files with the following variables:
 KEY_FILE="${KEY_FILE}"
 REMOTE_USER="${REMOTE_USER}"
 REMOTE_HOST="${REMOTE_HOST}"
-ELASTIC_IP="${ELASTIC_IP}" # this should only be set for VPSs that have an assigned elastic IP address (i.e. prod)
 CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
-
-# optionally specify additional SSH keys to add
-ADDITIONAL_SSH_KEYS="ssh-rsa AAAAB3NzaC1...
-ssh-ed25519 AAAAC3NzaC1..."
 
 PRIVATE_KEY="${PRIVATE_KEY}"
 FRONTEND_URL="${FRONTEND_URL}"
@@ -93,10 +88,10 @@ SSH Security Group ports:
 
 ## Initial Server Setup
 
-Run the following command to setup a new Test server:
+Host provisioning lives in [ssn-infra](https://github.com/swiss-subnet/ssn-infra), not here. Provision a new Test server from there:
 
 ```shell
-./scripts/initial-server-setup.sh ./.env.test
+just ansible-setup dev
 ```
 
 ## Deploy
@@ -109,10 +104,10 @@ Run the following command to deploy containers to the Test server:
 
 ## Server Maintenance
 
-Run the following command to run Test server maintenance:
+Run from [ssn-infra](https://github.com/swiss-subnet/ssn-infra):
 
 ```shell
-./scripts/server-maintenance.sh ./.env.test
+just ansible-maintenance dev
 ```
 
 ## Known Host Entry
@@ -135,10 +130,10 @@ source ./.env.test && ssh -i ${KEY_FILE} ${REMOTE_USER}@${REMOTE_HOST}
 
 ## Initial Server Setup
 
-Run the following command to setup a new Prod server:
+Host provisioning lives in [ssn-infra](https://github.com/swiss-subnet/ssn-infra), not here. Provision a new Prod server from there:
 
 ```shell
-./scripts/initial-server-setup.sh ./.env.prod
+just ansible-setup prod
 ```
 
 ## Deploy
@@ -151,10 +146,10 @@ Run the following command to deploy containers to the Prod server:
 
 ## Server Maintenance
 
-Run the following command to run Prod server maintenance:
+Run from [ssn-infra](https://github.com/swiss-subnet/ssn-infra):
 
 ```shell
-./scripts/server-maintenance.sh ./.env.prod
+just ansible-maintenance prod
 ```
 
 ## Known Host Entry
