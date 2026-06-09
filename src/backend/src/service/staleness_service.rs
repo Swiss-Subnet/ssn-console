@@ -75,6 +75,110 @@ fn is_staff(user_id: UserId) -> bool {
         .is_some_and(|perms| perms != crate::data::StaffPermissions::EMPTY)
 }
 
+#[cfg(feature = "canbench-rs")]
+mod benches {
+    use super::is_prunable_user;
+    use crate::data::{
+        canister_repository, invite_repository, organization_repository, project_repository,
+        team_repository, user_profile_repository, Canister, InviteStatus, InviteTarget, OrgInvite,
+        Organization, UserProfile,
+    };
+    use canbench_rs::{bench, bench_fn, BenchResult};
+    use candid::Principal;
+
+    const NOW: u64 = 1_000;
+
+    // Everything is derived from the user index: principals, population mix, and
+    // footprint shape. No RNG and no fresh_principal() -- identical seed every
+    // run, so instruction counts are stable for regression comparison.
+    fn principal(i: u32) -> Principal {
+        let mut bytes = [0u8; 29];
+        bytes[25..29].copy_from_slice(&i.to_be_bytes());
+        Principal::from_slice(&bytes)
+    }
+
+    // A realistic-ish population, assigned deterministically by index:
+    //   i % 10 in 0..=6  -> thin prunable user (1 org/team/project, no canister)
+    //   i % 10 == 7      -> blocked by a canister (still walks the full fanout)
+    //   i % 10 == 8      -> blocked by a pending invite
+    //   i % 10 == 9      -> multi-org footprint (3 orgs), prunable -> widest scan
+    fn seed_user(i: u32) {
+        let user_id =
+            user_profile_repository::create_user_profile(principal(i), UserProfile::default());
+        let org_id = organization_repository::add_default_org(user_id);
+        let team_id = team_repository::add_default_team(user_id, org_id);
+        let project_id = project_repository::add_default_project(team_id, org_id);
+
+        match i % 10 {
+            7 => {
+                canister_repository::create_canister(
+                    project_id,
+                    Canister {
+                        // Distinct from the user's own principal; index-derived.
+                        principal: principal(i.wrapping_add(1_000_000)),
+                        name: None,
+                        deleted_at: None,
+                    },
+                );
+            }
+            8 => {
+                invite_repository::create_invite(OrgInvite {
+                    org_id,
+                    created_by: user_id,
+                    created_at_ns: NOW,
+                    expires_at_ns: NOW + 1,
+                    target: InviteTarget::Email(format!("u{i}@example.com")),
+                    status: InviteStatus::Pending,
+                });
+            }
+            9 => {
+                for n in 0..2 {
+                    let extra_org = organization_repository::create_org(
+                        user_id,
+                        Organization {
+                            name: format!("org-{i}-{n}"),
+                        },
+                    );
+                    let extra_team = team_repository::add_default_team(user_id, extra_org);
+                    project_repository::add_default_project(extra_team, extra_org);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Mirrors user_profile_service::list_stale_users' scan: every profile run
+    // through is_prunable_user. The service wrapper only adds the auth gate and
+    // DTO mapping, neither of which scales with user count.
+    fn bench_list_stale_users(num_users: u32) -> BenchResult {
+        for i in 0..num_users {
+            seed_user(i);
+        }
+
+        bench_fn(|| {
+            user_profile_repository::list_user_profiles()
+                .into_iter()
+                .filter(|(user_id, _, _)| is_prunable_user(*user_id, NOW))
+                .count();
+        })
+    }
+
+    #[bench(raw)]
+    pub fn bench_list_stale_users_10() -> BenchResult {
+        bench_list_stale_users(10)
+    }
+
+    #[bench(raw)]
+    pub fn bench_list_stale_users_100() -> BenchResult {
+        bench_list_stale_users(100)
+    }
+
+    #[bench(raw)]
+    pub fn bench_list_stale_users_1000() -> BenchResult {
+        bench_list_stale_users(1000)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
