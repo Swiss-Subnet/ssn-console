@@ -7,8 +7,16 @@ set -Eeuo pipefail
 OUTPUT_FILE=./canbench_combined_comment.md
 : > "$OUTPUT_FILE"
 
-commit_hash=""
+# When the benchmark jobs were skipped (no Rust changes) only the pr_number
+# sentinel artifact is present. Signal the caller to skip posting a comment.
 shopt -s nullglob
+results=(canbench_result_*)
+if [ ${#results[@]} -eq 0 ]; then
+  echo "skip=true" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
+
+commit_hash=""
 for dir in canbench_result_*; do
   name=${dir#canbench_result_}
   file="$dir/$dir"

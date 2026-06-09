@@ -105,8 +105,6 @@ jobs:
           bash ./scripts/ci-post-run-benchmark.sh
 
   upload-pr-number:
-    needs: changes
-    if: needs.changes.outputs.benchmarks == 'true'
     runs-on: ubuntu-latest
 
     steps:
