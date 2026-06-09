@@ -1,6 +1,6 @@
 [Container]
 ContainerName=${CADDY_SERVICE_NAME}
-Image=${CADDY_IMAGE_NAMESPACE}/${CADDY_IMAGE_NAME}
+Image=${CADDY_IMAGE_NAMESPACE}/${CADDY_IMAGE_NAME}:${IMAGE_TAG}
 SecurityLabelType=${CADDY_SERVICE_NAME}.process
 Network=app.network
 
