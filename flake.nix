@@ -113,6 +113,9 @@
               chmod +x $out/bin/icp
             '';
           };
+        versions = pkgs.writeShellScriptBin "versions" ''
+          echo "SSN Console: rust ${rustToolchain.version or "$(rustc --version)"} | bun ${pkgs.bun.version} | node ${pkgs.nodejs_22.version} | dfx ${dfxVersion} | icp-cli ${icpCliVersion} | ssl ${pkgs.openssl.version} | just ${pkgs.just.version} | canbench ${canbenchVersion} | go ${pkgs.go.version} | jq ${pkgs.jq.version} | gettext ${pkgs.gettext.version} | podman ${pkgs.podman.version} | golangci-lint ${pkgs.golangci-lint.version} | actionlint ${pkgs.actionlint.version} | shellcheck ${pkgs.shellcheck.version}"
+        '';
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = [
@@ -120,6 +123,7 @@
             dfx
             icp-cli
             canbench
+            versions
 
             pkgs.bun
             pkgs.nodejs_22
@@ -127,6 +131,8 @@
             pkgs.just
             pkgs.go
             pkgs.jq
+            pkgs.gettext
+            pkgs.podman
             pkgs.golangci-lint
             pkgs.actionlint
             pkgs.shellcheck
@@ -134,7 +140,7 @@
 
           shellHook = ''
             if [ -t 1 ]; then
-              echo "SSN Console: rust ${rustToolchain.version or "$(rustc --version)"} | bun ${pkgs.bun.version} | node ${pkgs.nodejs_22.version} | dfx ${dfxVersion} | icp-cli ${icpCliVersion} | ssl ${pkgs.openssl.version} | just ${pkgs.just.version} | canbench ${canbenchVersion} | go ${pkgs.go.version} | jq ${pkgs.jq.version} | golangci-lint ${pkgs.golangci-lint.version} | actionlint ${pkgs.actionlint.version} | shellcheck ${pkgs.shellcheck.version}"
+              versions
             fi
           '';
         };
