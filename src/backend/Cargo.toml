@@ -9,7 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 canbench-rs.workspace = true
 candid.workspace = true
-candid_parser.workspace = true
 ic-cdk.workspace = true
 ic-cdk-timers.workspace = true
 ic-stable-structures.workspace = true
@@ -26,6 +25,9 @@ futures.workspace = true
 ed25519-dalek = "2"
 base64 = "0.22"
 serde_json = "1"
+
+[dev-dependencies]
+candid_parser.workspace = true
 
 [features]
 canbench-rs = []

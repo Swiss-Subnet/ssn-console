@@ -117,3 +117,14 @@ jobs:
             (cd "$svc" && go vet ./... && golangci-lint run ./...)
             echo "::endgroup::"
           done
+
+      - name: go mod tidy is clean per service
+        run: |
+          set -euo pipefail
+          for svc in */; do
+            [ -f "${svc}go.mod" ] || continue
+            echo "::group::$svc"
+            (cd "$svc" && go mod tidy)
+            echo "::endgroup::"
+          done
+          git diff --exit-code -- '*/go.mod' '*/go.sum'
