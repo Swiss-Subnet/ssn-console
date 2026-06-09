@@ -40,7 +40,7 @@ export class UserDriver {
     }
 
     this.actor.setIdentity(controllerIdentity);
-    await this.actor.update_user_profile({
+    await this.actor.admin_update_user_profile({
       user_id: profile.id,
       status: [{ Active: null }],
     });

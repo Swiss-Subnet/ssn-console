@@ -34,7 +34,7 @@ type Config struct {
 	IICanisterIDText string
 
 	// BackendCanisterIDText is the canister exposing
-	// list_user_readable_canister_principals.
+	// admin_list_user_readable_canister_principals.
 	BackendCanisterIDText string
 
 	// ProxyIdentityPEMPath optionally points at a PEM-encoded Ed25519

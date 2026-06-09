@@ -13,7 +13,7 @@ import {
   extractOkResponse,
 } from '@ssn/test-utils';
 
-describe('list_all_canisters', () => {
+describe('admin_list_all_canisters', () => {
   let driver: TestDriver;
 
   beforeEach(async () => {
@@ -28,7 +28,7 @@ describe('list_all_canisters', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [10n],
         page: [1n],
       });
@@ -39,7 +39,7 @@ describe('list_all_canisters', () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [10n],
         page: [1n],
       });
@@ -50,7 +50,7 @@ describe('list_all_canisters', () => {
     it('should return an empty array when there are no canisters', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [10n],
         page: [1n],
       });
@@ -89,7 +89,7 @@ describe('list_all_canisters', () => {
       // before the fixture loop. Bob stays Free (3 canisters fits).
       driver.actor.setIdentity(controllerIdentity);
       extractOkResponse(
-        await driver.actor.set_org_billing_plan({
+        await driver.actor.admin_set_org_billing_plan({
           org_id: aliceOrg.id,
           tier: { Pro: null },
         }),
@@ -122,7 +122,7 @@ describe('list_all_canisters', () => {
     it('should return one item per page', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [1n],
         page: [1n],
       });
@@ -138,7 +138,7 @@ describe('list_all_canisters', () => {
     it('should return multiple items per page', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [3n],
         page: [2n],
       });
@@ -153,7 +153,7 @@ describe('list_all_canisters', () => {
     it('return all items on a single page', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [10n],
         page: [1n],
       });
@@ -188,7 +188,7 @@ describe('list_all_canisters', () => {
     it('should set a minimum page', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [1n],
         page: [0n],
       });
@@ -199,7 +199,7 @@ describe('list_all_canisters', () => {
     it('should set a maximum page', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [1n],
         page: [10_000n],
       });
@@ -210,7 +210,7 @@ describe('list_all_canisters', () => {
     it('should set a minimum limit', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [0n],
         page: [1n],
       });
@@ -221,7 +221,7 @@ describe('list_all_canisters', () => {
     it('should set a maximum limit', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const res = await driver.actor.list_all_canisters({
+      const res = await driver.actor.admin_list_all_canisters({
         limit: [10_000n],
         page: [1n],
       });

@@ -13,7 +13,9 @@ use ic_cdk::{api::msg_caller, *};
 // assert_staff_perm). The off-chain billing gateway and staff operators
 // driving manual plan changes from the admin view both hit this path.
 #[update]
-fn set_org_billing_plan(req: SetOrgBillingPlanRequest) -> ApiResultDto<SetOrgBillingPlanResponse> {
+fn admin_set_org_billing_plan(
+    req: SetOrgBillingPlanRequest,
+) -> ApiResultDto<SetOrgBillingPlanResponse> {
     let caller = msg_caller();
     if let Err(err) =
         access_control_service::assert_staff_perm(&caller, StaffPermissions::WRITE_BILLING)

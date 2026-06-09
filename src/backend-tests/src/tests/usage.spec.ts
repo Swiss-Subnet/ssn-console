@@ -131,7 +131,7 @@ describe('Usage Metrics', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       extractOkResponse(
-        await driver.actor.set_org_billing_plan({
+        await driver.actor.admin_set_org_billing_plan({
           org_id: orgId,
           tier: { Pro: null },
         }),

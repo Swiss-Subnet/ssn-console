@@ -68,3 +68,11 @@ pub struct GetUserStatsResponse {
 pub struct VerifyEmailRequest {
     pub token: String,
 }
+
+pub type ListStaleUsersResponse = Vec<StaleUserEntry>;
+
+#[derive(Debug, Clone, CandidType)]
+pub struct StaleUserEntry {
+    pub id: String,
+    pub email: Option<String>,
+}

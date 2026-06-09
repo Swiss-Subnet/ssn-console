@@ -1,16 +1,20 @@
 use crate::{
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
-        GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListUserProfilesResponse,
-        UpdateMyUserProfileRequest, UpdateUserProfileRequest, VerifyEmailRequest,
+        GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListStaleUsersResponse,
+        ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
+        VerifyEmailRequest,
     },
     service::{access_control_service, user_profile_service},
 };
 use canister_utils::{assert_authenticated, assert_controller, ApiResultDto};
-use ic_cdk::{api::msg_caller, *};
+use ic_cdk::{
+    api::{msg_caller, time},
+    *,
+};
 
 #[query]
-fn list_user_profiles() -> ApiResultDto<ListUserProfilesResponse> {
+fn admin_list_user_profiles() -> ApiResultDto<ListUserProfilesResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_controller(&caller) {
         return ApiResultDto::Err(err);
@@ -32,7 +36,7 @@ fn get_user_profiles_by_principals(
 }
 
 #[update]
-fn update_user_profile(req: UpdateUserProfileRequest) -> ApiResultDto {
+fn admin_update_user_profile(req: UpdateUserProfileRequest) -> ApiResultDto {
     let caller = msg_caller();
     if let Err(err) = assert_controller(&caller) {
         return ApiResultDto::Err(err);
@@ -72,7 +76,13 @@ fn update_my_user_profile(req: UpdateMyUserProfileRequest) -> ApiResultDto {
 }
 
 #[query]
-fn get_user_stats() -> ApiResultDto<GetUserStatsResponse> {
+fn admin_list_stale_users() -> ApiResultDto<ListStaleUsersResponse> {
+    let caller = msg_caller();
+    user_profile_service::list_stale_users(&caller, time()).into()
+}
+
+#[query]
+fn admin_get_user_stats() -> ApiResultDto<GetUserStatsResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_controller(&caller) {
         return ApiResultDto::Err(err);

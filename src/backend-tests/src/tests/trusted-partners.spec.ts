@@ -22,11 +22,11 @@ describe('Trusted Partners', () => {
     await driver.tearDown();
   });
 
-  describe('list_trusted_partners', () => {
+  describe('admin_list_trusted_partners', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      const res = await driver.actor.list_trusted_partners();
+      const res = await driver.actor.admin_list_trusted_partners();
       expect(res).toEqual(unauthenticatedError);
     });
 
@@ -34,14 +34,14 @@ describe('Trusted Partners', () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      const res = await driver.actor.list_trusted_partners();
+      const res = await driver.actor.admin_list_trusted_partners();
       expect(res).toEqual(unauthorizedError);
     });
 
     it('should return an empty array when there are no trusted partners', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const partnersRes = await driver.actor.list_trusted_partners();
+      const partnersRes = await driver.actor.admin_list_trusted_partners();
       const partners = extractOkResponse(partnersRes);
       expect(partners).toEqual([]);
     });
@@ -52,19 +52,19 @@ describe('Trusted Partners', () => {
 
       driver.actor.setIdentity(controllerIdentity);
 
-      const alicePartnerRes = await driver.actor.create_trusted_partner({
+      const alicePartnerRes = await driver.actor.admin_create_trusted_partner({
         name: 'Alice',
         principal_id: alicePartnerIdentity.getPrincipal().toText(),
       });
       const alicePartner = extractOkResponse(alicePartnerRes);
 
-      const bobPartnerRes = await driver.actor.create_trusted_partner({
+      const bobPartnerRes = await driver.actor.admin_create_trusted_partner({
         name: 'Bob',
         principal_id: bobPartnerIdentity.getPrincipal().toText(),
       });
       const bobPartner = extractOkResponse(bobPartnerRes);
 
-      const partnersRes = await driver.actor.list_trusted_partners();
+      const partnersRes = await driver.actor.admin_list_trusted_partners();
       const partners = extractOkResponse(partnersRes);
 
       expect(partners.length).toBe(2);
@@ -73,12 +73,12 @@ describe('Trusted Partners', () => {
     });
   });
 
-  describe('create_trusted_partner', () => {
+  describe('admin_create_trusted_partner', () => {
     it('should return an error for an anonymous user', async () => {
       const alicePartnerIdentity = generateRandomIdentity();
       driver.actor.setIdentity(anonymousIdentity);
 
-      const res = await driver.actor.create_trusted_partner({
+      const res = await driver.actor.admin_create_trusted_partner({
         name: 'Alice',
         principal_id: alicePartnerIdentity.getPrincipal().toText(),
       });
@@ -91,7 +91,7 @@ describe('Trusted Partners', () => {
 
       driver.actor.setIdentity(aliceIdentity);
 
-      const res = await driver.actor.create_trusted_partner({
+      const res = await driver.actor.admin_create_trusted_partner({
         name: 'Bob',
         principal_id: bobPartnerIdentity.getPrincipal().toText(),
       });
@@ -102,7 +102,7 @@ describe('Trusted Partners', () => {
       const bobPartnerIdentity = generateRandomIdentity();
 
       driver.actor.setIdentity(controllerIdentity);
-      const bobPartnerRes = await driver.actor.create_trusted_partner({
+      const bobPartnerRes = await driver.actor.admin_create_trusted_partner({
         name: 'Bob',
         principal_id: bobPartnerIdentity.getPrincipal().toText(),
       });
@@ -119,13 +119,14 @@ describe('Trusted Partners', () => {
       const bobPartnerIdentity = generateRandomIdentity();
 
       driver.actor.setIdentity(controllerIdentity);
-      const existingPartnerRes = await driver.actor.create_trusted_partner({
-        name: 'Bob',
-        principal_id: bobPartnerIdentity.getPrincipal().toText(),
-      });
+      const existingPartnerRes =
+        await driver.actor.admin_create_trusted_partner({
+          name: 'Bob',
+          principal_id: bobPartnerIdentity.getPrincipal().toText(),
+        });
       const existingPartner = extractOkResponse(existingPartnerRes);
 
-      const res = await driver.actor.create_trusted_partner({
+      const res = await driver.actor.admin_create_trusted_partner({
         name: 'Robert',
         principal_id: bobPartnerIdentity.getPrincipal().toText(),
       });

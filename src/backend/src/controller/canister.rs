@@ -101,7 +101,7 @@ async fn stop_my_canister(request: StopMyCanisterRequest) -> ApiResultDto<()> {
 }
 
 #[query]
-fn list_user_readable_canister_principals(
+fn admin_list_user_readable_canister_principals(
     request: ListUserReadableCanisterPrincipalsRequest,
 ) -> ApiResultDto<ListUserReadableCanisterPrincipalsResponse> {
     let caller = msg_caller();
@@ -114,7 +114,9 @@ fn list_user_readable_canister_principals(
 }
 
 #[query]
-fn list_all_canisters(request: ListAllCanistersRequest) -> ApiResultDto<ListAllCanistersResponse> {
+fn admin_list_all_canisters(
+    request: ListAllCanistersRequest,
+) -> ApiResultDto<ListAllCanistersResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_controller(&caller) {
         return ApiResultDto::Err(err);

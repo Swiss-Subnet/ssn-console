@@ -13,7 +13,7 @@ use ic_cdk::{api::msg_caller, *};
 // identity can be granted exactly this and nothing else; canister
 // controllers are auto-allowed via assert_staff_perm.
 #[query]
-fn get_metrics(_req: GetMetricsRequest) -> ApiResultDto<GetMetricsResponse> {
+fn admin_get_metrics(_req: GetMetricsRequest) -> ApiResultDto<GetMetricsResponse> {
     let caller = msg_caller();
     if let Err(err) =
         access_control_service::assert_staff_perm(&caller, StaffPermissions::READ_METRICS)

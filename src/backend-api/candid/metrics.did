@@ -26,5 +26,5 @@ type MemoryRegion = record {
 };
 
 service : {
-  get_metrics : (GetMetricsRequest) -> (GetMetricsResponse) query;
+  admin_get_metrics : (GetMetricsRequest) -> (GetMetricsResponse) query;
 };

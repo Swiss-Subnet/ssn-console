@@ -48,7 +48,7 @@ export class UserProfileApi {
   }
 
   public async listUserProfiles(): Promise<ListUserProfilesResponse> {
-    const res = await this.actor.list_user_profiles();
+    const res = await this.actor.admin_list_user_profiles();
 
     return mapListUserProfilesResponse(res);
   }
@@ -63,14 +63,14 @@ export class UserProfileApi {
   }
 
   public async updateUserProfile(req: UpdateUserProfileRequest): Promise<void> {
-    const res = await this.actor.update_user_profile(
+    const res = await this.actor.admin_update_user_profile(
       mapUpdateUserProfileRequest(req),
     );
     mapOkResponse(res);
   }
 
   public async getUserStats(): Promise<GetUserStatsResponse> {
-    const res = await this.actor.get_user_stats();
+    const res = await this.actor.admin_get_user_stats();
     return mapUserStatsResponse(res);
   }
 

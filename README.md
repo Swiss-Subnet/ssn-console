@@ -104,7 +104,7 @@ read raw metrics) gated behind the canister controller. Grant them to a
 local user with `dfx`:
 
 ```shell
-dfx canister call backend grant_staff_permissions \
+dfx canister call backend admin_grant_staff_permissions \
   '(record {
       user_id = "<id>";
       permissions = record {
@@ -116,11 +116,11 @@ dfx canister call backend grant_staff_permissions \
    })'
 ```
 
-Then `get_metrics` (and any other staff-gated endpoint) can be called as
+Then `admin_get_metrics` (and any other staff-gated endpoint) can be called as
 that user:
 
 ```shell
-dfx canister call backend get_metrics '(record {})'
+dfx canister call backend admin_get_metrics '(record {})'
 ```
 
 ### Build the frontend

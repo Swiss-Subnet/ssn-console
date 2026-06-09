@@ -23,6 +23,6 @@ type TrustedPartner = record {
 };
 
 service : {
-  list_trusted_partners : () -> (ListTrustedPartnersResponse) query;
-  create_trusted_partner : (CreateTrustedPartnerRequest) -> (CreateTrustedPartnerResponse);
+  admin_list_trusted_partners : () -> (ListTrustedPartnersResponse) query;
+  admin_create_trusted_partner : (CreateTrustedPartnerRequest) -> (CreateTrustedPartnerResponse);
 };

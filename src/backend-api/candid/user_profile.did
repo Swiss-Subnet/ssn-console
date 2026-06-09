@@ -78,6 +78,16 @@ type GetUserStatsResponse = variant {
   Err : ApiError;
 };
 
+type StaleUserEntry = record {
+  id : UserId;
+  email : opt text;
+};
+
+type ListStaleUsersResponse = variant {
+  Ok : vec StaleUserEntry;
+  Err : ApiError;
+};
+
 type VerifyEmailRequest = record {
   token : text;
 };
@@ -88,10 +98,11 @@ type VerifyEmailResponse = variant {
 };
 
 service : {
-  list_user_profiles : () -> (ListUserProfilesResponse) query;
+  admin_list_user_profiles : () -> (ListUserProfilesResponse) query;
   get_user_profiles_by_principals : (GetUserProfilesByPrincipalsRequest) -> (GetUserProfilesByPrincipalsResponse) query;
-  update_user_profile : (UpdateUserProfileRequest) -> (UpdateUserProfileResponse);
-  get_user_stats : () -> (GetUserStatsResponse) query;
+  admin_update_user_profile : (UpdateUserProfileRequest) -> (UpdateUserProfileResponse);
+  admin_get_user_stats : () -> (GetUserStatsResponse) query;
+  admin_list_stale_users : () -> (ListStaleUsersResponse) query;
 
   get_my_user_profile : () -> (GetMyUserProfileResponse) query;
   create_my_user_profile : () -> (CreateMyUserProfileResponse);

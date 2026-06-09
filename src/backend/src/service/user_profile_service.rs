@@ -2,12 +2,13 @@ use crate::{
     data::{
         approval_policy_repository, organization_repository, project_repository, team_repository,
         user_profile_repository, ApprovalPolicy, OperationType, PolicyType, ProjectId,
-        ProjectPermissions, UserId, UserProfile, UserStatus,
+        ProjectPermissions, StaffPermissions, UserId, UserProfile, UserStatus,
     },
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
-        GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListUserProfilesResponse,
-        UpdateMyUserProfileRequest, UpdateUserProfileRequest, VerifyEmailRequest,
+        GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListStaleUsersResponse,
+        ListUserProfilesResponse, StaleUserEntry, UpdateMyUserProfileRequest,
+        UpdateUserProfileRequest, VerifyEmailRequest,
     },
     env,
     jwt::{extract_ed25519_public_key_from_pem, verify_jwt},
@@ -17,6 +18,7 @@ use crate::{
         map_list_user_profiles_response, map_user_status_request,
     },
     service::access_control_service::{self, ProjectAuth},
+    service::staleness_service,
     validation::Email,
 };
 use candid::Principal;
@@ -157,6 +159,22 @@ pub fn update_my_user_profile(caller: Principal, req: UpdateMyUserProfileRequest
         .expect("profile existence proven above");
 
     Ok(())
+}
+
+// Read-only; full scan, like list_user_profiles.
+pub fn list_stale_users(caller: &Principal, now_ns: u64) -> ApiResult<ListStaleUsersResponse> {
+    access_control_service::assert_staff_perm(caller, StaffPermissions::MANAGE_USERS)?;
+
+    let entries = user_profile_repository::list_user_profiles()
+        .into_iter()
+        .filter(|(user_id, _, _)| staleness_service::is_prunable_user(*user_id, now_ns))
+        .map(|(user_id, profile, _)| StaleUserEntry {
+            id: user_id.to_string(),
+            email: profile.email,
+        })
+        .collect();
+
+    Ok(entries)
 }
 
 pub fn get_user_stats() -> GetUserStatsResponse {

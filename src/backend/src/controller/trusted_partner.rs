@@ -6,7 +6,7 @@ use canister_utils::{assert_controller, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 #[query]
-fn list_trusted_partners() -> ApiResultDto<ListTrustedPartnersResponse> {
+fn admin_list_trusted_partners() -> ApiResultDto<ListTrustedPartnersResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_controller(&caller) {
         return ApiResultDto::Err(err);
@@ -16,7 +16,7 @@ fn list_trusted_partners() -> ApiResultDto<ListTrustedPartnersResponse> {
 }
 
 #[update]
-fn create_trusted_partner(
+fn admin_create_trusted_partner(
     req: CreateTrustedPartnerRequest,
 ) -> ApiResultDto<CreateTrustedPartnerResponse> {
     let caller = msg_caller();

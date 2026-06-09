@@ -13,7 +13,7 @@ export class TrustedPartnerApi {
   constructor(private readonly actor: ActorSubclass<_SERVICE>) {}
 
   public async listTrustedPartners(): Promise<ListTrustedPartnersResponse> {
-    const res = await this.actor.list_trusted_partners();
+    const res = await this.actor.admin_list_trusted_partners();
 
     return mapListTrustedPartnersResponse(res);
   }
@@ -23,7 +23,7 @@ export class TrustedPartnerApi {
   ): Promise<CreateTrustedPartnerResponse> {
     const apiReq = mapCreateTrustedPartnerRequest(req);
 
-    const apiRes = await this.actor.create_trusted_partner(apiReq);
+    const apiRes = await this.actor.admin_create_trusted_partner(apiReq);
 
     return mapCreateTrustedPartnerResponse(apiRes);
   }

@@ -54,7 +54,7 @@ type TermsAndConditionsDecisionType = variant {
 
 service : {
   get_latest_terms_and_conditions : () -> (GetLatestTermsAndConditionsResponse) query;
-  list_terms_and_conditions : () -> (ListTermsAndConditionsResponse) query;
+  admin_list_terms_and_conditions : () -> (ListTermsAndConditionsResponse) query;
   upsert_terms_and_conditions_decision : (UpsertTermsAndConditionsDecisionRequest) -> (UpsertTermsAndConditionsDecisionResponse);
-  create_terms_and_conditions : (CreateTermsAndConditionsRequest) -> (CreateTermsAndConditionsResponse);
+  admin_create_terms_and_conditions : (CreateTermsAndConditionsRequest) -> (CreateTermsAndConditionsResponse);
 };

@@ -65,7 +65,7 @@ describe('Terms and Conditions', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: termsAndConditionsContent,
         comment: termsAndConditionsComment,
       });
@@ -95,7 +95,7 @@ describe('Terms and Conditions', () => {
       const updatedTermsAndConditionsComment = 'Updated comment';
 
       driver.actor.setIdentity(controllerIdentity);
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: updatedTermsAndConditionsContent,
         comment: updatedTermsAndConditionsComment,
       });
@@ -180,7 +180,7 @@ describe('Terms and Conditions', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: termsAndConditionsContent,
         comment: termsAndConditionsComment,
       });
@@ -219,7 +219,7 @@ describe('Terms and Conditions', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: termsAndConditionsContent,
         comment: termsAndConditionsComment,
       });
@@ -252,11 +252,11 @@ describe('Terms and Conditions', () => {
     });
   });
 
-  describe('create_terms_and_conditions', () => {
+  describe('admin_create_terms_and_conditions', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      const res = await driver.actor.create_terms_and_conditions({
+      const res = await driver.actor.admin_create_terms_and_conditions({
         content: termsAndConditionsContent,
         comment: termsAndConditionsComment,
       });
@@ -267,7 +267,7 @@ describe('Terms and Conditions', () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      const res = await driver.actor.create_terms_and_conditions({
+      const res = await driver.actor.admin_create_terms_and_conditions({
         content: termsAndConditionsContent,
         comment: termsAndConditionsComment,
       });
@@ -284,7 +284,7 @@ describe('Terms and Conditions', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: termsAndConditionsContent,
         comment: termsAndConditionsComment,
       });

@@ -46,7 +46,7 @@ export class OrganizationApi {
   public async listOrganizations(
     req: ListOrganizationsRequest,
   ): Promise<ListOrganizationsResponse> {
-    const res = await this.actor.list_organizations(
+    const res = await this.actor.admin_list_organizations(
       mapListOrganizationsRequest(req),
     );
     return mapListOrganizationsResponse(res);
@@ -103,7 +103,7 @@ export class OrganizationApi {
   }
 
   public async setOrgBillingPlan(req: SetOrgBillingPlanRequest): Promise<void> {
-    const res = await this.actor.set_org_billing_plan(
+    const res = await this.actor.admin_set_org_billing_plan(
       mapSetOrgBillingPlanRequest(req),
     );
     mapSetOrgBillingPlanResponse(res);
