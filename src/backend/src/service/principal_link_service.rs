@@ -94,6 +94,7 @@ pub fn link_my_principal(caller: &Principal, code: String) -> ApiResult {
         Ok::<_, ApiError>(user_id)
     })?;
 
+    access_control_service::assert_principal_is_unclaimed(caller)?;
     user_profile_repository::link_principal_to_user(user_id, *caller)
 }
 
@@ -179,6 +180,7 @@ pub fn admin_link_principal_to_user(
         ));
     }
 
+    access_control_service::assert_principal_is_unclaimed(&principal)?;
     user_profile_repository::link_principal_to_user(user_id, principal)
 }
 
@@ -227,6 +229,7 @@ fn recover_with_claims(caller: &Principal, claims: Claims) -> ApiResult {
             ApiError::client_error("No verified account found for this email.".to_string())
         })?;
 
+    access_control_service::assert_principal_is_unclaimed(caller)?;
     user_profile_repository::link_principal_to_user(user_id, *caller)
 }
 
@@ -596,7 +599,10 @@ mod tests {
         let target_user_id = user_id_of(target_owner);
 
         let err = admin_link_principal_to_user(&staff, target_user_id, other_owner).unwrap_err();
-        assert_eq!(err.message(), "Principal cannot be linked.");
+        assert_eq!(
+            err.message(),
+            "Principal is already linked to a user account."
+        );
     }
 
     #[test]
@@ -732,7 +738,10 @@ mod tests {
             recovery_claims("recover-clash@example.com"),
         )
         .unwrap_err();
-        assert_eq!(err.message(), "Principal cannot be linked.");
+        assert_eq!(
+            err.message(),
+            "Principal is already linked to a user account."
+        );
     }
 
     #[test]
@@ -741,5 +750,61 @@ mod tests {
 
         let err = recover_with_claims(&new_principal, recovery_claims("not-an-email")).unwrap_err();
         assert!(err.message().contains("'@'"));
+    }
+
+    // Disjointness: a principal already granted as a service principal must
+    // not also become a user-account principal. We seed via the repository to
+    // bypass the service-layer disjointness check on the grant side.
+    fn seed_service_principal(p: Principal) {
+        crate::data::service_principal_repository::set_service_principal_permissions(
+            p,
+            StaffPermissions::READ_METRICS,
+        );
+    }
+
+    #[test]
+    fn link_my_principal_rejects_service_principal_target() {
+        let sp = fresh_principal();
+        seed_service_principal(sp);
+        let owner = fresh_user();
+        register_link_code(&owner, "DISJOIN1".to_string(), sp).unwrap();
+
+        let err = link_my_principal(&sp, "DISJOIN1".to_string()).unwrap_err();
+        assert!(
+            err.message().to_lowercase().contains("service"),
+            "expected service-principal conflict, got {:?}",
+            err.message(),
+        );
+    }
+
+    #[test]
+    fn admin_link_principal_rejects_service_principal_target() {
+        let (staff, _) = fresh_staff_user(StaffPermissions::MANAGE_USERS);
+        let target_owner = fresh_user();
+        let target_user_id = user_id_of(target_owner);
+        let sp = fresh_principal();
+        seed_service_principal(sp);
+
+        let err = admin_link_principal_to_user(&staff, target_user_id, sp).unwrap_err();
+        assert!(
+            err.message().to_lowercase().contains("service"),
+            "expected service-principal conflict, got {:?}",
+            err.message(),
+        );
+    }
+
+    #[test]
+    fn recover_with_claims_rejects_service_principal_caller() {
+        let _existing = fresh_user_with_verified_email("disjoint-recover@example.com");
+        let sp = fresh_principal();
+        seed_service_principal(sp);
+
+        let err =
+            recover_with_claims(&sp, recovery_claims("disjoint-recover@example.com")).unwrap_err();
+        assert!(
+            err.message().to_lowercase().contains("service"),
+            "expected service-principal conflict, got {:?}",
+            err.message(),
+        );
     }
 }

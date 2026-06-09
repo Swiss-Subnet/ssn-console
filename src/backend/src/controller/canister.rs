@@ -1,13 +1,14 @@
 use crate::{
-    data::CanisterId,
+    data::{CanisterId, StaffPermissions},
     dto::{
         ListAllCanistersRequest, ListAllCanistersResponse, ListMyCanistersRequest,
         ListMyCanistersResponse, ListUserCanistersRequest, ListUserCanistersResponse,
+        ListUserReadableCanisterPrincipalsRequest, ListUserReadableCanisterPrincipalsResponse,
         RemoveMyCanisterRequest, StartMyCanisterRequest, StopMyCanisterRequest,
         UpdateMyCanisterNameRequest,
     },
     env,
-    service::canister_service,
+    service::{access_control_service, canister_service},
 };
 use backend_api::{AddChildCanistersRequest, AddChildCanistersResponse};
 use canister_utils::{assert_authenticated, assert_controller, ApiResult, ApiResultDto};
@@ -97,6 +98,19 @@ async fn stop_my_canister(request: StopMyCanisterRequest) -> ApiResultDto<()> {
     canister_service::stop_my_canister(caller, canister_id)
         .await
         .into()
+}
+
+#[query]
+fn list_user_readable_canister_principals(
+    request: ListUserReadableCanisterPrincipalsRequest,
+) -> ApiResultDto<ListUserReadableCanisterPrincipalsResponse> {
+    let caller = msg_caller();
+    if let Err(err) =
+        access_control_service::assert_staff_perm(&caller, StaffPermissions::READ_METRICS)
+    {
+        return ApiResultDto::Err(err);
+    }
+    canister_service::list_user_readable_canister_principals(request).into()
 }
 
 #[query]

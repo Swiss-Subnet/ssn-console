@@ -53,6 +53,10 @@ export const createAuthSlice: AppStateCreator<AuthSlice> = (set, get) => ({
         idleOptions: {
           disableIdle: true,
         },
+        // Use Ed25519 (extractable) instead of the default ECDSA so the
+        // metrics-proxy session-mint flow can sign challenges directly
+        // via DelegationIdentity.sign().
+        keyType: 'Ed25519',
       });
       const isAuthenticated = await authClient.isAuthenticated();
       const identity = authClient.getIdentity();

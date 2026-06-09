@@ -1,5 +1,5 @@
 use crate::{
-    data::{self, user_profile_repository, UserId},
+    data::{self, service_principal_repository, user_profile_repository, UserId},
     dto::{
         GetMyStaffPermissionsResponse, GrantStaffPermissionsRequest, ListStaffResponse,
         RevokeStaffPermissionsRequest,
@@ -52,9 +52,14 @@ pub fn revoke_staff_permissions(req: RevokeStaffPermissionsRequest) -> ApiResult
 }
 
 // Returns the caller's own staff permissions, or `None` if they are not
-// staff (no profile, or profile.staff_permissions is None). Never reveals
-// information about other users.
+// staff. Checks the service-principal table first to match the resolution
+// order in access_control_service::assert_staff_perm, so self-introspection
+// agrees with the runtime authority check. Never reveals information about
+// other callers.
 pub fn get_my_staff_permissions(caller: &Principal) -> GetMyStaffPermissionsResponse {
+    if let Some(perms) = service_principal_repository::get_service_principal_permissions(caller) {
+        return Some(map_staff_permissions(perms));
+    }
     user_profile_repository::get_user_profile_by_principal(caller)
         .and_then(|(_, profile)| profile.staff_permissions)
         .map(map_staff_permissions)
@@ -74,4 +79,32 @@ pub fn list_staff() -> ListStaffResponse {
         .map(|(id, profile, _principals)| (id, profile))
         .collect();
     map_list_staff_response(profiles)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn principal(byte: u8) -> Principal {
+        let mut bytes = [0u8; 29];
+        bytes[28] = byte;
+        Principal::from_slice(&bytes)
+    }
+
+    #[test]
+    fn get_my_staff_permissions_resolves_service_principal() {
+        let p = principal(250);
+        service_principal_repository::set_service_principal_permissions(
+            p,
+            data::StaffPermissions::READ_METRICS,
+        );
+        let got = get_my_staff_permissions(&p).expect("service principal must see its own perms");
+        assert!(got.read_metrics);
+        assert!(!got.write_billing);
+    }
+
+    #[test]
+    fn get_my_staff_permissions_none_for_unknown_principal() {
+        assert!(get_my_staff_permissions(&principal(251)).is_none());
+    }
 }

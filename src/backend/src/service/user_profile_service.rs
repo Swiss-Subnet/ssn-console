@@ -16,7 +16,7 @@ use crate::{
         map_get_user_profiles_by_principals_response, map_get_user_stats_response,
         map_list_user_profiles_response, map_user_status_request,
     },
-    service::access_control_service::ProjectAuth,
+    service::access_control_service::{self, ProjectAuth},
     validation::Email,
 };
 use candid::Principal;
@@ -98,6 +98,7 @@ pub fn create_my_user_profile(caller: Principal) -> ApiResult<CreateMyUserProfil
             caller.to_text()
         )));
     }
+    access_control_service::assert_principal_is_unclaimed(&caller)?;
 
     let profile = UserProfile::default();
     let user_id = user_profile_repository::create_user_profile(caller, profile.clone());
@@ -216,4 +217,33 @@ pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> ApiResult {
         .expect("profile existence proven above");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::{service_principal_repository, StaffPermissions};
+
+    fn principal(byte: u8) -> Principal {
+        let mut bytes = [0u8; 29];
+        bytes[28] = byte;
+        Principal::from_slice(&bytes)
+    }
+
+    #[test]
+    fn create_my_user_profile_rejects_service_principal() {
+        let sp = principal(240);
+        service_principal_repository::set_service_principal_permissions(
+            sp,
+            StaffPermissions::READ_METRICS,
+        );
+
+        let err = create_my_user_profile(sp)
+            .expect_err("service principal must not create a user profile");
+        assert!(
+            err.message().to_lowercase().contains("service"),
+            "expected service-principal conflict, got {:?}",
+            err.message(),
+        );
+    }
 }

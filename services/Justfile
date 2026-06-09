@@ -53,3 +53,33 @@ run svc:
     set -a; . .env.local; set +a
     cd services/{{svc}}
     go run ./cmd/{{svc}}
+
+# Run metrics-proxy locally. Loads ../.env.local then derives the
+# backend canister id from .dfx/local/canister_ids.json so the recipe
+# works as soon as `dfx deploy backend` has run. PORT is forced to 3001
+# to dodge auth-service's PORT=3000. Without GRAFANA_URL the proxy
+# falls back to the in-memory fake data source. The proxy authenticates
+# as the RFC 8032 test-vector identity by default (loopback only); set
+# PROXY_IDENTITY_PEM to override.
+# Usage: just services::metrics-proxy
+metrics-proxy:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd ..
+    set -a; . .env.local; set +a
+    if [ -z "${BACKEND_CANISTER_ID:-}" ]; then
+        if [ -f .dfx/local/canister_ids.json ]; then
+            export BACKEND_CANISTER_ID=$(jq -r '.backend.local' .dfx/local/canister_ids.json)
+        fi
+    fi
+    if [ -z "${IC_HOST:-}" ]; then
+        # Prefer pocket-ic (8000) over dfx start (4943); both reachable locally.
+        if curl -s -m 1 -o /dev/null http://127.0.0.1:8000/api/v2/status; then
+            export IC_HOST=http://127.0.0.1:8000
+        else
+            export IC_HOST=http://127.0.0.1:4943
+        fi
+    fi
+    cd services/metrics-proxy
+    export PORT=3001
+    go run ./cmd/metrics-proxy

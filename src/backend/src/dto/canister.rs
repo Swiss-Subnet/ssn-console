@@ -19,6 +19,16 @@ pub struct ListUserCanistersResponse {
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListUserReadableCanisterPrincipalsRequest {
+    pub user_principal: Principal,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct ListUserReadableCanisterPrincipalsResponse {
+    pub canister_principals: Vec<Principal>,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct ListAllCanistersRequest {
     pub limit: Option<u64>,
     pub page: Option<u64>,

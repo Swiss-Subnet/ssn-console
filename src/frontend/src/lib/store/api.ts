@@ -7,6 +7,7 @@ import {
   ApprovalPolicyApi,
   CanisterApi,
   CanisterHistoryApi,
+  MetricsProxyApi,
   PrincipalLinkApi,
   ProposalApi,
   StaffPermissionsApi,
@@ -21,7 +22,7 @@ import {
   AuthApi,
   UsageApi,
 } from '@/lib/api';
-import { OFFCHAIN_SERVICE_URL } from '@/env';
+import { METRICS_PROXY_URL, OFFCHAIN_SERVICE_URL } from '@/env';
 import { isNil } from '@/lib/nil';
 import type { ApiSlice, AppStateCreator } from '@/lib/store/model';
 import { Actor, HttpAgent } from '@icp-sdk/core/agent';
@@ -75,6 +76,7 @@ const teamApi = new TeamApi(actor);
 const inviteApi = new InviteApi(actor);
 const canisterHistoryApi = new CanisterHistoryApi(canisterHistoryActor);
 const authApi = new AuthApi(OFFCHAIN_SERVICE_URL);
+const metricsProxyApi = new MetricsProxyApi(METRICS_PROXY_URL);
 const approvalPolicyApi = new ApprovalPolicyApi(actor);
 const proposalApi = new ProposalApi(actor);
 const principalLinkApi = new PrincipalLinkApi(actor);
@@ -95,6 +97,7 @@ export const createApiSlice: AppStateCreator<ApiSlice> = (_set, get) => ({
   teamApi,
   inviteApi,
   authApi,
+  metricsProxyApi,
   approvalPolicyApi,
   proposalApi,
   principalLinkApi,

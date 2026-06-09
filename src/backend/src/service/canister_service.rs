@@ -10,7 +10,9 @@ use crate::{
     },
     dto::{
         self, CanisterState, ListMyCanistersRequest, ListMyCanistersResponse,
-        ListUserCanistersRequest, ListUserCanistersResponse, UpdateMyCanisterNameRequest,
+        ListUserCanistersRequest, ListUserCanistersResponse,
+        ListUserReadableCanisterPrincipalsRequest, ListUserReadableCanisterPrincipalsResponse,
+        UpdateMyCanisterNameRequest,
     },
     mapping::{map_canister_info, map_canister_response},
     service::access_control_service::ProjectAuth,
@@ -38,6 +40,41 @@ pub async fn list_my_canisters(
     let project_canisters =
         canister_repository::list_active_canisters_by_project(auth.project_id());
     Ok(fetch_canisters_with_state(project_canisters).await)
+}
+
+// Returns Ok(empty) (not Err) for unknown principals so the caller can't
+// distinguish "no such user" from "user owns no canisters".
+pub fn list_user_readable_canister_principals(
+    request: ListUserReadableCanisterPrincipalsRequest,
+) -> ApiResult<ListUserReadableCanisterPrincipalsResponse> {
+    let Some(user_id) = user_profile_repository::get_user_id_by_principal(&request.user_principal)
+    else {
+        return Ok(ListUserReadableCanisterPrincipalsResponse {
+            canister_principals: vec![],
+        });
+    };
+
+    let team_ids = team_repository::list_user_team_ids(user_id);
+    let mut project_ids: Vec<ProjectId> = team_ids
+        .into_iter()
+        .flat_map(project_repository::list_team_project_ids)
+        .collect();
+    project_ids.sort();
+    project_ids.dedup();
+
+    let mut canister_principals: Vec<Principal> = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for project_id in project_ids {
+        for (_, canister) in canister_repository::list_active_canisters_by_project(project_id) {
+            if seen.insert(canister.principal) {
+                canister_principals.push(canister.principal);
+            }
+        }
+    }
+
+    Ok(ListUserReadableCanisterPrincipalsResponse {
+        canister_principals,
+    })
 }
 
 pub async fn list_user_canisters(
@@ -385,6 +422,7 @@ pub fn enforce_canister_quota(org_id: OrgId) -> ApiResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::data::{Canister, Organization, Project, Team, TeamId, UserId, UserProfile};
 
     fn principal(byte: u8) -> Principal {
         let mut bytes = [0u8; 29];
@@ -396,5 +434,157 @@ mod tests {
     fn resolve_managed_canister_principal_unknown_canister_is_not_found() {
         let err = resolve_managed_canister_principal(principal(1), CanisterId::new()).unwrap_err();
         assert!(err.message().contains("not found"));
+    }
+
+    fn canister_principal(byte: u8) -> Principal {
+        let mut bytes = [0u8; 29];
+        bytes[0] = byte;
+        Principal::from_slice(&bytes)
+    }
+
+    fn fresh_user(byte: u8) -> (Principal, UserId) {
+        let p = principal(byte);
+        let uid = user_profile_repository::create_user_profile(p, UserProfile::default());
+        (p, uid)
+    }
+
+    fn fresh_org_with_owner(owner_user_id: UserId, name: &str) -> OrgId {
+        organization_repository::create_org(
+            owner_user_id,
+            Organization {
+                name: name.to_string(),
+            },
+        )
+    }
+
+    fn fresh_team(owner_user_id: UserId, org_id: OrgId, name: &str) -> TeamId {
+        team_repository::create_team(
+            owner_user_id,
+            org_id,
+            Team {
+                org_id,
+                name: name.to_string(),
+            },
+        )
+    }
+
+    fn fresh_project(org_id: OrgId, team_id: TeamId, name: &str) -> ProjectId {
+        let project_id = project_repository::create_project(
+            org_id,
+            Project {
+                org_id,
+                name: name.to_string(),
+            },
+        );
+        project_repository::add_team_to_project(team_id, project_id);
+        project_id
+    }
+
+    fn fresh_canister(project_id: ProjectId, principal: Principal) -> CanisterId {
+        canister_repository::create_canister(
+            project_id,
+            Canister {
+                principal,
+                name: None,
+                deleted_at: None,
+            },
+        )
+    }
+
+    fn req(p: Principal) -> ListUserReadableCanisterPrincipalsRequest {
+        ListUserReadableCanisterPrincipalsRequest { user_principal: p }
+    }
+
+    #[test]
+    fn returns_empty_for_unknown_principal() {
+        let res = list_user_readable_canister_principals(req(principal(99))).unwrap();
+        assert!(res.canister_principals.is_empty());
+    }
+
+    #[test]
+    fn returns_empty_for_user_with_no_memberships() {
+        let (p, _) = fresh_user(1);
+        let res = list_user_readable_canister_principals(req(p)).unwrap();
+        assert!(res.canister_principals.is_empty());
+    }
+
+    #[test]
+    fn returns_canisters_across_users_teams_and_projects() {
+        let (p, uid) = fresh_user(2);
+        let org = fresh_org_with_owner(uid, "Acme");
+        let team = fresh_team(uid, org, "Team A");
+        let project = fresh_project(org, team, "Proj 1");
+
+        let c1 = canister_principal(10);
+        let c2 = canister_principal(11);
+        fresh_canister(project, c1);
+        fresh_canister(project, c2);
+
+        let res = list_user_readable_canister_principals(req(p)).unwrap();
+        let mut got = res.canister_principals;
+        got.sort();
+        let mut want = vec![c1, c2];
+        want.sort();
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn deduplicates_across_overlapping_projects() {
+        let (p, uid) = fresh_user(3);
+        let org = fresh_org_with_owner(uid, "Acme");
+        let team_a = fresh_team(uid, org, "Team A");
+        let team_b = fresh_team(uid, org, "Team B");
+        let project_a = fresh_project(org, team_a, "Proj A");
+        let project_b = fresh_project(org, team_b, "Proj B");
+
+        // Same canister principal registered under two distinct project IDs:
+        // dedup must happen on the IC principal, not on the Uuid key.
+        let shared = canister_principal(20);
+        fresh_canister(project_a, shared);
+        fresh_canister(project_b, shared);
+
+        let res = list_user_readable_canister_principals(req(p)).unwrap();
+        assert_eq!(res.canister_principals, vec![shared]);
+    }
+
+    #[test]
+    fn excludes_canisters_belonging_to_other_users() {
+        let (p_self, uid_self) = fresh_user(4);
+        let (p_other, uid_other) = fresh_user(5);
+
+        let org_self = fresh_org_with_owner(uid_self, "Mine");
+        let team_self = fresh_team(uid_self, org_self, "Mine");
+        let project_self = fresh_project(org_self, team_self, "Mine");
+        let c_self = canister_principal(30);
+        fresh_canister(project_self, c_self);
+
+        let org_other = fresh_org_with_owner(uid_other, "Theirs");
+        let team_other = fresh_team(uid_other, org_other, "Theirs");
+        let project_other = fresh_project(org_other, team_other, "Theirs");
+        let c_other = canister_principal(31);
+        fresh_canister(project_other, c_other);
+
+        let res = list_user_readable_canister_principals(req(p_self)).unwrap();
+        assert_eq!(res.canister_principals, vec![c_self]);
+
+        let res = list_user_readable_canister_principals(req(p_other)).unwrap();
+        assert_eq!(res.canister_principals, vec![c_other]);
+    }
+
+    #[test]
+    fn excludes_soft_deleted_canisters() {
+        let (p, uid) = fresh_user(6);
+        let org = fresh_org_with_owner(uid, "Acme");
+        let team = fresh_team(uid, org, "Team");
+        let project = fresh_project(org, team, "Proj");
+
+        let active = canister_principal(40);
+        let deleted = canister_principal(41);
+        fresh_canister(project, active);
+        let deleted_uuid = fresh_canister(project, deleted);
+        canister_repository::soft_delete_canister(project, deleted_uuid, 1);
+
+        let res = list_user_readable_canister_principals(req(p)).unwrap();
+        assert_eq!(res.canister_principals, vec![active]);
     }
 }

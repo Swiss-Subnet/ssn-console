@@ -2,8 +2,9 @@ use crate::{
     data::{
         approval_policy_repository, canister_repository, invite_repository, memory_metrics,
         organization_billing_plan_repository, organization_repository,
-        orphaned_canister_repository, project_repository, proposal_repository, team_repository,
-        terms_and_conditions_repository, trusted_partner_repository, user_profile_repository,
+        orphaned_canister_repository, project_repository, proposal_repository,
+        service_principal_repository, team_repository, terms_and_conditions_repository,
+        trusted_partner_repository, user_profile_repository,
     },
     dto::{EntryCount, GetMetricsResponse, MemoryRegion},
 };
@@ -26,7 +27,7 @@ pub fn collect_metrics() -> GetMetricsResponse {
 }
 
 fn collect_entry_counts() -> Vec<EntryCount> {
-    let groups: [Vec<(&'static str, u64)>; 12] = [
+    let groups: [Vec<(&'static str, u64)>; 13] = [
         user_profile_repository::metrics_counts(),
         organization_repository::metrics_counts(),
         team_repository::metrics_counts(),
@@ -39,6 +40,7 @@ fn collect_entry_counts() -> Vec<EntryCount> {
         terms_and_conditions_repository::metrics_counts(),
         organization_billing_plan_repository::metrics_counts(),
         orphaned_canister_repository::metrics_counts(),
+        service_principal_repository::metrics_counts(),
     ];
     groups
         .into_iter()
