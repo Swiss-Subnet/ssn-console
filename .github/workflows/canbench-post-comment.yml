@@ -26,6 +26,7 @@ jobs:
         run: bash ./scripts/ci-download-canbench-artifacts.sh
 
       - name: Post comment
+        if: steps.build-comment.outputs.skip != 'true'
         uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.build-comment.outputs.pr_number }}
