@@ -30,10 +30,6 @@ FROM docker.io/oven/bun:1 AS builder
 WORKDIR /app
 ENV NODE_ENV=production
 
-RUN apt-get update && apt-get install -y curl \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
-
 COPY --from=pruner /app/out/full/ .
 COPY --from=installer /app/ .
 COPY src/canister-utils/error.did ./src/canister-utils/error.did
