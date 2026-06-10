@@ -10,12 +10,9 @@
   ```shell
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
   ```
-- Install [`dfx`](https://docs.internetcomputer.org/building-apps/getting-started/install#installing-dfx-via-dfxvm).
-  ```shell
-  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-  ```
+- Install [`icp-cli`](https://github.com/dfinity/icp-cli) (local dev) and, for now, [`dfx`](https://docs.internetcomputer.org/building-apps/getting-started/install#installing-dfx-via-dfxvm) (CI/mainnet deploys still use it).
 
-Alternatively, all tooling is provided by the Nix flake:
+Alternatively, all tooling is provided by the Nix flake (this is the supported path; it pins icp-cli and the pocket-ic version local dev runs on):
 
 ```shell
 nix develop
@@ -70,6 +67,8 @@ Start the local replica and deploy canisters:
 ./scripts/init-local.sh
 ```
 
+Local dev runs on `icp-cli` (which pins the pocket-ic version). CI and mainnet/test deploys still use `dfx` for now; commands in the sections below that pass `--network test`/`--ic` remain `dfx`.
+
 ### Local Email Verification
 
 After signing up and entering your email in the UI, generate a
@@ -87,7 +86,7 @@ Mailpit instance, see [services/README.md](./services/README.md#auth-service-end
 
 ### Local User Activation
 
-New users start with `Pending` status. Activating via dfx is
+New users start with `Pending` status. Activating is
 sufficient to use the app locally -- email verification is optional:
 
 ```shell
@@ -101,10 +100,10 @@ This lists local users, lets you pick one from a menu, and sets it
 
 Staff permissions are cross-org capabilities (read every org, write billing,
 read raw metrics) gated behind the canister controller. Grant them to a
-local user with `dfx`:
+local user:
 
 ```shell
-dfx canister call backend admin_grant_staff_permissions \
+icp canister call backend admin_grant_staff_permissions \
   '(record {
       user_id = "<id>";
       permissions = record {
@@ -113,14 +112,14 @@ dfx canister call backend admin_grant_staff_permissions \
         manage_users = false;
         read_metrics = true;
       };
-   })'
+   })' -e local
 ```
 
 Then `admin_get_metrics` (and any other staff-gated endpoint) can be called as
 that user:
 
 ```shell
-dfx canister call backend admin_get_metrics '(record {})'
+icp canister call backend admin_get_metrics '(record {})' -e local
 ```
 
 ### Build the frontend
