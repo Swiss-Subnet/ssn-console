@@ -1,8 +1,6 @@
 use backend_api::*;
-use candid::export_service;
 use canister_utils::ApiResultDto;
 use dto::*;
-use ic_cdk::*;
 use ic_http_certification::{HttpRequest, HttpResponse};
 
 mod constants;
@@ -20,11 +18,7 @@ mod validation;
 #[macro_use]
 extern crate dotenv_codegen;
 
-export_service!();
-#[query(name = "__get_candid_interface_tmp_hack")]
-fn export_candid() -> String {
-    __export_service()
-}
+ic_cdk::export_candid!();
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {

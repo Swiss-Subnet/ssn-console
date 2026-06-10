@@ -1,0 +1,54 @@
+# Local-development config for icp-cli (replaces dfx.json for `icp` commands).
+# CI/mainnet deploys still use dfx.json for now; keep the two in sync until that migrates.
+# Each script build step compiles the wasm, embeds candid, shrinks, and gzips into
+# $ICP_WASM_OUTPUT_PATH -- the work dfx did implicitly via type:custom + optimize/gzip/shrink.
+#
+# Static env vars live here. The secret (PUBLIC_KEY) and cross-canister ids are set by
+# scripts/init-local.sh between create and install (they can't be static literals, and
+# canister post_upgrade reads them eagerly so they must exist before install).
+
+canisters:
+  - name: backend
+    build:
+      steps:
+        - type: script
+          commands:
+            - bun turbo -F frontend build
+            - cargo build --target wasm32-unknown-unknown --release -p backend --locked
+            - candid-extractor target/wasm32-unknown-unknown/release/backend.wasm > "$ICP_WASM_OUTPUT_PATH.did"
+            - ic-wasm target/wasm32-unknown-unknown/release/backend.wasm -o "$ICP_WASM_OUTPUT_PATH.shrunk" shrink
+            - ic-wasm "$ICP_WASM_OUTPUT_PATH.shrunk" -o "$ICP_WASM_OUTPUT_PATH.candid" metadata candid:service -f "$ICP_WASM_OUTPUT_PATH.did" -v public
+            - gzip -f -c "$ICP_WASM_OUTPUT_PATH.candid" > "$ICP_WASM_OUTPUT_PATH"
+    settings:
+      environment_variables:
+        OFFCHAIN_SERVICE_URL: 'http://localhost:3000'
+
+  - name: canister-history
+    build:
+      steps:
+        - type: script
+          commands:
+            - cargo build --target wasm32-unknown-unknown --release -p canister-history --locked
+            - candid-extractor target/wasm32-unknown-unknown/release/canister_history.wasm > "$ICP_WASM_OUTPUT_PATH.did"
+            - ic-wasm target/wasm32-unknown-unknown/release/canister_history.wasm -o "$ICP_WASM_OUTPUT_PATH.shrunk" shrink
+            - ic-wasm "$ICP_WASM_OUTPUT_PATH.shrunk" -o "$ICP_WASM_OUTPUT_PATH.candid" metadata candid:service -f "$ICP_WASM_OUTPUT_PATH.did" -v public
+            - gzip -f -c "$ICP_WASM_OUTPUT_PATH.candid" > "$ICP_WASM_OUTPUT_PATH"
+
+  - name: cycles-monitor
+    build:
+      steps:
+        - type: script
+          commands:
+            - cargo build --target wasm32-unknown-unknown --release -p cycles-monitor --locked
+            - candid-extractor target/wasm32-unknown-unknown/release/cycles_monitor.wasm > "$ICP_WASM_OUTPUT_PATH.did"
+            - ic-wasm target/wasm32-unknown-unknown/release/cycles_monitor.wasm -o "$ICP_WASM_OUTPUT_PATH.shrunk" shrink
+            - ic-wasm "$ICP_WASM_OUTPUT_PATH.shrunk" -o "$ICP_WASM_OUTPUT_PATH.candid" metadata candid:service -f "$ICP_WASM_OUTPUT_PATH.did" -v public
+            - gzip -f -c "$ICP_WASM_OUTPUT_PATH.candid" > "$ICP_WASM_OUTPUT_PATH"
+
+networks:
+  - name: local
+    mode: managed
+    gateway:
+      bind: 127.0.0.1
+      port: 8000
+    ii: true

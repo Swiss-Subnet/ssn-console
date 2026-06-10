@@ -5,6 +5,9 @@
 # dfx temporary files
 .dfx
 
+# icp-cli: cache is disposable; .icp/data (canister id mappings) is committed
+.icp/cache
+
 # build output
 target
 node_modules
