@@ -13,11 +13,12 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
   isProfileInitialized: false,
   isProfileLoading: false,
   profile: null,
+  myStaffPermissions: null,
 
   async initializeUserProfile() {
     set({ isProfileLoading: true });
 
-    const { userProfileApi, isAuthenticated } = get();
+    const { userProfileApi, staffPermissionsApi, isAuthenticated } = get();
 
     if (!isAuthenticated) {
       set({ isProfileInitialized: true, isProfileLoading: false });
@@ -26,14 +27,16 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
 
     try {
       const profile = await userProfileApi.getOrCreateMyUserProfile();
-      set({ profile });
+      const myStaffPermissions =
+        await staffPermissionsApi.getMyStaffPermissions();
+      set({ profile, myStaffPermissions });
     } finally {
       set({ isProfileInitialized: true, isProfileLoading: false });
     }
   },
 
   clearUserProfile() {
-    set({ profile: null });
+    set({ profile: null, myStaffPermissions: null });
   },
 
   setEmail: async (email: string) => {
@@ -93,4 +96,39 @@ export function selectIsAdmin(state: AppSlice): boolean {
 
 export function selectIsActive(state: AppSlice): boolean {
   return state.profile?.status === UserStatus.Active;
+}
+
+// Controllers (isAdmin) see the whole admin panel. Staff see only the areas
+// their granted permissions cover; these selectors mirror the backend gates.
+export function selectCanManageUsers(state: AppSlice): boolean {
+  return (
+    selectIsAdmin(state) || (state.myStaffPermissions?.manageUsers ?? false)
+  );
+}
+
+export function selectCanReadAllOrgs(state: AppSlice): boolean {
+  return (
+    selectIsAdmin(state) || (state.myStaffPermissions?.readAllOrgs ?? false)
+  );
+}
+
+export function selectCanWriteBilling(state: AppSlice): boolean {
+  return (
+    selectIsAdmin(state) || (state.myStaffPermissions?.writeBilling ?? false)
+  );
+}
+
+export function selectCanReadMetrics(state: AppSlice): boolean {
+  return (
+    selectIsAdmin(state) || (state.myStaffPermissions?.readMetrics ?? false)
+  );
+}
+
+export function selectCanAccessAdmin(state: AppSlice): boolean {
+  return (
+    selectCanManageUsers(state) ||
+    selectCanReadAllOrgs(state) ||
+    selectCanWriteBilling(state) ||
+    selectCanReadMetrics(state)
+  );
 }

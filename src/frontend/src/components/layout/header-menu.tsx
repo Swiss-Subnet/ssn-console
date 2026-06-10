@@ -9,7 +9,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { isNotNil } from '@/lib/nil';
-import { selectIsActive, selectIsAdmin, useAppStore } from '@/lib/store';
+import {
+  selectCanAccessAdmin,
+  selectIsActive,
+  selectIsAdmin,
+  useAppStore,
+} from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import {
   CircleUserRoundIcon,
@@ -28,6 +33,7 @@ export const HeaderMenu: FC = () => {
     useAppStore();
   const isActive = useAppStore(selectIsActive);
   const isAdmin = useAppStore(selectIsAdmin);
+  const canAccessAdmin = useAppStore(selectCanAccessAdmin);
   const pendingInviteCount = myInvites.length;
 
   const principal = useMemo(
@@ -93,7 +99,7 @@ export const HeaderMenu: FC = () => {
         <DropdownMenuSeparator />
 
         <DropdownMenuGroup>
-          {isAdmin && (
+          {canAccessAdmin && (
             <DropdownMenuItem
               className="justify-between"
               render={<NavLink to="/admin" />}

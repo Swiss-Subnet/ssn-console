@@ -100,8 +100,14 @@ This lists local users, lets you pick one from a menu, and sets it
 ### Granting Staff Permissions Locally
 
 Staff permissions are cross-org capabilities (read every org, write billing,
-read raw metrics) gated behind the canister controller. Grant them to a
-local user with `dfx`:
+manage users, read raw metrics) gated behind the canister controller. To grant
+the full set, pick a user from a menu:
+
+```shell
+just grant-staff
+```
+
+To grant a narrower set, call `dfx` directly and toggle the flags you want:
 
 ```shell
 dfx canister call backend admin_grant_staff_permissions \

@@ -1,9 +1,11 @@
 import {
+  mapGetMyStaffPermissionsResponse,
   mapGrantStaffPermissionsRequest,
   mapGrantStaffPermissionsResponse,
   mapListStaffResponse,
   mapRevokeStaffPermissionsRequest,
   mapRevokeStaffPermissionsResponse,
+  type GetMyStaffPermissionsResponse,
   type GrantStaffPermissionsRequest,
   type ListStaffResponse,
   type RevokeStaffPermissionsRequest,
@@ -17,6 +19,11 @@ export class StaffPermissionsApi {
   public async listStaff(): Promise<ListStaffResponse> {
     const res = await this.actor.admin_list_staff({});
     return mapListStaffResponse(res);
+  }
+
+  public async getMyStaffPermissions(): Promise<GetMyStaffPermissionsResponse> {
+    const res = await this.actor.get_my_staff_permissions({});
+    return mapGetMyStaffPermissionsResponse(res);
   }
 
   public async grantStaffPermissions(

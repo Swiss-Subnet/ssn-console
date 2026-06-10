@@ -188,7 +188,7 @@ type TrackChildCanistersResponse = variant {
 
 service : {
   list_my_canisters : (ListMyCanistersRequest) -> (ListMyCanistersResponse);
-  list_user_canisters : (ListUserCanistersRequest) -> (ListUserCanistersResponse);
+  admin_list_user_canisters : (ListUserCanistersRequest) -> (ListUserCanistersResponse);
   remove_my_canister : (RemoveMyCanisterRequest) -> (RemoveMyCanisterResponse);
   update_my_canister_name : (UpdateMyCanisterNameRequest) -> (UpdateMyCanisterNameResponse);
   start_my_canister : (StartMyCanisterRequest) -> (StartMyCanisterResponse);

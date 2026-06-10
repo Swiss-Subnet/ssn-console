@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   allOrgPermissions,
   allProjectPermissions,
+  lacksStaffPermissionError,
   noProfileError,
   TestDriver,
   unauthenticatedError,
-  unauthorizedError,
 } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 import {
@@ -25,20 +25,49 @@ describe('User Profile', () => {
     await driver.tearDown();
   });
 
+  // Creates an active user and grants the given staff permissions. Returns
+  // the user's identity (caller is reset to anonymous). Used to assert
+  // staff-gated admin endpoints honor the relevant permission bit.
+  async function createActiveStaffUser(
+    permissions: Partial<{
+      read_all_orgs: boolean;
+      write_billing: boolean;
+      manage_users: boolean;
+      read_metrics: boolean;
+    }> = {},
+  ) {
+    const identity = generateRandomIdentity();
+    driver.actor.setIdentity(identity);
+    const profile = extractOkResponse(
+      await driver.actor.create_my_user_profile(),
+    );
+
+    driver.actor.setIdentity(controllerIdentity);
+    await driver.actor.admin_update_user_profile({
+      user_id: profile.id,
+      status: [{ Active: null }],
+    });
+    await driver.actor.admin_grant_staff_permissions({
+      user_id: profile.id,
+      permissions: {
+        read_all_orgs: false,
+        write_billing: false,
+        manage_users: false,
+        read_metrics: false,
+        ...permissions,
+      },
+    });
+
+    driver.actor.setIdentity(anonymousIdentity);
+    return { identity, profile };
+  }
+
   describe('admin_list_user_profiles', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
       const res = await driver.actor.admin_list_user_profiles();
       expect(res).toEqual(unauthenticatedError);
-    });
-
-    it('should return an error for a non-controller user', async () => {
-      const aliceIdentity = generateRandomIdentity();
-      driver.actor.setIdentity(aliceIdentity);
-
-      const res = await driver.actor.admin_list_user_profiles();
-      expect(res).toEqual(unauthorizedError);
     });
 
     it('should return an empty array when there are no users', async () => {
@@ -93,20 +122,6 @@ describe('User Profile', () => {
         status: [{ Active: null }],
       });
       expect(res).toEqual(unauthenticatedError);
-    });
-
-    it('should return an error for a non-controller user', async () => {
-      const aliceIdentity = generateRandomIdentity();
-      driver.actor.setIdentity(aliceIdentity);
-      const aliceProfileRes = await driver.actor.create_my_user_profile();
-      const aliceProfile = extractOkResponse(aliceProfileRes);
-
-      driver.actor.setIdentity(aliceIdentity);
-      const res = await driver.actor.admin_update_user_profile({
-        user_id: aliceProfile.id,
-        status: [{ Active: null }],
-      });
-      expect(res).toEqual(unauthorizedError);
     });
 
     it('should return an error if the user does not exist', async () => {
@@ -175,6 +190,49 @@ describe('User Profile', () => {
         finalUpdatedAliceProfileRes,
       );
       expect(finalUpdatedAliceProfile!.status).toEqual({ Inactive: null });
+    });
+  });
+
+  // The user-management admin endpoints are gated on MANAGE_USERS (controllers
+  // are auto-allowed). Grouped into two PocketIC instances -- one denied path,
+  // one allowed path -- to keep boot overhead down.
+  describe('manage_users staff gate', () => {
+    it('denies a staff user lacking manage_users on every user endpoint', async () => {
+      const { profile: target } = await createActiveStaffUser({
+        manage_users: true,
+      });
+      const { identity } = await createActiveStaffUser({ read_metrics: true });
+      driver.actor.setIdentity(identity);
+
+      const expected = lacksStaffPermissionError('MANAGE_USERS');
+      expect(await driver.actor.admin_list_user_profiles()).toEqual(expected);
+      expect(await driver.actor.admin_get_user_stats()).toEqual(expected);
+      expect(await driver.actor.admin_list_stale_users()).toEqual(expected);
+      expect(
+        await driver.actor.admin_update_user_profile({
+          user_id: target.id,
+          status: [{ Inactive: null }],
+        }),
+      ).toEqual(expected);
+    });
+
+    it('allows a staff user holding manage_users on every user endpoint', async () => {
+      const { identity, profile } = await createActiveStaffUser({
+        manage_users: true,
+      });
+      driver.actor.setIdentity(identity);
+
+      expect(
+        extractOkResponse(await driver.actor.admin_list_user_profiles()),
+      ).toHaveLength(1);
+      extractOkResponse(await driver.actor.admin_get_user_stats());
+      extractOkResponse(await driver.actor.admin_list_stale_users());
+      extractOkResponse(
+        await driver.actor.admin_update_user_profile({
+          user_id: profile.id,
+          status: [{ Inactive: null }],
+        }),
+      );
     });
   });
 

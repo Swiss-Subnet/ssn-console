@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import {
+  lacksStaffPermissionError,
   TestDriver,
   unauthenticatedError,
-  unauthorizedError,
 } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 import { Principal } from '@icp-sdk/core/principal';
@@ -24,29 +24,68 @@ describe('list_user_canisters', () => {
     await driver.tearDown();
   });
 
+  // Creates an active user with the given staff permission bits and returns
+  // its identity (caller reset to anonymous).
+  async function createActiveStaffUser(manageUsers: boolean) {
+    const identity = generateRandomIdentity();
+    driver.actor.setIdentity(identity);
+    const profile = extractOkResponse(
+      await driver.actor.create_my_user_profile(),
+    );
+
+    driver.actor.setIdentity(controllerIdentity);
+    await driver.actor.admin_update_user_profile({
+      user_id: profile.id,
+      status: [{ Active: null }],
+    });
+    await driver.actor.admin_grant_staff_permissions({
+      user_id: profile.id,
+      permissions: {
+        read_all_orgs: false,
+        write_billing: false,
+        manage_users: manageUsers,
+        read_metrics: false,
+      },
+    });
+
+    driver.actor.setIdentity(anonymousIdentity);
+    return { identity, profile };
+  }
+
   it('should return an error for an anonymous user', async () => {
     driver.actor.setIdentity(anonymousIdentity);
 
-    const res = await driver.actor.list_user_canisters({
+    const res = await driver.actor.admin_list_user_canisters({
       user_id: crypto.randomUUID(),
     });
     expect(res).toEqual(unauthenticatedError);
   });
 
-  it('should return an error for a non-controller user', async () => {
-    const aliceIdentity = generateRandomIdentity();
-    driver.actor.setIdentity(aliceIdentity);
+  it('should return an error for a staff user without manage_users', async () => {
+    const { identity } = await createActiveStaffUser(false);
+    driver.actor.setIdentity(identity);
 
-    const res = await driver.actor.list_user_canisters({
+    const res = await driver.actor.admin_list_user_canisters({
       user_id: crypto.randomUUID(),
     });
-    expect(res).toEqual(unauthorizedError);
+    expect(res).toEqual(lacksStaffPermissionError('MANAGE_USERS'));
+  });
+
+  it('should allow a staff user with manage_users', async () => {
+    const { identity, profile } = await createActiveStaffUser(true);
+    driver.actor.setIdentity(identity);
+
+    const res = await driver.actor.admin_list_user_canisters({
+      user_id: profile.id,
+    });
+    const { canisters } = extractOkResponse(res);
+    expect(canisters).toEqual([]);
   });
 
   it('should return an error for an invalid user_id', async () => {
     driver.actor.setIdentity(controllerIdentity);
 
-    const res = await driver.actor.list_user_canisters({
+    const res = await driver.actor.admin_list_user_canisters({
       user_id: 'invalid-uuid',
     });
     const err = extractErrResponse(res);
@@ -57,7 +96,7 @@ describe('list_user_canisters', () => {
     const [_, aliceProfile] = await driver.users.createUser();
 
     driver.actor.setIdentity(controllerIdentity);
-    const canistersRes = await driver.actor.list_user_canisters({
+    const canistersRes = await driver.actor.admin_list_user_canisters({
       user_id: aliceProfile.id,
     });
     const { canisters } = extractOkResponse(canistersRes);
@@ -73,7 +112,7 @@ describe('list_user_canisters', () => {
     await driver.proposals.createCanister(aliceIdentity, aliceProject.id);
 
     driver.actor.setIdentity(controllerIdentity);
-    const aliceCanistersRes = await driver.actor.list_user_canisters({
+    const aliceCanistersRes = await driver.actor.admin_list_user_canisters({
       user_id: aliceProfile.id,
     });
     const { canisters: aliceCanisters } = extractOkResponse(aliceCanistersRes);

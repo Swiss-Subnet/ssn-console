@@ -29,7 +29,7 @@ export class CanisterApi {
   public async listUserCanisters(
     request: ListUserCanistersRequest,
   ): Promise<ListUserCanistersResponse> {
-    const res = await this.actor.list_user_canisters(request);
+    const res = await this.actor.admin_list_user_canisters(request);
 
     return mapListUserCanistersResponse(res);
   }

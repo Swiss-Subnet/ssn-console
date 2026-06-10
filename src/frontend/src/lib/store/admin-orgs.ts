@@ -1,5 +1,9 @@
 import type { PlanTier } from '@/lib/api-models';
 import type { AdminOrgsSlice, AppStateCreator } from '@/lib/store/model';
+import {
+  selectCanReadAllOrgs,
+  selectCanWriteBilling,
+} from '@/lib/store/user-profile';
 
 const PAGE_SIZE = 50;
 
@@ -12,9 +16,10 @@ export const createAdminOrgsSlice: AppStateCreator<AdminOrgsSlice> = (
   adminOrgsNextCursor: null,
 
   async initializeAdminOrgs() {
-    const { organizationApi, isAuthenticated, profile } = get();
+    const state = get();
+    const { organizationApi, isAuthenticated } = state;
 
-    if (!isAuthenticated || !profile?.isAdmin) {
+    if (!isAuthenticated || !selectCanReadAllOrgs(state)) {
       set({ isAdminOrgsInitialized: true });
       return;
     }
@@ -54,9 +59,10 @@ export const createAdminOrgsSlice: AppStateCreator<AdminOrgsSlice> = (
   },
 
   async setAdminOrgPlan(orgId: string, tier: PlanTier) {
-    const { organizationApi, isAuthenticated, profile } = get();
+    const state = get();
+    const { organizationApi, isAuthenticated } = state;
 
-    if (!isAuthenticated || !profile?.isAdmin) {
+    if (!isAuthenticated || !selectCanWriteBilling(state)) {
       throw new Error('Not authorized to change billing plans');
     }
 

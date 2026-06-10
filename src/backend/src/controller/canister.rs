@@ -37,11 +37,13 @@ async fn list_my_canisters(
 }
 
 #[update]
-async fn list_user_canisters(
+async fn admin_list_user_canisters(
     request: ListUserCanistersRequest,
 ) -> ApiResultDto<ListUserCanistersResponse> {
     let caller = msg_caller();
-    if let Err(err) = assert_controller(&caller) {
+    if let Err(err) =
+        access_control_service::assert_staff_perm(&caller, StaffPermissions::MANAGE_USERS)
+    {
         return ApiResultDto::Err(err);
     }
 

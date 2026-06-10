@@ -5,6 +5,7 @@ import {
 } from '@/lib/api-models/user-profile';
 import { fromCandidOpt } from '@/lib/utils';
 import type {
+  GetMyStaffPermissionsResponse as ApiGetMyStaffPermissionsResponse,
   GrantStaffPermissionsRequest as ApiGrantStaffPermissionsRequest,
   GrantStaffPermissionsResponse as ApiGrantStaffPermissionsResponse,
   ListStaffResponse as ApiListStaffResponse,
@@ -31,6 +32,8 @@ export type StaffMember = {
 
 export type ListStaffResponse = StaffMember[];
 
+export type GetMyStaffPermissionsResponse = StaffPermissions | null;
+
 export type GrantStaffPermissionsRequest = {
   userId: string;
   permissions: StaffPermissions;
@@ -49,6 +52,13 @@ export function mapStaffPermissionsResponse(
     manageUsers: res.manage_users,
     readMetrics: res.read_metrics,
   };
+}
+
+export function mapGetMyStaffPermissionsResponse(
+  res: ApiGetMyStaffPermissionsResponse,
+): GetMyStaffPermissionsResponse {
+  const perms = fromCandidOpt(mapOkResponse(res));
+  return perms ? mapStaffPermissionsResponse(perms) : null;
 }
 
 export function mapStaffPermissionsRequest(
