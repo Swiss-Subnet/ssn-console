@@ -1,6 +1,3 @@
-use candid::export_service;
-use ic_cdk::*;
-
 mod constants;
 mod controller;
 mod dto;
@@ -16,11 +13,7 @@ use canister_history_api::*;
 use canister_utils::ApiResultDto;
 use dto::*;
 
-export_service!();
-#[query(name = "__get_candid_interface_tmp_hack")]
-fn export_candid() -> String {
-    __export_service()
-}
+ic_cdk::export_candid!();
 
 #[cfg(test)]
 mod tests {
