@@ -20,7 +20,7 @@ fn get_latest_terms_and_conditions() -> ApiResultDto<GetLatestTermsAndConditions
 }
 
 #[query]
-fn list_terms_and_conditions() -> ApiResultDto<ListTermsAndConditionsResponse> {
+fn admin_list_terms_and_conditions() -> ApiResultDto<ListTermsAndConditionsResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_controller(&caller) {
         return ApiResultDto::Err(err);
@@ -44,7 +44,7 @@ fn upsert_terms_and_conditions_decision(
 }
 
 #[update]
-fn create_terms_and_conditions(
+fn admin_create_terms_and_conditions(
     req: CreateTermsAndConditionsRequest,
 ) -> ApiResultDto<CreateTermsAndConditionsResponse> {
     let caller = msg_caller();

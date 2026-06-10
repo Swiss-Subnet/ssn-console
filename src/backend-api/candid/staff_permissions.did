@@ -82,11 +82,11 @@ type ServicePrincipalEntry = record {
 
 service : {
   get_my_staff_permissions : (GetMyStaffPermissionsRequest) -> (GetMyStaffPermissionsResponse) query;
-  grant_staff_permissions : (GrantStaffPermissionsRequest) -> (GrantStaffPermissionsResponse);
-  revoke_staff_permissions : (RevokeStaffPermissionsRequest) -> (RevokeStaffPermissionsResponse);
-  list_staff : (ListStaffRequest) -> (ListStaffResponse) query;
+  admin_grant_staff_permissions : (GrantStaffPermissionsRequest) -> (GrantStaffPermissionsResponse);
+  admin_revoke_staff_permissions : (RevokeStaffPermissionsRequest) -> (RevokeStaffPermissionsResponse);
+  admin_list_staff : (ListStaffRequest) -> (ListStaffResponse) query;
 
-  grant_service_principal_permissions : (GrantServicePrincipalPermissionsRequest) -> (GrantServicePrincipalPermissionsResponse);
-  revoke_service_principal_permissions : (RevokeServicePrincipalPermissionsRequest) -> (RevokeServicePrincipalPermissionsResponse);
-  list_service_principals : (ListServicePrincipalsRequest) -> (ListServicePrincipalsResponse) query;
+  admin_grant_service_principal_permissions : (GrantServicePrincipalPermissionsRequest) -> (GrantServicePrincipalPermissionsResponse);
+  admin_revoke_service_principal_permissions : (RevokeServicePrincipalPermissionsRequest) -> (RevokeServicePrincipalPermissionsResponse);
+  admin_list_service_principals : (ListServicePrincipalsRequest) -> (ListServicePrincipalsResponse) query;
 };

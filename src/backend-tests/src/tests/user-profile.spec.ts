@@ -25,11 +25,11 @@ describe('User Profile', () => {
     await driver.tearDown();
   });
 
-  describe('list_user_profiles', () => {
+  describe('admin_list_user_profiles', () => {
     it('should return an error for an anonymous user', async () => {
       driver.actor.setIdentity(anonymousIdentity);
 
-      const res = await driver.actor.list_user_profiles();
+      const res = await driver.actor.admin_list_user_profiles();
       expect(res).toEqual(unauthenticatedError);
     });
 
@@ -37,14 +37,14 @@ describe('User Profile', () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
-      const res = await driver.actor.list_user_profiles();
+      const res = await driver.actor.admin_list_user_profiles();
       expect(res).toEqual(unauthorizedError);
     });
 
     it('should return an empty array when there are no users', async () => {
       driver.actor.setIdentity(controllerIdentity);
 
-      const profilesRes = await driver.actor.list_user_profiles();
+      const profilesRes = await driver.actor.admin_list_user_profiles();
       const profiles = extractOkResponse(profilesRes);
       expect(profiles).toEqual([]);
     });
@@ -70,7 +70,7 @@ describe('User Profile', () => {
       const controllerProfileRes = await driver.actor.get_my_user_profile();
       const [controllerProfile] = extractOkResponse(controllerProfileRes);
 
-      const profilesRes = await driver.actor.list_user_profiles();
+      const profilesRes = await driver.actor.admin_list_user_profiles();
       const profiles = extractOkResponse(profilesRes);
 
       expect(profiles.length).toBe(3);
@@ -80,7 +80,7 @@ describe('User Profile', () => {
     });
   });
 
-  describe('update_user_profile', () => {
+  describe('admin_update_user_profile', () => {
     it('should return an error for an anonymous user', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
@@ -88,7 +88,7 @@ describe('User Profile', () => {
       const aliceProfile = extractOkResponse(aliceProfileRes);
 
       driver.actor.setIdentity(anonymousIdentity);
-      const res = await driver.actor.update_user_profile({
+      const res = await driver.actor.admin_update_user_profile({
         user_id: aliceProfile.id,
         status: [{ Active: null }],
       });
@@ -102,7 +102,7 @@ describe('User Profile', () => {
       const aliceProfile = extractOkResponse(aliceProfileRes);
 
       driver.actor.setIdentity(aliceIdentity);
-      const res = await driver.actor.update_user_profile({
+      const res = await driver.actor.admin_update_user_profile({
         user_id: aliceProfile.id,
         status: [{ Active: null }],
       });
@@ -113,7 +113,7 @@ describe('User Profile', () => {
       const userId = '2d3ee223-c6d2-49d8-928f-d42597bfed65';
       driver.actor.setIdentity(controllerIdentity);
 
-      const res = await driver.actor.update_user_profile({
+      const res = await driver.actor.admin_update_user_profile({
         user_id: userId,
         status: [{ Active: null }],
       });
@@ -134,19 +134,19 @@ describe('User Profile', () => {
       expect(aliceProfile.status).toEqual({ Inactive: null });
 
       driver.actor.setIdentity(controllerIdentity);
-      let userStatsRes = await driver.actor.get_user_stats();
+      let userStatsRes = await driver.actor.admin_get_user_stats();
       let userStats = extractOkResponse(userStatsRes);
       expect(userStats.total).toBe(1n);
       expect(userStats.active).toBe(0n);
 
       driver.actor.setIdentity(controllerIdentity);
-      await driver.actor.update_user_profile({
+      await driver.actor.admin_update_user_profile({
         user_id: aliceProfile.id,
         status: [{ Active: null }],
       });
 
       driver.actor.setIdentity(controllerIdentity);
-      userStatsRes = await driver.actor.get_user_stats();
+      userStatsRes = await driver.actor.admin_get_user_stats();
       userStats = extractOkResponse(userStatsRes);
       expect(userStats.total).toBe(1n);
       expect(userStats.active).toBe(1n);
@@ -157,13 +157,13 @@ describe('User Profile', () => {
       expect(updatedAliceProfile!.status).toEqual({ Active: null });
 
       driver.actor.setIdentity(controllerIdentity);
-      await driver.actor.update_user_profile({
+      await driver.actor.admin_update_user_profile({
         user_id: aliceProfile.id,
         status: [{ Inactive: null }],
       });
 
       driver.actor.setIdentity(controllerIdentity);
-      userStatsRes = await driver.actor.get_user_stats();
+      userStatsRes = await driver.actor.admin_get_user_stats();
       userStats = extractOkResponse(userStatsRes);
       expect(userStats.total).toBe(1n);
       expect(userStats.active).toBe(0n);

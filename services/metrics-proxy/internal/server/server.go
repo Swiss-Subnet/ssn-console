@@ -24,7 +24,7 @@ const (
 
 // Authorizer answers "which canister principals may user U read metrics
 // for?". The production implementation is the backend.Client (an IC query
-// to list_user_readable_canister_principals); tests stub this directly.
+// to admin_list_user_readable_canister_principals); tests stub this directly.
 type Authorizer interface {
 	ListUserReadableCanisters(ctx context.Context, user principal.Principal) ([]principal.Principal, error)
 }

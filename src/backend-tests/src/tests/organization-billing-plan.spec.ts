@@ -13,7 +13,7 @@ import {
 } from '@ssn/test-utils';
 import { generateRandomIdentity } from '@dfinity/pic';
 
-describe('set_org_billing_plan', () => {
+describe('admin_set_org_billing_plan', () => {
   let driver: TestDriver;
 
   beforeEach(async () => {
@@ -28,7 +28,7 @@ describe('set_org_billing_plan', () => {
     const [, , org] = await driver.users.createUser();
 
     driver.actor.setIdentity(anonymousIdentity);
-    const res = await driver.actor.set_org_billing_plan({
+    const res = await driver.actor.admin_set_org_billing_plan({
       org_id: org.id,
       tier: { Pro: null },
     });
@@ -39,7 +39,7 @@ describe('set_org_billing_plan', () => {
     const [aliceIdentity, , org] = await driver.users.createUser();
 
     driver.actor.setIdentity(aliceIdentity);
-    const res = await driver.actor.set_org_billing_plan({
+    const res = await driver.actor.admin_set_org_billing_plan({
       org_id: org.id,
       tier: { Pro: null },
     });
@@ -50,7 +50,7 @@ describe('set_org_billing_plan', () => {
     const missingOrgId = '00000000-0000-0000-0000-000000000000';
 
     driver.actor.setIdentity(controllerIdentity);
-    const res = await driver.actor.set_org_billing_plan({
+    const res = await driver.actor.admin_set_org_billing_plan({
       org_id: missingOrgId,
       tier: { Pro: null },
     });
@@ -69,7 +69,7 @@ describe('set_org_billing_plan', () => {
     const [, , org] = await driver.users.createUser();
 
     driver.actor.setIdentity(controllerIdentity);
-    const res = await driver.actor.set_org_billing_plan({
+    const res = await driver.actor.admin_set_org_billing_plan({
       org_id: org.id,
       tier: { Enterprise: null },
     });
@@ -88,7 +88,7 @@ describe('set_org_billing_plan', () => {
     const [aliceIdentity, , org] = await driver.users.createUser();
 
     driver.actor.setIdentity(controllerIdentity);
-    const setRes = await driver.actor.set_org_billing_plan({
+    const setRes = await driver.actor.admin_set_org_billing_plan({
       org_id: org.id,
       tier: { Pro: null },
     });
@@ -194,7 +194,7 @@ describe('get_org_billing_plan', () => {
 
     driver.actor.setIdentity(controllerIdentity);
     extractOkResponse(
-      await driver.actor.set_org_billing_plan({
+      await driver.actor.admin_set_org_billing_plan({
         org_id: org.id,
         tier: { Pro: null },
       }),
@@ -265,7 +265,7 @@ describe('list_my_org_billing_plans', () => {
 
     driver.actor.setIdentity(controllerIdentity);
     extractOkResponse(
-      await driver.actor.set_org_billing_plan({
+      await driver.actor.admin_set_org_billing_plan({
         org_id: org.id,
         tier: { Pro: null },
       }),

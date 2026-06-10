@@ -95,7 +95,7 @@ type Organization = record {
 
 service : {
   list_my_organizations : () -> (ListMyOrganizationsResponse) query;
-  list_organizations : (ListOrganizationsRequest) -> (ListOrganizationsResponse) query;
+  admin_list_organizations : (ListOrganizationsRequest) -> (ListOrganizationsResponse) query;
   create_organization : (CreateOrganizationRequest) -> (CreateOrganizationResponse);
   get_organization : (GetOrganizationRequest) -> (GetOrganizationResponse) query;
   update_organization : (UpdateOrganizationRequest) -> (UpdateOrganizationResponse);

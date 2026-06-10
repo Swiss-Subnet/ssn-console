@@ -20,4 +20,25 @@ benches:
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
+  bench_list_stale_users_10:
+    total:
+      calls: 1
+      instructions: 2544159
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  bench_list_stale_users_100:
+    total:
+      calls: 1
+      instructions: 40937412
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  bench_list_stale_users_1000:
+    total:
+      calls: 1
+      instructions: 603474269
+      heap_increase: 3
+      stable_memory_increase: 0
+    scopes: {}
 version: 0.6.0

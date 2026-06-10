@@ -47,7 +47,7 @@ type ListMyOrgBillingPlansResponse = variant {
 };
 
 service : {
-  set_org_billing_plan : (SetOrgBillingPlanRequest) -> (SetOrgBillingPlanResponse);
+  admin_set_org_billing_plan : (SetOrgBillingPlanRequest) -> (SetOrgBillingPlanResponse);
   get_org_billing_plan : (GetOrgBillingPlanRequest) -> (GetOrgBillingPlanResponse) query;
   list_my_org_billing_plans : () -> (ListMyOrgBillingPlansResponse) query;
 };

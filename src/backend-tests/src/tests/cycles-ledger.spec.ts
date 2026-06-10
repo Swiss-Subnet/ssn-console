@@ -61,7 +61,7 @@ describe('Cycles Ledger', () => {
       const trustedPartnerIdentity = generateRandomIdentity();
 
       driver.actor.setIdentity(controllerIdentity);
-      await driver.actor.create_trusted_partner({
+      await driver.actor.admin_create_trusted_partner({
         name: 'Trusted Partner',
         principal_id: trustedPartnerIdentity.getPrincipal().toText(),
       });
@@ -91,7 +91,7 @@ describe('Cycles Ledger', () => {
       const trustedPartnerIdentity = generateRandomIdentity();
 
       driver.actor.setIdentity(controllerIdentity);
-      await driver.actor.create_trusted_partner({
+      await driver.actor.admin_create_trusted_partner({
         name: 'Trusted Partner',
         principal_id: trustedPartnerIdentity.getPrincipal().toText(),
       });
@@ -139,7 +139,7 @@ describe('Cycles Ledger', () => {
       const aliceIdentity = generateRandomIdentity();
 
       driver.actor.setIdentity(controllerIdentity);
-      await driver.actor.create_trusted_partner({
+      await driver.actor.admin_create_trusted_partner({
         name: 'Trusted Partner',
         principal_id: trustedPartnerIdentity.getPrincipal().toText(),
       });

@@ -26,7 +26,7 @@ type Res = {
 
 function fetchPage(page: number): Res {
   const arg = `"(record { limit = opt ${LIMIT_PER_PAGE}; page = opt ${page} })"`;
-  const command = `dfx canister call backend list_all_canisters ${arg} --network ${NETWORK} --output json`;
+  const command = `dfx canister call backend admin_list_all_canisters ${arg} --network ${NETWORK} --output json`;
 
   console.log(`Fetching page ${page}...`);
 

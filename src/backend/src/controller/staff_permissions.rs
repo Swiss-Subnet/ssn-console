@@ -32,7 +32,7 @@ fn get_my_staff_permissions(
 // to their own ceiling, but for v1 promotion is controller-only to keep
 // the trust boundary unambiguous.
 #[update]
-fn grant_staff_permissions(
+fn admin_grant_staff_permissions(
     req: GrantStaffPermissionsRequest,
 ) -> ApiResultDto<GrantStaffPermissionsResponse> {
     let caller = msg_caller();
@@ -48,7 +48,7 @@ fn grant_staff_permissions(
 // Clear a user's staff permission bitmask. Idempotent: revoking a non-
 // staff user is a no-op success. Same controller gate as grant.
 #[update]
-fn revoke_staff_permissions(
+fn admin_revoke_staff_permissions(
     req: RevokeStaffPermissionsRequest,
 ) -> ApiResultDto<RevokeStaffPermissionsResponse> {
     let caller = msg_caller();
@@ -65,7 +65,7 @@ fn revoke_staff_permissions(
 // roster is sensitive (it lists who has cross-org read or billing-write
 // authority) and is never exposed to non-controllers.
 #[query]
-fn list_staff(_req: ListStaffRequest) -> ApiResultDto<ListStaffResponse> {
+fn admin_list_staff(_req: ListStaffRequest) -> ApiResultDto<ListStaffResponse> {
     let caller = msg_caller();
     if let Err(err) = assert_controller(&caller) {
         return ApiResultDto::Err(err);
@@ -75,7 +75,7 @@ fn list_staff(_req: ListStaffRequest) -> ApiResultDto<ListStaffResponse> {
 }
 
 #[update]
-fn grant_service_principal_permissions(
+fn admin_grant_service_principal_permissions(
     req: GrantServicePrincipalPermissionsRequest,
 ) -> ApiResultDto<GrantServicePrincipalPermissionsResponse> {
     let caller = msg_caller();
@@ -88,7 +88,7 @@ fn grant_service_principal_permissions(
 }
 
 #[update]
-fn revoke_service_principal_permissions(
+fn admin_revoke_service_principal_permissions(
     req: RevokeServicePrincipalPermissionsRequest,
 ) -> ApiResultDto<RevokeServicePrincipalPermissionsResponse> {
     let caller = msg_caller();
@@ -101,7 +101,7 @@ fn revoke_service_principal_permissions(
 }
 
 #[query]
-fn list_service_principals(
+fn admin_list_service_principals(
     _req: ListServicePrincipalsRequest,
 ) -> ApiResultDto<ListServicePrincipalsResponse> {
     let caller = msg_caller();

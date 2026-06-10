@@ -61,7 +61,7 @@ func run() error {
 	log.Printf("metrics-proxy authenticated as principal=%s", id.Sender())
 	log.Printf(
 		"to grant READ_METRICS:\n"+
-			"  dfx canister call backend grant_service_principal_permissions \\\n"+
+			"  dfx canister call backend admin_grant_service_principal_permissions \\\n"+
 			"    '(record { service_principal = principal \"%s\"; permissions = record { read_all_orgs=false; write_billing=false; manage_users=false; read_metrics=true } })'",
 		id.Sender(),
 	)

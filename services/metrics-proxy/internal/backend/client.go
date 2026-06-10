@@ -1,5 +1,5 @@
 // Package backend is the metrics-proxy's client for the on-chain backend
-// canister. It calls list_user_readable_canister_principals to learn
+// canister. It calls admin_list_user_readable_canister_principals to learn
 // which canisters a given user is allowed to see metrics for.
 package backend
 
@@ -24,7 +24,7 @@ type Config struct {
 	ICHost string
 
 	// CanisterID is the backend canister exposing
-	// list_user_readable_canister_principals.
+	// admin_list_user_readable_canister_principals.
 	CanisterID principal.Principal
 
 	// Identity authenticates the proxy as a staff principal holding the
@@ -99,7 +99,7 @@ func (c *Client) ListUserReadableCanisters(ctx context.Context, user principal.P
 	if err := c.agent.QueryWithContext(
 		ctx,
 		c.canisterID,
-		"list_user_readable_canister_principals",
+		"admin_list_user_readable_canister_principals",
 		[]any{req},
 		[]any{&res},
 	); err != nil {

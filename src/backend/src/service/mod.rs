@@ -11,6 +11,7 @@ pub mod project_service;
 pub mod proposal_service;
 pub mod service_principal_service;
 pub mod staff_permissions_service;
+pub mod staleness_service;
 pub mod team_service;
 pub mod terms_and_conditions_service;
 pub mod trusted_partner_service;

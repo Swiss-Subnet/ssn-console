@@ -22,7 +22,7 @@ export class TermsAndConditionsApi {
   }
 
   public async listTermsAndConditions(): Promise<TermsAndConditionsListItem[]> {
-    const res = await this.actor.list_terms_and_conditions();
+    const res = await this.actor.admin_list_terms_and_conditions();
 
     return mapListTermsAndConditionsResponse(res);
   }
@@ -41,7 +41,7 @@ export class TermsAndConditionsApi {
   ): Promise<void> {
     const apiReq = mapCreateTermsAndConditionsRequest(req);
 
-    const res = await this.actor.create_terms_and_conditions(apiReq);
+    const res = await this.actor.admin_create_terms_and_conditions(apiReq);
     mapOkResponse(res);
   }
 }

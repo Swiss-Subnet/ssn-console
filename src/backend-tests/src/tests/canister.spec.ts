@@ -270,7 +270,7 @@ describe('Canisters', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: 'Terms and conditions content',
         comment: 'Terms and conditions comment',
       });
@@ -289,7 +289,7 @@ describe('Canisters', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: 'Terms and conditions content',
         comment: 'Terms and conditions comment',
       });
@@ -318,7 +318,7 @@ describe('Canisters', () => {
     it('should create a canister for a controller without accepting terms and conditions', async () => {
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: 'Terms and conditions content',
         comment: 'Terms and conditions comment',
       });
@@ -356,7 +356,7 @@ describe('Canisters', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: 'Terms and conditions content',
         comment: 'Terms and conditions comment',
       });
@@ -560,7 +560,7 @@ describe('Canisters', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: 'Terms and conditions content',
         comment: 'Terms and conditions comment',
       });
@@ -593,7 +593,7 @@ describe('Canisters', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: 'Terms and conditions content',
         comment: 'Terms and conditions comment',
       });
@@ -628,7 +628,7 @@ describe('Canisters', () => {
     it('should add a controller for a controller without accepting terms and conditions', async () => {
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: 'Terms and conditions content',
         comment: 'Terms and conditions comment',
       });
@@ -662,7 +662,7 @@ describe('Canisters', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       await driver.actor.create_my_user_profile();
-      await driver.actor.create_terms_and_conditions({
+      await driver.actor.admin_create_terms_and_conditions({
         content: 'Terms and conditions content',
         comment: 'Terms and conditions comment',
       });
@@ -1023,7 +1023,7 @@ describe('Canisters', () => {
       expect(canisters[0]!.deleted_at[0]).toEqual(expect.any(BigInt));
     });
 
-    it('list_all_canisters surfaces soft-deleted canisters with deleted_at populated', async () => {
+    it('admin_list_all_canisters surfaces soft-deleted canisters with deleted_at populated', async () => {
       const [aliceIdentity] = await driver.users.createUser();
       driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
@@ -1038,7 +1038,10 @@ describe('Canisters', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       const { canisters, meta } = extractOkResponse(
-        await driver.actor.list_all_canisters({ limit: [10n], page: [1n] }),
+        await driver.actor.admin_list_all_canisters({
+          limit: [10n],
+          page: [1n],
+        }),
       );
 
       expect(meta.total_items).toBe(1n);

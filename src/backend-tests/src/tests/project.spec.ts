@@ -42,7 +42,7 @@ describe('Projects', () => {
     }
 
     driver.actor.setIdentity(controllerIdentity);
-    await driver.actor.update_user_profile({
+    await driver.actor.admin_update_user_profile({
       user_id: profile.id,
       status: [{ Active: null }],
     });
