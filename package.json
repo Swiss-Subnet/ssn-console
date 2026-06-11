@@ -6,7 +6,8 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "type-check": "bun --bun tsc --build"
+    "type-check": "bun --bun tsc --build",
+    "outline": "bun scripts/outline.ts"
   },
   "dependencies": {
     "@icp-sdk/auth": "^5.0.0",

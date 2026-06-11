@@ -19,6 +19,9 @@ tsconfig.tsbuildinfo
 # local dev keys
 .local
 
+# local mirror of the Outline "Process & Use-Case Library" collection (scripts/outline.ts export) - never publish
+docs/process-library
+
 # deployment temporary files
 tmp
 
