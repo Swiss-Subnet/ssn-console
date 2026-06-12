@@ -14,8 +14,13 @@ import {
   type Canister,
   type ListUserCanistersResponse,
 } from '@/lib/api-models';
+import { useRequireAdminCapability } from '@/lib/auth';
 import { maskEmail } from '@/lib/format';
-import { useAdminPrivacyStore, useAppStore } from '@/lib/store';
+import {
+  selectCanManageUsers,
+  useAdminPrivacyStore,
+  useAppStore,
+} from '@/lib/store';
 import { showErrorToast } from '@/lib/toast';
 import { AdminEmail } from '@/routes/admin/admin-email';
 import { UserCanisterCard } from '@/routes/admin/user-canister-card';
@@ -26,6 +31,7 @@ import { useCallback, useEffect, useState, type FC } from 'react';
 import { useParams } from 'react-router';
 
 const UserDetail: FC = () => {
+  useRequireAdminCapability(useAppStore(selectCanManageUsers));
   const { userId } = useParams<{ userId: string }>();
   const { users, canisterApi } = useAppStore();
   const censorEmails = useAdminPrivacyStore(s => s.censorEmails);

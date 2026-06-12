@@ -14,6 +14,7 @@ import type {
   GetUserStatsResponse as ApiGetUserStatsResponse,
   GetUserProfilesByPrincipalsRequest as ApiGetUserProfilesByPrincipalsRequest,
   GetUserProfilesByPrincipalsResponse as ApiGetUserProfilesByPrincipalsResponse,
+  ListStaleUsersResponse as ApiListStaleUsersResponse,
 } from '@ssn/backend-api';
 
 export type ListUserProfilesResponse = UserProfile[];
@@ -133,6 +134,22 @@ export function mapUserStatsResponse(
     active: Number(okRes.active),
     inactive: Number(okRes.inactive),
   };
+}
+
+export type StaleUserEntry = {
+  id: string;
+  email: string | null;
+};
+
+export type ListStaleUsersResponse = StaleUserEntry[];
+
+export function mapListStaleUsersResponse(
+  res: ApiListStaleUsersResponse,
+): ListStaleUsersResponse {
+  return mapOkResponse(res).map(entry => ({
+    id: entry.id,
+    email: fromCandidOpt(entry.email),
+  }));
 }
 
 export type UserProfileBrief = {

@@ -3,6 +3,7 @@ import {
   mapGetMyUserProfileResponse,
   mapGetUserProfilesByPrincipalsRequest,
   mapGetUserProfilesByPrincipalsResponse,
+  mapListStaleUsersResponse,
   mapListUserProfilesResponse,
   mapUpdateMyUserProfileRequest,
   mapUpdateUserProfileRequest,
@@ -11,6 +12,7 @@ import {
   type GetMyUserProfileResponse,
   type GetUserProfilesByPrincipalsRequest,
   type GetUserProfilesByPrincipalsResponse,
+  type ListStaleUsersResponse,
   type ListUserProfilesResponse,
   type UpdateMyUserProfileRequest,
   type UpdateUserProfileRequest,
@@ -72,6 +74,11 @@ export class UserProfileApi {
   public async getUserStats(): Promise<GetUserStatsResponse> {
     const res = await this.actor.admin_get_user_stats();
     return mapUserStatsResponse(res);
+  }
+
+  public async listStaleUsers(): Promise<ListStaleUsersResponse> {
+    const res = await this.actor.admin_list_stale_users();
+    return mapListStaleUsersResponse(res);
   }
 
   public async verifyMyEmail(token: string): Promise<void> {

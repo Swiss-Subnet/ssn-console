@@ -1,38 +1,45 @@
 import { UserStatus } from '@/lib/api-models';
 import { isNil } from '@/lib/nil';
 import type { AppStateCreator, UsersSlice } from '@/lib/store/model';
+import { selectCanManageUsers } from '@/lib/store/user-profile';
 
 export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
   isUsersInitialized: false,
   users: null,
   userStats: null,
+  staleUserIds: null,
 
   async initializeUsers() {
-    const { userProfileApi, isAuthenticated, isProfileInitialized, profile } =
-      get();
+    const state = get();
+    const { userProfileApi, isAuthenticated, isProfileInitialized } = state;
 
     if (!isProfileInitialized) {
       throw new Error('User profile is not initialized');
     }
 
-    if (!isAuthenticated || !profile?.isAdmin) {
+    if (!isAuthenticated || !selectCanManageUsers(state)) {
       set({ isUsersInitialized: true });
       return;
     }
 
     try {
-      const [users, userStats] = await Promise.all([
+      const [users, userStats, staleUsers] = await Promise.all([
         userProfileApi.listUserProfiles(),
         userProfileApi.getUserStats(),
+        userProfileApi.listStaleUsers(),
       ]);
-      set({ users, userStats });
+      set({
+        users,
+        userStats,
+        staleUserIds: new Set(staleUsers.map(u => u.id)),
+      });
     } finally {
       set({ isUsersInitialized: true });
     }
   },
 
   clearUsers() {
-    set({ users: null });
+    set({ users: null, staleUserIds: null });
   },
 
   async activateUser(userId) {
@@ -48,14 +55,15 @@ export const createUsersSlice: AppStateCreator<UsersSlice> = (set, get) => ({
   },
 
   async setUserStatus(userId, status) {
+    const state = get();
     const { userProfileApi, isAuthenticated, isProfileInitialized, profile } =
-      get();
+      state;
 
     if (!isProfileInitialized || isNil(profile)) {
       throw new Error('User profile is not initialized');
     }
 
-    if (!isAuthenticated || !profile.isAdmin) {
+    if (!isAuthenticated || !selectCanManageUsers(state)) {
       throw new Error('Not authorized to set user status');
     }
 

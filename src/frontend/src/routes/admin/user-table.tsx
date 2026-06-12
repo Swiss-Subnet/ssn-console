@@ -33,12 +33,12 @@ export type UserTableProps = {
 
 type SortKey = 'id' | 'email' | 'status';
 type SortDirection = 'asc' | 'desc';
-type StatusFilter = 'all' | UserStatus;
+type StatusFilter = 'all' | UserStatus | 'stale';
 
 const PAGE_SIZE = 20;
 
 export const UserTable: FC<UserTableProps> = ({ className }) => {
-  const { users, setUserStatus } = useAppStore();
+  const { users, staleUserIds, setUserStatus } = useAppStore();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -52,12 +52,16 @@ export const UserTable: FC<UserTableProps> = ({ className }) => {
     if (!users) return [];
     const needle = search.trim().toLowerCase();
     return users.filter(user => {
-      if (statusFilter !== 'all' && user.status !== statusFilter) return false;
+      if (statusFilter === 'stale') {
+        if (!staleUserIds?.has(user.id)) return false;
+      } else if (statusFilter !== 'all' && user.status !== statusFilter) {
+        return false;
+      }
       if (!needle) return true;
       const haystack = [user.id, user.email ?? ''].join(' ').toLowerCase();
       return haystack.includes(needle);
     });
-  }, [users, search, statusFilter]);
+  }, [users, staleUserIds, search, statusFilter]);
 
   const sorted = useMemo(() => {
     const copy = [...filtered];
@@ -178,6 +182,16 @@ export const UserTable: FC<UserTableProps> = ({ className }) => {
           >
             Inactive
           </StatusFilterButton>
+          <StatusFilterButton
+            current={statusFilter}
+            value="stale"
+            onSelect={v => {
+              setStatusFilter(v);
+              resetToFirstPage();
+            }}
+          >
+            Stale
+          </StatusFilterButton>
         </div>
 
         <span className="text-muted-foreground ml-auto text-xs">
@@ -283,12 +297,22 @@ export const UserTable: FC<UserTableProps> = ({ className }) => {
                 </TableCell>
 
                 <TableCell className="font-mono">
-                  <Link
-                    to={`/admin/users/${user.id}`}
-                    className="hover:underline"
-                  >
-                    {user.id}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/admin/users/${user.id}`}
+                      className="hover:underline"
+                    >
+                      {user.id}
+                    </Link>
+                    {staleUserIds?.has(user.id) && (
+                      <Badge
+                        variant="secondary"
+                        title="No canisters, sole org/team member, no pending invites, not staff"
+                      >
+                        Stale
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
 
                 <TableCell>

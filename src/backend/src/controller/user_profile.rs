@@ -1,4 +1,5 @@
 use crate::{
+    data::StaffPermissions,
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
         GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListStaleUsersResponse,
@@ -7,7 +8,7 @@ use crate::{
     },
     service::{access_control_service, user_profile_service},
 };
-use canister_utils::{assert_authenticated, assert_controller, ApiResultDto};
+use canister_utils::{assert_authenticated, ApiResultDto};
 use ic_cdk::{
     api::{msg_caller, time},
     *,
@@ -16,7 +17,9 @@ use ic_cdk::{
 #[query]
 fn admin_list_user_profiles() -> ApiResultDto<ListUserProfilesResponse> {
     let caller = msg_caller();
-    if let Err(err) = assert_controller(&caller) {
+    if let Err(err) =
+        access_control_service::assert_staff_perm(&caller, StaffPermissions::MANAGE_USERS)
+    {
         return ApiResultDto::Err(err);
     }
 
@@ -38,7 +41,9 @@ fn get_user_profiles_by_principals(
 #[update]
 fn admin_update_user_profile(req: UpdateUserProfileRequest) -> ApiResultDto {
     let caller = msg_caller();
-    if let Err(err) = assert_controller(&caller) {
+    if let Err(err) =
+        access_control_service::assert_staff_perm(&caller, StaffPermissions::MANAGE_USERS)
+    {
         return ApiResultDto::Err(err);
     }
 
@@ -78,13 +83,21 @@ fn update_my_user_profile(req: UpdateMyUserProfileRequest) -> ApiResultDto {
 #[query]
 fn admin_list_stale_users() -> ApiResultDto<ListStaleUsersResponse> {
     let caller = msg_caller();
+    if let Err(err) =
+        access_control_service::assert_staff_perm(&caller, StaffPermissions::MANAGE_USERS)
+    {
+        return ApiResultDto::Err(err);
+    }
+
     user_profile_service::list_stale_users(&caller, time()).into()
 }
 
 #[query]
 fn admin_get_user_stats() -> ApiResultDto<GetUserStatsResponse> {
     let caller = msg_caller();
-    if let Err(err) = assert_controller(&caller) {
+    if let Err(err) =
+        access_control_service::assert_staff_perm(&caller, StaffPermissions::MANAGE_USERS)
+    {
         return ApiResultDto::Err(err);
     }
 

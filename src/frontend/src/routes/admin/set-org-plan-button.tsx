@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PlanTier } from '@/lib/api-models';
-import { useAppStore } from '@/lib/store';
+import { selectCanWriteBilling, useAppStore } from '@/lib/store';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import { useState, type FC } from 'react';
 
@@ -25,8 +25,13 @@ export const SetOrgPlanButton: FC<SetOrgPlanButtonProps> = ({
   currentTier,
 }) => {
   const { setAdminOrgPlan } = useAppStore();
+  const canWriteBilling = useAppStore(selectCanWriteBilling);
   const [pendingTier, setPendingTier] = useState<PlanTier | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  if (!canWriteBilling) {
+    return null;
+  }
 
   if (currentTier === PlanTier.Enterprise) {
     return (

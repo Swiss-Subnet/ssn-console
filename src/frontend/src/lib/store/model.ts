@@ -118,6 +118,7 @@ export type UserProfileSlice = {
   isProfileInitialized: boolean;
   isProfileLoading: boolean;
   profile: UserProfile | null;
+  myStaffPermissions: StaffPermissions | null;
 
   initializeUserProfile: () => Promise<void>;
   clearUserProfile: () => void;
@@ -147,6 +148,7 @@ export type UsersSlice = {
   isUsersInitialized: boolean;
   users: UserProfile[] | null;
   userStats: GetUserStatsResponse | null;
+  staleUserIds: Set<string> | null;
 
   initializeUsers: () => Promise<void>;
   clearUsers: () => void;

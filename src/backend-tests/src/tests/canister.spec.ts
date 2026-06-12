@@ -1014,7 +1014,9 @@ describe('Canisters', () => {
 
       driver.actor.setIdentity(controllerIdentity);
       const { canisters } = extractOkResponse(
-        await driver.actor.list_user_canisters({ user_id: aliceProfile.id }),
+        await driver.actor.admin_list_user_canisters({
+          user_id: aliceProfile.id,
+        }),
       );
 
       expect(canisters).toHaveLength(1);

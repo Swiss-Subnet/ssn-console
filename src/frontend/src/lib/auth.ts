@@ -1,5 +1,10 @@
 import { isNotNil } from '@/lib/nil';
-import { selectIsActive, selectIsAdmin, useAppStore } from '@/lib/store';
+import {
+  selectCanAccessAdmin,
+  selectIsActive,
+  selectIsAdmin,
+  useAppStore,
+} from '@/lib/store';
 import { useReturnTo } from '@/lib/utils';
 import { useEffect } from 'react';
 
@@ -43,13 +48,28 @@ export const useRequireAuth = (): void => {
 
 export const useRequireAdminAuth = (): void => {
   const { isProfileInitialized } = useAppStore();
-  const isAdmin = useAppStore(selectIsAdmin);
+  const canAccessAdmin = useAppStore(selectCanAccessAdmin);
   const returnTo = useReturnTo();
 
   useEffect(() => {
-    if (isProfileInitialized && !isAdmin) {
+    if (isProfileInitialized && !canAccessAdmin) {
       returnTo('/');
       return;
     }
-  }, [isProfileInitialized, isAdmin, returnTo]);
+  }, [isProfileInitialized, canAccessAdmin, returnTo]);
+};
+
+// Guards a single admin tab whose backend endpoint requires a specific
+// capability. Controllers pass every check (selectCan* fold in isAdmin);
+// staff are bounced to the admin landing if they lack the bit.
+export const useRequireAdminCapability = (hasCapability: boolean): void => {
+  const { isProfileInitialized } = useAppStore();
+  const returnTo = useReturnTo();
+
+  useEffect(() => {
+    if (isProfileInitialized && !hasCapability) {
+      returnTo('/admin');
+      return;
+    }
+  }, [isProfileInitialized, hasCapability, returnTo]);
 };

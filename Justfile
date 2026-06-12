@@ -114,13 +114,25 @@ retest-backend *args:
 activate-user:
     #!/usr/bin/env bash
     set -euo pipefail
-    json=$(dfx canister call backend list_user_profiles '(record {})' --output json)
+    json=$(dfx canister call backend admin_list_user_profiles '()' --output json)
     mapfile -t lines < <(echo "$json" | jq -r '.Ok[] | "\(.id)\t\(.email[0] // "no-email")\t\(.status | keys[0])"')
     if [ ${#lines[@]} -eq 0 ]; then echo "No user profiles found."; exit 0; fi
     echo "Select a user to activate:"
     select line in "${lines[@]}"; do [ -n "${line:-}" ] && break; done
     id=${line%%$'\t'*}
-    dfx canister call backend update_user_profile "(record { user_id = \"$id\"; status = opt variant { Active } })"
+    dfx canister call backend admin_update_user_profile "(record { user_id = \"$id\"; status = opt variant { Active } })"
+
+# List local users, pick one from a menu, and grant full staff permissions
+grant-staff:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    json=$(dfx canister call backend admin_list_user_profiles '()' --output json)
+    mapfile -t lines < <(echo "$json" | jq -r '.Ok[] | "\(.id)\t\(.email[0] // "no-email")\t\(.status | keys[0])"')
+    if [ ${#lines[@]} -eq 0 ]; then echo "No user profiles found."; exit 0; fi
+    echo "Select a user to make staff:"
+    select line in "${lines[@]}"; do [ -n "${line:-}" ] && break; done
+    id=${line%%$'\t'*}
+    dfx canister call backend admin_grant_staff_permissions "(record { user_id = \"$id\"; permissions = record { read_all_orgs = true; write_billing = true; manage_users = true; read_metrics = true } })"
 
 # Go microservices live under services/; see `just services::` for recipes
 mod services

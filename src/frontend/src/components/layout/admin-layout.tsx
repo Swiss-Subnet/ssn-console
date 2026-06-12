@@ -1,7 +1,13 @@
 import { Container } from '@/components/layout/container';
 import { H1 } from '@/components/typography/h1';
 import { Button } from '@/components/ui/button';
-import { useAdminPrivacyStore } from '@/lib/store';
+import {
+  selectCanManageUsers,
+  selectCanReadAllOrgs,
+  selectIsAdmin,
+  useAdminPrivacyStore,
+  useAppStore,
+} from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import type { FC } from 'react';
@@ -10,20 +16,37 @@ import { NavLink, Outlet } from 'react-router';
 type AdminTab = {
   to: string;
   label: string;
+  visible: boolean;
 };
-
-const TABS: AdminTab[] = [
-  { to: '/admin', label: 'Overview' },
-  { to: '/admin/users', label: 'Users' },
-  { to: '/admin/trusted-partners', label: 'Trusted Partners' },
-  { to: '/admin/terms-and-conditions', label: 'Terms & Conditions' },
-  { to: '/admin/staff', label: 'Staff Permissions' },
-  { to: '/admin/organizations', label: 'Organizations' },
-];
 
 export const AdminLayout: FC = () => {
   const censorEmails = useAdminPrivacyStore(s => s.censorEmails);
   const toggleCensorEmails = useAdminPrivacyStore(s => s.toggleCensorEmails);
+
+  const isAdmin = useAppStore(selectIsAdmin);
+  const canManageUsers = useAppStore(selectCanManageUsers);
+  const canReadAllOrgs = useAppStore(selectCanReadAllOrgs);
+
+  const TABS: AdminTab[] = [
+    { to: '/admin', label: 'Overview', visible: true },
+    { to: '/admin/users', label: 'Users', visible: canManageUsers },
+    {
+      to: '/admin/organizations',
+      label: 'Organizations',
+      visible: canReadAllOrgs,
+    },
+    {
+      to: '/admin/trusted-partners',
+      label: 'Trusted Partners',
+      visible: isAdmin,
+    },
+    {
+      to: '/admin/terms-and-conditions',
+      label: 'Terms & Conditions',
+      visible: isAdmin,
+    },
+    { to: '/admin/staff', label: 'Staff Permissions', visible: isAdmin },
+  ].filter(tab => tab.visible);
 
   return (
     <Container>
