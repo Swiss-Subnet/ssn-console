@@ -6,21 +6,27 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 echo
-echo "🔍 Fetching local subnet canister ranges..."
-RANGES=$(bun run ./src/scripts/src/fetch-local-subnet-canister-ranges.ts)
+echo "Fetching local subnet canister ranges..."
+# canister-history's sync walks every id in this range to pull history, so local
+# dev seeds the Application subnet range from icp-cli's network topology.
+TOPOLOGY=".icp/cache/networks/local/state/topology.json"
+if [ ! -f "$TOPOLOGY" ]; then
+  echo "$TOPOLOGY not found. Is the local network running (icp network start)?"
+  exit 1
+fi
 
-# Assuming a single range for the local subnet for simplicity
-START_PRINCIPAL=$(echo "$RANGES" | awk '{print $1}')
-END_PRINCIPAL=$(echo "$RANGES" | awk '{print $2}')
+read -r START_PRINCIPAL END_PRINCIPAL < <(
+  jq -r '.subnet_configs[] | select(.subnet_kind == "Application") | "\(.ranges[0].start) \(.ranges[-1].end)"' "$TOPOLOGY"
+)
 
 if [ -z "$START_PRINCIPAL" ] || [ -z "$END_PRINCIPAL" ]; then
-  echo "💢 Failed to parse canister ranges."
+  echo "Failed to read an Application subnet range from $TOPOLOGY."
   exit 1
 fi
 
 echo "Updating canister history with range: $START_PRINCIPAL to $END_PRINCIPAL"
 
-dfx canister call canister-history update_subnet_canister_ranges "(
+icp canister call canister-history update_subnet_canister_ranges "(
   record {
     canister_ranges = vec {
       record {
@@ -29,6 +35,6 @@ dfx canister call canister-history update_subnet_canister_ranges "(
       };
     };
   }
-)"
+)" -e local
 
-echo "✅ Local subnet canister ranges updated!"
+echo "Local subnet canister ranges updated."
