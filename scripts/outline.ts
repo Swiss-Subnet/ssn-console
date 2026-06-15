@@ -2,39 +2,27 @@
 /**
  * Query the Outline "Process & Use-Case Library" collection.
  *
- * Usage:
- *   bun scripts/outline.ts search <query>        full-text search within the collection
- *   bun scripts/outline.ts get <ID-or-title>     print one doc as markdown (e.g. "UC01")
- *   bun scripts/outline.ts list [NN]             index with statuses, optionally one category
- *   bun scripts/outline.ts export [dir]          dump collection to markdown
- *                                                (default: docs/process-library — gitignored)
+ * Usage: bun outline <command> [...]
+ *   search <query>         full-text search within the collection
+ *   get <ID-or-title>      print one doc as markdown (e.g. "UC01")
+ *   list [NN]              index with statuses, optionally one category
+ *   export [dir] [--clean] dump collection to markdown
+ *                          (default: docs/process-library — gitignored)
  *
  * Env: OUTLINE_URL, OUTLINE_API_TOKEN (or in .env.local / .env.dev / .env)
  */
-import {
-  readFileSync,
-  existsSync,
-  mkdirSync,
-  writeFileSync,
-  rmSync,
-} from 'node:fs';
+import { config } from 'dotenv';
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 
 const COLLECTION_NAME = 'Process & Use-Case Library';
 const DEFAULT_EXPORT_DIR = resolve(import.meta.dir, '../docs/process-library');
 
 function loadEnv(): { url: string; token: string } {
-  const env: Record<string, string> = {};
-  for (const f of ['.env.local', '.env.dev', '.env']) {
-    const p = resolve(import.meta.dir, '..', f);
-    if (!existsSync(p)) continue;
-    for (const line of readFileSync(p, 'utf8').split('\n')) {
-      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*"?([^"\n]*)"?\s*$/);
-      if (m && !(m[1] in env)) env[m[1]] = m[2];
-    }
-  }
-  const url = process.env.OUTLINE_URL ?? env.OUTLINE_URL;
-  const token = process.env.OUTLINE_API_TOKEN ?? env.OUTLINE_API_TOKEN;
+  for (const f of ['.env.local', '.env.dev', '.env'])
+    config({ path: resolve(import.meta.dir, '..', f), quiet: true });
+  const url = process.env.OUTLINE_URL;
+  const token = process.env.OUTLINE_API_TOKEN;
   if (!url || !token || token === 'replace-me') {
     console.error(
       'Missing OUTLINE_URL / OUTLINE_API_TOKEN (env or .env.local/.env.dev).',
@@ -43,7 +31,6 @@ function loadEnv(): { url: string; token: string } {
   }
   return { url: url.replace(/\/+$/, ''), token };
 }
-
 const { url: BASE, token: TOKEN } = loadEnv();
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -114,10 +101,11 @@ async function main() {
       [
         'Usage: bun outline <command> [...]',
         '',
-        '  search <query>  — full-text search within the collection',
-        '  get <ID|title>  — fetch one doc as markdown (resolves UC01 by title prefix)',
-        '  list [NN]       — index of the collection or one category, with statuses',
-        '  export [dir]    — dump the whole collection to markdown (spec corpus for CI / diffing / offline reading; default: docs/process-library)',
+        '  search <query>         — full-text search within the collection',
+        '  get <ID|title>         — fetch one doc as markdown (resolves UC01 by title prefix)',
+        '  list [NN]              — index of the collection or one category, with statuses',
+        '  export [dir] [--clean] — dump the whole collection to markdown (--clean removes old files first)',
+        '                           (default dir: docs/process-library - gitignored)',
       ].join('\n'),
     );
     process.exit(0);
@@ -169,9 +157,11 @@ async function main() {
         .forEach(d => console.log(`     ${d.title}`));
     }
   } else if (cmd === 'export') {
-    const dir = args[0] ? resolve(args[0]) : DEFAULT_EXPORT_DIR;
+    const clean = args.includes('--clean');
+    const dirArg = args.find(a => !a.startsWith('--'));
+    const dir = dirArg ? resolve(dirArg) : DEFAULT_EXPORT_DIR;
     const docs = await allDocs(colId);
-    rmSync(dir, { recursive: true, force: true });
+    if (clean) rmSync(dir, { recursive: true, force: true });
     mkdirSync(dir, { recursive: true });
     const byId = new Map(docs.map(d => [d.id, d]));
     for (const d of docs) {
@@ -186,7 +176,9 @@ async function main() {
       mkdirSync(dirname(path), { recursive: true });
       writeFileSync(path, `# ${d.title}\n\n${d.text}`);
     }
-    console.log(`Exported ${docs.length} documents to ${dir}`);
+    console.log(
+      `Exported ${docs.length} documents to ${dir}${clean ? ' (clean rebuild)' : ''}`,
+    );
   }
 }
 
