@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Usage Metrics > Integration: Upsert and Get Usage > should correctly retrieve historical billing months > historical-usage-july-2026 1`] = `
+exports[`Usage Metrics > Integration: Upsert and Get Usage > should correctly retrieve historical billing months > historical-usage-month-1 1`] = `
 {
   "canisters": [
     {
@@ -42,7 +42,7 @@ exports[`Usage Metrics > Integration: Upsert and Get Usage > should correctly re
 }
 `;
 
-exports[`Usage Metrics > Integration: Upsert and Get Usage > should correctly retrieve historical billing months > historical-usage-june-2026 1`] = `
+exports[`Usage Metrics > Integration: Upsert and Get Usage > should correctly retrieve historical billing months > historical-usage-month-2 1`] = `
 {
   "canisters": [
     {
