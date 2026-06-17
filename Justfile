@@ -47,7 +47,7 @@ render ENV_FILE:
     podman save  "localhost/caddy:${IMAGE_TAG}"                   > "${DIST}/images/caddy.tar"
     podman build -t "localhost/auth-service:${IMAGE_TAG}"         -f "${CONFIG_DIR}/auth-service.containerfile" "${ROOT_DIR}/services"
     podman save  "localhost/auth-service:${IMAGE_TAG}"            > "${DIST}/images/auth-service.tar"
-    podman build -t "localhost/canister-otlp-syncer:${IMAGE_TAG}" -f "${CONFIG_DIR}/canister-otlp-syncer.containerfile" "${ROOT_DIR}"
+    podman build -t "localhost/canister-otlp-syncer:${IMAGE_TAG}" -f "${CONFIG_DIR}/canister-otlp-syncer.containerfile" "${ROOT_DIR}/services"
     podman save  "localhost/canister-otlp-syncer:${IMAGE_TAG}"    > "${DIST}/images/canister-otlp-syncer.tar"
 
     echo "Rendering config..."
