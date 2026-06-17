@@ -56,7 +56,7 @@ export class TestDriver extends BaseTestDriver {
     const backendFixture = await setupBackendCanister(pic, {
       environmentVariables: [
         { name: 'PUBLIC_KEY', value: PUBLIC_KEY },
-        { name: 'OFFCHAIN_SERVICE_URL', value: 'http://localhost:3000' },
+        { name: 'AUTH_SERVICE_URL', value: 'http://localhost:3000' },
         { name: 'CANISTER_HISTORY_ID', value: canisterHistoryId.toText() },
       ],
     });

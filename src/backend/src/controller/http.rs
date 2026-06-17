@@ -131,15 +131,15 @@ fn serve_asset(req: &HttpRequest) -> HttpResponse<'static> {
         ) {
             response
         } else {
-            ic_cdk::trap("Failed to init_offchain_service_urlserve asset");
+            ic_cdk::trap("Failed to serve asset");
         }
     })
 }
 
 fn get_asset_headers(additional_headers: Vec<HeaderField>) -> Vec<HeaderField> {
-    let offchain_service_url = env::get_offchain_service_url();
+    let auth_service_url = env::get_auth_service_url();
 
-    let mut connect_src = vec!["'self'", &offchain_service_url];
+    let mut connect_src = vec!["'self'", &auth_service_url];
     if env::is_local() {
         connect_src.push("http://localhost:8000");
     } else {

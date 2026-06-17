@@ -30,7 +30,7 @@ render ENV_FILE:
 
     # Image/service identifiers referenced by the quadlet templates.
     export CADDY_IMAGE_NAMESPACE=localhost CADDY_IMAGE_NAME=caddy CADDY_SERVICE_NAME=caddy
-    export OFFCHAIN_SERVICE_IMAGE_NAMESPACE=localhost OFFCHAIN_SERVICE_IMAGE_NAME=offchain-service OFFCHAIN_SERVICE_SERVICE_NAME=offchain-service
+    export AUTH_SERVICE_IMAGE_NAMESPACE=localhost AUTH_SERVICE_IMAGE_NAME=auth-service AUTH_SERVICE_SERVICE_NAME=auth-service
     export CANISTER_OTLP_SYNCER_IMAGE_NAMESPACE=localhost CANISTER_OTLP_SYNCER_IMAGE_NAME=canister-otlp-syncer CANISTER_OTLP_SYNCER_SERVICE_NAME=canister-otlp-syncer
 
     # Remote paths the rendered quadlets/Caddyfile bake in (must match ansible console-deploy vars).
@@ -45,8 +45,8 @@ render ENV_FILE:
     echo "Building images (tag ${IMAGE_TAG})..."
     podman build -t "localhost/caddy:${IMAGE_TAG}"                -f "${CONFIG_DIR}/caddy.containerfile" "${ROOT_DIR}"
     podman save  "localhost/caddy:${IMAGE_TAG}"                   > "${DIST}/images/caddy.tar"
-    podman build -t "localhost/offchain-service:${IMAGE_TAG}"     -f "${CONFIG_DIR}/offchain-service.containerfile" "${ROOT_DIR}"
-    podman save  "localhost/offchain-service:${IMAGE_TAG}"        > "${DIST}/images/offchain-service.tar"
+    podman build -t "localhost/auth-service:${IMAGE_TAG}"         -f "${CONFIG_DIR}/auth-service.containerfile" "${ROOT_DIR}/services"
+    podman save  "localhost/auth-service:${IMAGE_TAG}"            > "${DIST}/images/auth-service.tar"
     podman build -t "localhost/canister-otlp-syncer:${IMAGE_TAG}" -f "${CONFIG_DIR}/canister-otlp-syncer.containerfile" "${ROOT_DIR}"
     podman save  "localhost/canister-otlp-syncer:${IMAGE_TAG}"    > "${DIST}/images/canister-otlp-syncer.tar"
 
@@ -60,11 +60,11 @@ render ENV_FILE:
     # Non-secret facts ansible's console-deploy needs (no secrets here).
     # The deploy keys its "already on host?" skip on per-image ref; image_tag is informational.
     {
-      printf 'offchain_service_domain: "%s"\n' "${OFFCHAIN_SERVICE_DOMAIN}"
+      printf 'auth_service_domain: "%s"\n' "${AUTH_SERVICE_DOMAIN}"
       printf 'image_tag: "%s"\n' "${IMAGE_TAG}"
       printf 'images:\n'
       printf '  - { tar: caddy.tar, ref: "localhost/caddy:%s" }\n' "${IMAGE_TAG}"
-      printf '  - { tar: offchain-service.tar, ref: "localhost/offchain-service:%s" }\n' "${IMAGE_TAG}"
+      printf '  - { tar: auth-service.tar, ref: "localhost/auth-service:%s" }\n' "${IMAGE_TAG}"
       printf '  - { tar: canister-otlp-syncer.tar, ref: "localhost/canister-otlp-syncer:%s" }\n' "${IMAGE_TAG}"
     } > "${DIST}/deploy-vars.yml"
 

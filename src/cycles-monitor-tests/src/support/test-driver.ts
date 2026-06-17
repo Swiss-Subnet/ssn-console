@@ -20,7 +20,7 @@ export const PUBLIC_KEY = publicKey
   .trim();
 const secret = privateKey.export({ type: 'pkcs8', format: 'der' });
 const seed = new Uint8Array((secret as Buffer).slice(16));
-export const offchainIdentity = Ed25519KeyIdentity.fromSecretKey(seed);
+export const authServiceIdentity = Ed25519KeyIdentity.fromSecretKey(seed);
 
 export class TestDriver extends BaseTestDriver {
   public get cyclesMonitorActor(): Actor<CyclesMonitorService> {

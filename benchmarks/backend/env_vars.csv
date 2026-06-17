@@ -1,3 +1,3 @@
-OFFCHAIN_SERVICE_URL,https://offchain.example
+AUTH_SERVICE_URL,https://auth.example
 PUBLIC_KEY,-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAGb9ECWmEzf6FQbrBZ9w7lshQhqowtrbLDFw4rXAxZuE=\n-----END PUBLIC KEY-----
 CANISTER_HISTORY_ID,aaaaa-aa

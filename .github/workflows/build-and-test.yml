@@ -17,7 +17,6 @@ jobs:
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
       frontend: ${{ steps.filter.outputs.frontend }}
-      offchain: ${{ steps.filter.outputs.offchain }}
       go: ${{ steps.filter.outputs.go }}
     steps:
       - name: Checkout code
@@ -45,9 +44,6 @@ jobs:
               - 'turbo.json'
               - 'prettier.config.cjs'
               - '.github/actions/setup-bun/**'
-            offchain:
-              - 'src/offchain-service/**'
-              - 'config/offchain-service.containerfile'
             go:
               - 'services/**/*.go'
               - 'services/**/go.mod'
@@ -55,6 +51,7 @@ jobs:
               - 'services/go.work'
               - 'services/go.work.sum'
               - 'services/Justfile'
+              - 'config/auth-service.containerfile'
               - '.github/workflows/build-and-test.yml'
 
   build_and_test_all_canisters:
@@ -187,21 +184,6 @@ jobs:
 
       - name: Type check
         run: bun type-check
-
-  test_offchain_service:
-    name: Test Offchain Service
-    needs: changes
-    if: needs.changes.outputs.offchain == 'true' || needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6.0.2
-
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
-
-      - name: Unit tests
-        run: bun turbo -F offchain-service test
 
   build_and_test_services:
     name: Build and Test Go Services

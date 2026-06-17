@@ -6,7 +6,7 @@ use ic_cdk::{api::msg_caller, *};
 fn record_usage(req: dto::RecordUsageRequest) -> ApiResultDto<dto::RecordUsageResponse> {
     if msg_caller() != env::get_public_key_principal() {
         return ApiResultDto::Err(canister_utils::ApiError::unauthorized(
-            "Only the offchain-service is allowed to call this endpoint".to_string(),
+            "Only the auth-service is allowed to call this endpoint".to_string(),
         ));
     }
 

@@ -22,7 +22,7 @@ ic_cdk::export_candid!();
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
-    env::init_offchain_service_url();
+    env::init_auth_service_url();
     env::init_public_key();
     env::init_public_key_principal();
     env::init_canister_history_id();

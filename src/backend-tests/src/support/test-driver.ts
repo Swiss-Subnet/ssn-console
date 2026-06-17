@@ -37,7 +37,7 @@ export const PUBLIC_KEY = publicKey
 export const PRIVATE_KEY = privateKey;
 const secret = privateKey.export({ type: 'pkcs8', format: 'der' });
 const seed = new Uint8Array((secret as Buffer).slice(16));
-export const offchainIdentity = Ed25519KeyIdentity.fromSecretKey(seed);
+export const authServiceIdentity = Ed25519KeyIdentity.fromSecretKey(seed);
 
 import { createIdentity } from '@dfinity/pic';
 
@@ -71,7 +71,7 @@ export class TestDriver extends BaseTestDriver {
     const fixture = await setupBackendCanister(pic, {
       environmentVariables: [
         { name: 'PUBLIC_KEY', value: PUBLIC_KEY },
-        { name: 'OFFCHAIN_SERVICE_URL', value: 'http://localhost:3000' },
+        { name: 'AUTH_SERVICE_URL', value: 'http://localhost:3000' },
         { name: 'CANISTER_HISTORY_ID', value: CANISTER_HISTORY_ID.toText() },
       ],
     });
