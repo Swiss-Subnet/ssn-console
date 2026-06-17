@@ -11,15 +11,28 @@ import (
 
 	"github.com/aviate-labs/agent-go/principal"
 
+	mpb "go.opentelemetry.io/proto/otlp/metrics/v1"
+
 	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/canister"
 	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/otlp"
 )
 
 const timestampFileName = ".last-cycles-monitor-timestamp"
 
+// Canister and Pusher are the seams Run depends on; *canister.Client and
+// *otlp.Pusher satisfy them in production, fakes in tests.
+type Canister interface {
+	ListMetricsAfter(ctx context.Context, cursor *canister.Cursor) ([]canister.CyclesMetricsSnapshot, *canister.Cursor, error)
+	RecordUsage(ctx context.Context, usages []canister.CanisterUsage) error
+}
+
+type Pusher interface {
+	Push(ctx context.Context, rm *mpb.ResourceMetrics) error
+}
+
 type Deps struct {
-	Client      *canister.Client
-	Pusher      *otlp.Pusher
+	Client      Canister
+	Pusher      Pusher
 	Environment string
 	StateDir    string
 	Now         func() time.Time

@@ -45,7 +45,7 @@ func Load() (*Config, error) {
 		MetricsEndpoint:         otlpEndpoint + "/v1/metrics",
 		GrafanaEnvironment:      os.Getenv("GRAFANA_ENVIRONMENT"),
 		// Cursor persistence dir; the prod quadlet mounts /data.
-		StateDir:                optional("STATE_DIR", "/data"),
+		StateDir: optional("STATE_DIR", "/data"),
 	}, nil
 }
 

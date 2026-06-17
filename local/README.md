@@ -32,10 +32,10 @@ Bring up just the sink with `just local-telemetry-up` / `local-telemetry-down`.
 
 ## Ports
 
-| Port  | Service               |
-| ----- | --------------------- |
-| 3000  | auth-service          |
-| 3001  | metrics-proxy         |
-| 4318  | Alloy OTLP/HTTP       |
-| 9090  | Prometheus            |
-| 12345 | Alloy admin/UI        |
+| Port  | Service         |
+| ----- | --------------- |
+| 3000  | auth-service    |
+| 3001  | metrics-proxy   |
+| 4318  | Alloy OTLP/HTTP |
+| 9090  | Prometheus      |
+| 12345 | Alloy admin/UI  |

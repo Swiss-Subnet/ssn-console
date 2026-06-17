@@ -21,7 +21,9 @@ type Topology = {
 };
 
 const toPrincipal = (b64: string): string =>
-  Principal.fromUint8Array(Uint8Array.from(Buffer.from(b64, 'base64'))).toText();
+  Principal.fromUint8Array(
+    Uint8Array.from(Buffer.from(b64, 'base64')),
+  ).toText();
 
 const res = await fetch(`${GATEWAY}/_/topology`);
 if (!res.ok) {

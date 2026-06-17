@@ -10,7 +10,7 @@ services:
     volumes:
       - ./prometheus.local.yml:/etc/prometheus/prometheus.yml:Z
     ports:
-      - "9090:9090"
+      - '9090:9090'
 
   alloy:
     image: docker.io/grafana/alloy:v1.5.1
@@ -21,7 +21,7 @@ services:
     volumes:
       - ./alloy.local.alloy:/etc/alloy/config.alloy:Z
     ports:
-      - "4318:4318"
-      - "12345:12345"
+      - '4318:4318'
+      - '12345:12345'
     depends_on:
       - prometheus
