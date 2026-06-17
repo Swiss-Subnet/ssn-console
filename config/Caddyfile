@@ -16,8 +16,11 @@
 	}
 }
 
-${OFFCHAIN_SERVICE_DOMAIN}:443 {
-	reverse_proxy ${OFFCHAIN_SERVICE_IMAGE_NAME}:${PORT} {
+${AUTH_SERVICE_DOMAIN}:443 {
+	# One API host, services split by subpath. metrics-proxy (/v1/*) is not
+	# deployed yet; its matcher is reserved here and goes live with that service.
+	@auth path /v1.0/auth/* /status
+	reverse_proxy @auth ${AUTH_SERVICE_IMAGE_NAME}:${PORT} {
 		header_up X-Real-IP {remote_host}
 	}
 

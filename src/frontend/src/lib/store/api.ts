@@ -22,7 +22,7 @@ import {
   AuthApi,
   UsageApi,
 } from '@/lib/api';
-import { METRICS_PROXY_URL, OFFCHAIN_SERVICE_URL } from '@/env';
+import { METRICS_PROXY_URL, AUTH_SERVICE_URL } from '@/env';
 import { isNil } from '@/lib/nil';
 import type { ApiSlice, AppStateCreator } from '@/lib/store/model';
 import { Actor, HttpAgent } from '@icp-sdk/core/agent';
@@ -75,7 +75,7 @@ const organizationApi = new OrganizationApi(actor);
 const teamApi = new TeamApi(actor);
 const inviteApi = new InviteApi(actor);
 const canisterHistoryApi = new CanisterHistoryApi(canisterHistoryActor);
-const authApi = new AuthApi(OFFCHAIN_SERVICE_URL);
+const authApi = new AuthApi(AUTH_SERVICE_URL);
 const metricsProxyApi = new MetricsProxyApi(METRICS_PROXY_URL);
 const approvalPolicyApi = new ApprovalPolicyApi(actor);
 const proposalApi = new ProposalApi(actor);

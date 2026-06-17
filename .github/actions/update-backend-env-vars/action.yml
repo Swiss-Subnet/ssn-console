@@ -7,11 +7,7 @@ inputs:
     required: true
 
   public_key:
-    description: The public signing key of the offchain service
-    required: true
-
-  offchain_service_url:
-    description: The root URL of the offchain service
+    description: The public signing key of the auth service
     required: true
 
 runs:
@@ -23,6 +19,9 @@ runs:
         CANISTER_ID=$(dfx canister id backend --network ${{ inputs.network }})
         CANISTER_HISTORY_ID=$(dfx canister id canister-history --network ${{ inputs.network }})
         FORMATTED_PUBLIC_KEY=$(echo "${{ inputs.public_key }}" | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
+        # Single source of truth: the auth service URL lives in the frontend env.json,
+        # keyed by network, so frontend and backend never drift.
+        AUTH_SERVICE_URL=$(jq -er ".[\"${{ inputs.network }}\"].AUTH_SERVICE_URL" src/frontend/env.json)
 
         dfx canister call aaaaa-aa update_settings "(
           record {
@@ -34,8 +33,8 @@ runs:
                   value = \"$FORMATTED_PUBLIC_KEY\";
                 };
                 record {
-                  name = \"OFFCHAIN_SERVICE_URL\";
-                  value = \"${{ inputs.offchain_service_url }}\";
+                  name = \"AUTH_SERVICE_URL\";
+                  value = \"$AUTH_SERVICE_URL\";
                 };
                 record {
                   name = \"CANISTER_HISTORY_ID\";

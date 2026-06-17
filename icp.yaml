@@ -21,7 +21,7 @@ canisters:
             - gzip -f -c "$ICP_WASM_OUTPUT_PATH.candid" > "$ICP_WASM_OUTPUT_PATH"
     settings:
       environment_variables:
-        OFFCHAIN_SERVICE_URL: 'http://localhost:3000'
+        AUTH_SERVICE_URL: 'http://localhost:3000'
 
   - name: canister-history
     build:

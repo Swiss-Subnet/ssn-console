@@ -1,6 +1,6 @@
 # Deploy
 
-The workload (Caddy, offchain-service, canister-otlp-syncer) is deployed in two stages across two repos:
+The workload (Caddy, auth-service, canister-otlp-syncer) is deployed in two stages across two repos:
 
 1. **Render** (here): build the container images and substitute config from a `.env` into `dist/`.
 2. **Place + activate** ([ssn-infra](https://github.com/swiss-subnet/ssn-infra)): ansible copies `dist/` onto the host, loads images, and restarts services.
@@ -16,7 +16,7 @@ Secrets stay in this repo. `render` fills templates (quadlets, Caddyfile, `confi
 - **Podman & Quadlets**: containers run as Systemd user services via Quadlets.
 - **Caddy**: reverse proxy; TLS via the Cloudflare DNS challenge.
 - **SELinux**: custom `.cil` policies (in `config/`) enforce per-container boundaries; loaded on the host by ansible.
-- **Bun & ElysiaJS**: `offchain-service` compiles to a standalone binary.
+- **Go**: `auth-service` compiles to a static binary (distroless image).
 
 ## Env files
 
@@ -44,7 +44,7 @@ dist/
   Caddyfile
   config.alloy
   policies/*.cil
-  deploy-vars.yml      # non-secret facts: offchain_service_domain, image_tag, image refs
+  deploy-vars.yml      # non-secret facts: auth_service_domain, image_tag, image refs
 ```
 
 ## Deploy to the host

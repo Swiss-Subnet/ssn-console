@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  offchainIdentity,
+  authServiceIdentity,
   TestDriver,
   unauthenticatedError,
   unauthorizedError,
@@ -115,7 +115,7 @@ describe('Cycles Monitor', () => {
     });
 
     it('should return metrics for public key identity', async () => {
-      driver.cyclesMonitorActor.setIdentity(offchainIdentity);
+      driver.cyclesMonitorActor.setIdentity(authServiceIdentity);
       const res = await driver.cyclesMonitorActor.list_metrics_after({
         cursor: [],
       });

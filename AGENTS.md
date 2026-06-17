@@ -11,7 +11,7 @@ This is a monorepo containing an Internet Computer Protocol (ICP) application.
 | Package (workspace name) | Path                         | Language              | Description                                                                                   |
 | ------------------------ | ---------------------------- | --------------------- | --------------------------------------------------------------------------------------------- |
 | `frontend`               | `src/frontend`               | TypeScript / React 19 | SPA — Vite, TailwindCSS v4, Zustand, Zod, React Router                                        |
-| `offchain-service`       | `src/offchain-service`       | TypeScript / Bun      | HTTP service — ElysiaJS, JWT auth, email via nodemailer                                       |
+| Go microservices         | `services/`                  | Go                    | HTTP services (auth-service: JWT auth + email, metrics-proxy, ...); see `services/README.md`  |
 | `backend-tests`          | `src/backend-tests`          | TypeScript            | PocketIC integration tests for the `backend` canister                                         |
 | `canister-history-tests` | `src/canister-history-tests` | TypeScript            | PocketIC integration tests for the `canister-history` canister                                |
 | `cycles-monitor-tests`   | `src/cycles-monitor-tests`   | TypeScript            | PocketIC integration tests for the `cycles-monitor` canister                                  |
@@ -58,10 +58,10 @@ This is a monorepo containing an Internet Computer Protocol (ICP) application.
 - **Start Dev Server**: `bun turbo -F frontend start` (Vite on port 3000)
 - **Build Frontend**: `bun turbo -F frontend build` (runs `tsc && vite build`)
 
-### Offchain Service (`src/offchain-service`)
+### Go microservices (`services/`)
 
-- **Run Tests**: `bun turbo -F offchain-service test` (uses `bun test`, not vitest)
-- The service compiles to a standalone Bun binary inside its container (`config/offchain-service.containerfile`)
+- **Run Tests**: `just services::test` (or `cd services/<svc> && go test ./...`)
+- Each service builds a static binary into a distroless container; see `services/README.md`.
 
 ### Rust / ICP
 
@@ -218,21 +218,11 @@ All canisters include an inline `#[cfg(test)]` test that validates the exported 
 
 ---
 
-### Offchain Service (TypeScript — `src/offchain-service`)
+### Go microservices (`services/`)
 
-This is a standalone Bun + ElysiaJS HTTP service deployed as a container alongside the ICP canisters.
+Standalone Go HTTP services deployed as distroless containers alongside the ICP canisters. `auth-service` (JWT minting + email) replaces the former offchain-service; `metrics-proxy` and others live here too. Each is its own Go module within the `services/go.work` workspace.
 
-#### Architecture
-
-Follows the same layered structure as the Rust backend:
-
-- `controller/` — ElysiaJS route handlers
-- `service/` — Business logic (JWT generation with `jose`, email with `nodemailer`)
-- `dto/` — Request/response types
-
-#### Testing
-
-Tests use `bun test` (not vitest). Run with `bun turbo -F offchain-service test`.
+See `services/README.md` for layout, the `just services::` recipes, and per-service end-to-end testing.
 
 ---
 

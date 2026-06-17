@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   TestDriver,
-  offchainIdentity,
+  authServiceIdentity,
   projectNotFoundOrNoAccessError,
   unauthenticatedError,
 } from '../support';
@@ -89,7 +89,7 @@ describe('Usage Metrics', () => {
       expect(result).toEqual({
         Err: {
           code: [{ Unauthorized: {} }],
-          message: 'Only the offchain-service is allowed to call this endpoint',
+          message: 'Only the auth-service is allowed to call this endpoint',
         },
       });
     });
@@ -100,13 +100,13 @@ describe('Usage Metrics', () => {
       expect(result).toEqual({
         Err: {
           code: [{ Unauthorized: {} }],
-          message: 'Only the offchain-service is allowed to call this endpoint',
+          message: 'Only the auth-service is allowed to call this endpoint',
         },
       });
     });
 
-    it('should accept offchain service identity', async () => {
-      driver.actor.setIdentity(offchainIdentity);
+    it('should accept auth service identity', async () => {
+      driver.actor.setIdentity(authServiceIdentity);
       const result = await driver.actor.record_usage({ usages: [] });
       expect(result).toEqual({ Ok: {} });
     });
@@ -187,7 +187,7 @@ describe('Usage Metrics', () => {
           );
         }
 
-        driver.actor.setIdentity(offchainIdentity);
+        driver.actor.setIdentity(authServiceIdentity);
         const upsertRes = await driver.actor.record_usage({ usages });
         extractOkResponse(upsertRes);
       }
@@ -228,7 +228,7 @@ describe('Usage Metrics', () => {
       {
         await driver.pic.setTime(month1);
         await driver.pic.tick();
-        driver.actor.setIdentity(offchainIdentity);
+        driver.actor.setIdentity(authServiceIdentity);
         const upsertRes = await driver.actor.record_usage({
           usages: [createUsage(canister.principal_id, 1n)],
         });
@@ -239,7 +239,7 @@ describe('Usage Metrics', () => {
       {
         await driver.pic.setTime(month2);
         await driver.pic.tick();
-        driver.actor.setIdentity(offchainIdentity);
+        driver.actor.setIdentity(authServiceIdentity);
         const upsertRes = await driver.actor.record_usage({
           usages: [createUsage(canister.principal_id, 2n)],
         });
@@ -283,7 +283,7 @@ describe('Usage Metrics', () => {
       // Lifetime burned_cycles at end of Month 1: 1.5T (everything before Month 2).
       await driver.pic.setTime(endOfMonth1);
       await driver.pic.tick();
-      driver.actor.setIdentity(offchainIdentity);
+      driver.actor.setIdentity(authServiceIdentity);
       extractOkResponse(
         await driver.actor.record_usage({
           usages: [

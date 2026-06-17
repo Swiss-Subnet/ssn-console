@@ -209,11 +209,11 @@ declare "journal_module" {
       target_label  = "level"
     }
 
-    // drop the offchain-service logs since they're captured via the OTLP pipeline
+    // drop the auth-service logs since they're captured via the OTLP pipeline
     rule {
       action        = "drop"
       source_labels = ["__journal_container_name"]
-      regex         = "${OFFCHAIN_SERVICE_SERVICE_NAME}"
+      regex         = "${AUTH_SERVICE_SERVICE_NAME}"
     }
 
     forward_to = []

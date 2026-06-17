@@ -38,7 +38,6 @@ jobs:
         with:
           network: production
           public_key: ${{ secrets.PUBLIC_KEY }}
-          offchain_service_url: ${{ secrets.OFFCHAIN_SERVICE_URL }}
 
       - name: Update canister history env vars
         uses: ./.github/actions/update-canister-history-env-vars

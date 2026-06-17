@@ -27,9 +27,9 @@ try {
     );
   }
 
-  if (!networkConfig.OFFCHAIN_SERVICE_URL) {
+  if (!networkConfig.AUTH_SERVICE_URL) {
     throw new Error(
-      `Missing OFFCHAIN_SERVICE_URL in configuration for network '${network}' in ${envJsonPath}`,
+      `Missing AUTH_SERVICE_URL in configuration for network '${network}' in ${envJsonPath}`,
     );
   }
 
@@ -55,7 +55,7 @@ export default defineConfig({
     },
   },
   define: {
-    'import.meta.env.OFFCHAIN_SERVICE_URL': `"${networkConfig.OFFCHAIN_SERVICE_URL}"`,
+    'import.meta.env.AUTH_SERVICE_URL': `"${networkConfig.AUTH_SERVICE_URL}"`,
     'import.meta.env.METRICS_PROXY_URL': `"${networkConfig.METRICS_PROXY_URL}"`,
   },
   server: {

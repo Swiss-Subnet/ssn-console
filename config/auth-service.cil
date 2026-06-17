@@ -1,7 +1,7 @@
 (type alloy_otel_port_t)
 (typeattributeset port_type (alloy_otel_port_t))
 
-(block offchain-service
+(block auth-service
   (blockinherit container)
   (blockinherit restricted_net_container)
   (allow process process ( capability ( chown dac_override fowner fsetid kill net_bind_service setfcap setgid setpcap setuid sys_chroot )))
