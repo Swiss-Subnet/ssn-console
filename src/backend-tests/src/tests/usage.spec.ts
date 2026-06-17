@@ -41,6 +41,23 @@ describe('Usage Metrics', () => {
     };
   }
 
+  // PocketIC initializes its clock to wall-time and refuses to set time
+  // backwards, so test dates must stay ahead of "now". Derive two consecutive
+  // future months from a base instant rather than hardcoding calendar months.
+  const billingMonth = (d: Date) =>
+    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  const futureMonths = (base: Date) => {
+    const firstOfNextMonth = new Date(
+      Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 1),
+    );
+    const month1 = new Date(firstOfNextMonth);
+    const month2 = new Date(
+      Date.UTC(month1.getUTCFullYear(), month1.getUTCMonth() + 1, 1),
+    );
+    return { month1, month2 };
+  };
+
   const cleanUsage = (usageData: GetUsageResponseData) => {
     const cleaned = structuredClone(usageData);
     // Sort canisters predictably here as replacing their IDs with the anonymous principal
@@ -203,9 +220,13 @@ describe('Usage Metrics', () => {
       });
       const canister = extractOkResponse(canisterRes)[0]!;
 
-      // Advance time to Month 1 (June 2026)
+      const { month1, month2 } = futureMonths(
+        new Date(await driver.pic.getTime()),
+      );
+
+      // Advance to mid-Month-1 and record usage there.
       {
-        await driver.pic.setTime(new Date('2026-06-15T12:00:00Z'));
+        await driver.pic.setTime(month1);
         await driver.pic.tick();
         driver.actor.setIdentity(offchainIdentity);
         const upsertRes = await driver.actor.record_usage({
@@ -214,9 +235,9 @@ describe('Usage Metrics', () => {
         extractOkResponse(upsertRes);
       }
 
-      // Advance time to Month 2 (July 2026)
+      // Advance to mid-Month-2 and record usage there.
       {
-        await driver.pic.setTime(new Date('2026-07-15T12:00:00Z'));
+        await driver.pic.setTime(month2);
         await driver.pic.tick();
         driver.actor.setIdentity(offchainIdentity);
         const upsertRes = await driver.actor.record_usage({
@@ -226,27 +247,27 @@ describe('Usage Metrics', () => {
       }
 
       driver.actor.setIdentity(userIdentity);
-      const juneRes = await driver.actor.get_usage({
+      const month1Res = await driver.actor.get_usage({
         project_id: project.id,
-        billing_month: ['2026-06'],
+        billing_month: [billingMonth(month1)],
       });
-      const juneUsage = extractOkResponse(juneRes);
+      const month1Usage = extractOkResponse(month1Res);
 
-      const julyRes = await driver.actor.get_usage({
+      const month2Res = await driver.actor.get_usage({
         project_id: project.id,
-        billing_month: ['2026-07'],
+        billing_month: [billingMonth(month2)],
       });
-      const julyUsage = extractOkResponse(julyRes);
+      const month2Usage = extractOkResponse(month2Res);
 
-      expect(cleanUsage(juneUsage)).toMatchSnapshot(
-        'historical-usage-june-2026',
+      expect(cleanUsage(month1Usage)).toMatchSnapshot(
+        'historical-usage-month-1',
       );
-      expect(cleanUsage(julyUsage)).toMatchSnapshot(
-        'historical-usage-july-2026',
+      expect(cleanUsage(month2Usage)).toMatchSnapshot(
+        'historical-usage-month-2',
       );
     });
 
-    it('returns July-only usage when fed lifetime-cumulative counters across a month boundary', async () => {
+    it('returns second-month-only usage when fed lifetime-cumulative counters across a month boundary', async () => {
       driver.actor.setIdentity(userIdentity);
       const project = await driver.getDefaultProject();
       await driver.proposals.createCanister(userIdentity, project.id);
@@ -256,8 +277,11 @@ describe('Usage Metrics', () => {
       });
       const canister = extractOkResponse(canisterRes)[0]!;
 
-      // Lifetime burned_cycles at end of June: 1.5T (everything before July).
-      await driver.pic.setTime(new Date('2026-06-30T23:00:00Z'));
+      const { month2 } = futureMonths(new Date(await driver.pic.getTime()));
+      const endOfMonth1 = new Date(month2.getTime() - 60 * 60 * 1000);
+
+      // Lifetime burned_cycles at end of Month 1: 1.5T (everything before Month 2).
+      await driver.pic.setTime(endOfMonth1);
       await driver.pic.tick();
       driver.actor.setIdentity(offchainIdentity);
       extractOkResponse(
@@ -271,8 +295,8 @@ describe('Usage Metrics', () => {
         }),
       );
 
-      // Lifetime burned_cycles at start of July: only 500 cycles burned *in* July.
-      await driver.pic.setTime(new Date('2026-07-01T00:00:00Z'));
+      // Lifetime burned_cycles at start of Month 2: only 500 cycles burned *in* Month 2.
+      await driver.pic.setTime(month2);
       await driver.pic.tick();
       extractOkResponse(
         await driver.actor.record_usage({
@@ -286,17 +310,17 @@ describe('Usage Metrics', () => {
       );
 
       driver.actor.setIdentity(userIdentity);
-      const julyUsage = extractOkResponse(
+      const month2Usage = extractOkResponse(
         await driver.actor.get_usage({
           project_id: project.id,
-          billing_month: ['2026-07'],
+          billing_month: [billingMonth(month2)],
         }),
       );
 
-      // "Usage during July" should be 500 cycles. Currently returns 1.5T + 500
+      // Usage during Month 2 should be 500 cycles. Currently returns 1.5T + 500
       // because the backend stores cumulative-at-end-of-month instead of
-      // subtracting June's anchor.
-      expect(julyUsage.project.burned_cycles).toBe(500n);
+      // subtracting Month 1's anchor.
+      expect(month2Usage.project.burned_cycles).toBe(500n);
     });
   });
 });
