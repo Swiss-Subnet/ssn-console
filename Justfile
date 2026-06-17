@@ -172,6 +172,9 @@ build-backend:
 # Regenerate TS candid bindings from .did files
 bindings:
     cd src/backend-api && bun run build
+    cd src/canister-history-api && bun run build
+    cd src/cycles-monitor-api && bun run build
+    cd src/management-canister && bun run build
 
 # Run backend integration tests, rebuilding the wasm first; args scope vitest (e.g. canister, -t soft-delete)
 test-backend *args: build-backend

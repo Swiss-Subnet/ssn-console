@@ -44,7 +44,7 @@ func (p *Pusher) Push(ctx context.Context, rm *mpb.ResourceMetrics) error {
 	if err != nil {
 		return fmt.Errorf("post metrics: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		b, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("alloy rejected payload: %d - %s", resp.StatusCode, b)
