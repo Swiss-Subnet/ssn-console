@@ -53,6 +53,7 @@ func run() error {
 		Client:      client,
 		Pusher:      otlp.NewPusher(cfg.MetricsEndpoint, &http.Client{Timeout: 30 * time.Second}),
 		Environment: cfg.GrafanaEnvironment,
+		StateDir:    cfg.StateDir,
 	})
 }
 

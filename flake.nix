@@ -169,24 +169,25 @@
         # version, so this is what pins pocket-ic (icp-cli ships no pocket-ic).
         # icp finds it via ICP_CLI_NETWORK_LAUNCHER_PATH (set in shellHook), and
         # the launcher expects pocket-ic as a sibling, so both land in $out/bin.
-        launcherVersion = "14.0.0-2026-06-04-04-52";
+        # SSN fork: adds local-network support for cycles-monitor's canister_metrics.
+        launcherVersion = "14.0.0-2026-06-12-04-52.ssn1";
         icp-cli-network-launcher = let
           platformMap = {
             "x86_64-linux" = {
               asset = "x86_64-linux";
-              hash = "sha256-sQxsHiYaJWhxwtFXUVX55nr6zyO3HCMdisUCM8k4fos=";
+              hash = "sha256-gk3JCo/m+IZJ4bog6LNrUBpznG/s31sksXzc9x+5ssk=";
             };
             "aarch64-linux" = {
               asset = "arm64-linux";
-              hash = "sha256-2FFtXIwM+Q8oGziXkM+k2RyHX4tzDL3YcUC4eMBv1YA=";
+              hash = "sha256-PViQIJbRS1A6Uar4CWtgfHuZlaIMNkOfL3dYdw+wUhA=";
             };
             "x86_64-darwin" = {
               asset = "x86_64-darwin";
-              hash = "sha256-ECFMpfwsZlJDZl5Dj15qDvm9DCGdj7292ayx9TpTlJ0=";
+              hash = "sha256-rS1yc3sxLwOrA60Q/ixmayekHhwV4bbQcij14JmqXyQ=";
             };
             "aarch64-darwin" = {
               asset = "arm64-darwin";
-              hash = "sha256-UK/5iC3YmBQer7U/31OC76DGbx3210RpU0332Xp5RZs=";
+              hash = "sha256-me9nwOjGCnsneWXBP8MIWYMHtzyWOfjvL2HZQO7MlQo=";
             };
           };
           platformInfo = platformMap.${system};
@@ -196,7 +197,7 @@
             pname = "icp-cli-network-launcher";
             version = launcherVersion;
             src = pkgs.fetchurl {
-              url = "https://github.com/dfinity/icp-cli-network-launcher/releases/download/v${launcherVersion}/${archive}.tar.gz";
+              url = "https://github.com/Swiss-Subnet/icp-cli-network-launcher/releases/download/v${launcherVersion}/${archive}.tar.gz";
               hash = platformInfo.hash;
             };
             sourceRoot = archive;
@@ -207,7 +208,7 @@
             '';
           };
         versions = pkgs.writeShellScriptBin "versions" ''
-          echo "SSN Console: rust ${rustToolchain.version or "$(rustc --version)"} | bun ${pkgs.bun.version} | node ${pkgs.nodejs_22.version} | dfx ${dfxVersion} | icp-cli ${icpCliVersion} | pocket-ic ${launcherVersion} | candid-extractor ${candidExtractorVersion} | ic-wasm ${icWasmVersion} | ssl ${pkgs.openssl.version} | just ${pkgs.just.version} | canbench ${canbenchVersion} | go ${pkgs.go.version} | jq ${pkgs.jq.version} | gettext ${pkgs.gettext.version} | podman ${pkgs.podman.version} | golangci-lint ${pkgs.golangci-lint.version} | actionlint ${pkgs.actionlint.version} | shellcheck ${pkgs.shellcheck.version}"
+          echo "SSN Console: rust ${rustToolchain.version or "$(rustc --version)"} | bun ${pkgs.bun.version} | node ${pkgs.nodejs_22.version} | dfx ${dfxVersion} | icp-cli ${icpCliVersion} | pocket-ic ${launcherVersion} | candid-extractor ${candidExtractorVersion} | ic-wasm ${icWasmVersion} | ssl ${pkgs.openssl.version} | just ${pkgs.just.version} | canbench ${canbenchVersion} | go ${pkgs.go.version} | jq ${pkgs.jq.version} | gettext ${pkgs.gettext.version} | podman ${pkgs.podman.version} | podman-compose ${pkgs.podman-compose.version} | golangci-lint ${pkgs.golangci-lint.version} | actionlint ${pkgs.actionlint.version} | shellcheck ${pkgs.shellcheck.version}"
         '';
       in {
         devShells.default = pkgs.mkShell {
@@ -229,6 +230,7 @@
             pkgs.jq
             pkgs.gettext
             pkgs.podman
+            pkgs.podman-compose
             pkgs.golangci-lint
             pkgs.actionlint
             pkgs.shellcheck
@@ -236,6 +238,27 @@
 
           shellHook = ''
             export ICP_CLI_NETWORK_LAUNCHER_PATH="${icp-cli-network-launcher}/bin/icp-cli-network-launcher"
+
+            # Image-mode networks run via podman. icp-cli speaks the Docker API,
+            # so point it at the podman machine's gvproxy socket. And icp mounts
+            # its status dir from TMPDIR -- nix's TMPDIR (/tmp/nix-shell-*) is not
+            # shared into the podman VM, so move TMPDIR under $HOME, which is.
+            if podman machine inspect >/dev/null 2>&1; then
+              _ssn_podman_sock="$(lsof -U 2>/dev/null | grep -oE '/[^ ]*/podman/podman-machine-default-api.sock' | head -1)"
+              [ -S "''${_ssn_podman_sock:-}" ] && export DOCKER_HOST="unix://$_ssn_podman_sock"
+              export TMPDIR="$HOME/.ssn/tmp"
+              mkdir -p "$TMPDIR"
+            fi
+
+            # Prompt: path relative to repo root.
+            _ssn_relpwd() {
+              local root name
+              root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "\w"; return; }
+              name="$(basename "$root")"
+              if [ "$PWD" = "$root" ]; then echo "$name";
+              else echo "$name''${PWD#$root}"; fi
+            }
+            export PROMPT_COMMAND='PS1="(ssn) $(_ssn_relpwd) \$ "'
             if [ -t 1 ]; then
               versions
             fi

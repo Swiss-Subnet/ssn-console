@@ -18,9 +18,15 @@ tsconfig.tsbuildinfo
 # environment variables
 .env*
 !.env.example
+# Committed: ships the public RFC 8032 test-vector keys + local defaults. Safe
+# to track precisely because it contains no real secrets. `cp` it to .env.local.
+!.env.local.example
 
 # local dev keys
 .local
+
+# backgrounded local service pids + logs (just local-up)
+local/run
 
 # local mirror of the Outline "Process & Use-Case Library" collection (scripts/outline.ts export) - never publish
 docs/process-library

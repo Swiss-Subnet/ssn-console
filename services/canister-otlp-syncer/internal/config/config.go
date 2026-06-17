@@ -12,6 +12,7 @@ type Config struct {
 	PrivateKeyPEM           string
 	MetricsEndpoint         string
 	GrafanaEnvironment      string
+	StateDir                string
 }
 
 func Load() (*Config, error) {
@@ -43,6 +44,8 @@ func Load() (*Config, error) {
 		PrivateKeyPEM:           privateKey,
 		MetricsEndpoint:         otlpEndpoint + "/v1/metrics",
 		GrafanaEnvironment:      os.Getenv("GRAFANA_ENVIRONMENT"),
+		// Cursor persistence dir; the prod quadlet mounts /data.
+		StateDir:                optional("STATE_DIR", "/data"),
 	}, nil
 }
 
@@ -52,4 +55,11 @@ func required(name string) (string, error) {
 		return "", fmt.Errorf("missing required environment variable: %s", name)
 	}
 	return v, nil
+}
+
+func optional(name, def string) string {
+	if v := os.Getenv(name); v != "" {
+		return v
+	}
+	return def
 }

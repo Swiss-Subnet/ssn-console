@@ -71,7 +71,7 @@ func Load() (*Config, error) {
 		}
 	}
 
-	backendCanister, err := required("BACKEND_CANISTER_ID")
+	backendCanister, err := required("CANISTER_ID_BACKEND")
 	if err != nil {
 		return nil, err
 	}

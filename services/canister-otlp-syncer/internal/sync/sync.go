@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -14,12 +15,13 @@ import (
 	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/otlp"
 )
 
-const timestampFile = "/data/.last-cycles-monitor-timestamp"
+const timestampFileName = ".last-cycles-monitor-timestamp"
 
 type Deps struct {
 	Client      *canister.Client
 	Pusher      *otlp.Pusher
 	Environment string
+	StateDir    string
 	Now         func() time.Time
 }
 
@@ -28,8 +30,9 @@ func Run(ctx context.Context, d Deps) error {
 	if now == nil {
 		now = time.Now
 	}
+	timestampFile := filepath.Join(d.StateDir, timestampFileName)
 
-	start := readStartTimestamp(now)
+	start := readStartTimestamp(timestampFile, now)
 	// Cursor is exclusive; min principal pages from the start of that timestamp.
 	cursor := &canister.Cursor{TimestampNS: start, CanisterID: minPrincipal()}
 
@@ -63,7 +66,7 @@ func Run(ctx context.Context, d Deps) error {
 			break
 		}
 		cursor = next
-		writeTimestamp(next.TimestampNS)
+		writeTimestamp(timestampFile, next.TimestampNS)
 	}
 
 	if total == 0 {
@@ -83,8 +86,8 @@ func Run(ctx context.Context, d Deps) error {
 	return d.Client.RecordUsage(ctx, usages)
 }
 
-func readStartTimestamp(now func() time.Time) uint64 {
-	b, err := os.ReadFile(timestampFile)
+func readStartTimestamp(path string, now func() time.Time) uint64 {
+	b, err := os.ReadFile(path)
 	if err == nil {
 		if v, perr := strconv.ParseUint(strings.TrimSpace(string(b)), 10, 64); perr == nil {
 			return v
@@ -93,8 +96,8 @@ func readStartTimestamp(now func() time.Time) uint64 {
 	return uint64(now().Add(-time.Hour).UnixNano())
 }
 
-func writeTimestamp(ns uint64) {
-	if err := os.WriteFile(timestampFile, []byte(strconv.FormatUint(ns, 10)), 0o644); err != nil {
+func writeTimestamp(path string, ns uint64) {
+	if err := os.WriteFile(path, []byte(strconv.FormatUint(ns, 10)), 0o644); err != nil {
 		log.Printf("warning: persist cursor timestamp: %v", err)
 	}
 }
