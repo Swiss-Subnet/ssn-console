@@ -2,6 +2,9 @@ import { DelegationIdentity } from '@icp-sdk/core/identity';
 import type { Identity } from '@icp-sdk/core/agent';
 import z from 'zod';
 
+// Mirrors metrics-proxy's apiPrefix; the path is signed into the iiauth challenge.
+const API_PREFIX = '/v0/metrics';
+
 export type MetricSlug =
   | 'memory-bytes'
   | 'compute-time-seconds'
@@ -80,7 +83,7 @@ export class MetricsProxyApi {
       to: args.to.toISOString(),
       step: args.step,
     });
-    const path = `/v1/canisters/${encodeURIComponent(args.canisterId)}/metrics/${encodeURIComponent(args.metric)}`;
+    const path = `${API_PREFIX}/canisters/${encodeURIComponent(args.canisterId)}/metrics/${encodeURIComponent(args.metric)}`;
     const url = `${this.rootUrl}${path}?${params.toString()}`;
 
     const token = await this.getSessionToken(args.identity);
@@ -127,7 +130,7 @@ export class MetricsProxyApi {
         `metrics-proxy: expected DelegationIdentity, got ${identity.constructor.name}; user must be logged in via II with an Ed25519 session key`,
       );
     }
-    const path = '/v1/session';
+    const path = `${API_PREFIX}/session`;
     const url = `${this.rootUrl}${path}`;
     const timestampMillis = Date.now();
     const delegation = identity.getDelegation();

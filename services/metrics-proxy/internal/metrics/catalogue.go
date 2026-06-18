@@ -8,7 +8,7 @@ package metrics
 // the proxy builds the query with canister_id="..." as the only variable
 // label. Extending the catalogue is the only way to expose a new metric.
 type Metric struct {
-	Slug        string // URL path component: /v1/canisters/{id}/metrics/{slug}
+	Slug        string // URL path component: /v0/metrics/canisters/{id}/metrics/{slug}
 	Series      string // Prometheus metric name emitted by the syncer
 	Unit        string
 	Description string

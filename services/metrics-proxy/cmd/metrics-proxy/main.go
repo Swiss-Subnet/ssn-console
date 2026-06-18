@@ -54,7 +54,7 @@ func run() error {
 		return err
 	}
 
-	id, err := backend.LoadIdentity(cfg.ProxyIdentityPEMPath, cfg.ICHost)
+	id, err := backend.LoadIdentity(cfg.ProxyIdentityPEM, cfg.ICHost)
 	if err != nil {
 		return err
 	}
@@ -91,9 +91,9 @@ func run() error {
 	srv := &http.Server{
 		Addr: "0.0.0.0:" + strconv.Itoa(cfg.Port),
 		Handler: server.New(server.Deps{
-			Querier:     querier,
-			FrontendURL: cfg.FrontendURL,
-			Authorizer:  bc,
+			Querier:        querier,
+			AllowedOrigins: cfg.AllowedOrigins,
+			Authorizer:     bc,
 			IIAuth: iiauth.Config{
 				IICanisterID:  iiCanisterID,
 				RootPublicKey: rootKey,

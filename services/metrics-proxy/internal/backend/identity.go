@@ -3,7 +3,6 @@ package backend
 import (
 	"crypto/ed25519"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/aviate-labs/agent-go/identity"
@@ -21,19 +20,15 @@ var (
 	rfc8032Test1Seed = mustHex("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")
 )
 
-// LoadIdentity returns the identity to authenticate the proxy as. If
-// pemPath is non-empty, the PEM at that path is loaded. Otherwise the
-// RFC 8032 test vector is used — but only when ICHost looks like a local
-// replica; pointing the proxy at mainnet without a real PEM is rejected.
-func LoadIdentity(pemPath, icHost string) (*identity.Ed25519Identity, error) {
-	if pemPath != "" {
-		pem, err := os.ReadFile(pemPath)
+// LoadIdentity returns the identity to authenticate the proxy as. If pem is
+// non-empty, that PEM-encoded keypair is used. Otherwise the RFC 8032 test
+// vector is used — but only when ICHost looks like a local replica; pointing
+// the proxy at mainnet without a real PEM is rejected.
+func LoadIdentity(pem, icHost string) (*identity.Ed25519Identity, error) {
+	if strings.TrimSpace(pem) != "" {
+		id, err := identity.NewEd25519IdentityFromPEM([]byte(pem))
 		if err != nil {
-			return nil, fmt.Errorf("read pem %s: %w", pemPath, err)
-		}
-		id, err := identity.NewEd25519IdentityFromPEM(pem)
-		if err != nil {
-			return nil, fmt.Errorf("parse pem %s: %w", pemPath, err)
+			return nil, fmt.Errorf("parse PROXY_IDENTITY_PEM: %w", err)
 		}
 		return id, nil
 	}

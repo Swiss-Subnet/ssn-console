@@ -15,14 +15,23 @@ render ENV_FILE:
     CONFIG_DIR="${ROOT_DIR}/config"
     DIST="${ROOT_DIR}/dist"
 
-    # Image tag = source revision, so unchanged code yields the same tag and the
-    # deploy skips re-shipping. A dirty working tree gets a -dirty suffix and a warning.
+    # The host is x86_64; build for it explicitly so a render on an arm64 dev
+    # machine (Apple Silicon) still produces images that run on the VPS. Go
+    # cross-compiles cleanly under CGO_ENABLED=0.
+    TARGET_PLATFORM="${TARGET_PLATFORM:-linux/amd64}"
+    TARGET_ARCH="${TARGET_PLATFORM##*/}"
+
+    # Image tag = source revision + arch, so unchanged code yields the same tag
+    # and the deploy skips re-shipping. The arch suffix means an image built for
+    # a different arch is a DIFFERENT ref, so the deploy's "ref exists -> skip"
+    # can never leave a wrong-arch image in place. A dirty tree adds -dirty.
     IMAGE_TAG=$(git rev-parse --short HEAD)
     if [ -n "$(git status --porcelain)" ]; then
       IMAGE_TAG="${IMAGE_TAG}-dirty"
-      echo "WARNING: working tree has uncommitted changes; tagging images ${IMAGE_TAG}." >&2
+      echo "WARNING: working tree has uncommitted changes; tagging images ${IMAGE_TAG}-${TARGET_ARCH}." >&2
       echo "         A -dirty build is not reproducible from a commit; commit before a real deploy." >&2
     fi
+    IMAGE_TAG="${IMAGE_TAG}-${TARGET_ARCH}"
     export IMAGE_TAG
 
     rm -rf "${DIST}"
@@ -32,6 +41,14 @@ render ENV_FILE:
     export CADDY_IMAGE_NAMESPACE=localhost CADDY_IMAGE_NAME=caddy CADDY_SERVICE_NAME=caddy
     export AUTH_SERVICE_IMAGE_NAMESPACE=localhost AUTH_SERVICE_IMAGE_NAME=auth-service AUTH_SERVICE_SERVICE_NAME=auth-service
     export CANISTER_OTLP_SYNCER_IMAGE_NAMESPACE=localhost CANISTER_OTLP_SYNCER_IMAGE_NAME=canister-otlp-syncer CANISTER_OTLP_SYNCER_SERVICE_NAME=canister-otlp-syncer
+    export METRICS_PROXY_IMAGE_NAMESPACE=localhost METRICS_PROXY_IMAGE_NAME=metrics-proxy METRICS_PROXY_SERVICE_NAME=metrics-proxy
+    export PAYMENTS_SERVICE_IMAGE_NAMESPACE=localhost PAYMENTS_SERVICE_IMAGE_NAME=payments-service PAYMENTS_SERVICE_SERVICE_NAME=payments-service
+
+    # metrics-proxy expects GRAFANA_URL/USERNAME/PASSWORD; map them from the
+    # env file's hosted-metrics names (the .env files are not touched here).
+    export GRAFANA_URL="${GRAFANA_HOSTED_METRICS_URL}"
+    export GRAFANA_USERNAME="${GRAFANA_HOSTED_METRICS_ID}"
+    export GRAFANA_PASSWORD="${GRAFANA_RW_API_KEY}"
 
     # Remote paths the rendered quadlets/Caddyfile bake in (must match ansible console-deploy vars).
     export REMOTE_CADDYFILE_PATH="/home/${REMOTE_USER}/.config/containers/volumes/caddy/Caddyfile"
@@ -42,13 +59,17 @@ render ENV_FILE:
     export CANISTER_ID_BACKEND=$(jq -er ".[\"backend\"].${DFX_NETWORK}" canister_ids.json)
     export CANISTER_ID_CYCLES_MONITOR=$(jq -er ".[\"cycles-monitor\"].${DFX_NETWORK}" canister_ids.json)
 
-    echo "Building images (tag ${IMAGE_TAG})..."
-    podman build -t "localhost/caddy:${IMAGE_TAG}"                -f "${CONFIG_DIR}/caddy.containerfile" "${ROOT_DIR}"
+    echo "Building images (tag ${IMAGE_TAG}, platform ${TARGET_PLATFORM})..."
+    podman build --platform "${TARGET_PLATFORM}" -t "localhost/caddy:${IMAGE_TAG}"                -f "${CONFIG_DIR}/caddy.containerfile" "${ROOT_DIR}"
     podman save  "localhost/caddy:${IMAGE_TAG}"                   > "${DIST}/images/caddy.tar"
-    podman build -t "localhost/auth-service:${IMAGE_TAG}"         -f "${CONFIG_DIR}/auth-service.containerfile" "${ROOT_DIR}/services"
+    podman build --platform "${TARGET_PLATFORM}" -t "localhost/auth-service:${IMAGE_TAG}"         -f "${CONFIG_DIR}/auth-service.containerfile" "${ROOT_DIR}/services"
     podman save  "localhost/auth-service:${IMAGE_TAG}"            > "${DIST}/images/auth-service.tar"
-    podman build -t "localhost/canister-otlp-syncer:${IMAGE_TAG}" -f "${CONFIG_DIR}/canister-otlp-syncer.containerfile" "${ROOT_DIR}/services"
+    podman build --platform "${TARGET_PLATFORM}" -t "localhost/canister-otlp-syncer:${IMAGE_TAG}" -f "${CONFIG_DIR}/canister-otlp-syncer.containerfile" "${ROOT_DIR}/services"
     podman save  "localhost/canister-otlp-syncer:${IMAGE_TAG}"    > "${DIST}/images/canister-otlp-syncer.tar"
+    podman build --platform "${TARGET_PLATFORM}" -t "localhost/metrics-proxy:${IMAGE_TAG}"        -f "${CONFIG_DIR}/metrics-proxy.containerfile" "${ROOT_DIR}/services"
+    podman save  "localhost/metrics-proxy:${IMAGE_TAG}"           > "${DIST}/images/metrics-proxy.tar"
+    podman build --platform "${TARGET_PLATFORM}" -t "localhost/payments-service:${IMAGE_TAG}"     -f "${CONFIG_DIR}/payments-service.containerfile" "${ROOT_DIR}/services"
+    podman save  "localhost/payments-service:${IMAGE_TAG}"        > "${DIST}/images/payments-service.tar"
 
     echo "Rendering config..."
     for f in "${CONFIG_DIR}/quadlets"/*; do strict_envsubst "$f" "${DIST}/quadlets/$(basename "$f")"; done
@@ -66,6 +87,8 @@ render ENV_FILE:
       printf '  - { tar: caddy.tar, ref: "localhost/caddy:%s" }\n' "${IMAGE_TAG}"
       printf '  - { tar: auth-service.tar, ref: "localhost/auth-service:%s" }\n' "${IMAGE_TAG}"
       printf '  - { tar: canister-otlp-syncer.tar, ref: "localhost/canister-otlp-syncer:%s" }\n' "${IMAGE_TAG}"
+      printf '  - { tar: metrics-proxy.tar, ref: "localhost/metrics-proxy:%s" }\n' "${IMAGE_TAG}"
+      printf '  - { tar: payments-service.tar, ref: "localhost/payments-service:%s" }\n' "${IMAGE_TAG}"
     } > "${DIST}/deploy-vars.yml"
 
     echo "Rendered -> ${DIST}"

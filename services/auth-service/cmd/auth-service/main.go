@@ -63,10 +63,11 @@ func run() error {
 	})
 
 	authServer := server.New(server.Deps{
-		Signer:      signer,
-		Mailer:      mailService,
-		FrontendURL: cfg.FrontendURL,
-		SMTPFrom:    cfg.SMTPFrom,
+		Signer:         signer,
+		Mailer:         mailService,
+		FrontendURL:    cfg.FrontendURL,
+		AllowedOrigins: cfg.AllowedOrigins,
+		SMTPFrom:       cfg.SMTPFrom,
 	})
 
 	srv := &http.Server{

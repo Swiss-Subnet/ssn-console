@@ -7,10 +7,25 @@ import (
 	"strings"
 )
 
+// NormalizeOrigin strips surrounding space and a trailing slash so a config
+// value still matches a browser Origin header (which never has one).
+func NormalizeOrigin(o string) string {
+	return strings.TrimRight(strings.TrimSpace(o), "/")
+}
+
+func originAllowed(origin string, allowed []string) bool {
+	for _, a := range allowed {
+		if origin == a {
+			return true
+		}
+	}
+	return false
+}
+
 // WithCORS wraps next so that:
 //   - requests with no Origin header (curl, server-to-server) pass through;
-//   - requests whose Origin matches allowedOrigin pass through and get the
-//     usual Access-Control-Allow-Origin response header;
+//   - requests whose Origin is in allowedOrigins pass through and get the
+//     matching Access-Control-Allow-Origin response header;
 //   - cross-origin requests from any other Origin are rejected with 403
 //     before the handler runs.
 //
@@ -18,16 +33,16 @@ import (
 // it matches, otherwise no-op" middleware lets the browser block the
 // response but still runs the handler, which leaks side effects (rate
 // limiter ticks, upstream queries, audit logs) to attackers picking any
-// origin.
-func WithCORS(next http.Handler, allowedOrigin string) http.Handler {
+// origin. allowedOrigins must already be normalized (see NormalizeOrigin).
+func WithCORS(next http.Handler, allowedOrigins []string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if origin != "" && origin != allowedOrigin {
+		if origin != "" && !originAllowed(origin, allowedOrigins) {
 			http.Error(w, "origin not allowed", http.StatusForbidden)
 			return
 		}
-		if origin == allowedOrigin {
-			w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+		if origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 		}
 		next.ServeHTTP(w, r)
@@ -36,7 +51,7 @@ func WithCORS(next http.Handler, allowedOrigin string) http.Handler {
 
 // PreflightOpts configures the Preflight handler.
 type PreflightOpts struct {
-	AllowedOrigin  string
+	AllowedOrigins []string
 	Methods        []string
 	AllowedHeaders []string
 }
@@ -49,11 +64,12 @@ func Preflight(opts PreflightOpts) http.HandlerFunc {
 	headers := append([]string{"Content-Type"}, opts.AllowedHeaders...)
 	allowHeaders := strings.Join(headers, ", ")
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Origin") != opts.AllowedOrigin {
+		origin := r.Header.Get("Origin")
+		if !originAllowed(origin, opts.AllowedOrigins) {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
-		w.Header().Set("Access-Control-Allow-Origin", opts.AllowedOrigin)
+		w.Header().Set("Access-Control-Allow-Origin", origin)
 		w.Header().Set("Access-Control-Allow-Methods", allowMethods)
 		w.Header().Set("Access-Control-Allow-Headers", allowHeaders)
 		w.Header().Set("Access-Control-Max-Age", "600")

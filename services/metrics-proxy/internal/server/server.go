@@ -20,6 +20,11 @@ const (
 	defaultStep = time.Minute
 	maxStep     = 24 * time.Hour
 	maxRange    = 31 * 24 * time.Hour
+
+	// APIPrefix is this service's API contract; Caddy and the frontend use the
+	// same literal. The request path is signed into the iiauth challenge, so all
+	// three must agree.
+	APIPrefix = "/v0/metrics"
 )
 
 // Authorizer answers "which canister principals may user U read metrics
@@ -30,12 +35,12 @@ type Authorizer interface {
 }
 
 type Deps struct {
-	Querier      grafana.Querier
-	FrontendURL  string
-	Authorizer   Authorizer
-	IIAuth       iiauth.Config
-	AuthCacheTTL time.Duration // per-principal authz reuse; defaults to 60s
-	SessionTTL   time.Duration // session-token lifetime; defaults to 15min
+	Querier        grafana.Querier
+	AllowedOrigins []string
+	Authorizer     Authorizer
+	IIAuth         iiauth.Config
+	AuthCacheTTL   time.Duration // per-principal authz reuse; defaults to 60s
+	SessionTTL     time.Duration // session-token lifetime; defaults to 15min
 }
 
 type Server struct {
@@ -59,22 +64,22 @@ func New(deps Deps) *Server {
 	sessions := iiauth.NewSessionStore(sessionTTL, deps.IIAuth.Now)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /status", handleStatus)
-	mux.Handle("POST /v1/session", iiauth.Middleware(deps.IIAuth, handleMintSession(sessions)))
-	mux.HandleFunc("OPTIONS /v1/session", httpsvc.Preflight(httpsvc.PreflightOpts{
-		AllowedOrigin:  deps.FrontendURL,
+	mux.HandleFunc("GET "+APIPrefix+"/status", handleStatus)
+	mux.Handle("POST "+APIPrefix+"/session", iiauth.Middleware(deps.IIAuth, handleMintSession(sessions)))
+	mux.HandleFunc("OPTIONS "+APIPrefix+"/session", httpsvc.Preflight(httpsvc.PreflightOpts{
+		AllowedOrigins: deps.AllowedOrigins,
 		Methods:        []string{http.MethodPost},
 		AllowedHeaders: []string{iiauth.HeaderDelegation, iiauth.HeaderSignature, iiauth.HeaderTimestamp},
 	}))
-	mux.Handle("GET /v1/metrics", iiauth.SessionMiddleware(sessions, http.HandlerFunc(handleListMetrics)))
-	mux.Handle("GET /v1/canisters/{id}/metrics/{slug}", iiauth.SessionMiddleware(sessions, handleQueryRange(deps, cache)))
-	mux.HandleFunc("OPTIONS /v1/canisters/{id}/metrics/{slug}", httpsvc.Preflight(httpsvc.PreflightOpts{
-		AllowedOrigin:  deps.FrontendURL,
+	mux.Handle("GET "+APIPrefix+"/list", iiauth.SessionMiddleware(sessions, http.HandlerFunc(handleListMetrics)))
+	mux.Handle("GET "+APIPrefix+"/canisters/{id}/metrics/{slug}", iiauth.SessionMiddleware(sessions, handleQueryRange(deps, cache)))
+	mux.HandleFunc("OPTIONS "+APIPrefix+"/canisters/{id}/metrics/{slug}", httpsvc.Preflight(httpsvc.PreflightOpts{
+		AllowedOrigins: deps.AllowedOrigins,
 		Methods:        []string{http.MethodGet},
 		AllowedHeaders: []string{"Authorization"},
 	}))
 
-	return &Server{handler: httpsvc.WithCORS(mux, deps.FrontendURL)}
+	return &Server{handler: httpsvc.WithCORS(mux, deps.AllowedOrigins)}
 }
 
 type mintSessionResponse struct {

@@ -84,7 +84,7 @@ func (f *fixture) drain(t *testing.T) {
 
 func TestStatus_OK(t *testing.T) {
 	f := newFixture(t)
-	req := httptest.NewRequest(http.MethodGet, "/status", nil)
+	req := httptest.NewRequest(http.MethodGet, server.APIPrefix+"/status", nil)
 	rr := httptest.NewRecorder()
 	f.srv.ServeHTTP(rr, req)
 
@@ -101,7 +101,7 @@ func TestEmailVerification_HappyPath(t *testing.T) {
 	f := newFixture(t)
 	const email = "test@example.com"
 
-	rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{"email": email})
+	rr := f.post(t, server.APIPrefix+"/email-verification", map[string]string{"email": email})
 	if rr.Code != http.StatusAccepted {
 		t.Fatalf("status: got %d want 202", rr.Code)
 	}
@@ -163,7 +163,7 @@ func TestAccountRecovery_HappyPath(t *testing.T) {
 	f := newFixture(t)
 	const email = "test@example.com"
 
-	rr := f.post(t, "/v1.0/auth/account-recovery", map[string]string{"email": email})
+	rr := f.post(t, server.APIPrefix+"/account-recovery", map[string]string{"email": email})
 	if rr.Code != http.StatusAccepted {
 		t.Fatalf("status: got %d want 202", rr.Code)
 	}
@@ -220,11 +220,11 @@ func TestThrottleIsPerPurpose(t *testing.T) {
 	f := newFixture(t)
 	const email = "test@example.com"
 
-	rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{"email": email})
+	rr := f.post(t, server.APIPrefix+"/email-verification", map[string]string{"email": email})
 	if rr.Code != http.StatusAccepted {
 		t.Fatalf("verify status: got %d want 202", rr.Code)
 	}
-	rr = f.post(t, "/v1.0/auth/account-recovery", map[string]string{"email": email})
+	rr = f.post(t, server.APIPrefix+"/account-recovery", map[string]string{"email": email})
 	if rr.Code != http.StatusAccepted {
 		t.Fatalf("recover status: got %d want 202", rr.Code)
 	}
@@ -257,7 +257,7 @@ func TestThrottleIsPerPurpose(t *testing.T) {
 // valid/invalid/throttled apart. The check is that no mail goes out.
 func TestEmailVerification_InvalidEmail(t *testing.T) {
 	f := newFixture(t)
-	rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{"email": "invalid-email"})
+	rr := f.post(t, server.APIPrefix+"/email-verification", map[string]string{"email": "invalid-email"})
 	if rr.Code != http.StatusAccepted {
 		t.Fatalf("status: got %d want 202", rr.Code)
 	}
@@ -269,7 +269,7 @@ func TestEmailVerification_InvalidEmail(t *testing.T) {
 
 func TestEmailVerification_MissingEmail(t *testing.T) {
 	f := newFixture(t)
-	rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{})
+	rr := f.post(t, server.APIPrefix+"/email-verification", map[string]string{})
 	if rr.Code != http.StatusAccepted {
 		t.Fatalf("status: got %d want 202", rr.Code)
 	}
@@ -286,7 +286,7 @@ func TestEmailVerification_ThrottlesRepeatAddress(t *testing.T) {
 	const email = "test@example.com"
 
 	for i := range 2 {
-		rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{"email": email})
+		rr := f.post(t, server.APIPrefix+"/email-verification", map[string]string{"email": email})
 		if rr.Code != http.StatusAccepted {
 			t.Fatalf("req %d: got %d want 202", i, rr.Code)
 		}
@@ -304,7 +304,7 @@ func TestEmailVerification_ThrottlesRepeatAddress(t *testing.T) {
 func TestEmailVerification_MailerFailureStillReturns202(t *testing.T) {
 	f := newFixture(t)
 	f.mailer.Err = errors.New("smtp down")
-	rr := f.post(t, "/v1.0/auth/email-verification", map[string]string{"email": "test@example.com"})
+	rr := f.post(t, server.APIPrefix+"/email-verification", map[string]string{"email": "test@example.com"})
 	if rr.Code != http.StatusAccepted {
 		t.Fatalf("status: got %d want 202", rr.Code)
 	}
