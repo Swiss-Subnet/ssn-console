@@ -2,6 +2,7 @@ go 1.25.5
 
 use (
 	./auth-service
+	./canister-otlp-syncer
 	./httpsvc
 	./metrics-proxy
 	./payments-service

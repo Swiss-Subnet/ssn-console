@@ -1,0 +1,7 @@
+# Local-dev Prometheus: only receives remote-write from Alloy. No scrape jobs.
+global:
+  scrape_interval: 15s
+
+storage:
+  tsdb:
+    out_of_order_time_window: 30m

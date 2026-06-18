@@ -9,7 +9,7 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 if [ ! -f .env.local ]; then
-  echo "set-canister-env: .env.local not found; PUBLIC_KEY is required. Aborting." >&2
+  echo "set-canister-env: .env.local not found (cp .env.local.example .env.local). Aborting." >&2
   exit 1
 fi
 

@@ -7,6 +7,11 @@ cd "$ROOT_DIR"
 
 CANISTERS=(backend canister-history cycles-monitor)
 
+# The backend reads DFX_NETWORK via dotenv! at compile time, so .env must exist
+# before `icp build`. Seed it; the full version (with canister ids) is written
+# after install below.
+echo "DFX_NETWORK='local'" > .env
+
 echo
 echo "Stopping any running local network..."
 icp network stop || true
@@ -22,6 +27,17 @@ echo "Creating canisters..."
 for c in "${CANISTERS[@]}"; do
   icp canister create "$c" -e local
 done
+
+# The rental subnet admin in icp.yaml is hardcoded (set at network start, before
+# canisters exist). Fail loudly if the real cycles-monitor id drifts from it,
+# else canister_metrics is silently unauthorized and no snapshots are stored.
+CM_ID="$(icp canister status cycles-monitor -e local --id-only)"
+RENTAL_ADMIN="$(grep -oE 'application:rental=[a-z0-9-]+' icp.yaml | cut -d= -f2)"
+if [ "$CM_ID" != "$RENTAL_ADMIN" ]; then
+  echo "init-local: cycles-monitor id ($CM_ID) != rental admin in icp.yaml ($RENTAL_ADMIN)." >&2
+  echo "            Update the --subnet=application:rental= principal in icp.yaml." >&2
+  exit 1
+fi
 
 echo
 echo "Building canisters..."
@@ -57,6 +73,17 @@ EOF
 echo
 echo "Triggering canister-history sync..."
 icp canister call canister-history trigger_sync_canister_histories '(record {})' -e local
+
+echo
+echo "Waiting for canister-history to populate, then triggering cycles-monitor sync..."
+# The history sync is async; cycles-monitor's metrics walk needs it populated.
+for _ in $(seq 1 20); do
+  if icp canister call canister-history list_subnet_canister_ids '(record {})' -e local 2>/dev/null | grep -q principal; then
+    break
+  fi
+  sleep 1
+done
+icp canister call cycles-monitor trigger_sync_metrics '(record {})' -e local
 
 echo
 echo "Local environment ready."

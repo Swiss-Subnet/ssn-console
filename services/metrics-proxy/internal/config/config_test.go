@@ -4,7 +4,7 @@ import "testing"
 
 func TestLoad_RejectsGrafanaURLWithoutCredentials(t *testing.T) {
 	t.Setenv("FRONTEND_URL", "http://localhost:4200")
-	t.Setenv("BACKEND_CANISTER_ID", "aaaaa-aa")
+	t.Setenv("CANISTER_ID_BACKEND", "aaaaa-aa")
 	t.Setenv("GRAFANA_URL", "https://example.grafana.net/api/prom")
 	t.Setenv("GRAFANA_USERNAME", "")
 	t.Setenv("GRAFANA_PASSWORD", "")
@@ -15,7 +15,7 @@ func TestLoad_RejectsGrafanaURLWithoutCredentials(t *testing.T) {
 
 func TestLoad_FakeWhenGrafanaURLEmpty(t *testing.T) {
 	t.Setenv("FRONTEND_URL", "http://localhost:4200")
-	t.Setenv("BACKEND_CANISTER_ID", "aaaaa-aa")
+	t.Setenv("CANISTER_ID_BACKEND", "aaaaa-aa")
 	t.Setenv("GRAFANA_URL", "")
 	cfg, err := Load()
 	if err != nil {
@@ -29,13 +29,13 @@ func TestLoad_FakeWhenGrafanaURLEmpty(t *testing.T) {
 func TestLoad_RequiresBackendCanisterID(t *testing.T) {
 	t.Setenv("FRONTEND_URL", "http://localhost:4200")
 	if _, err := Load(); err == nil {
-		t.Fatal("expected error when BACKEND_CANISTER_ID is missing")
+		t.Fatal("expected error when CANISTER_ID_BACKEND is missing")
 	}
 }
 
 func TestLoad_DefaultICHostAndIICanister(t *testing.T) {
 	t.Setenv("FRONTEND_URL", "http://localhost:4200")
-	t.Setenv("BACKEND_CANISTER_ID", "aaaaa-aa")
+	t.Setenv("CANISTER_ID_BACKEND", "aaaaa-aa")
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -50,7 +50,7 @@ func TestLoad_DefaultICHostAndIICanister(t *testing.T) {
 
 func TestLoad_RejectsInvalidRootKeyHex(t *testing.T) {
 	t.Setenv("FRONTEND_URL", "http://localhost:4200")
-	t.Setenv("BACKEND_CANISTER_ID", "aaaaa-aa")
+	t.Setenv("CANISTER_ID_BACKEND", "aaaaa-aa")
 	t.Setenv("IC_ROOT_KEY_DER_HEX", "not-hex")
 	if _, err := Load(); err == nil {
 		t.Fatal("expected error on invalid hex root key")

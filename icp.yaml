@@ -46,9 +46,14 @@ canisters:
             - gzip -f -c "$ICP_WASM_OUTPUT_PATH.candid" > "$ICP_WASM_OUTPUT_PATH"
 
 networks:
+  # SSN fork (image mode): local app subnet is a rental subnet (free cycles +
+  # cycles-monitor as subnet admin, so it may call canister_metrics).
+  # Principal = deterministic local cycles-monitor id.
   - name: local
     mode: managed
-    gateway:
-      bind: 127.0.0.1
-      port: 8000
-    ii: true
+    image: ghcr.io/swiss-subnet/icp-cli-network-launcher:14.0.0-2026-06-12-04-52.ssn1
+    port-mapping:
+      - '8000:4943'
+    args:
+      - '--ii'
+      - '--subnet=application:rental=aiewf-lx777-77775-aaaca-cai'

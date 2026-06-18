@@ -1,49 +1,22 @@
-## Stage 1: Prune the workspace ##
+## Stage 1: Build the static binary ##
+# Build context is services/. GOWORK=off ignores go.work (which lists modules
+# not in context); this module is self-contained.
 
-FROM docker.io/oven/bun:1 AS pruner
+FROM docker.io/library/golang:1.25 AS builder
 
-WORKDIR /app
-ENV NODE_ENV=production
+WORKDIR /src
+ENV CGO_ENABLED=0 GOOS=linux GOWORK=off
 
-COPY . .
-RUN TURBO_TELEMETRY_DISABLED=1 && \
-  TURBO_VERSION=$(bun -e "console.log(require('./package.json').devDependencies.turbo)") && \
-  bunx turbo@$TURBO_VERSION prune canister-otlp-syncer --docker
+COPY canister-otlp-syncer/ ./canister-otlp-syncer/
 
-## Stage 2: Install dependencies ##
+RUN --mount=type=cache,target=/root/.cache/go-build \
+  --mount=type=cache,target=/go/pkg/mod \
+  go build -C canister-otlp-syncer -trimpath -ldflags='-s -w' -o /out/canister-otlp-syncer ./cmd/canister-otlp-syncer
 
-FROM docker.io/oven/bun:1 AS installer
+## Stage 2: Final image ##
 
-WORKDIR /app
-ENV NODE_ENV=production
+FROM gcr.io/distroless/static-debian12
 
-COPY --from=pruner /app/out/json/ .
+COPY --from=builder /out/canister-otlp-syncer /canister-otlp-syncer
 
-# install node modules using shared bun cache
-RUN --mount=type=cache,id=bun-cache,target=/root/.bun/install/cache \
-  bun install --frozen-lockfile
-
-## Stage 3: Build the application ##
-
-FROM docker.io/oven/bun:1 AS builder
-
-WORKDIR /app
-ENV NODE_ENV=production
-
-COPY --from=pruner /app/out/full/ .
-COPY --from=installer /app/ .
-COPY src/canister-utils/error.did ./src/canister-utils/error.did
-
-RUN TURBO_TELEMETRY_DISABLED=1 && \
-  bun turbo -F canister-otlp-syncer build
-
-## Stage 4: Final Image ##
-
-FROM gcr.io/distroless/base
-
-WORKDIR /app
-ENV NODE_ENV=production
-
-COPY --from=builder /app .
-
-CMD ["./src/canister-otlp-syncer/dist/main"]
+ENTRYPOINT ["/canister-otlp-syncer"]

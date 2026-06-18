@@ -1,0 +1,27 @@
+# Local telemetry sink: Alloy (OTLP :4318) -> Prometheus (:9090). `just local-telemetry-up`.
+
+services:
+  prometheus:
+    image: docker.io/prom/prometheus:v3.1.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=out-of-order-time-window
+    volumes:
+      - ./prometheus.local.yml:/etc/prometheus/prometheus.yml:Z
+    ports:
+      - '9090:9090'
+
+  alloy:
+    image: docker.io/grafana/alloy:v1.5.1
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+    volumes:
+      - ./alloy.local.alloy:/etc/alloy/config.alloy:Z
+    ports:
+      - '4318:4318'
+      - '12345:12345'
+    depends_on:
+      - prometheus

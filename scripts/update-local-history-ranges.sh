@@ -7,20 +7,13 @@ cd "$ROOT_DIR"
 
 echo
 echo "Fetching local subnet canister ranges..."
-# canister-history's sync walks every id in this range to pull history, so local
-# dev seeds the Application subnet range from icp-cli's network topology.
-TOPOLOGY=".icp/cache/networks/local/state/topology.json"
-if [ ! -f "$TOPOLOGY" ]; then
-  echo "$TOPOLOGY not found. Is the local network running (icp network start)?"
-  exit 1
-fi
-
-read -r START_PRINCIPAL END_PRINCIPAL < <(
-  jq -r '.subnet_configs[] | select(.subnet_kind == "Application") | "\(.ranges[0].start) \(.ranges[-1].end)"' "$TOPOLOGY"
-)
+# canister-history's sync walks this range to discover canisters; cycles-monitor
+# then calls canister_metrics per id. Read the Application range from pocket-ic's
+# topology API (image-mode networks don't write topology.json on the host).
+read -r START_PRINCIPAL END_PRINCIPAL < <(cd src/scripts && bun run ./src/local-subnet-ranges.ts)
 
 if [ -z "$START_PRINCIPAL" ] || [ -z "$END_PRINCIPAL" ]; then
-  echo "Failed to read an Application subnet range from $TOPOLOGY."
+  echo "Failed to read an Application subnet range from the topology API."
   exit 1
 fi
 

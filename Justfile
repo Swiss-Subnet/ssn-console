@@ -47,7 +47,7 @@ render ENV_FILE:
     podman save  "localhost/caddy:${IMAGE_TAG}"                   > "${DIST}/images/caddy.tar"
     podman build -t "localhost/auth-service:${IMAGE_TAG}"         -f "${CONFIG_DIR}/auth-service.containerfile" "${ROOT_DIR}/services"
     podman save  "localhost/auth-service:${IMAGE_TAG}"            > "${DIST}/images/auth-service.tar"
-    podman build -t "localhost/canister-otlp-syncer:${IMAGE_TAG}" -f "${CONFIG_DIR}/canister-otlp-syncer.containerfile" "${ROOT_DIR}"
+    podman build -t "localhost/canister-otlp-syncer:${IMAGE_TAG}" -f "${CONFIG_DIR}/canister-otlp-syncer.containerfile" "${ROOT_DIR}/services"
     podman save  "localhost/canister-otlp-syncer:${IMAGE_TAG}"    > "${DIST}/images/canister-otlp-syncer.tar"
 
     echo "Rendering config..."
@@ -69,6 +69,77 @@ render ENV_FILE:
     } > "${DIST}/deploy-vars.yml"
 
     echo "Rendered -> ${DIST}"
+
+# Bring up the full local env: replica + canisters + telemetry sink + services.
+# The syncer is one-shot: trigger it with `just services::canister-otlp-syncer`.
+# Preflight runs first (deps are left-to-right) so a missing .env.local fails
+# before the slow canister build, not after.
+local-up: local-preflight local-telemetry-up
+    ./scripts/init-local.sh
+    @just local-services-up
+
+# Fail fast if the local prerequisites are missing.
+local-preflight:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f .env.local ]; then
+        echo "local-up: .env.local not found. Run: cp .env.local.example .env.local" >&2
+        exit 1
+    fi
+
+# Tear down everything brought up by local-up.
+local-down: local-services-down local-telemetry-down
+    icp network stop || true
+
+# Background the long-running services (auth-service, metrics-proxy) into local/run/.
+local-services-up:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Run the built binary, not `go run`, so the tracked pid is killable.
+    mkdir -p local/run
+    set -a; . .env.local; . .env; set +a
+    if curl -s -m 1 -o /dev/null http://127.0.0.1:8000/api/v2/status; then
+        export IC_HOST=http://127.0.0.1:8000
+    else
+        export IC_HOST=http://127.0.0.1:4943
+    fi
+    start() {
+        local name=$1 dir=$2; shift 2
+        if [ -f "local/run/${name}.pid" ] && kill -0 "$(cat "local/run/${name}.pid")" 2>/dev/null; then
+            echo "${name} already running (pid $(cat "local/run/${name}.pid"))"; return
+        fi
+        echo "building ${name}..."
+        (cd "services/${dir}" && go build -o "../../local/run/${name}" "./cmd/${dir}")
+        echo "starting ${name} -> local/run/${name}.log"
+        ( "$@" ) >"local/run/${name}.log" 2>&1 &
+        echo $! > "local/run/${name}.pid"
+    }
+    start auth-service  auth-service  ./local/run/auth-service
+    PORT=3001 start metrics-proxy metrics-proxy ./local/run/metrics-proxy
+
+# Stop the backgrounded services and clean up local/run/.
+local-services-down:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [ -d local/run ] || exit 0
+    for pidfile in local/run/*.pid; do
+        [ -e "$pidfile" ] || continue
+        pid=$(cat "$pidfile"); name=$(basename "$pidfile" .pid)
+        if kill -0 "$pid" 2>/dev/null; then
+            echo "stopping ${name} (pid ${pid})"
+            kill "$pid" 2>/dev/null || true
+        fi
+        rm -f "$pidfile"
+    done
+
+# Bring up the local telemetry sink (Alloy on :4318 -> Prometheus on :9090).
+# Inspect metrics via Prometheus at http://localhost:9090.
+local-telemetry-up:
+    podman-compose -f local/compose.yml up -d
+
+# Tear down the local telemetry sink.
+local-telemetry-down:
+    podman-compose -f local/compose.yml down
 
 # Format Rust + TypeScript + Go
 fmt:
@@ -101,6 +172,9 @@ build-backend:
 # Regenerate TS candid bindings from .did files
 bindings:
     cd src/backend-api && bun run build
+    cd src/canister-history-api && bun run build
+    cd src/cycles-monitor-api && bun run build
+    cd src/management-canister && bun run build
 
 # Run backend integration tests, rebuilding the wasm first; args scope vitest (e.g. canister, -t soft-delete)
 test-backend *args: build-backend

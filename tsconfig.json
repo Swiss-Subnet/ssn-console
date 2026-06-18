@@ -7,7 +7,6 @@
   "references": [
     { "path": "./src/backend-tests" },
     { "path": "./src/canister-history-tests" },
-    { "path": "./src/canister-otlp-syncer" },
     { "path": "./src/cycles-monitor-tests" },
     { "path": "./src/frontend" },
     { "path": "./src/scripts" },
