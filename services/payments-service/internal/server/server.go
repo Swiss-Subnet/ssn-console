@@ -9,6 +9,9 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+// APIPrefix is this service's API contract; Caddy uses the same literal.
+const APIPrefix = "/v0/payrexx"
+
 type Deps struct {
 	Payrexx *payrexx.Client
 }
@@ -19,8 +22,8 @@ type Server struct {
 
 func New(deps Deps) *Server {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /status", handleStatus)
-	mux.HandleFunc("POST /v1.0/payrexx/signature-check", handleSignatureCheck(deps.Payrexx))
+	mux.HandleFunc("GET "+APIPrefix+"/status", handleStatus)
+	mux.HandleFunc("POST "+APIPrefix+"/signature-check", handleSignatureCheck(deps.Payrexx))
 
 	return &Server{
 		handler: otelhttp.NewHandler(mux, "payments-service"),

@@ -1,0 +1,13 @@
+(type alloy_otel_port_t)
+(typeattributeset port_type (alloy_otel_port_t))
+
+(block payments-service
+  (blockinherit container)
+  (blockinherit restricted_net_container)
+  (allow process process ( capability ( chown dac_override fowner fsetid kill net_bind_service setfcap setgid setpcap setuid sys_chroot )))
+
+  (allow process ntop_port_t ( tcp_socket ( name_bind )))
+
+  ; Outbound 443 (Payrexx API) is permitted by restricted_net_container.
+  (allow process alloy_otel_port_t ( tcp_socket ( name_connect )))
+)

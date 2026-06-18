@@ -17,11 +17,26 @@
 }
 
 ${AUTH_SERVICE_DOMAIN}:443 {
-	# One API host, services split by subpath. metrics-proxy (/v1/*) is not
-	# deployed yet; its matcher is reserved here and goes live with that service.
-	@auth path /v1.0/auth/* /status
-	reverse_proxy @auth ${AUTH_SERVICE_IMAGE_NAME}:${PORT} {
-		header_up X-Real-IP {remote_host}
+	# One API host, services split by subpath. All routes are versioned /v0/*
+	# (beta; unstable contract); each service owns one explicit prefix so an
+	# unknown /v0/* 404s instead of being swallowed. Each prefix includes the
+	# service's own /status health endpoint (e.g. /v0/auth/status).
+	handle /v0/auth/* {
+		reverse_proxy ${AUTH_SERVICE_IMAGE_NAME}:${PORT} {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	handle /v0/payrexx/* {
+		reverse_proxy ${PAYMENTS_SERVICE_SERVICE_NAME}:3001 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	handle /v0/metrics/* {
+		reverse_proxy ${METRICS_PROXY_SERVICE_NAME}:3001 {
+			header_up X-Real-IP {remote_host}
+		}
 	}
 
 	tls {

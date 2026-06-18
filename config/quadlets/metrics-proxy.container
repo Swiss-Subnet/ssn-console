@@ -1,0 +1,26 @@
+[Container]
+ContainerName=${METRICS_PROXY_SERVICE_NAME}
+Image=${METRICS_PROXY_IMAGE_NAMESPACE}/${METRICS_PROXY_SERVICE_NAME}:${IMAGE_TAG}
+SecurityLabelType=${METRICS_PROXY_SERVICE_NAME}.process
+Network=app.network
+
+Environment="PORT=3001"
+Environment="FRONTEND_URL=${FRONTEND_URL}"
+Environment="CANISTER_ID_BACKEND=${CANISTER_ID_BACKEND}"
+Environment="IC_HOST=https://icp0.io"
+
+Environment="GRAFANA_URL=${GRAFANA_URL}"
+Environment="GRAFANA_USERNAME=${GRAFANA_USERNAME}"
+Environment="GRAFANA_PASSWORD=${GRAFANA_PASSWORD}"
+
+# Staff identity (PEM-encoded Ed25519 keypair) the proxy authenticates as; the
+# principal must hold READ_METRICS on the backend canister. Inlined from the
+# env like auth-service's PRIVATE_KEY.
+Environment="PROXY_IDENTITY_PEM=${PROXY_IDENTITY_PEM}"
+
+[Service]
+Restart=always
+MemoryMax=192M
+
+[Install]
+WantedBy=default.target

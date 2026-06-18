@@ -18,6 +18,10 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+// APIPrefix is this service's API contract; Caddy and the frontend use the
+// same literal.
+const APIPrefix = "/v0/auth"
+
 const tokenTTL = 15 * time.Minute
 
 // backgroundSendTimeout bounds each detached SMTP send. The handler returns
@@ -38,10 +42,11 @@ type Signer interface {
 }
 
 type Deps struct {
-	Signer      Signer
-	Mailer      mailer.Mailer
-	FrontendURL string
-	SMTPFrom    string
+	Signer         Signer
+	Mailer         mailer.Mailer
+	FrontendURL    string // canonical, for magic links
+	AllowedOrigins []string
+	SMTPFrom       string
 }
 
 // Server wraps the HTTP handler and tracks background mail sends so they
@@ -70,12 +75,12 @@ func New(deps Deps) *Server {
 		throttle: make(map[throttleKey]time.Time),
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /status", handleStatus)
-	mux.HandleFunc("POST /v1.0/auth/email-verification", s.handleMintAndMail(deps, emailVerificationFlow))
-	mux.HandleFunc("OPTIONS /v1.0/auth/email-verification", httpsvc.Preflight(httpsvc.PreflightOpts{AllowedOrigin: deps.FrontendURL, Methods: []string{http.MethodPost}}))
-	mux.HandleFunc("POST /v1.0/auth/account-recovery", s.handleMintAndMail(deps, accountRecoveryFlow))
-	mux.HandleFunc("OPTIONS /v1.0/auth/account-recovery", httpsvc.Preflight(httpsvc.PreflightOpts{AllowedOrigin: deps.FrontendURL, Methods: []string{http.MethodPost}}))
-	s.handler = otelhttp.NewHandler(httpsvc.WithCORS(mux, deps.FrontendURL), "auth-service")
+	mux.HandleFunc("GET "+APIPrefix+"/status", handleStatus)
+	mux.HandleFunc("POST "+APIPrefix+"/email-verification", s.handleMintAndMail(deps, emailVerificationFlow))
+	mux.HandleFunc("OPTIONS "+APIPrefix+"/email-verification", httpsvc.Preflight(httpsvc.PreflightOpts{AllowedOrigins: deps.AllowedOrigins, Methods: []string{http.MethodPost}}))
+	mux.HandleFunc("POST "+APIPrefix+"/account-recovery", s.handleMintAndMail(deps, accountRecoveryFlow))
+	mux.HandleFunc("OPTIONS "+APIPrefix+"/account-recovery", httpsvc.Preflight(httpsvc.PreflightOpts{AllowedOrigins: deps.AllowedOrigins, Methods: []string{http.MethodPost}}))
+	s.handler = otelhttp.NewHandler(httpsvc.WithCORS(mux, deps.AllowedOrigins), "auth-service")
 	return s
 }
 

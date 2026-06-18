@@ -6,13 +6,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/swiss-subnet/ssn-console/services/httpsvc"
 )
 
 type Config struct {
 	Port int
 
-	// FrontendURL is the single allowed CORS origin.
-	FrontendURL string
+	// AllowedOrigins is the CORS allowlist parsed from FRONTEND_URL (comma-separated).
+	AllowedOrigins []string
 
 	// Grafana Cloud Prometheus-compatible read endpoint, e.g.
 	//   https://prometheus-prod-XX-prod-XX.grafana.net/api/prom
@@ -37,11 +39,10 @@ type Config struct {
 	// admin_list_user_readable_canister_principals.
 	BackendCanisterIDText string
 
-	// ProxyIdentityPEMPath optionally points at a PEM-encoded Ed25519
-	// keypair authenticating the proxy as a staff principal. Empty in
-	// local dev: the RFC 8032 test vector is used (only when ICHost is
-	// a loopback address).
-	ProxyIdentityPEMPath string
+	// ProxyIdentityPEM is a PEM-encoded Ed25519 keypair authenticating the
+	// proxy as a staff principal. Empty in local dev: the RFC 8032 test
+	// vector is used (only when ICHost is a loopback address).
+	ProxyIdentityPEM string
 
 	// RootKeyDERHex overrides the IC root key. Mainnet uses the
 	// hardcoded one; local replicas need this set (dfx-start prints the
@@ -54,6 +55,7 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	allowedOrigins := parseOrigins(frontendURL)
 
 	port, err := optionalPort("PORT", 3001)
 	if err != nil {
@@ -93,9 +95,11 @@ func Load() (*Config, error) {
 		}
 	}
 
+	proxyIdentityPEM := os.Getenv("PROXY_IDENTITY_PEM")
+
 	return &Config{
 		Port:                  port,
-		FrontendURL:           frontendURL,
+		AllowedOrigins:        allowedOrigins,
 		GrafanaURL:            strings.TrimRight(grafanaURL, "/"),
 		GrafanaUsername:       grafanaUser,
 		GrafanaPassword:       grafanaPass,
@@ -103,9 +107,20 @@ func Load() (*Config, error) {
 		ICHost:                icHost,
 		IICanisterIDText:      iiCanister,
 		BackendCanisterIDText: backendCanister,
-		ProxyIdentityPEMPath:  os.Getenv("PROXY_IDENTITY_PEM"),
+		ProxyIdentityPEM:      proxyIdentityPEM,
 		RootKeyDERHex:         rootKeyHex,
 	}, nil
+}
+
+// parseOrigins splits FRONTEND_URL on commas and normalizes each entry.
+func parseOrigins(v string) []string {
+	var out []string
+	for _, p := range strings.Split(v, ",") {
+		if o := httpsvc.NormalizeOrigin(p); o != "" {
+			out = append(out, o)
+		}
+	}
+	return out
 }
 
 func required(name string) (string, error) {

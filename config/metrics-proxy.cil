@@ -1,0 +1,10 @@
+(block metrics-proxy
+  (blockinherit container)
+  (blockinherit restricted_net_container)
+  (allow process process ( capability ( chown dac_override fowner fsetid kill net_bind_service setfcap setgid setpcap setuid sys_chroot )))
+
+  (allow process ntop_port_t ( tcp_socket ( name_bind )))
+
+  ; Outbound 443 (IC replica + Grafana Cloud) is permitted by restricted_net_container.
+  ; Identity PEM arrives via env, not a mount, so no container_file_t rules.
+)

@@ -66,9 +66,9 @@ func newTestServer(t *testing.T, q grafana.Querier, allowed ...principal.Princip
 	t.Helper()
 	now := time.Unix(1700000000, 0)
 	srv := New(Deps{
-		Querier:     q,
-		FrontendURL: testOrigin,
-		Authorizer:  stubAuthorizer{allow: allowed},
+		Querier:        q,
+		AllowedOrigins: []string{testOrigin},
+		Authorizer:     stubAuthorizer{allow: allowed},
 		IIAuth: iiauth.Config{
 			Now:             func() time.Time { return now },
 			SkewWindow:      60 * time.Second,
@@ -78,7 +78,7 @@ func newTestServer(t *testing.T, q grafana.Querier, allowed ...principal.Princip
 	return srv, now
 }
 
-// mintSession runs a POST /v1/session against srv with a freshly-signed
+// mintSession runs a POST /v0/metrics/session against srv with a freshly-signed
 // empty delegation chain and returns the bearer token the server issues.
 // Tests use this once per case, then attach the token via signedGet.
 func mintSession(t *testing.T, srv http.Handler, now time.Time) string {
@@ -89,7 +89,7 @@ func mintSession(t *testing.T, srv http.Handler, now time.Time) string {
 	}
 	der := derWrapEd25519(pub)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/session", nil)
+	req := httptest.NewRequest(http.MethodPost, APIPrefix+"/session", nil)
 	tsMillis := now.UnixMilli()
 	challenge := iiauth.ChallengeBytes(req.Method, req.URL.Path, req.URL.RawQuery, tsMillis, der)
 	sig := ed25519.Sign(priv, challenge)
@@ -132,7 +132,7 @@ func canisterPrincipal(byte0 byte) principal.Principal {
 func TestStatusOK(t *testing.T) {
 	srv, _ := newTestServer(t, &capturingQuerier{})
 	rec := httptest.NewRecorder()
-	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/status", nil))
+	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, APIPrefix+"/status", nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("want 200, got %d", rec.Code)
 	}
@@ -142,7 +142,7 @@ func TestListMetrics_Authenticated(t *testing.T) {
 	srv, now := newTestServer(t, &capturingQuerier{})
 	token := mintSession(t, srv, now)
 	rec := httptest.NewRecorder()
-	srv.ServeHTTP(rec, bearerGet("/v1/metrics", token))
+	srv.ServeHTTP(rec, bearerGet(APIPrefix+"/list", token))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("want 200, got %d: %s", rec.Code, rec.Body.String())
 	}
@@ -161,7 +161,7 @@ func TestListMetrics_Authenticated(t *testing.T) {
 
 func TestListMetrics_Unauthenticated(t *testing.T) {
 	srv, _ := newTestServer(t, &capturingQuerier{})
-	req := httptest.NewRequest(http.MethodGet, "/v1/metrics", nil)
+	req := httptest.NewRequest(http.MethodGet, APIPrefix+"/list", nil)
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, req)
 	if rec.Code != http.StatusUnauthorized {
@@ -172,7 +172,7 @@ func TestListMetrics_Unauthenticated(t *testing.T) {
 func TestQueryRange_ForbiddenWhenCanisterNotInAuthorisedList(t *testing.T) {
 	srv, now := newTestServer(t, &capturingQuerier{})
 	token := mintSession(t, srv, now)
-	target := "/v1/canisters/aaaaa-aa/metrics/memory-bytes"
+	target := APIPrefix + "/canisters/aaaaa-aa/metrics/memory-bytes"
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, bearerGet(target, token))
 	if rec.Code != http.StatusForbidden {
@@ -183,7 +183,7 @@ func TestQueryRange_ForbiddenWhenCanisterNotInAuthorisedList(t *testing.T) {
 func TestQueryRange_BadRequestForMalformedCanisterID(t *testing.T) {
 	srv, now := newTestServer(t, &capturingQuerier{})
 	token := mintSession(t, srv, now)
-	target := "/v1/canisters/not-a-principal/metrics/memory-bytes"
+	target := APIPrefix + "/canisters/not-a-principal/metrics/memory-bytes"
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, bearerGet(target, token))
 	if rec.Code != http.StatusBadRequest {
@@ -195,7 +195,7 @@ func TestQueryRange_NotFoundForUnknownMetric(t *testing.T) {
 	canister := canisterPrincipal(1)
 	srv, now := newTestServer(t, &capturingQuerier{}, canister)
 	token := mintSession(t, srv, now)
-	target := "/v1/canisters/" + canister.String() + "/metrics/not-a-metric"
+	target := APIPrefix + "/canisters/" + canister.String() + "/metrics/not-a-metric"
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, bearerGet(target, token))
 	if rec.Code != http.StatusNotFound {
@@ -210,7 +210,7 @@ func TestQueryRange_HappyPathInjectsCanisterIDLabel(t *testing.T) {
 	}
 	srv, now := newTestServer(t, q, canister)
 	token := mintSession(t, srv, now)
-	target := "/v1/canisters/" + canister.String() +
+	target := APIPrefix + "/canisters/" + canister.String() +
 		"/metrics/memory-bytes?from=2024-01-01T00:00:00Z&to=2024-01-01T01:00:00Z&step=1m"
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, bearerGet(target, token))
@@ -237,7 +237,7 @@ func TestQueryRange_RejectsRangeTooLarge(t *testing.T) {
 	canister := canisterPrincipal(3)
 	srv, now := newTestServer(t, &capturingQuerier{}, canister)
 	token := mintSession(t, srv, now)
-	target := "/v1/canisters/" + canister.String() +
+	target := APIPrefix + "/canisters/" + canister.String() +
 		"/metrics/memory-bytes?from=2024-01-01T00:00:00Z&to=2024-06-01T00:00:00Z&step=1m"
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, bearerGet(target, token))
@@ -250,7 +250,7 @@ func TestQueryRange_RejectsToBeforeFrom(t *testing.T) {
 	canister := canisterPrincipal(4)
 	srv, now := newTestServer(t, &capturingQuerier{}, canister)
 	token := mintSession(t, srv, now)
-	target := "/v1/canisters/" + canister.String() +
+	target := APIPrefix + "/canisters/" + canister.String() +
 		"/metrics/memory-bytes?from=2024-01-02T00:00:00Z&to=2024-01-01T00:00:00Z"
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, bearerGet(target, token))
@@ -264,7 +264,7 @@ func TestQueryRange_BadGatewayOnUpstreamError(t *testing.T) {
 	q := &capturingQuerier{err: errStub{}}
 	srv, now := newTestServer(t, q, canister)
 	token := mintSession(t, srv, now)
-	target := "/v1/canisters/" + canister.String() + "/metrics/memory-bytes"
+	target := APIPrefix + "/canisters/" + canister.String() + "/metrics/memory-bytes"
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, bearerGet(target, token))
 	if rec.Code != http.StatusBadGateway {

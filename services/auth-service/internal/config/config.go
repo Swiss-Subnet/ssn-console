@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
+
+	"github.com/swiss-subnet/ssn-console/services/httpsvc"
 )
 
 type Config struct {
-	Port        int
-	PrivateKey  string
+	Port       int
+	PrivateKey string
+	// FrontendURL is the canonical URL used to build magic links (first origin).
 	FrontendURL string
+	// AllowedOrigins is the CORS allowlist parsed from FRONTEND_URL (comma-separated).
+	AllowedOrigins []string
 
 	SMTPHost string
 	SMTPPort int
@@ -29,6 +35,7 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	allowedOrigins := parseOrigins(frontendURL)
 	smtpHost, err := required("SMTP_HOST")
 	if err != nil {
 		return nil, err
@@ -49,7 +56,8 @@ func Load() (*Config, error) {
 	return &Config{
 		Port:               port,
 		PrivateKey:         privateKey,
-		FrontendURL:        frontendURL,
+		FrontendURL:        allowedOrigins[0],
+		AllowedOrigins:     allowedOrigins,
 		SMTPHost:           smtpHost,
 		SMTPPort:           smtpPort,
 		SMTPUser:           smtpUser,
@@ -57,6 +65,18 @@ func Load() (*Config, error) {
 		SMTPFrom:           optional("SMTP_FROM", `"Swiss Subnet" <noreply@subnet.ch>`),
 		GrafanaEnvironment: os.Getenv("GRAFANA_ENVIRONMENT"),
 	}, nil
+}
+
+// parseOrigins splits FRONTEND_URL on commas and normalizes each entry.
+// The first is canonical (used for magic links); all are CORS-allowed.
+func parseOrigins(v string) []string {
+	var out []string
+	for _, p := range strings.Split(v, ",") {
+		if o := httpsvc.NormalizeOrigin(p); o != "" {
+			out = append(out, o)
+		}
+	}
+	return out
 }
 
 func required(name string) (string, error) {

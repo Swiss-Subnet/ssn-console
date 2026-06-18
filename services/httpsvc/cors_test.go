@@ -15,7 +15,7 @@ func okHandler() http.Handler {
 }
 
 func TestWithCORS_AllowsMatchingOrigin(t *testing.T) {
-	h := WithCORS(okHandler(), testOrigin)
+	h := WithCORS(okHandler(), []string{testOrigin})
 	req := httptest.NewRequest(http.MethodGet, "/x", nil)
 	req.Header.Set("Origin", testOrigin)
 	rec := httptest.NewRecorder()
@@ -34,7 +34,7 @@ func TestWithCORS_AllowsMatchingOrigin(t *testing.T) {
 func TestWithCORS_RejectsMismatchedOrigin(t *testing.T) {
 	called := false
 	next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) { called = true })
-	h := WithCORS(next, testOrigin)
+	h := WithCORS(next, []string{testOrigin})
 	req := httptest.NewRequest(http.MethodGet, "/x", nil)
 	req.Header.Set("Origin", "https://evil.example.com")
 	rec := httptest.NewRecorder()
@@ -48,7 +48,7 @@ func TestWithCORS_RejectsMismatchedOrigin(t *testing.T) {
 }
 
 func TestWithCORS_AllowsNoOrigin(t *testing.T) {
-	h := WithCORS(okHandler(), testOrigin)
+	h := WithCORS(okHandler(), []string{testOrigin})
 	req := httptest.NewRequest(http.MethodGet, "/x", nil)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -61,7 +61,7 @@ func TestWithCORS_AllowsNoOrigin(t *testing.T) {
 }
 
 func TestPreflight_AllowsMatchingOrigin(t *testing.T) {
-	h := Preflight(PreflightOpts{AllowedOrigin: testOrigin, Methods: []string{http.MethodPost}})
+	h := Preflight(PreflightOpts{AllowedOrigins: []string{testOrigin}, Methods: []string{http.MethodPost}})
 	req := httptest.NewRequest(http.MethodOptions, "/x", nil)
 	req.Header.Set("Origin", testOrigin)
 	rec := httptest.NewRecorder()
@@ -75,7 +75,7 @@ func TestPreflight_AllowsMatchingOrigin(t *testing.T) {
 }
 
 func TestPreflight_RejectsMismatchedOrigin(t *testing.T) {
-	h := Preflight(PreflightOpts{AllowedOrigin: testOrigin, Methods: []string{http.MethodPost}})
+	h := Preflight(PreflightOpts{AllowedOrigins: []string{testOrigin}, Methods: []string{http.MethodPost}})
 	req := httptest.NewRequest(http.MethodOptions, "/x", nil)
 	req.Header.Set("Origin", "https://evil.example.com")
 	rec := httptest.NewRecorder()
@@ -86,7 +86,7 @@ func TestPreflight_RejectsMismatchedOrigin(t *testing.T) {
 }
 
 func TestPreflight_JoinsMultipleMethods(t *testing.T) {
-	h := Preflight(PreflightOpts{AllowedOrigin: testOrigin, Methods: []string{http.MethodGet, http.MethodPost}})
+	h := Preflight(PreflightOpts{AllowedOrigins: []string{testOrigin}, Methods: []string{http.MethodGet, http.MethodPost}})
 	req := httptest.NewRequest(http.MethodOptions, "/x", nil)
 	req.Header.Set("Origin", testOrigin)
 	rec := httptest.NewRecorder()

@@ -14,6 +14,7 @@ Volume=${REMOTE_CADDY_DATA_DIR}:/data:Z
 
 [Service]
 Restart=always
+MemoryMax=192M
 
 [Install]
 WantedBy=default.target

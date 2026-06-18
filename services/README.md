@@ -83,7 +83,7 @@ full flow locally you need a fake SMTP server; Mailpit is the easiest.
 5. Trigger a verification email:
 
    ```
-   curl -i -X POST http://localhost:3000/v1.0/auth/email-verification \
+   curl -i -X POST http://localhost:3000/v0/auth/email-verification \
      -H 'content-type: application/json' \
      -d '{"email":"alice@subnet.ch"}'
    ```

@@ -6,7 +6,7 @@ is the only component that ever signs/sends/receives Payrexx traffic.
 
 ## Layout
 
-- `cmd/payments-service/main.go` -- HTTP server. Endpoints: `GET /status`, `POST /v1.0/payrexx/signature-check`.
+- `cmd/payments-service/main.go` -- HTTP server. Endpoints: `GET /v0/payrexx/status`, `POST /v0/payrexx/signature-check`.
 - `internal/payrexx/client.go` -- signed REST client. HMAC-SHA256, `&ApiSignature=` body/query.
 - `internal/payrexx/envelope.go` -- decoder for Payrexx's `{status, data, message}` response shape.
 - `internal/config/config.go` -- env-var loader.
@@ -28,7 +28,7 @@ is the only component that ever signs/sends/receives Payrexx traffic.
    ```
 
 The service listens on `:3001` by default. Pair it with `just caddy-local`
-to reach it via `http://localhost:8080/v1.0/payrexx/...` -- the same path
+to reach it via `http://localhost:8080/v0/payrexx/...` -- the same path
 shape production will use behind the reverse proxy.
 
 ## Tests

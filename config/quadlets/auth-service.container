@@ -19,6 +19,7 @@ Environment="OTEL_EXPORTER_OTLP_ENDPOINT=http://host.containers.internal:4318"
 
 [Service]
 Restart=always
+MemoryMax=128M
 
 [Install]
 WantedBy=default.target
