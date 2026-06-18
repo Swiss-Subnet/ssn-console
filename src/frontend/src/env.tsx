@@ -37,8 +37,11 @@ export const CANISTER_HISTORY_CANISTER_ID: string = getEnvVar(
 
 export const SHOULD_FETCH_ROOT_KEY = IS_LOCAL;
 
-export const DERIVATION_ORIGIN =
-  IS_LOCAL || IS_TEST ? undefined : 'https://console.subnet.ch';
+export const DERIVATION_ORIGIN = IS_LOCAL
+  ? undefined
+  : IS_TEST
+    ? 'https://staging-console.subnet.ch'
+    : 'https://console.subnet.ch';
 
 export const AUTH_SERVICE_URL = getEnvVar('AUTH_SERVICE_URL');
 export const METRICS_PROXY_URL = getEnvVar('METRICS_PROXY_URL');
