@@ -38,6 +38,12 @@ try {
       `Missing METRICS_PROXY_URL in configuration for network '${network}' in ${envJsonPath}`,
     );
   }
+
+  if (!Array.isArray(networkConfig.ALTERNATIVE_ORIGINS)) {
+    throw new Error(
+      `Missing ALTERNATIVE_ORIGINS array in configuration for network '${network}' in ${envJsonPath}`,
+    );
+  }
 } catch (e) {
   console.error(e);
   throw e;
@@ -76,6 +82,24 @@ export default defineConfig({
     tailwindcss(),
     environment('all', { prefix: 'CANISTER_', defineOn: 'import.meta.env' }),
     environment('all', { prefix: 'DFX_', defineOn: 'import.meta.env' }),
+    {
+      // Emit the II alternative-origins file per network so a staging build
+      // authorizes the staging canister origins and production authorizes
+      // production. Served at /.well-known/ii-alternative-origins; II fetches
+      // it from the derivationOrigin to authorize the requesting origin.
+      name: 'ii-alternative-origins',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: '.well-known/ii-alternative-origins',
+          source: JSON.stringify(
+            { alternativeOrigins: networkConfig.ALTERNATIVE_ORIGINS },
+            null,
+            2,
+          ),
+        });
+      },
+    },
     viteCompressionPlugin({
       algorithm: 'gzip',
       ext: '.gz',
