@@ -7,6 +7,7 @@
 // At most one pending code per user; registering replaces any existing one.
 
 use crate::data::{user_profile_repository, LinkedPrincipal, StaffPermissions, UserId};
+use crate::dto::{RejectionError, RejectionReason};
 use crate::env;
 use crate::jwt::{extract_ed25519_public_key_from_pem, verify_jwt};
 use crate::service::access_control_service;
@@ -21,7 +22,7 @@ const LINK_CODE_TTL_NANOS: u64 = 15 * 60 * 1_000_000_000;
 const LINK_CODE_LEN: usize = 8;
 
 thread_local! {
-    static PENDING_LINK_CODES: RefCell<BTreeMap<UserId, PendingLinkCode>> = RefCell::new(BTreeMap::new());
+    static PENDING_LINK_CODES: RefCell<BTreeMap<UserId, PendingLinkCode>> = const { RefCell::new(BTreeMap::new()) };
 }
 
 #[derive(Clone)]
@@ -207,7 +208,7 @@ pub fn admin_list_linked_principals(
     Ok(user_profile_repository::get_principals_by_user_id(user_id))
 }
 
-pub fn recover_account_by_email(caller: &Principal, token: String) -> ApiResult {
+pub fn recover_account_by_email(caller: &Principal, token: String) -> Result<(), RejectionError> {
     let pub_key_str = env::get_public_key();
     let pub_key_bytes = extract_ed25519_public_key_from_pem(&pub_key_str)
         .map_err(|e| ApiError::internal_error(format!("Failed to parse public key: {}", e)))?;
@@ -216,21 +217,25 @@ pub fn recover_account_by_email(caller: &Principal, token: String) -> ApiResult 
     recover_with_claims(caller, claims)
 }
 
-fn recover_with_claims(caller: &Principal, claims: Claims) -> ApiResult {
+fn recover_with_claims(caller: &Principal, claims: Claims) -> Result<(), RejectionError> {
     if claims.purpose.as_deref() != Some(PURPOSE_ACCOUNT_RECOVERY) {
-        return Err(ApiError::client_error(
+        return Err(RejectionError::new(
             "Token cannot be used to recover an account.".to_string(),
+            RejectionReason::WrongPurpose,
         ));
     }
 
     let email = Email::try_from(claims.email)?;
     let user_id =
         user_profile_repository::get_user_id_by_verified_email(&email).ok_or_else(|| {
-            ApiError::client_error("No verified account found for this email.".to_string())
+            RejectionError::new(
+                "No verified account found for this email.".to_string(),
+                RejectionReason::NoVerifiedAccount,
+            )
         })?;
 
     access_control_service::assert_principal_is_unclaimed(caller)?;
-    user_profile_repository::link_principal_to_user(user_id, *caller)
+    user_profile_repository::link_principal_to_user(user_id, *caller).map_err(Into::into)
 }
 
 fn validate_code_format(code: &str) -> ApiResult {
@@ -683,7 +688,8 @@ mod tests {
 
         let err =
             recover_with_claims(&new_principal, recovery_claims("nobody@example.com")).unwrap_err();
-        assert!(err.message().contains("No verified account"));
+        assert!(err.message.contains("No verified account"));
+        assert_eq!(err.reason, Some(RejectionReason::NoVerifiedAccount));
     }
 
     #[test]
@@ -701,7 +707,8 @@ mod tests {
 
         let err = recover_with_claims(&new_principal, recovery_claims("unverified@example.com"))
             .unwrap_err();
-        assert!(err.message().contains("No verified account"));
+        assert!(err.message.contains("No verified account"));
+        assert_eq!(err.reason, Some(RejectionReason::NoVerifiedAccount));
     }
 
     #[test]
@@ -713,7 +720,8 @@ mod tests {
         claims.purpose = Some(PURPOSE_EMAIL_VERIFICATION.to_string());
 
         let err = recover_with_claims(&new_principal, claims).unwrap_err();
-        assert!(err.message().contains("recover an account"));
+        assert!(err.message.contains("recover an account"));
+        assert_eq!(err.reason, Some(RejectionReason::WrongPurpose));
     }
 
     #[test]
@@ -725,7 +733,8 @@ mod tests {
         claims.purpose = None;
 
         let err = recover_with_claims(&new_principal, claims).unwrap_err();
-        assert!(err.message().contains("recover an account"));
+        assert!(err.message.contains("recover an account"));
+        assert_eq!(err.reason, Some(RejectionReason::WrongPurpose));
     }
 
     #[test]
@@ -739,9 +748,10 @@ mod tests {
         )
         .unwrap_err();
         assert_eq!(
-            err.message(),
+            err.message,
             "Principal is already linked to a user account."
         );
+        assert_eq!(err.reason, None);
     }
 
     #[test]
@@ -749,7 +759,7 @@ mod tests {
         let new_principal = fresh_principal();
 
         let err = recover_with_claims(&new_principal, recovery_claims("not-an-email")).unwrap_err();
-        assert!(err.message().contains("'@'"));
+        assert!(err.message.contains("'@'"));
     }
 
     // Disjointness: a principal already granted as a service principal must
@@ -802,9 +812,9 @@ mod tests {
         let err =
             recover_with_claims(&sp, recovery_claims("disjoint-recover@example.com")).unwrap_err();
         assert!(
-            err.message().to_lowercase().contains("service"),
+            err.message.to_lowercase().contains("service"),
             "expected service-principal conflict, got {:?}",
-            err.message(),
+            err.message,
         );
     }
 }

@@ -3,8 +3,8 @@ use crate::{
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
         GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListStaleUsersResponse,
-        ListUserProfilesResponse, UpdateMyUserProfileRequest, UpdateUserProfileRequest,
-        VerifyEmailRequest,
+        ListUserProfilesResponse, RejectionError, UpdateMyUserProfileRequest,
+        UpdateUserProfileRequest, VerifyEmailRequest,
     },
     service::{access_control_service, user_profile_service},
 };
@@ -105,11 +105,9 @@ fn admin_get_user_stats() -> ApiResultDto<GetUserStatsResponse> {
 }
 
 #[update]
-fn verify_my_email(req: VerifyEmailRequest) -> ApiResultDto {
+fn verify_my_email(req: VerifyEmailRequest) -> Result<(), RejectionError> {
     let caller = msg_caller();
-    if let Err(err) = assert_authenticated(&caller) {
-        return ApiResultDto::Err(err);
-    }
+    assert_authenticated(&caller)?;
 
-    user_profile_service::verify_email(caller, req).into()
+    user_profile_service::verify_email(caller, req)
 }

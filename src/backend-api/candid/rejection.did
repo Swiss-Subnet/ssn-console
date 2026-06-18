@@ -1,0 +1,13 @@
+type RejectionReason = variant {
+  Expired;
+  Invalid;
+  WrongPurpose;
+  EmailMismatch;
+  ProfileNotFound;
+  NoVerifiedAccount;
+};
+
+type RejectionError = record {
+  message : text;
+  reason : opt RejectionReason;
+};

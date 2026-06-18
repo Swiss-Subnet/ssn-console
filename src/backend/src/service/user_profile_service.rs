@@ -7,8 +7,8 @@ use crate::{
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
         GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListStaleUsersResponse,
-        ListUserProfilesResponse, StaleUserEntry, UpdateMyUserProfileRequest,
-        UpdateUserProfileRequest, VerifyEmailRequest,
+        ListUserProfilesResponse, RejectionError, RejectionReason, StaleUserEntry,
+        UpdateMyUserProfileRequest, UpdateUserProfileRequest, VerifyEmailRequest,
     },
     env,
     jwt::{extract_ed25519_public_key_from_pem, verify_jwt},
@@ -181,7 +181,7 @@ pub fn get_user_stats() -> GetUserStatsResponse {
     map_get_user_stats_response(user_profile_repository::get_user_stats())
 }
 
-pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> ApiResult {
+pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> Result<(), RejectionError> {
     let pub_key_str = env::get_public_key();
 
     let pub_key_bytes = extract_ed25519_public_key_from_pem(&pub_key_str)
@@ -196,24 +196,29 @@ pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> ApiResult {
     match token_data.purpose.as_deref() {
         None | Some(PURPOSE_EMAIL_VERIFICATION) => {}
         Some(_) => {
-            return Err(ApiError::client_error(
+            return Err(RejectionError::new(
                 "Token cannot be used to verify an email.".to_string(),
+                RejectionReason::WrongPurpose,
             ));
         }
     }
 
     let (user_id, mut profile) = user_profile_repository::get_user_profile_by_principal(&caller)
         .ok_or_else(|| {
-            ApiError::client_error(format!(
-                "User profile for principal {} does not exist.",
-                caller.to_text()
-            ))
+            RejectionError::new(
+                format!(
+                    "User profile for principal {} does not exist.",
+                    caller.to_text()
+                ),
+                RejectionReason::ProfileNotFound,
+            )
         })?;
 
     let Some(stored_email) = profile.email.clone() else {
         return Err(ApiError::client_error(
             "User profile does not have an email to verify".to_string(),
-        ));
+        )
+        .into());
     };
 
     // Normalize both sides: legacy rows weren't normalized at write time,
@@ -221,8 +226,9 @@ pub fn verify_email(caller: Principal, req: VerifyEmailRequest) -> ApiResult {
     let profile_email = Email::try_from(stored_email)?;
     let claim_email = Email::try_from(token_data.email)?;
     if profile_email.as_str() != claim_email.as_str() {
-        return Err(ApiError::client_error(
+        return Err(RejectionError::new(
             "Token email does not match user profile email".to_string(),
+            RejectionReason::EmailMismatch,
         ));
     }
 
