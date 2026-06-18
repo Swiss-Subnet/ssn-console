@@ -1,5 +1,6 @@
 import "./ids.did";
 import "../../canister-utils/error.did";
+import "./rejection.did";
 
 type ListUserProfilesResponse = variant {
   Ok : vec UserProfile;
@@ -94,7 +95,7 @@ type VerifyEmailRequest = record {
 
 type VerifyEmailResponse = variant {
   Ok;
-  Err : ApiError;
+  Err : RejectionError;
 };
 
 service : {

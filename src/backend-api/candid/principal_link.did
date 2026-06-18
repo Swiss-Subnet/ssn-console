@@ -1,5 +1,6 @@
 import "./ids.did";
 import "../../canister-utils/error.did";
+import "./rejection.did";
 
 type RegisterLinkCodeRequest = record {
   code : text;
@@ -106,7 +107,7 @@ type RecoverAccountByEmailRequest = record {
 
 type RecoverAccountByEmailResponse = variant {
   Ok : record {};
-  Err : ApiError;
+  Err : RejectionError;
 };
 
 service : {

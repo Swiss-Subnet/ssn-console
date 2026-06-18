@@ -19,6 +19,7 @@ import {
   type UserProfile,
   type GetUserStatsResponse,
   mapOkResponse,
+  mapRejectionResponse,
 } from '@/lib/api-models';
 import { isNotNil } from '@/lib/nil';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
@@ -83,7 +84,7 @@ export class UserProfileApi {
 
   public async verifyMyEmail(token: string): Promise<void> {
     const res = await this.actor.verify_my_email({ token });
-    mapOkResponse(res);
+    mapRejectionResponse(res);
   }
 
   public async getUserProfilesByPrincipals(

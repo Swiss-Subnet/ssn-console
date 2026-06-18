@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { noProfileError, TestDriver, unauthenticatedError } from '../support';
+import { TestDriver } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 import { createTestJwt, PRIVATE_KEY, PUBLIC_KEY } from '../support';
 import * as crypto from 'node:crypto';
@@ -19,7 +19,13 @@ describe('Email Verification', () => {
   it('should return an error for an anonymous user', async () => {
     driver.actor.setIdentity(anonymousIdentity);
     const res = await driver.actor.verify_my_email({ token: 'dummy_token' });
-    expect(res).toEqual(unauthenticatedError);
+    // Auth guard maps to RejectionError (no code, no typed reason).
+    expect(res).toEqual({
+      Err: {
+        message: 'Anonymous principals are not allowed to perform this action.',
+        reason: [],
+      },
+    });
   });
 
   it('should return an error if the user profile does not exist', async () => {
@@ -28,7 +34,12 @@ describe('Email Verification', () => {
     const token = await createTestJwt('alice@subnet.ch', PRIVATE_KEY);
 
     const res = await driver.actor.verify_my_email({ token });
-    expect(res).toEqual(noProfileError(aliceIdentity.getPrincipal()));
+    expect(res).toEqual({
+      Err: {
+        message: `User profile for principal ${aliceIdentity.getPrincipal()} does not exist.`,
+        reason: [{ ProfileNotFound: null }],
+      },
+    });
   });
 
   it('should return an error if the user has no email set', async () => {
@@ -39,10 +50,11 @@ describe('Email Verification', () => {
     const token = await createTestJwt('alice@subnet.ch', PRIVATE_KEY);
     const res = await driver.actor.verify_my_email({ token });
 
+    // Plain client error, no typed reason.
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'User profile does not have an email to verify',
+        reason: [],
       },
     });
   });
@@ -58,8 +70,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'Token email does not match user profile email',
+        reason: [{ EmailMismatch: null }],
       },
     });
   });
@@ -78,8 +90,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'JWT has expired',
+        reason: [{ Expired: null }],
       },
     });
   });
@@ -97,8 +109,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'Invalid JWT token format',
+        reason: [{ Invalid: null }],
       },
     });
   });
@@ -116,8 +128,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'Invalid JWT signature base64 encoding',
+        reason: [{ Invalid: null }],
       },
     });
   });
@@ -138,8 +150,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'Invalid JWT signature length',
+        reason: [{ Invalid: null }],
       },
     });
   });
@@ -167,8 +179,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'Invalid JWT public key',
+        reason: [{ Invalid: null }],
       },
     });
 
@@ -197,8 +209,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'JWT signature verification failed',
+        reason: [{ Invalid: null }],
       },
     });
   });
@@ -221,8 +233,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'Invalid JWT payload base64 encoding',
+        reason: [{ Invalid: null }],
       },
     });
   });
@@ -245,8 +257,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'Failed to parse JWT base claims',
+        reason: [{ Invalid: null }],
       },
     });
   });
@@ -272,8 +284,8 @@ describe('Email Verification', () => {
 
     expect(res).toEqual({
       Err: {
-        code: [{ ClientError: {} }],
         message: 'Failed to parse JSON claims',
+        reason: [{ Invalid: null }],
       },
     });
   });
