@@ -52,8 +52,11 @@ networks:
   - name: local
     mode: managed
     image: ghcr.io/swiss-subnet/icp-cli-network-launcher:14.0.0-2026-06-12-04-52.ssn1
+    # Host port must equal the launcher's gateway port (4943): Internet Identity
+    # bakes absolute origins at the gateway port into its frontend, so a remap
+    # like 8000:4943 makes II's browser-side calls hit an unreachable :4943.
     port-mapping:
-      - '8000:4943'
+      - '4943:4943'
     args:
       - '--ii'
       - '--subnet=application:rental=aiewf-lx777-77775-aaaca-cai'

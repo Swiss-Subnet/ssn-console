@@ -49,7 +49,11 @@ func isLocalReplica(host string) bool {
 	h := strings.ToLower(host)
 	return strings.Contains(h, "127.0.0.1") ||
 		strings.Contains(h, "localhost") ||
-		strings.Contains(h, "0.0.0.0")
+		strings.Contains(h, "0.0.0.0") ||
+		// Container -> host-side replica (compose dev): the host alias still
+		// reaches a local replica, so the RFC 8032 test identity is fine.
+		strings.Contains(h, "host.containers.internal") ||
+		strings.Contains(h, "host.docker.internal")
 }
 
 func mustHex(s string) []byte {

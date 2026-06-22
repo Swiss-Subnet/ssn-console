@@ -1,0 +1,59 @@
+# Shared path filters for build-and-test.yml and lint.yml (union of both).
+rust:
+  - '**/*.rs'
+  - 'Cargo.toml'
+  - 'Cargo.lock'
+  - 'rust-toolchain.toml'
+  - 'rustfmt.toml'
+  - 'dfx.json'
+  - '.github/actions/setup-dfx/**'
+  - '.github/filters.yml'
+  - '.github/workflows/build-and-test.yml'
+  - '.github/workflows/lint.yml'
+
+# `frontend` (build-and-test) and `typescript` (lint) are the same surface.
+frontend: &frontend
+  - 'src/frontend/**'
+  - '**/*.ts'
+  - '**/*.tsx'
+  - '**/*.js'
+  - '**/*.jsx'
+  - '**/*.json'
+  - '**/*.md'
+  - 'package.json'
+  - 'bun.lock'
+  - 'tsconfig.json'
+  - 'turbo.json'
+  - 'prettier.config.cjs'
+  - '.github/actions/setup-bun/**'
+  - '.github/filters.yml'
+  - '.github/workflows/build-and-test.yml'
+  - '.github/workflows/lint.yml'
+
+typescript: *frontend
+
+go:
+  - 'services/**/*.go'
+  - 'services/**/go.mod'
+  - 'services/**/go.sum'
+  - 'services/go.work'
+  - 'services/go.work.sum'
+  - 'services/.golangci.yml'
+  - 'services/Justfile'
+  - 'config/auth-service.containerfile'
+  - '.github/filters.yml'
+  - '.github/workflows/build-and-test.yml'
+  - '.github/workflows/lint.yml'
+
+go-tools:
+  - 'tools/**/*.go'
+  - 'tools/**/go.mod'
+  - 'tools/**/go.sum'
+  - 'tools/go.work'
+  - 'tools/go.work.sum'
+  - 'tools/.golangci.yml'
+  # ssn-admin generates its client from the backend candid.
+  - 'src/backend-api/**/*.did'
+  - '.github/filters.yml'
+  - '.github/workflows/build-and-test.yml'
+  - '.github/workflows/lint.yml'

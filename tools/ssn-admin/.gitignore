@@ -1,0 +1,3 @@
+bin/
+# goic-generated candid bindings; regenerated via `go generate`.
+internal/canister/backend_gen.go

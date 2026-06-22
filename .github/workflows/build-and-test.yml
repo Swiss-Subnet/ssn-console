@@ -18,6 +18,7 @@ jobs:
       rust: ${{ steps.filter.outputs.rust }}
       frontend: ${{ steps.filter.outputs.frontend }}
       go: ${{ steps.filter.outputs.go }}
+      go-tools: ${{ steps.filter.outputs.go-tools }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -25,34 +26,7 @@ jobs:
       - id: filter
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         with:
-          filters: |
-            rust:
-              - '**/*.rs'
-              - 'Cargo.toml'
-              - 'Cargo.lock'
-              - 'rust-toolchain.toml'
-              - 'dfx.json'
-              - '.github/workflows/build-and-test.yml'
-              - '.github/actions/setup-dfx/**'
-            frontend:
-              - 'src/frontend/**'
-              - '**/*.ts'
-              - '**/*.tsx'
-              - 'package.json'
-              - 'bun.lock'
-              - 'tsconfig.json'
-              - 'turbo.json'
-              - 'prettier.config.cjs'
-              - '.github/actions/setup-bun/**'
-            go:
-              - 'services/**/*.go'
-              - 'services/**/go.mod'
-              - 'services/**/go.sum'
-              - 'services/go.work'
-              - 'services/go.work.sum'
-              - 'services/Justfile'
-              - 'config/auth-service.containerfile'
-              - '.github/workflows/build-and-test.yml'
+          filters: .github/filters.yml
 
   build_and_test_all_canisters:
     name: Build and Test All Canisters
@@ -210,5 +184,34 @@ jobs:
             [ -f "${svc}go.mod" ] || continue
             echo "::group::$svc"
             (cd "$svc" && go build ./... && go test ./...)
+            echo "::endgroup::"
+          done
+
+  build_and_test_tools:
+    name: Build and Test Go Tools
+    needs: changes
+    if: needs.changes.outputs.go-tools == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: tools/go.work
+          cache-dependency-path: tools/**/go.sum
+
+      - name: Build and test per tool
+        run: |
+          set -euo pipefail
+          for t in */; do
+            [ -f "${t}go.mod" ] || continue
+            echo "::group::$t"
+            # ssn-admin's candid bindings are gitignored; generate before build.
+            (cd "$t" && go generate ./... && go build ./... && go test ./...)
             echo "::endgroup::"
           done

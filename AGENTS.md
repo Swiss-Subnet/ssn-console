@@ -34,7 +34,7 @@ This is a monorepo containing an Internet Computer Protocol (ICP) application.
 
 - DFX version: `0.30.2`
 - Defined canisters: `backend`, `canister-history`, `cycles-monitor`, `internet_identity` (remote on non-local networks)
-- Networks: `local` (127.0.0.1:8000 ephemeral), `test` (icp0.io persistent), `production` (icp0.io persistent)
+- Networks: `local` (127.0.0.1:4943 ephemeral), `test` (icp0.io persistent), `production` (icp0.io persistent)
 - Canister IDs are written to `.env` by DFX on deploy and read by Vite via `vite-plugin-environment`
 
 ### Rust Toolchain

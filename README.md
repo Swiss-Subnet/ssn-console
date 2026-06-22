@@ -1,187 +1,90 @@
 # SSN Console
 
-## Initial Setup
+## Setup
 
-- Install [`bun`](https://bun.sh/).
-  ```shell
-  curl -fsSL https://bun.sh/install | bash
-  ```
-- Install [Rust](https://rust-lang.org/).
-  ```shell
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-  ```
-- Install [`icp-cli`](https://github.com/dfinity/icp-cli) (local dev) and, for now, [`dfx`](https://docs.internetcomputer.org/building-apps/getting-started/install#installing-dfx-via-dfxvm) (CI/mainnet deploys still use it).
-
-Alternatively, all tooling is provided by the Nix flake (this is the supported path; it pins icp-cli and the pocket-ic version local dev runs on):
+The Nix flake is the supported toolchain. It pins everything local dev needs (rust, `dfx`, `icp-cli`, the pocket-ic launcher, `bun`, `node`, `go`, `just`, `podman`, linters):
 
 ```shell
 nix develop
 ```
 
-## Env Vars
+Without Nix, install the pieces yourself: [`bun`](https://bun.sh/), [Rust](https://rust-lang.org/), [`icp-cli`](https://github.com/dfinity/icp-cli) (local dev), [`dfx`](https://docs.internetcomputer.org/building-apps/getting-started/install#installing-dfx-via-dfxvm) (CI/mainnet deploys), plus `go`, `just`, and `podman`/`podman-compose`.
 
-Create the `.env.local` file:
-
-```shell
-PRIVATE_KEY="${PRIVATE_KEY}"
-PUBLIC_KEY="${PUBLIC_KEY}"
-
-FRONTEND_URL="${FRONTEND_URL}"
-SMTP_HOST="${SMTP_HOST}"
-SMTP_PORT="${SMTP_PORT}"
-SMTP_USER="${SMTP_USER}"
-SMTP_PASS="${SMTP_PASS}"
-SMTP_FROM="${SMTP_FROM}"
-PORT="${PORT}"
-```
-
-Generate the signing keys for email verification JWTs:
+Then, from the repo root:
 
 ```shell
-mkdir -p .local
-openssl genpkey -algorithm ed25519 -out .local/sign.pem
-openssl pkey -in .local/sign.pem -pubout -out .local/sign.pub
+bun i                              # install TS/JS workspace deps
+cp .env.local.example .env.local   # local-dev env (see below)
+just local-up                      # replica + canisters + auth-service + Mailpit
 ```
 
-Note: macOS LibreSSL does not support Ed25519. Use the Nix shell
-or install OpenSSL via Homebrew.
+`just local-up` runs preflight, brings up the compose dependencies (telemetry sink + Mailpit), runs `./scripts/init-local.sh` (starts the replica, deploys canisters, writes `.env`), and starts the Go services. Tear it all down with `just local-down`.
 
-For minimal local dev (no SMTP needed), create `.env.local` with
-just the public key:
+`.env.local` works out of the box: the signing keypair is the public RFC 8032 Test 1 vector (no real secret), valid only against the local replica. `init-local.sh` installs its `PUBLIC_KEY` on the canister so the JWTs the auth-service mints verify on the IC side. No key generation needed.
 
-```shell
-printf 'PUBLIC_KEY="%s"\n' "$(cat .local/sign.pub)" > .env.local
-```
+Local dev runs on `icp-cli` (which pins the pocket-ic version). CI and mainnet/test deploys still use `dfx` for now; commands in the sections below that pass `--network test`/`--ic` remain `dfx`.
 
-## Commands
+### Just the replica
 
-Install dependencies:
-
-```shell
-bun i
-```
-
-Start the local replica and deploy canisters:
+If you only need the canisters (no Go services or Mailpit), run the init script directly:
 
 ```shell
 ./scripts/init-local.sh
 ```
 
-Local dev runs on `icp-cli` (which pins the pocket-ic version). CI and mainnet/test deploys still use `dfx` for now; commands in the sections below that pass `--network test`/`--ic` remain `dfx`.
+### Local Email Verification & Recovery
 
-### Local Email Verification
+Enter your email in the UI, then open the magic link from Mailpit (`http://localhost:8025`):
 
-After signing up and entering your email in the UI, generate a
-verification token:
+- verification links (`/verify?token=...`) -- open signed in as the email's account
+- recovery links (`/recover?token=...`) -- open signed in as a new, unclaimed Internet Identity
 
-```shell
-bun run scripts/generate-verify-token.ts <your-email>
-```
+See [services/README.md](./services/README.md#auth-service-end-to-end-testing) for the HTTP + SMTP details and `curl` triggers.
 
-Visit `http://localhost:5173/verify?token=<output>` in the same
-browser where you are signed in.
+### Local Admin Operations
 
-To exercise the real `auth-service` HTTP + SMTP path against a local
-Mailpit instance, see [services/README.md](./services/README.md#auth-service-end-to-end-testing).
-
-### Local User Activation
-
-New users start with `Pending` status. Activating is
-sufficient to use the app locally -- email verification is optional:
+`ssn-admin` is the operator CLI for the backend's admin operations (user activation, staff permissions, principal linking). Locally it authenticates as the RFC 8032 test identity that `init-local.sh` pre-grants admin, so no setup is needed. List users to get their IDs:
 
 ```shell
-just activate-user
+just tools::ssn-admin user list
 ```
 
-This lists local users, lets you pick one from a menu, and sets it
-`Active`.
-
-### Granting Staff Permissions Locally
-
-Staff permissions are cross-org capabilities (read every org, write billing,
-manage users, read raw metrics) gated behind the canister controller. To grant
-the full set, pick a user from a menu:
+New users start with `Pending` status; activating is sufficient to use the app locally (email verification is optional):
 
 ```shell
-just grant-staff
+just tools::ssn-admin user activate <user-id>
 ```
 
-To grant a narrower set, call `icp` directly and toggle the flags you want:
+Staff permissions are cross-org capabilities (read every org, write billing, manage users, read raw metrics) gated behind the canister controller. Grant the full set, or toggle individual flags:
 
 ```shell
-icp canister call backend admin_grant_staff_permissions \
-  '(record {
-      user_id = "<id>";
-      permissions = record {
-        read_all_orgs = false;
-        write_billing = false;
-        manage_users = false;
-        read_metrics = true;
-      };
-   })' -e local
+just tools::ssn-admin staff grant <user-id> --read-all-orgs --write-billing --manage-users --read-metrics
+just tools::ssn-admin staff grant <user-id> --read-metrics   # narrower
 ```
 
-Then `admin_get_metrics` (and any other staff-gated endpoint) can be called as
-that user:
+See `just tools::ssn-admin help` for the full command surface (`user`, `staff`, `principal`). Against a non-local IC set `ADMIN_IDENTITY_PEM`.
 
-```shell
-icp canister call backend admin_get_metrics '(record {})' -e local
-```
-
-### Build the frontend
-
-Build the backend API library:
-
-```shell
-bun turbo -F @ssn/backend-api build
-```
-
-Build the management canister library:
-
-```shell
-bun turbo -F @ssn/management-canister build
-```
-
-Run the frontend development server:
+### Run the frontend
 
 ```shell
 bun turbo -F frontend start
 ```
 
+Turbo builds the generated binding packages (`@ssn/backend-api`, `@ssn/management-canister`) as dependencies; you don't build them by hand.
+
 ### CI
 
 CI runs lint and build/test jobs per service, skipping jobs when
-their source paths have not changed. See the comments at the top of
-`.github/workflows/build-and-test.yml` for the dependency graph. If
-you add cross-canister dependencies or new packages, update the path
-filters in the workflow files.
+their source paths have not changed. Path filters are shared across
+the workflows in `.github/filters.yml`; update them when you add
+cross-canister dependencies or new packages.
 
-### Format code:
+### Format code
 
-```shell
-bun format
-```
-
-### Controller Management
-
-To add a controller (make a user into an admin):
+`just fmt` formats the whole repo (Rust + TypeScript + Go):
 
 ```shell
-dfx canister update-settings --add-controller ${CONTROLLER_PRINCIPAL} backend
-```
-
-To remove a controller (remove admin rights from a user):
-
-```shell
-dfx canister update-settings --remove-controller ${CONTROLLER_PRINCIPAL} backend
-```
-
-### Canister Cycle Management
-
-To top up cycles for a canister, use the following command:
-
-```shell
-dfx wallet send ${CANISTER_ID} ${CYCLES_AMOUNT}
+just fmt
 ```
 
 ### Project export (icp-cli zip)
@@ -203,11 +106,13 @@ To export a CSV of all canisters tracked by the Console:
 bun -F scripts fetch-canisters-csv
 ```
 
-The above script defaults to mainnet, to use a different network:
+The script uses `dfx` and defaults to mainnet (`production`); pass `--network` to target another `dfx` network, e.g. `test`:
 
 ```shell
-bun -F scripts fetch-canisters-csv --network="local"
+bun -F scripts fetch-canisters-csv --network="test"
 ```
+
+(`dfx` cannot reach the `icp-cli`-managed local replica, so `--network local` does not work here.)
 
 ### Canister history canister
 
@@ -255,36 +160,4 @@ dfx canister call --network test canister-history list_canister_changes '(
     limit = opt (50 : nat64);
   },
 )'
-```
-
-### Canister info
-
-Encode the call args for the management canister:
-
-```shell
-./didc encode --defs ./src/management-canister/ic.did --types '(canister_info_args)' '(
-  record {
-    canister_id = principal "${TARGET_CANISTER_PRINCIPAL}";
-    num_requested_changes = opt 100;
-  }
-)'
-```
-
-Make the call to your cycles wallet:
-
-```shell
-dfx canister call --ic --candid ./cycles_wallet.did ${CYCLES_WALLET_PRINCIPAL} wallet_call
-```
-
-Enter the following options into Candid assist:
-
-- `hex`: `${ARGS_HEX}`
-- `0`
-- `canister_info`
-- `aaaaa-aa`
-
-Decode the output:
-
-```shell
-./didc decode --defs ./src/management-canister/ic.did --types '(canister_info_result)' ${RESULT_HEX}
 ```

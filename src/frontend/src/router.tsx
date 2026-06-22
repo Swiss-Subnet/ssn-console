@@ -29,6 +29,7 @@ const TermsAndConditionsTab = lazy(
 const StaffTab = lazy(() => import('@/routes/admin/staff-tab'));
 const OrganizationsTab = lazy(() => import('@/routes/admin/organizations-tab'));
 const Verify = lazy(() => import('@/routes/verify/verify'));
+const Recover = lazy(() => import('@/routes/recover/recover'));
 const Dashboard = lazy(() => import('@/routes/dashboard/dashboard'));
 const Billing = lazy(() => import('@/routes/billing/billing'));
 const CreateOrganization = lazy(
@@ -66,6 +67,7 @@ export const Router: FC = () => (
         <Route index element={<Home />} />
         <Route path="terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="verify" element={<Verify />} />
+        <Route path="recover" element={<Recover />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="canisters" element={<RedirectToProjectCanisters />} />
