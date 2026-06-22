@@ -64,12 +64,32 @@ services:
     environment:
       PORT: '3001'
       USE_FAKE_METRICS: 'true'
-      # The replica runs on the host, not in this network.
-      IC_HOST: http://host.containers.internal:4943
+      IC_HOST: http://localhost:4943
       OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
     ports:
       - '3001:3001'
     extra_hosts:
-      - 'host.containers.internal:host-gateway'
+      - 'localhost:host-gateway'
     depends_on:
       - alloy
+
+  canister-otlp-syncer:
+    build:
+      context: ../services
+      dockerfile: ../config/canister-otlp-syncer.containerfile
+    network_mode: host
+    env_file:
+      - ../.env.local
+      - ../.env
+    environment:
+      SYNC_INTERVAL: '60s'
+      HTTP_GATEWAY: http://127.0.0.1:4943
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://127.0.0.1:4318
+      STATE_DIR: /data
+    volumes:
+      - canister-otlp-syncer-state:/data
+    depends_on:
+      - alloy
+
+volumes:
+  canister-otlp-syncer-state:

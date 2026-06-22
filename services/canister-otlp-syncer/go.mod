@@ -1,9 +1,9 @@
 module github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer
 
-go 1.25.5
+go 1.26.4
 
 require (
-	github.com/aviate-labs/agent-go v0.8.3
+	github.com/aviate-labs/agent-go v0.9.2-0.20260622152312-20f4b738237f
 	go.opentelemetry.io/proto/otlp v1.10.0
 	google.golang.org/protobuf v1.36.11
 )

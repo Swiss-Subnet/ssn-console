@@ -4,7 +4,7 @@
 # GOWORK=off ignores go.work (which lists modules we don't copy); httpsvc resolves
 # via metrics-proxy's replace ../httpsvc directive instead.
 
-FROM docker.io/library/golang:1.25 AS builder
+FROM docker.io/library/golang:1.26 AS builder
 
 WORKDIR /src
 ENV CGO_ENABLED=0 GOOS=linux GOWORK=off

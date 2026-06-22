@@ -115,9 +115,7 @@ export const OrganizationInvitations: FC<OrganizationInvitationsProps> = ({
 
   const [invites, setInvites] = useState<OrgInvite[]>([]);
   const [revokingId, setRevokingId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<InviteStatus | 'all'>(
-    'pending',
-  );
+  const [statusFilter, setStatusFilter] = useState<InviteStatus | 'all'>('all');
 
   const filteredInvites = useMemo(
     () =>

@@ -62,7 +62,7 @@ const ProposalList: FC = () => {
     [project, orgMap],
   );
 
-  const [activeTab, setActiveTab] = useState<FilterTab['id']>('open');
+  const [activeTab, setActiveTab] = useState<FilterTab['id']>('all');
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);

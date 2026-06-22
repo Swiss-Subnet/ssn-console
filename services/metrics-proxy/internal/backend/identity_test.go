@@ -48,8 +48,8 @@ func TestIsLocalReplica(t *testing.T) {
 		{"https://icp0.io", false},
 		{"https://ic0.app", false},
 	} {
-		if got := isLocalReplica(c.host); got != c.want {
-			t.Errorf("isLocalReplica(%q) = %v, want %v", c.host, got, c.want)
+		if got := IsLocalReplica(c.host); got != c.want {
+			t.Errorf("IsLocalReplica(%q) = %v, want %v", c.host, got, c.want)
 		}
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -70,7 +69,7 @@ func run() error {
 		ICHost:       cfg.ICHost,
 		CanisterID:   backendCanisterID,
 		Identity:     id,
-		FetchRootKey: isLocalHost(cfg.ICHost),
+		FetchRootKey: backend.IsLocalReplica(cfg.ICHost),
 	})
 	if err != nil {
 		return err
@@ -123,14 +122,4 @@ func resolveRootKey(rootKeyHex string) ([]byte, error) {
 		return hex.DecodeString(certification.RootKey)
 	}
 	return hex.DecodeString(rootKeyHex)
-}
-
-func isLocalHost(host string) bool {
-	h := strings.ToLower(host)
-	for _, needle := range []string{"127.0.0.1", "localhost", "0.0.0.0"} {
-		if strings.Contains(h, needle) {
-			return true
-		}
-	}
-	return false
 }
