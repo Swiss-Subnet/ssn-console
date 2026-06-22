@@ -35,66 +35,39 @@ just services::run auth-service   # run locally, loads ../.env.local
 
 ## auth-service: end-to-end testing
 
-`auth-service` mints an Ed25519 JWT and hands it to SMTP. To exercise the
-full flow locally you need a fake SMTP server; Mailpit is the easiest.
+`auth-service` mints an Ed25519 JWT and hands it to SMTP. Both the service
+and its Mailpit sink are brought up by `just local-up` from the repo root,
+so the usual setup is enough:
 
-1. Generate the signing keys (one time):
+```
+cp .env.local.example .env.local   # if you haven't already
+just local-up                      # replica + canisters + auth-service + Mailpit
+```
 
-   ```
-   mkdir -p .local
-   openssl genpkey -algorithm ed25519 -out .local/sign.pem
-   openssl pkey -in .local/sign.pem -pubout -out .local/sign.pub
-   ```
+`.env.local.example` ships the RFC 8032 Test 1 keypair (no real secret);
+`init-local.sh` installs its `PUBLIC_KEY` on the backend canister so minted
+tokens verify on the IC side. `SMTP_USER`/`SMTP_PASS` are blank because
+Mailpit implements no AUTH -- in prod both must be set or the service
+rejects the config. Mailpit's web UI is at `http://localhost:8025`.
 
-2. Start Mailpit (SMTP on 1025, web UI on 8025):
+Trigger an email (verification or recovery):
 
-   ```
-   docker run --rm -p 1025:1025 -p 8025:8025 axllent/mailpit
-   ```
+```
+curl -i -X POST http://localhost:3000/v0/auth/email-verification \
+  -H 'content-type: application/json' -d '{"email":"alice@subnet.ch"}'
 
-3. Populate `.env.local` at the repo root. `just services::run` sources
-   this file via bash, so `$(...)` is expanded at load time and the PEM
-   is inlined with real newlines:
+curl -i -X POST http://localhost:3000/v0/auth/account-recovery \
+  -H 'content-type: application/json' -d '{"email":"alice@subnet.ch"}'
+```
 
-   ```
-   PRIVATE_KEY="$(cat .local/sign.pem)"
-   FRONTEND_URL=http://localhost:4200
-   SMTP_HOST=127.0.0.1
-   SMTP_PORT=1025
-   SMTP_USER=
-   SMTP_PASS=
-   SMTP_FROM="Swiss Subnet <noreply@local>"
-   PORT=3000
-   ```
+Both always return `202 Accepted` (no oracle for valid/invalid/throttled).
+The SMTP send is detached, so 202 means the token was minted and enqueued,
+not delivered -- watch Mailpit or the service logs to confirm.
 
-   Leave `SMTP_USER` and `SMTP_PASS` blank: Mailpit does not implement
-   SMTP AUTH. In prod both must be set; the service rejects one without
-   the other.
-
-   The same `PRIVATE_KEY` must match the `PUBLIC_KEY` set on the backend
-   canister, otherwise the token will fail verification on the IC side.
-
-4. Run the service:
-
-   ```
-   just services::run auth-service
-   ```
-
-5. Trigger a verification email:
-
-   ```
-   curl -i -X POST http://localhost:3000/v0/auth/email-verification \
-     -H 'content-type: application/json' \
-     -d '{"email":"alice@subnet.ch"}'
-   ```
-
-   Expect `202 Accepted`. The SMTP send is detached, so 202 means the
-   token was minted and enqueued, not that mail was delivered -- watch
-   Mailpit at `http://localhost:8025` (or the service logs) to confirm.
-
-The magic link in the Mailpit message points at
-`${FRONTEND_URL}/verify?token=...`; pasting it into a browser signed in
-against the local replica completes the canister-side verification.
+The magic link points at `${FRONTEND_URL}/verify?token=...` or
+`/recover?token=...`. Verification runs as the signed-in principal; recovery
+must run as a _new, unclaimed_ Internet Identity and links it to the account
+that owns the verified email (so a verified+claimed email must exist first).
 
 For fast feedback without SMTP, `just services::test` runs the in-process
 HTTP + fake-mailer tests under `internal/server` and `internal/mailer`.

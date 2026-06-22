@@ -42,6 +42,9 @@ func TestIsLocalReplica(t *testing.T) {
 		{"http://127.0.0.1:4943", true},
 		{"http://localhost:4943", true},
 		{"http://0.0.0.0:4943", true},
+		// Container host aliases for the host-side replica (compose dev).
+		{"http://host.containers.internal:8000", true},
+		{"http://host.docker.internal:8000", true},
 		{"https://icp0.io", false},
 		{"https://ic0.app", false},
 	} {

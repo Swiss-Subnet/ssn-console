@@ -1,0 +1,63 @@
+default:
+    @just --list
+
+# Go operator tooling (not deployed services). Invoked from the repo root as
+# `just tools::<recipe>`.
+
+# Run `go generate` across every tool module. ssn-admin generates gitignored
+# candid bindings, so this must run before vet/build.
+gen:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for t in */; do
+        [ -f "${t}go.mod" ] || continue
+        (cd "$t" && go generate ./...)
+    done
+
+# Format every tool module.
+fmt:
+    golangci-lint fmt
+
+# go generate + vet across every tool module.
+check: gen
+    #!/usr/bin/env bash
+    set -euo pipefail
+    golangci-lint fmt --diff
+    for t in */; do
+        [ -f "${t}go.mod" ] || continue
+        (cd "$t" && go vet ./...)
+    done
+
+# Run tests across every tool module; args forwarded to `go test`.
+test *args: gen
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for t in */; do
+        [ -f "${t}go.mod" ] || continue
+        (cd "$t" && go test ./... {{args}})
+    done
+
+# Build every tool into tools/<name>/bin/<name>.
+build: gen
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for t in */; do
+        name="${t%/}"
+        [ -f "$name/go.mod" ] || continue
+        echo "building $name"
+        (cd "$name" && go build -o "bin/$name" "./cmd/$name")
+    done
+
+# Run the admin CLI against the local replica. Loads ../.env for
+# CANISTER_ID_BACKEND (written by init-local) and ../.env.local; authenticates
+# as the RFC 8032 test identity (loopback only). Pass args through, e.g.
+#   just tools::ssn-admin user list
+#   just tools::ssn-admin user activate <id>
+ssn-admin *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd ..
+    set -a; [ -f .env.local ] && . .env.local; . .env; set +a
+    : "${IC_HOST:=http://127.0.0.1:4943}"; export IC_HOST
+    cd tools/ssn-admin
+    go run ./cmd/ssn-admin {{args}}

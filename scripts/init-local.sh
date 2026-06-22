@@ -58,6 +58,14 @@ for c in "${CANISTERS[@]}"; do
 done
 
 echo
+echo "Granting admin to the RFC 8032 test identity (ssn-admin CLI / local tooling)..."
+# Backend admin == canister controller (assert_staff_perm short-circuits on
+# is_controller). Add the RFC 8032 Test 1 principal -- the identity ssn-admin
+# authenticates as locally -- so the CLI has admin without exporting icp's key.
+TEST_VECTOR_PRINCIPAL="e73il-iz5tp-nkgt7-idxyw-ngkah-47bpv-qdase-pzde6-g6vwc-a3eql-jae"
+icp canister settings update backend -e local --add-controller "$TEST_VECTOR_PRINCIPAL"
+
+echo
 echo "Writing .env for the frontend..."
 # icp-cli has no output_env_file; the frontend's vite build reads ids from .env.
 cat > .env <<EOF
@@ -84,6 +92,19 @@ for _ in $(seq 1 20); do
   sleep 1
 done
 icp canister call cycles-monitor trigger_sync_metrics '(record {})' -e local
+
+echo
+echo "Registering Internet Identity custom domain (id.ai.localhost)..."
+# icp-cli only writes the id.ai.localhost gateway route for Launcher-mode networks;
+# our Image-mode --ii is invisible to it. Append after installs (which rewrite the
+# file from scratch); the gateway's file provider re-reads it live.
+STATUS_DIR="$(jq -r '.["status-dir"] // empty' .icp/cache/networks/local/descriptor.json 2>/dev/null)"
+if [ -n "$STATUS_DIR" ] && [ -f "$STATUS_DIR/custom-domains.txt" ]; then
+  grep -q "^id.ai.localhost:" "$STATUS_DIR/custom-domains.txt" ||
+    echo "id.ai.localhost:uqzsh-gqaaa-aaaaq-qaada-cai" >> "$STATUS_DIR/custom-domains.txt"
+else
+  echo "init-local: custom-domains.txt not found; II login domain not registered." >&2
+fi
 
 echo
 echo "Local environment ready."

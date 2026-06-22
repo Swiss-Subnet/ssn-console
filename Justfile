@@ -97,9 +97,10 @@ render ENV_FILE:
 # The syncer is one-shot: trigger it with `just services::canister-otlp-syncer`.
 # Preflight runs first (deps are left-to-right) so a missing .env.local fails
 # before the slow canister build, not after.
-local-up: local-preflight local-telemetry-up
+local-up: local-preflight local-deps-up
     ./scripts/init-local.sh
     @just local-services-up
+    @echo "Mailpit UI: http://localhost:8025"
 
 # Fail fast if the local prerequisites are missing.
 local-preflight:
@@ -111,57 +112,23 @@ local-preflight:
     fi
 
 # Tear down everything brought up by local-up.
-local-down: local-services-down local-telemetry-down
+local-down:
+    podman-compose -f local/compose.yml down
     icp network stop || true
 
-# Background the long-running services (auth-service, metrics-proxy) into local/run/.
+# Build + (re)start the auth-service / metrics-proxy containers. Run after
+# init-local.sh so .env (canister ids) exists; --build picks up code changes.
 local-services-up:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    # Run the built binary, not `go run`, so the tracked pid is killable.
-    mkdir -p local/run
-    set -a; . .env.local; . .env; set +a
-    if curl -s -m 1 -o /dev/null http://127.0.0.1:8000/api/v2/status; then
-        export IC_HOST=http://127.0.0.1:8000
-    else
-        export IC_HOST=http://127.0.0.1:4943
-    fi
-    start() {
-        local name=$1 dir=$2; shift 2
-        if [ -f "local/run/${name}.pid" ] && kill -0 "$(cat "local/run/${name}.pid")" 2>/dev/null; then
-            echo "${name} already running (pid $(cat "local/run/${name}.pid"))"; return
-        fi
-        echo "building ${name}..."
-        (cd "services/${dir}" && go build -o "../../local/run/${name}" "./cmd/${dir}")
-        echo "starting ${name} -> local/run/${name}.log"
-        ( "$@" ) >"local/run/${name}.log" 2>&1 &
-        echo $! > "local/run/${name}.pid"
-    }
-    start auth-service  auth-service  ./local/run/auth-service
-    PORT=3001 start metrics-proxy metrics-proxy ./local/run/metrics-proxy
+    podman-compose -f local/compose.yml up -d --build auth-service metrics-proxy
 
-# Stop the backgrounded services and clean up local/run/.
-local-services-down:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    [ -d local/run ] || exit 0
-    for pidfile in local/run/*.pid; do
-        [ -e "$pidfile" ] || continue
-        pid=$(cat "$pidfile"); name=$(basename "$pidfile" .pid)
-        if kill -0 "$pid" 2>/dev/null; then
-            echo "stopping ${name} (pid ${pid})"
-            kill "$pid" 2>/dev/null || true
-        fi
-        rm -f "$pidfile"
-    done
+# Bring up the infra dependencies: telemetry sink (Alloy :4318 -> Prometheus
+# :9090) + Mailpit (SMTP :1025, UI :8025). Metrics at http://localhost:9090,
+# mail at http://localhost:8025.
+local-deps-up:
+    podman-compose -f local/compose.yml up -d prometheus alloy mailpit
 
-# Bring up the local telemetry sink (Alloy on :4318 -> Prometheus on :9090).
-# Inspect metrics via Prometheus at http://localhost:9090.
-local-telemetry-up:
-    podman-compose -f local/compose.yml up -d
-
-# Tear down the local telemetry sink.
-local-telemetry-down:
+# Tear down the whole compose stack (deps + services).
+local-deps-down:
     podman-compose -f local/compose.yml down
 
 # Format Rust + TypeScript + Go
@@ -169,12 +136,14 @@ fmt:
     cargo fmt
     bun run format
     just services::fmt
+    just tools::fmt
 
 # Type-check Rust + TypeScript + Go without building
 check:
     cargo check -p backend
     bun --bun tsc --build
     just services::check
+    just tools::check
 
 # Lint GitHub Actions workflows (and embedded shell scripts via shellcheck)
 lint-actions:
@@ -207,29 +176,8 @@ test-backend *args: build-backend
 retest-backend *args:
     cd src/backend-tests && bun run test {{args}}
 
-# List local users, pick one from a menu, and set it Active
-activate-user:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    json=$(icp canister call backend admin_list_user_profiles '()' -e local --json)
-    mapfile -t lines < <(echo "$json" | jq -r '.Ok[] | "\(.id)\t\(.email[0] // "no-email")\t\(.status | keys[0])"')
-    if [ ${#lines[@]} -eq 0 ]; then echo "No user profiles found."; exit 0; fi
-    echo "Select a user to activate:"
-    select line in "${lines[@]}"; do [ -n "${line:-}" ] && break; done
-    id=${line%%$'\t'*}
-    icp canister call backend admin_update_user_profile "(record { user_id = \"$id\"; status = opt variant { Active } })" -e local
-
-# List local users, pick one from a menu, and grant full staff permissions
-grant-staff:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    json=$(icp canister call backend admin_list_user_profiles '()' -e local --json)
-    mapfile -t lines < <(echo "$json" | jq -r '.Ok[] | "\(.id)\t\(.email[0] // "no-email")\t\(.status | keys[0])"')
-    if [ ${#lines[@]} -eq 0 ]; then echo "No user profiles found."; exit 0; fi
-    echo "Select a user to make staff:"
-    select line in "${lines[@]}"; do [ -n "${line:-}" ] && break; done
-    id=${line%%$'\t'*}
-    icp canister call backend admin_grant_staff_permissions "(record { user_id = \"$id\"; permissions = record { read_all_orgs = true; write_billing = true; manage_users = true; read_metrics = true } })" -e local
-
 # Go microservices live under services/; see `just services::` for recipes
 mod services
+
+# Go operator tooling lives under tools/; see `just tools::` for recipes
+mod tools

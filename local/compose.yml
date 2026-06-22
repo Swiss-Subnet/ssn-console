@@ -1,4 +1,10 @@
-# Local telemetry sink: Alloy (OTLP :4318) -> Prometheus (:9090). `just local-telemetry-up`.
+# Local dev stack: the Go services plus their dependencies -- telemetry sink
+# (Alloy OTLP :4318 -> Prometheus :9090), Mailpit (SMTP :1025, UI :8025), and
+# the auth-service / metrics-proxy containers. `just local-deps-up`.
+#
+# env_file pulls PRIVATE_KEY/SMTP/FRONTEND_URL from .env.local and the canister
+# ids from the generated .env; `environment:` overrides the few values that
+# must point at compose-internal DNS (mailpit, alloy) or the host replica.
 
 services:
   prometheus:
@@ -25,3 +31,45 @@ services:
       - '12345:12345'
     depends_on:
       - prometheus
+
+  mailpit:
+    image: docker.io/axllent/mailpit:latest
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+  auth-service:
+    build:
+      context: ../services
+      dockerfile: ../config/auth-service.containerfile
+    env_file:
+      - ../.env.local
+    environment:
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mailpit
+      - alloy
+
+  metrics-proxy:
+    build:
+      context: ../services
+      dockerfile: ../config/metrics-proxy.containerfile
+    env_file:
+      - ../.env.local
+      - ../.env
+    environment:
+      PORT: '3001'
+      USE_FAKE_METRICS: 'true'
+      # The replica runs on the host, not in this network.
+      IC_HOST: http://host.containers.internal:4943
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
+    ports:
+      - '3001:3001'
+    extra_hosts:
+      - 'host.containers.internal:host-gateway'
+    depends_on:
+      - alloy

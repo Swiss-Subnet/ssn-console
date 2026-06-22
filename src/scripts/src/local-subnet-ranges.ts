@@ -5,7 +5,7 @@
 
 import { Principal } from '@icp-sdk/core/principal';
 
-const GATEWAY = process.env.LOCAL_GATEWAY ?? 'http://127.0.0.1:8000';
+const GATEWAY = process.env.LOCAL_GATEWAY ?? 'http://127.0.0.1:4943';
 
 type Topology = {
   subnet_configs: Record<

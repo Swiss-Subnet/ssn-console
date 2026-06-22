@@ -6,10 +6,13 @@ import { SignUpPrompt } from '@/routes/home/sign-up-prompt';
 import { ActivityPrompt } from '@/routes/home/activity-prompt';
 import { Container } from '@/components/layout/container';
 import EmailVerificationPrompt from './email-verification-prompt';
+import AccountRecoveryPrompt from './account-recovery-prompt';
+import OnboardingChoice from './onboarding-choice';
 
 const Home: FC = () => {
   const { isAuthenticated, profile } = useAppStore();
   const isActive = useAppStore(selectIsActive);
+  const hasProfile = isAuthenticated && profile !== null;
 
   return (
     <Container>
@@ -23,13 +26,17 @@ const Home: FC = () => {
 
       {!isAuthenticated && <SignUpPrompt className="mt-8" />}
 
-      {isAuthenticated && profile?.email && !profile.emailVerified && (
+      {!isAuthenticated && <AccountRecoveryPrompt className="mt-4" />}
+
+      {isAuthenticated && !hasProfile && <OnboardingChoice className="mt-8" />}
+
+      {hasProfile && profile?.email && !profile.emailVerified && (
         <EmailVerificationPrompt className="mt-8" />
       )}
 
-      {isAuthenticated && !isActive && <EmailPrompt className="mt-8" />}
+      {hasProfile && !isActive && <EmailPrompt className="mt-8" />}
 
-      {isAuthenticated && isActive && <ActivityPrompt className="mt-8" />}
+      {hasProfile && isActive && <ActivityPrompt className="mt-8" />}
     </Container>
   );
 };

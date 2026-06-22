@@ -9,6 +9,7 @@ import {
   mapLinkMyPrincipalRequest,
   mapLinkMyPrincipalResponse,
   mapListMyLinkedPrincipalsResponse,
+  mapRejectionResponse,
   mapRegisterLinkCodeRequest,
   mapRegisterLinkCodeResponse,
   mapRevokeMyLinkCodeResponse,
@@ -99,5 +100,10 @@ export class PrincipalLinkApi {
       mapAdminListLinkedPrincipalsRequest(userId),
     );
     return mapAdminListLinkedPrincipalsResponse(res);
+  }
+
+  public async recoverAccountByEmail(token: string): Promise<void> {
+    const res = await this.actor.recover_account_by_email({ token });
+    mapRejectionResponse(res);
   }
 }

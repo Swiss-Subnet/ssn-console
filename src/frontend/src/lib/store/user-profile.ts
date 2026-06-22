@@ -1,5 +1,5 @@
 import { UserStatus } from '@/lib/api-models';
-import { isNil } from '@/lib/nil';
+import { isNil, isNotNil } from '@/lib/nil';
 import type {
   AppSlice,
   AppStateCreator,
@@ -26,7 +26,11 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
     }
 
     try {
-      const profile = await userProfileApi.getOrCreateMyUserProfile();
+      // Get-only: a fresh principal has no profile and we must NOT auto-create
+      // one. Auto-creating would claim the principal, which then blocks email
+      // recovery (recover_account_by_email requires an unclaimed caller). The
+      // user creates a profile explicitly, or recovers onto an existing one.
+      const profile = await userProfileApi.getMyUserProfile();
       const myStaffPermissions =
         await staffPermissionsApi.getMyStaffPermissions();
       set({ profile, myStaffPermissions });
@@ -37,6 +41,16 @@ export const createUserProfileSlice: AppStateCreator<UserProfileSlice> = (
 
   clearUserProfile() {
     set({ profile: null, myStaffPermissions: null });
+  },
+
+  async createProfile() {
+    const { userProfileApi, isAuthenticated, profile } = get();
+    if (!isAuthenticated || isNotNil(profile)) {
+      return;
+    }
+
+    const created = await userProfileApi.createMyUserProfile();
+    set({ profile: created });
   },
 
   setEmail: async (email: string) => {

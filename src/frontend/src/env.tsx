@@ -27,7 +27,7 @@ export const ENVIRONMENT_BANNER: {
       }
     : null;
 export const IDENTITY_PROVIDER = IS_LOCAL
-  ? 'http://id.ai.localhost:8000'
+  ? 'http://id.ai.localhost:4943'
   : 'https://id.ai';
 
 export const BACKEND_CANISTER_ID: string = getEnvVar('CANISTER_ID_BACKEND');

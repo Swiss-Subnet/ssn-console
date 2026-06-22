@@ -122,6 +122,7 @@ export type UserProfileSlice = {
 
   initializeUserProfile: () => Promise<void>;
   clearUserProfile: () => void;
+  createProfile: () => Promise<void>;
 
   setEmail: (email: string) => Promise<void>;
   setEmailVerified: () => void;
@@ -142,6 +143,8 @@ export type PrincipalLinkSlice = {
   unlinkMyPrincipal: (principal: string) => Promise<void>;
   revokeMyLinkCode: () => Promise<void>;
   setMyPrincipalName: (principal: string, name: string | null) => Promise<void>;
+  sendRecoveryEmail: (email: string) => Promise<void>;
+  recoverAccountByEmail: (token: string) => Promise<void>;
 };
 
 export type UsersSlice = {

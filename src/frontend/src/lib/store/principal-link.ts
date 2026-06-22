@@ -80,4 +80,16 @@ export const createPrincipalLinkSlice: AppStateCreator<PrincipalLinkSlice> = (
         ) ?? null,
     }));
   },
+
+  // Unauthenticated by design: the user requesting recovery has lost access to
+  // their identity, so this only needs the email the token will be bound to.
+  async sendRecoveryEmail(email) {
+    const { authApi } = get();
+    await authApi.sendAccountRecovery(email);
+  },
+
+  async recoverAccountByEmail(token) {
+    const { principalLinkApi } = get();
+    await principalLinkApi.recoverAccountByEmail(token);
+  },
 });

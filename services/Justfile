@@ -67,20 +67,13 @@ metrics-proxy:
     set -euo pipefail
     cd ..
     set -a; . .env.local; . .env; set +a
-    if [ -z "${IC_HOST:-}" ]; then
-        # Prefer pocket-ic (8000) over dfx start (4943); both reachable locally.
-        if curl -s -m 1 -o /dev/null http://127.0.0.1:8000/api/v2/status; then
-            export IC_HOST=http://127.0.0.1:8000
-        else
-            export IC_HOST=http://127.0.0.1:4943
-        fi
-    fi
+    : "${IC_HOST:=http://127.0.0.1:4943}"; export IC_HOST
     cd services/metrics-proxy
     export PORT=3001
     go run ./cmd/metrics-proxy
 
 # Run canister-otlp-syncer once against the local replica, pushing OTLP to the
-# local telemetry sink (`just local-telemetry-up` from the repo root). Loads
+# local telemetry sink (`just local-deps-up` from the repo root). Loads
 # ../.env.local for PRIVATE_KEY and ../.env for the canister ids (both written
 # by init-local.sh), points OTLP at the local Alloy on :4318.
 # Usage: just services::canister-otlp-syncer
@@ -90,11 +83,7 @@ canister-otlp-syncer:
     cd ..
     set -a; . .env.local; . .env; set +a
     if [ -z "${HTTP_GATEWAY:-}" ]; then
-        if curl -s -m 1 -o /dev/null http://127.0.0.1:8000/api/v2/status; then
-            export HTTP_GATEWAY=http://127.0.0.1:8000
-        else
-            export HTTP_GATEWAY=http://127.0.0.1:4943
-        fi
+        export HTTP_GATEWAY=http://127.0.0.1:4943
     fi
     export OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://127.0.0.1:4318}
     # Persist the cursor under local/run/ instead of the prod /data mount.
