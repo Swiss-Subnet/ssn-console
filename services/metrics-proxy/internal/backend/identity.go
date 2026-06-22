@@ -33,7 +33,7 @@ func LoadIdentity(pem, icHost string) (*identity.Ed25519Identity, error) {
 		return id, nil
 	}
 
-	if !isLocalReplica(icHost) {
+	if !IsLocalReplica(icHost) {
 		return nil, fmt.Errorf(
 			"PROXY_IDENTITY_PEM is required when IC_HOST is not a local replica (got %q)",
 			icHost,
@@ -45,7 +45,7 @@ func LoadIdentity(pem, icHost string) (*identity.Ed25519Identity, error) {
 	return identity.NewEd25519Identity(pub, priv)
 }
 
-func isLocalReplica(host string) bool {
+func IsLocalReplica(host string) bool {
 	h := strings.ToLower(host)
 	return strings.Contains(h, "127.0.0.1") ||
 		strings.Contains(h, "localhost") ||

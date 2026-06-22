@@ -2,7 +2,7 @@ module github.com/swiss-subnet/ssn-console/tools/ssn-admin
 
 go 1.26.4
 
-require github.com/aviate-labs/agent-go v0.9.2-0.20260622113417-a63c3f62ea24
+require github.com/aviate-labs/agent-go v0.9.2-0.20260622152312-20f4b738237f
 
 require (
 	github.com/0x51-dev/upeg v0.1.5 // indirect

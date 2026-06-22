@@ -11,11 +11,11 @@ just local-up      # replica + canisters + compose stack (deps + services)
 just local-down    # tear it all back down
 ```
 
-`local-up` brings up the infra deps (telemetry sink + Mailpit), runs `scripts/init-local.sh` (replica + canisters, daemonized), then builds and starts the Go services (auth-service, metrics-proxy) as containers in the same compose stack. Everything but the replica is managed by `local/compose.yml`. Tail a service with `podman logs -f local_auth-service_1`. Mailpit's web UI is at <http://localhost:8025>.
+`local-up` brings up the infra deps (telemetry sink + Mailpit), runs `scripts/init-local.sh` (replica + canisters, daemonized), then builds and starts the Go services (auth-service, metrics-proxy, canister-otlp-syncer) as containers in the same compose stack. Everything but the replica is managed by `local/compose.yml`. Tail a service with `podman logs -f local_auth-service_1`. Mailpit's web UI is at <http://localhost:8025>.
 
 `just local-services-up` rebuilds and restarts just the service containers (use after a code change); `just local-deps-up` brings up only the infra deps.
 
-The `canister-otlp-syncer` is one-shot, so it is not part of the always-running set. Trigger a sync when you want to exercise it:
+The `canister-otlp-syncer` binary is one-shot; prod drives the cadence with a systemd hourly timer. In the compose stack it sets `SYNC_INTERVAL=60s` so the binary loops itself and keeps the canister-usage grid populated. To run a single pass against the replica without the container (e.g. while iterating on the syncer):
 
 ```
 just services::canister-otlp-syncer

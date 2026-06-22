@@ -1,7 +1,7 @@
 github.com/0x51-dev/upeg v0.1.5 h1:wbggXZSJbI0ln+5sy77Y/y+1d6fB41VoA6J/840+6Cc=
 github.com/0x51-dev/upeg v0.1.5/go.mod h1:ts9/Zafxb9W9drZFTmQNMR7kLOyHyBw37NuowyiDork=
-github.com/aviate-labs/agent-go v0.9.2-0.20260622113417-a63c3f62ea24 h1:yaC5e9GqPC9yQfCZkTYmSLqRq9Z3EyeoZCflfjqfVFk=
-github.com/aviate-labs/agent-go v0.9.2-0.20260622113417-a63c3f62ea24/go.mod h1:uTcjPxtTnmjYVzOttyNrxwWZjk6WsTex2Sd9Gg+OXoA=
+github.com/aviate-labs/agent-go v0.9.2-0.20260622152312-20f4b738237f h1:IAp/rawPAz5pec1sj6BAEqot0+I9Iz0tp8uPqEKViF0=
+github.com/aviate-labs/agent-go v0.9.2-0.20260622152312-20f4b738237f/go.mod h1:uTcjPxtTnmjYVzOttyNrxwWZjk6WsTex2Sd9Gg+OXoA=
 github.com/bits-and-blooms/bitset v1.20.0 h1:2F+rfL86jE2d/bmw7OhqUg2Sj/1rURkBn3MdfoPyRVU=
 github.com/bits-and-blooms/bitset v1.20.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
 github.com/consensys/bavard v0.1.27 h1:j6hKUrGAy/H+gpNrpLU3I26n1yc+VMGmd6ID5+gAhOs=

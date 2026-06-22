@@ -20,7 +20,7 @@ import { useMemo, type FC } from 'react';
 import { NavLink, useParams } from 'react-router';
 
 export const OrgSwitcher: FC = () => {
-  const { projectId: projectIdParam } = useParams();
+  const { orgId: orgIdParam, projectId: projectIdParam } = useParams();
   const orgsWithProjects = useAppStore(selectOrgsWithProjects);
   const projectMap = useAppStore(selectProjectMap);
   const orgMap = useAppStore(selectOrgMap);
@@ -35,12 +35,16 @@ export const OrgSwitcher: FC = () => {
   );
 
   const activeOrganization = useMemo(() => {
+    if (!isNil(orgIdParam)) {
+      return orgMap.get(orgIdParam);
+    }
+
     if (isNil(activeProject)) {
       return null;
     }
 
     return orgMap.get(activeProject.orgId);
-  }, [activeProject, orgMap]);
+  }, [orgIdParam, activeProject, orgMap]);
 
   if (orgsWithProjects.length === 0) {
     return null;

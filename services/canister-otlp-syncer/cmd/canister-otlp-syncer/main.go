@@ -47,14 +47,32 @@ func run() error {
 		return err
 	}
 
-	log.Printf("starting one-shot sync as %s", client.Sender())
-
-	return sync.Run(ctx, sync.Deps{
+	deps := sync.Deps{
 		Client:      client,
 		Pusher:      otlp.NewPusher(cfg.MetricsEndpoint, &http.Client{Timeout: 30 * time.Second}),
 		Environment: cfg.GrafanaEnvironment,
 		StateDir:    cfg.StateDir,
-	})
+	}
+
+	if cfg.SyncInterval <= 0 {
+		log.Printf("starting one-shot sync as %s", client.Sender())
+		return sync.Run(ctx, deps)
+	}
+
+	log.Printf("starting sync loop (every %s) as %s", cfg.SyncInterval, client.Sender())
+	t := time.NewTicker(cfg.SyncInterval)
+	defer t.Stop()
+	for {
+		if err := sync.Run(ctx, deps); err != nil {
+			// A transient replica/network error must not kill the loop.
+			log.Printf("sync failed: %v", err)
+		}
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-t.C:
+		}
+	}
 }
 
 func isLocal(host string) bool {

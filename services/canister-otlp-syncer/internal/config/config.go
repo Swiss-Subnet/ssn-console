@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 type Config struct {
@@ -13,6 +14,9 @@ type Config struct {
 	MetricsEndpoint         string
 	GrafanaEnvironment      string
 	StateDir                string
+	// 0 means one-shot (prod: a systemd timer drives the cadence). A positive
+	// value makes the binary loop on its own (local compose, no external timer).
+	SyncInterval time.Duration
 }
 
 func Load() (*Config, error) {
@@ -37,6 +41,14 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	var syncInterval time.Duration
+	if v := os.Getenv("SYNC_INTERVAL"); v != "" {
+		syncInterval, err = time.ParseDuration(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid SYNC_INTERVAL %q: %w", v, err)
+		}
+	}
+
 	return &Config{
 		BackendCanisterID:       backend,
 		CyclesMonitorCanisterID: cyclesMonitor,
@@ -45,7 +57,8 @@ func Load() (*Config, error) {
 		MetricsEndpoint:         otlpEndpoint + "/v1/metrics",
 		GrafanaEnvironment:      os.Getenv("GRAFANA_ENVIRONMENT"),
 		// Cursor persistence dir; the prod quadlet mounts /data.
-		StateDir: optional("STATE_DIR", "/data"),
+		StateDir:     optional("STATE_DIR", "/data"),
+		SyncInterval: syncInterval,
 	}, nil
 }
 

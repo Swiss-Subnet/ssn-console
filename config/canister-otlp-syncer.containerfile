@@ -2,7 +2,7 @@
 # Build context is services/. GOWORK=off ignores go.work (which lists modules
 # not in context); this module is self-contained.
 
-FROM docker.io/library/golang:1.25 AS builder
+FROM docker.io/library/golang:1.26 AS builder
 
 WORKDIR /src
 ENV CGO_ENABLED=0 GOOS=linux GOWORK=off

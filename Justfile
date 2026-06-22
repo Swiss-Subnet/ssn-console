@@ -119,7 +119,7 @@ local-down:
 # Build + (re)start the auth-service / metrics-proxy containers. Run after
 # init-local.sh so .env (canister ids) exists; --build picks up code changes.
 local-services-up:
-    podman-compose -f local/compose.yml up -d --build auth-service metrics-proxy
+    podman-compose -f local/compose.yml up -d --build auth-service metrics-proxy canister-otlp-syncer
 
 # Bring up the infra dependencies: telemetry sink (Alloy :4318 -> Prometheus
 # :9090) + Mailpit (SMTP :1025, UI :8025). Metrics at http://localhost:9090,
