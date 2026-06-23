@@ -46,9 +46,11 @@ render ENV_FILE:
 
     # metrics-proxy expects GRAFANA_URL/USERNAME/PASSWORD; map them from the
     # env file's hosted-metrics names (the .env files are not touched here).
+    # The proxy queries, so its password is the read-only token, not the
+    # remote-write key Alloy uses to push.
     export GRAFANA_URL="${GRAFANA_HOSTED_METRICS_URL}"
     export GRAFANA_USERNAME="${GRAFANA_HOSTED_METRICS_ID}"
-    export GRAFANA_PASSWORD="${GRAFANA_RW_API_KEY}"
+    export GRAFANA_PASSWORD="${GRAFANA_RO_API_KEY}"
 
     # Remote paths the rendered quadlets/Caddyfile bake in (must match ansible console-deploy vars).
     export REMOTE_CADDYFILE_PATH="/home/${REMOTE_USER}/.config/containers/volumes/caddy/Caddyfile"

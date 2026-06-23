@@ -56,3 +56,31 @@ func TestLoad_RejectsInvalidRootKeyHex(t *testing.T) {
 		t.Fatal("expected error on invalid hex root key")
 	}
 }
+
+// The hosted-metrics env var carries the remote-write (push) endpoint
+// (.../api/prom/push). The proxy queries (.../api/prom), so Load strips a
+// trailing /push (and any trailing slash) to accept the push URL verbatim.
+func TestLoad_NormalizesGrafanaPushURL(t *testing.T) {
+	cases := map[string]string{
+		"https://x.grafana.net/api/prom/push":  "https://x.grafana.net/api/prom",
+		"https://x.grafana.net/api/prom/push/": "https://x.grafana.net/api/prom",
+		"https://x.grafana.net/api/prom":       "https://x.grafana.net/api/prom",
+		"https://x.grafana.net/api/prom/":      "https://x.grafana.net/api/prom",
+	}
+	for in, want := range cases {
+		t.Run(in, func(t *testing.T) {
+			t.Setenv("FRONTEND_URL", "http://localhost:4200")
+			t.Setenv("CANISTER_ID_BACKEND", "aaaaa-aa")
+			t.Setenv("GRAFANA_URL", in)
+			t.Setenv("GRAFANA_USERNAME", "u")
+			t.Setenv("GRAFANA_PASSWORD", "p")
+			cfg, err := Load()
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if cfg.GrafanaURL != want {
+				t.Errorf("GrafanaURL = %q, want %q", cfg.GrafanaURL, want)
+			}
+		})
+	}
+}
