@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -187,26 +187,30 @@ func (s *Server) handleMintAndMail(deps Deps, flow mintAndMailFlow) http.Handler
 		var req emailRequest
 		dec := json.NewDecoder(r.Body)
 		dec.DisallowUnknownFields()
+		ctx := r.Context()
 		if err := dec.Decode(&req); err != nil {
+			slog.WarnContext(ctx, "send mail dropped", "purpose", flow.purpose, "reason", "bad request body", "err", err)
 			return
 		}
 		if !validEmail(req.Email) {
+			slog.WarnContext(ctx, "send mail dropped", "purpose", flow.purpose, "reason", "invalid email")
 			return
 		}
 		if !s.allowSend(flow.purpose, req.Email) {
+			slog.InfoContext(ctx, "send mail dropped", "purpose", flow.purpose, "to", req.Email, "reason", "throttled", "window", perEmailThrottle.String())
 			return
 		}
 
 		jwt, err := flow.sign(deps.Signer, req.Email, tokenTTL)
 		if err != nil {
-			log.Printf("sign token (%s): %v", flow.purpose, err)
+			slog.ErrorContext(ctx, "sign token", "purpose", flow.purpose, "err", err)
 			return
 		}
 
 		link := deps.FrontendURL + flow.frontendPath + "?token=" + url.QueryEscape(jwt)
 		var htmlBuf bytes.Buffer
 		if err := flow.html.Execute(&htmlBuf, struct{ Link string }{link}); err != nil {
-			log.Printf("render email (%s): %v", flow.purpose, err)
+			slog.ErrorContext(ctx, "render email", "purpose", flow.purpose, "err", err)
 			return
 		}
 		msg := mailer.Message{
@@ -222,7 +226,7 @@ func (s *Server) handleMintAndMail(deps Deps, flow mintAndMailFlow) http.Handler
 		select {
 		case s.sem <- struct{}{}:
 		default:
-			log.Printf("send mail to %s (%s): dropped, in-flight cap reached", msg.To, flow.purpose)
+			slog.WarnContext(ctx, "send mail dropped", "purpose", flow.purpose, "to", msg.To, "reason", "in-flight cap reached")
 			return
 		}
 
@@ -232,11 +236,13 @@ func (s *Server) handleMintAndMail(deps Deps, flow mintAndMailFlow) http.Handler
 		go func() {
 			defer s.wg.Done()
 			defer func() { <-s.sem }()
-			ctx, cancel := context.WithTimeout(context.Background(), backgroundSendTimeout)
+			sendCtx, cancel := context.WithTimeout(context.Background(), backgroundSendTimeout)
 			defer cancel()
-			if err := deps.Mailer.Send(ctx, msg); err != nil {
-				log.Printf("send mail to %s (%s): %v", msg.To, flow.purpose, err)
+			if err := deps.Mailer.Send(sendCtx, msg); err != nil {
+				slog.ErrorContext(sendCtx, "send mail failed", "purpose", flow.purpose, "to", msg.To, "err", err)
+				return
 			}
+			slog.InfoContext(sendCtx, "send mail sent", "purpose", flow.purpose, "to", msg.To)
 		}()
 	}
 }
