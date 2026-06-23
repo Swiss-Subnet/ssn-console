@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -311,6 +312,42 @@ func TestEmailVerification_MailerFailureStillReturns202(t *testing.T) {
 	f.drain(t)
 	if _, ok := f.mailer.LastSent(); ok {
 		t.Error("mailer recorded a send despite returning an error")
+	}
+}
+
+// captureLog swaps the slog default for one writing to a buffer for the
+// duration of the test and returns a func yielding what was written so far.
+func captureLog(t *testing.T) func() string {
+	t.Helper()
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	t.Cleanup(func() { slog.SetDefault(prev) })
+	return buf.String
+}
+
+// A successful send is logged so a journey can be traced end to end.
+func TestEmailVerification_LogsSent(t *testing.T) {
+	logs := captureLog(t)
+	f := newFixture(t)
+	f.post(t, server.APIPrefix+"/email-verification", map[string]string{"email": "test@example.com"})
+	f.drain(t)
+	if !strings.Contains(logs(), `msg="send mail sent"`) || !strings.Contains(logs(), "to=test@example.com") {
+		t.Errorf("missing sent log line; got:\n%s", logs())
+	}
+}
+
+// A throttled repeat is logged (previously a silent drop).
+func TestEmailVerification_LogsThrottledDrop(t *testing.T) {
+	logs := captureLog(t)
+	f := newFixture(t)
+	const email = "test@example.com"
+	for range 2 {
+		f.post(t, server.APIPrefix+"/email-verification", map[string]string{"email": email})
+	}
+	f.drain(t)
+	if !strings.Contains(logs(), "reason=throttled") {
+		t.Errorf("missing throttled-drop log line; got:\n%s", logs())
 	}
 }
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,7 +21,8 @@ import (
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatalf("auth-service: %v", err)
+		slog.Error("auth-service", "err", err)
+		os.Exit(1)
 	}
 }
 
@@ -46,7 +47,7 @@ func run() error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := shutdownTelemetry(shutdownCtx); err != nil {
-			log.Printf("telemetry shutdown: %v", err)
+			slog.Error("telemetry shutdown", "err", err)
 		}
 	}()
 
@@ -77,15 +78,15 @@ func run() error {
 	}
 
 	go func() {
-		log.Printf("auth-service listening on %s, frontend_url=%q", srv.Addr, cfg.FrontendURL)
+		slog.Info("auth-service listening", "addr", srv.Addr, "frontend_url", cfg.FrontendURL)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("listen: %v", err)
+			slog.Error("listen", "err", err)
 			stop()
 		}
 	}()
 
 	<-ctx.Done()
-	log.Println("shutting down")
+	slog.Info("shutting down")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -98,7 +99,7 @@ func run() error {
 	drainCtx, cancelDrain := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelDrain()
 	if err := authServer.Wait(drainCtx); err != nil {
-		log.Printf("drain background sends: %v", err)
+		slog.Error("drain background sends", "err", err)
 	}
 	return nil
 }
