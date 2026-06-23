@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -22,7 +21,8 @@ import (
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatalf("auth-service: %v", err)
+		slog.Error("auth-service", "err", err)
+		os.Exit(1)
 	}
 }
 
