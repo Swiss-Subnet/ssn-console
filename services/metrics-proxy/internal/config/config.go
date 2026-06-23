@@ -65,6 +65,12 @@ func Load() (*Config, error) {
 	grafanaURL := os.Getenv("GRAFANA_URL")
 	useFake := os.Getenv("USE_FAKE_METRICS") == "true" || grafanaURL == ""
 
+	// The hosted-metrics env var is the remote-write (push) endpoint
+	// (.../api/prom/push); the query API lives at .../api/prom. Strip a
+	// trailing /push so the push URL can be used verbatim.
+	grafanaURL = strings.TrimRight(grafanaURL, "/")
+	grafanaURL = strings.TrimSuffix(grafanaURL, "/push")
+
 	grafanaUser := os.Getenv("GRAFANA_USERNAME")
 	grafanaPass := os.Getenv("GRAFANA_PASSWORD")
 	if !useFake {
@@ -100,7 +106,7 @@ func Load() (*Config, error) {
 	return &Config{
 		Port:                  port,
 		AllowedOrigins:        allowedOrigins,
-		GrafanaURL:            strings.TrimRight(grafanaURL, "/"),
+		GrafanaURL:            grafanaURL,
 		GrafanaUsername:       grafanaUser,
 		GrafanaPassword:       grafanaPass,
 		UseFakeMetrics:        useFake,
