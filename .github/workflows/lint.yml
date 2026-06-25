@@ -94,6 +94,16 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: committed candid bindings are up to date
+        run: |
+          set -euo pipefail
+          for svc in */; do
+            [ -f "${svc}go.mod" ] || continue
+            (cd "$svc" && go generate ./...)
+          done
+          git diff --exit-code -- 'canister-clients/**/*_gen.go' \
+            || { echo "::error::canister-clients bindings are stale; run 'just services::gen' and commit"; exit 1; }
+
       - name: go mod tidy is clean per service
         run: |
           set -euo pipefail
@@ -138,8 +148,7 @@ jobs:
           for t in */; do
             [ -f "${t}go.mod" ] || continue
             echo "::group::$t"
-            # candid bindings are gitignored; generate before vet/lint.
-            (cd "$t" && go generate ./... && go vet ./... && golangci-lint run ./...)
+            (cd "$t" && go vet ./... && golangci-lint run ./...)
             echo "::endgroup::"
           done
 
@@ -149,7 +158,7 @@ jobs:
           for t in */; do
             [ -f "${t}go.mod" ] || continue
             echo "::group::$t"
-            (cd "$t" && go generate ./... && go mod tidy)
+            (cd "$t" && go mod tidy)
             echo "::endgroup::"
           done
           git diff --exit-code -- '*/go.mod' '*/go.sum'

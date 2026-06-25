@@ -41,6 +41,12 @@ go:
   - 'services/.golangci.yml'
   - 'services/Justfile'
   - 'config/auth-service.containerfile'
+  # canister-clients' committed bindings are generated from these .did files;
+  # a change here must run lint_go's drift check.
+  - 'src/backend-api/**/*.did'
+  - 'src/cycles-monitor-api/**/*.did'
+  - 'src/canister-history-api/**/*.did'
+  - 'src/canister-utils/**/*.did'
   - '.github/filters.yml'
   - '.github/workflows/build-and-test.yml'
   - '.github/workflows/lint.yml'
@@ -52,8 +58,8 @@ go-tools:
   - 'tools/go.work'
   - 'tools/go.work.sum'
   - 'tools/.golangci.yml'
-  # ssn-admin generates its client from the backend candid.
-  - 'src/backend-api/**/*.did'
+  # ssn-admin consumes the shared canister-clients module; its bindings are
+  # generated under services/, so .did changes are covered by the `go` filter.
   - '.github/filters.yml'
   - '.github/workflows/build-and-test.yml'
   - '.github/workflows/lint.yml'

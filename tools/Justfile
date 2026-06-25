@@ -4,24 +4,20 @@ default:
 # Go operator tooling (not deployed services). Invoked from the repo root as
 # `just tools::<recipe>`.
 
-# Generate gitignored candid bindings. ssn-admin consumes the shared
-# canister-clients module (generated under services/), so delegate there;
-# this must run before vet/build.
+# Regenerate the committed candid bindings ssn-admin consumes. They live in
+# the shared canister-clients module under services/, so delegate there; the
+# result is committed, so normal builds need no generate step.
 gen:
     #!/usr/bin/env bash
     set -euo pipefail
     (cd ../services && just gen)
-    for t in */; do
-        [ -f "${t}go.mod" ] || continue
-        (cd "$t" && go generate ./...)
-    done
 
 # Format every tool module.
 fmt:
     golangci-lint fmt
 
-# go generate + vet across every tool module.
-check: gen
+# vet across every tool module.
+check:
     #!/usr/bin/env bash
     set -euo pipefail
     golangci-lint fmt --diff
@@ -31,7 +27,7 @@ check: gen
     done
 
 # Run tests across every tool module; args forwarded to `go test`.
-test *args: gen
+test *args:
     #!/usr/bin/env bash
     set -euo pipefail
     for t in */; do
@@ -40,7 +36,7 @@ test *args: gen
     done
 
 # Build every tool into tools/<name>/bin/<name>.
-build: gen
+build:
     #!/usr/bin/env bash
     set -euo pipefail
     for t in */; do
@@ -55,7 +51,7 @@ build: gen
 # as the RFC 8032 test identity (loopback only). Pass args through, e.g.
 #   just tools::ssn-admin user list
 #   just tools::ssn-admin user activate <id>
-ssn-admin *args: gen
+ssn-admin *args:
     #!/usr/bin/env bash
     set -euo pipefail
     cd ..

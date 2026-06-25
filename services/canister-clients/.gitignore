@@ -1,5 +1,0 @@
-# goic-generated candid bindings; regenerated via `go generate` (see the gen.go
-# in each subpackage). Generated once on the build host before image builds.
-backend/backend_gen.go
-cyclesmonitor/cyclesmonitor_gen.go
-history/canister_history_gen.go

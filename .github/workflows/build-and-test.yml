@@ -211,7 +211,6 @@ jobs:
           for t in */; do
             [ -f "${t}go.mod" ] || continue
             echo "::group::$t"
-            # ssn-admin's candid bindings are gitignored; generate before build.
-            (cd "$t" && go generate ./... && go build ./... && go test ./...)
+            (cd "$t" && go build ./... && go test ./...)
             echo "::endgroup::"
           done

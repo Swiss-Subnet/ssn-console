@@ -1,9 +1,9 @@
 ## Stage 1: Build the static binary ##
 # Build context is services/. canister-otlp-syncer depends on the canister-clients
-# module via a replace directive, so both must be in context. canister-clients carries
-# its goic-generated bindings, which `just services::gen` produces on the host before
-# this build (goic is not run here). GOWORK=off ignores go.work (which lists modules
-# not in context); canister-clients resolves via the replace directive.
+# module via a replace directive, so both must be in context. canister-clients' goic
+# bindings are committed, so the COPY brings them in and no generate step runs here.
+# GOWORK=off ignores go.work (which lists modules not in context); canister-clients
+# resolves via the replace directive.
 
 FROM docker.io/library/golang:1.26 AS builder
 

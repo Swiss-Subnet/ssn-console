@@ -1,9 +1,9 @@
 default:
     @just --list
 
-# Generate gitignored candid bindings (canister-clients) so vet/build/test and
-# image builds see them. goic does not run inside the service containerfiles, so
-# generation happens here on the host and the result is COPYed into the build context.
+# Regenerate the committed candid bindings (canister-clients) from the .did
+# files. Run after a .did changes; the result is committed, so normal builds
+# need no generate step. CI verifies the checked-in output is up to date.
 gen:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -17,7 +17,7 @@ fmt:
     golangci-lint fmt
 
 # Verify formatting + vet across every service module
-check: gen
+check:
     #!/usr/bin/env bash
     set -euo pipefail
     golangci-lint fmt --diff
@@ -36,7 +36,7 @@ lint:
     done
 
 # Run tests across every service module; args forwarded to `go test`
-test *args: gen
+test *args:
     #!/usr/bin/env bash
     set -euo pipefail
     for svc in */; do
@@ -46,7 +46,7 @@ test *args: gen
 
 # Build every service into services/<name>/bin/<name>. Modules without a
 # cmd/<name> entrypoint (e.g. canister-clients) are libraries; skip them.
-build: gen
+build:
     #!/usr/bin/env bash
     set -euo pipefail
     for svc in */; do
@@ -75,7 +75,7 @@ run svc:
 # as the RFC 8032 test-vector identity by default (loopback only); set
 # PROXY_IDENTITY_PEM to override.
 # Usage: just services::metrics-proxy
-metrics-proxy: gen
+metrics-proxy:
     #!/usr/bin/env bash
     set -euo pipefail
     cd ..
@@ -90,7 +90,7 @@ metrics-proxy: gen
 # ../.env.local for PRIVATE_KEY and ../.env for the canister ids (both written
 # by init-local.sh), points OTLP at the local Alloy on :4318.
 # Usage: just services::canister-otlp-syncer
-canister-otlp-syncer: gen
+canister-otlp-syncer:
     #!/usr/bin/env bash
     set -euo pipefail
     cd ..
