@@ -131,6 +131,36 @@ func (c *Client) ListStaff() ([]canister.StaffMember, error) {
 	return *res.Ok, nil
 }
 
+func (c *Client) GrantServicePrincipal(p principal.Principal, perms canister.StaffPermissions) error {
+	res, err := c.a.AdminGrantServicePrincipalPermissions(canister.GrantServicePrincipalPermissionsRequest{
+		ServicePrincipal: p,
+		Permissions:      perms,
+	})
+	if err != nil {
+		return err
+	}
+	return apiErr(res.Err)
+}
+
+func (c *Client) RevokeServicePrincipal(p principal.Principal) error {
+	res, err := c.a.AdminRevokeServicePrincipalPermissions(canister.RevokeServicePrincipalPermissionsRequest{ServicePrincipal: p})
+	if err != nil {
+		return err
+	}
+	return apiErr(res.Err)
+}
+
+func (c *Client) ListServicePrincipals() ([]canister.ServicePrincipalEntry, error) {
+	res, err := c.a.AdminListServicePrincipals(canister.ListServicePrincipalsRequest{})
+	if err != nil {
+		return nil, err
+	}
+	if res.Err != nil {
+		return nil, apiErr(res.Err)
+	}
+	return res.Ok.ServicePrincipals, nil
+}
+
 func (c *Client) LinkPrincipal(userID string, p principal.Principal) error {
 	res, err := c.a.AdminLinkPrincipalToUser(canister.AdminLinkPrincipalRequest{UserId: userID, Principal: p})
 	if err != nil {
