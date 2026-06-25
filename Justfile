@@ -61,6 +61,11 @@ render ENV_FILE:
     export CANISTER_ID_BACKEND=$(jq -er ".[\"backend\"].${DFX_NETWORK}" canister_ids.json)
     export CANISTER_ID_CYCLES_MONITOR=$(jq -er ".[\"cycles-monitor\"].${DFX_NETWORK}" canister_ids.json)
 
+    # canister-clients' goic bindings are gitignored; generate them on the host
+    # so the metrics-proxy / canister-otlp-syncer image builds (which COPY but do
+    # not run goic) find them in the services/ build context.
+    just services::gen
+
     echo "Building images (tag ${IMAGE_TAG}, platform ${TARGET_PLATFORM})..."
     podman build --platform "${TARGET_PLATFORM}" -t "localhost/caddy:${IMAGE_TAG}"                -f "${CONFIG_DIR}/caddy.containerfile" "${ROOT_DIR}"
     podman save  "localhost/caddy:${IMAGE_TAG}"                   > "${DIST}/images/caddy.tar"
@@ -132,7 +137,10 @@ local-redeploy CANISTER:
 
 # Build + (re)start the auth-service / metrics-proxy containers. Run after
 # init-local.sh so .env (canister ids) exists; --build picks up code changes.
+# services::gen first: the image builds COPY canister-clients' gitignored goic
+# bindings but do not generate them.
 local-services-up:
+    just services::gen
     podman-compose -f local/compose.yml up -d --build auth-service metrics-proxy canister-otlp-syncer
 
 # Bring up the infra dependencies: telemetry sink (Alloy :4318 -> Prometheus

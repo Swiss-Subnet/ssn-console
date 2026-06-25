@@ -13,17 +13,18 @@ import (
 
 	mpb "go.opentelemetry.io/proto/otlp/metrics/v1"
 
-	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/canister"
+	backendgen "github.com/swiss-subnet/ssn-console/services/canister-clients/backend"
+	cmgen "github.com/swiss-subnet/ssn-console/services/canister-clients/cyclesmonitor"
 	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/otlp"
 )
 
 const timestampFileName = ".last-cycles-monitor-timestamp"
 
-// Canister and Pusher are the seams Run depends on; *canister.Client and
+// Canister and Pusher are the seams Run depends on; *client and
 // *otlp.Pusher satisfy them in production, fakes in tests.
 type Canister interface {
-	ListMetricsAfter(ctx context.Context, cursor *canister.Cursor) ([]canister.CyclesMetricsSnapshot, *canister.Cursor, error)
-	RecordUsage(ctx context.Context, usages []canister.CanisterUsage) error
+	ListMetricsAfter(ctx context.Context, cursor *cmgen.Cursor) ([]cmgen.CyclesMetricsSnapshotDto, *cmgen.Cursor, error)
+	RecordUsage(ctx context.Context, usages []backendgen.CanisterUsage) error
 }
 
 type Pusher interface {
@@ -47,7 +48,7 @@ func Run(ctx context.Context, d Deps) error {
 
 	start := readStartTimestamp(timestampFile, now)
 	// Cursor is exclusive; min principal pages from the start of that timestamp.
-	cursor := &canister.Cursor{TimestampNS: start, CanisterID: minPrincipal()}
+	cursor := &cmgen.Cursor{Field0: start, Field1: minPrincipal()}
 
 	type stamped struct {
 		usage otlp.Usage
@@ -68,8 +69,8 @@ func Run(ctx context.Context, d Deps) error {
 			}
 			total += len(snapshots)
 			for i, u := range usages {
-				key := u.CanisterID.String()
-				ts := snapshots[i].TimestampNS
+				key := u.CanisterId.String()
+				ts := snapshots[i].TimestampNs
 				if cur, ok := latest[key]; !ok || ts >= cur.ts {
 					latest[key] = stamped{usage: u, ts: ts}
 				}
@@ -79,7 +80,7 @@ func Run(ctx context.Context, d Deps) error {
 			break
 		}
 		cursor = next
-		writeTimestamp(timestampFile, next.TimestampNS)
+		writeTimestamp(timestampFile, next.Field0)
 	}
 
 	if total == 0 {

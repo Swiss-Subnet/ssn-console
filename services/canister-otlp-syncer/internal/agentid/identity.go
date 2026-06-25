@@ -1,4 +1,4 @@
-package canister
+package agentid
 
 import (
 	"crypto/ed25519"

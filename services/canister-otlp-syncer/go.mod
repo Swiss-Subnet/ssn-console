@@ -4,9 +4,12 @@ go 1.26.4
 
 require (
 	github.com/aviate-labs/agent-go v0.9.2-0.20260622152312-20f4b738237f
+	github.com/swiss-subnet/ssn-console/services/canister-clients v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/proto/otlp v1.10.0
 	google.golang.org/protobuf v1.36.11
 )
+
+replace github.com/swiss-subnet/ssn-console/services/canister-clients => ../canister-clients
 
 require (
 	github.com/0x51-dev/upeg v0.1.5 // indirect

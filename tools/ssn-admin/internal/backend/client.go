@@ -11,7 +11,7 @@ import (
 	"github.com/aviate-labs/agent-go/identity"
 	"github.com/aviate-labs/agent-go/principal"
 
-	"github.com/swiss-subnet/ssn-console/tools/ssn-admin/internal/canister"
+	canister "github.com/swiss-subnet/ssn-console/services/canister-clients/backend"
 )
 
 type Client struct {

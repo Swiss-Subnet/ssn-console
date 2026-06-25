@@ -2,6 +2,7 @@ go 1.26.4
 
 use (
 	./auth-service
+	./canister-clients
 	./canister-otlp-syncer
 	./httpsvc
 	./metrics-proxy

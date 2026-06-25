@@ -4,6 +4,7 @@ go 1.26.4
 
 require (
 	github.com/aviate-labs/agent-go v0.9.2-0.20260622152312-20f4b738237f
+	github.com/swiss-subnet/ssn-console/services/canister-clients v0.0.0-00010101000000-000000000000
 	github.com/swiss-subnet/ssn-console/services/httpsvc v0.0.0-00010101000000-000000000000
 )
 
@@ -21,3 +22,5 @@ require (
 )
 
 replace github.com/swiss-subnet/ssn-console/services/httpsvc => ../httpsvc
+
+replace github.com/swiss-subnet/ssn-console/services/canister-clients => ../canister-clients

@@ -4,11 +4,13 @@ default:
 # Go operator tooling (not deployed services). Invoked from the repo root as
 # `just tools::<recipe>`.
 
-# Run `go generate` across every tool module. ssn-admin generates gitignored
-# candid bindings, so this must run before vet/build.
+# Generate gitignored candid bindings. ssn-admin consumes the shared
+# canister-clients module (generated under services/), so delegate there;
+# this must run before vet/build.
 gen:
     #!/usr/bin/env bash
     set -euo pipefail
+    (cd ../services && just gen)
     for t in */; do
         [ -f "${t}go.mod" ] || continue
         (cd "$t" && go generate ./...)
@@ -53,12 +55,11 @@ build: gen
 # as the RFC 8032 test identity (loopback only). Pass args through, e.g.
 #   just tools::ssn-admin user list
 #   just tools::ssn-admin user activate <id>
-ssn-admin *args:
+ssn-admin *args: gen
     #!/usr/bin/env bash
     set -euo pipefail
     cd ..
     set -a; [ -f .env.local ] && . .env.local; . .env; set +a
     : "${IC_HOST:=http://127.0.0.1:4943}"; export IC_HOST
     cd tools/ssn-admin
-    [ -f internal/canister/backend_gen.go ] || go generate ./...
     go run ./cmd/ssn-admin {{args}}

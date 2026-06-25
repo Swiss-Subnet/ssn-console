@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/canister"
+	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/agentid"
 	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/config"
 	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/otlp"
 	"github.com/swiss-subnet/ssn-console/services/canister-otlp-syncer/internal/sync"
@@ -31,12 +31,12 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	id, err := canister.IdentityFromPEM(cfg.PrivateKeyPEM)
+	id, err := agentid.IdentityFromPEM(cfg.PrivateKeyPEM)
 	if err != nil {
 		return err
 	}
 
-	client, err := canister.New(canister.Config{
+	client, err := sync.NewClient(sync.ClientConfig{
 		HTTPGateway:             cfg.HTTPGateway,
 		Identity:                id,
 		BackendCanisterID:       cfg.BackendCanisterID,
