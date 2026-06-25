@@ -65,6 +65,7 @@ type CanisterWithOwner = record {
   principal_id : text;
   user_id : UserId;
   email : opt text;
+  email_verified : bool;
   deleted_at : opt nat64;
 };
 

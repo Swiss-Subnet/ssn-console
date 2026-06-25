@@ -46,6 +46,7 @@ pub struct CanisterWithOwner {
     pub principal_id: String,
     pub user_id: String,
     pub email: Option<String>,
+    pub email_verified: bool,
     pub deleted_at: Option<u64>,
 }
 

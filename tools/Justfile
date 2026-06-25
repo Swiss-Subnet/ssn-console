@@ -60,4 +60,5 @@ ssn-admin *args:
     set -a; [ -f .env.local ] && . .env.local; . .env; set +a
     : "${IC_HOST:=http://127.0.0.1:4943}"; export IC_HOST
     cd tools/ssn-admin
+    [ -f internal/canister/backend_gen.go ] || go generate ./...
     go run ./cmd/ssn-admin {{args}}

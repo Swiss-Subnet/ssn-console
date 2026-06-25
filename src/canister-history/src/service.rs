@@ -12,7 +12,10 @@ use crate::model::{CanisterChangeDetails, CanisterChangeInfo, CanisterChangeOrig
 use crate::repository;
 use backend_api::{AddChildCanistersRequest, AddChildCanistersResponse, ParentChildMapping};
 use candid::Principal;
-use canister_history_api::{ListSubnetCanisterIdsRequest, ListSubnetCanisterIdsResponse};
+use canister_history_api::{
+    KnownCanister, ListKnownCanistersRequest, ListKnownCanistersResponse,
+    ListSubnetCanisterIdsRequest, ListSubnetCanisterIdsResponse,
+};
 use canister_utils::{
     is_destination_invalid, ApiError, ApiResult, ApiResultDto, CanisterId, CanisterIdRange,
     MAX_CALLS_PER_BATCH,
@@ -39,6 +42,17 @@ pub fn list_subnet_canister_ids(
     ListSubnetCanisterIdsResponse {
         canister_id_ranges: repository::list_subnet_canister_id_ranges(),
     }
+}
+
+pub fn list_known_canisters(_req: ListKnownCanistersRequest) -> ListKnownCanistersResponse {
+    let canisters = repository::list_known_canisters()
+        .into_iter()
+        .map(|(canister_id, is_deleted)| KnownCanister {
+            canister_id,
+            is_deleted,
+        })
+        .collect();
+    ListKnownCanistersResponse { canisters }
 }
 
 pub fn list_canister_changes(req: ListCanisterChangesRequest) -> ListCanisterChangesResponse {

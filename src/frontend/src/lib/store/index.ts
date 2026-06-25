@@ -1,3 +1,4 @@
+export * from './admin-canisters';
 export * from './admin-privacy';
 export * from './api';
 export * from './app';

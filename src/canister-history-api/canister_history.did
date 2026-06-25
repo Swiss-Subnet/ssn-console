@@ -34,6 +34,20 @@ type ListSubnetCanisterIdsResponse = variant {
   Err : ApiError;
 };
 
+type ListKnownCanistersRequest = record {};
+
+type KnownCanister = record {
+  canister_id : principal;
+  is_deleted : bool;
+};
+
+type ListKnownCanistersResponse = variant {
+  Ok : record {
+    canisters : vec KnownCanister;
+  };
+  Err : ApiError;
+};
+
 type ListCanisterChangesRequest = record {
   canister_id : principal;
   reverse : opt bool;
@@ -115,6 +129,7 @@ service : {
   update_subnet_canister_ranges : (UpdateSubnetCanisterRangesRequest) -> (UpdateSubnetCanisterRangesResponse);
   list_subnet_canister_ranges : (ListSubnetCanisterRangesRequest) -> (ListSubnetCanisterRangesResponse) query;
   list_subnet_canister_ids : (ListSubnetCanisterIdsRequest) -> (ListSubnetCanisterIdsResponse) query;
+  list_known_canisters : (ListKnownCanistersRequest) -> (ListKnownCanistersResponse) query;
   list_canister_changes : (ListCanisterChangesRequest) -> (ListCanisterChangesResponse) query;
   trigger_sync_canister_histories : (TriggerSyncCanisterHistoriesRequest) -> (TriggerSyncCanisterHistoriesResponse);
 };

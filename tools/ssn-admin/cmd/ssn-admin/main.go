@@ -35,6 +35,8 @@ func run(args []string) error {
 		return staffCmd(rest)
 	case "principal":
 		return principalCmd(rest)
+	case "subnet":
+		return subnetCmd(rest)
 	case "-h", "--help", "help":
 		usage()
 		return nil
@@ -59,8 +61,11 @@ func usage() {
   principal link <user-id> <principal>
   principal unlink <user-id> <principal>
 
+  subnet show-ranges
+
 env: CANISTER_ID_BACKEND (required), IC_HOST (default http://127.0.0.1:4943),
-     ADMIN_IDENTITY_PEM (required against non-local IC_HOST)
+     ADMIN_IDENTITY_PEM (required against non-local IC_HOST),
+     CANISTER_ID_CANISTER_HISTORY (required for subnet commands)
 `)
 }
 

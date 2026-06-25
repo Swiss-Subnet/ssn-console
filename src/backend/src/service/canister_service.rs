@@ -262,6 +262,7 @@ pub fn list_all_canisters(
                     principal_id: canister.principal.to_text(),
                     user_id: org_owner_id.to_string(),
                     email: org_owner.email,
+                    email_verified: org_owner.email_verified,
                     deleted_at: canister.deleted_at,
                 })
         })

@@ -34,6 +34,11 @@ export type ListCanisterChangesResponse = {
   totalPages: bigint;
 };
 
+export type KnownCanister = {
+  canisterId: string;
+  isDeleted: boolean;
+};
+
 function mapOrigin(
   raw: ApiCanisterChange['origin'],
 ): CanisterChangeOrigin | null {

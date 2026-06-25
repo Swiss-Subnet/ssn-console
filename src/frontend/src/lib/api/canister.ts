@@ -1,8 +1,10 @@
 import {
+  mapListAllCanistersResponse,
   mapListMyCanistersResponse,
   mapListUserCanistersResponse,
   mapOkResponse,
   readProposalOutcome,
+  type ListAllCanistersResponse,
   type ListMyCanistersRequest,
   type ListMyCanistersResponse,
   type ListUserCanistersRequest,
@@ -32,6 +34,18 @@ export class CanisterApi {
     const res = await this.actor.admin_list_user_canisters(request);
 
     return mapListUserCanistersResponse(res);
+  }
+
+  public async adminListAllCanisters(
+    page: bigint,
+    limit: bigint,
+  ): Promise<ListAllCanistersResponse> {
+    const res = await this.actor.admin_list_all_canisters({
+      page: [page],
+      limit: [limit],
+    });
+
+    return mapListAllCanistersResponse(res);
   }
 
   public async createCanister(projectId: string): Promise<ProposalOutcome> {

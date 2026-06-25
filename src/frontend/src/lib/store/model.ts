@@ -227,6 +227,18 @@ export type AdminOrgsSlice = {
   ) => Promise<void>;
 };
 
+export type AdminCanistersSlice = {
+  isAdminCanistersInitialized: boolean;
+  isAdminCanistersLoading: boolean;
+  adminCanisters:
+    | import('@/lib/store/admin-canisters').AdminCanisterRow[]
+    | null;
+  adminUntrackedCount: number;
+
+  initializeAdminCanisters: () => Promise<void>;
+  clearAdminCanisters: () => void;
+};
+
 export type TermsAndConditionsSlice = {
   isTermsAndConditionsInitialized: boolean;
   termsAndConditions: TermsAndConditions | null;
@@ -334,6 +346,7 @@ export type AppSlice = AuthSlice &
   TrustedPartnersSlice &
   StaffSlice &
   AdminOrgsSlice &
+  AdminCanistersSlice &
   TermsAndConditionsSlice &
   ProjectsSlice &
   OrganizationsSlice &

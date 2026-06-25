@@ -118,6 +118,18 @@ local-down:
     podman-compose -f local/compose.yml down
     icp network stop || true
 
+# Rebuild + reinstall one canister against the running local network. Re-applies
+# env vars before install: a bare `icp install` wipes the dynamic vars (PUBLIC_KEY,
+# cross-canister ids) and post_upgrade traps reading them. Upgrade mode, so stable
+# memory survives. Usage: just local-redeploy backend
+local-redeploy CANISTER:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    icp build {{CANISTER}} -e local
+    icp canister settings sync {{CANISTER}} -e local
+    ./scripts/set-canister-env.sh
+    icp canister install {{CANISTER}} -e local -y
+
 # Build + (re)start the auth-service / metrics-proxy containers. Run after
 # init-local.sh so .env (canister ids) exists; --build picks up code changes.
 local-services-up:

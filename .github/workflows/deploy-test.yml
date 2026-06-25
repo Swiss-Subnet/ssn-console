@@ -56,3 +56,9 @@ jobs:
 
       - name: Deploy to test
         run: dfx deploy --network test
+
+      - name: Sync subnet ranges
+        uses: ./.github/actions/sync-subnet-ranges
+        with:
+          network: test
+          identity_pem: ${{ secrets.IDENTITY_PEM }}
