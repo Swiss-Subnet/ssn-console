@@ -1,19 +1,21 @@
 default:
     @just --list
 
-# Render the deployable workload into dist/ (build image tars + envsubst config).
-# Host placement/activation is done by ssn-infra's ansible-console-deploy.
-# Usage: just render <env_file>   e.g. just render ./.env.test
-render ENV_FILE:
+# Render the deployable workload into dist/<env>/ (build image tars + envsubst config).
+# Host placement/activation is done by ssn-infra's ansible-console-deploy, which
+# targets the inventory group of the same name and refuses a mismatched dist.
+# Usage: just render <env>   e.g. just render prod  (sources .env.<env>)
+render ENV:
     #!/usr/bin/env bash
     set -euo pipefail
-    [ -f "{{ENV_FILE}}" ] || { echo "env file not found: {{ENV_FILE}}" >&2; exit 1; }
-    set -a; source "{{ENV_FILE}}"; set +a
+    ENV_FILE="./.env.{{ENV}}"
+    [ -f "${ENV_FILE}" ] || { echo "env file not found: ${ENV_FILE}" >&2; exit 1; }
+    set -a; source "${ENV_FILE}"; set +a
     source scripts/lib/utils.sh
 
     ROOT_DIR=$(pwd)
     CONFIG_DIR="${ROOT_DIR}/config"
-    DIST="${ROOT_DIR}/dist"
+    DIST="${ROOT_DIR}/dist/{{ENV}}"
 
     # The host is x86_64; build for it explicitly so a render on an arm64 dev
     # machine (Apple Silicon) still produces images that run on the VPS. Go
@@ -83,6 +85,7 @@ render ENV_FILE:
     # Non-secret facts ansible's console-deploy needs (no secrets here).
     # The deploy keys its "already on host?" skip on per-image ref; image_tag is informational.
     {
+      printf 'deploy_env: "%s"\n' "{{ENV}}"
       printf 'auth_service_domain: "%s"\n' "${AUTH_SERVICE_DOMAIN}"
       printf 'image_tag: "%s"\n' "${IMAGE_TAG}"
       printf 'images:\n'
@@ -93,7 +96,7 @@ render ENV_FILE:
       printf '  - { tar: payments-service.tar, ref: "localhost/payments-service:%s" }\n' "${IMAGE_TAG}"
     } > "${DIST}/deploy-vars.yml"
 
-    echo "Rendered -> ${DIST}"
+    echo "Rendered {{ENV}} -> ${DIST}"
 
 # Bring up the full local env: replica + canisters + telemetry sink + services.
 # The syncer is one-shot: trigger it with `just services::canister-otlp-syncer`.
