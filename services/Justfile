@@ -1,6 +1,17 @@
 default:
     @just --list
 
+# Regenerate the committed candid bindings (canister-clients) from the .did
+# files. Run after a .did changes; the result is committed, so normal builds
+# need no generate step. CI verifies the checked-in output is up to date.
+gen:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for svc in */; do
+        [ -f "${svc}go.mod" ] || continue
+        (cd "$svc" && go generate ./...)
+    done
+
 # Format every service module (gofumpt + goimports via golangci-lint)
 fmt:
     golangci-lint fmt
@@ -33,13 +44,15 @@ test *args:
         (cd "$svc" && go test ./... {{args}})
     done
 
-# Build every service into services/<name>/bin/<name>
+# Build every service into services/<name>/bin/<name>. Modules without a
+# cmd/<name> entrypoint (e.g. canister-clients) are libraries; skip them.
 build:
     #!/usr/bin/env bash
     set -euo pipefail
     for svc in */; do
         name="${svc%/}"
         [ -f "$name/go.mod" ] || continue
+        [ -d "$name/cmd/$name" ] || continue
         echo "building $name"
         (cd "$name" && go build -o "bin/$name" "./cmd/$name")
     done

@@ -4,22 +4,20 @@ default:
 # Go operator tooling (not deployed services). Invoked from the repo root as
 # `just tools::<recipe>`.
 
-# Run `go generate` across every tool module. ssn-admin generates gitignored
-# candid bindings, so this must run before vet/build.
+# Regenerate the committed candid bindings ssn-admin consumes. They live in
+# the shared canister-clients module under services/, so delegate there; the
+# result is committed, so normal builds need no generate step.
 gen:
     #!/usr/bin/env bash
     set -euo pipefail
-    for t in */; do
-        [ -f "${t}go.mod" ] || continue
-        (cd "$t" && go generate ./...)
-    done
+    (cd ../services && just gen)
 
 # Format every tool module.
 fmt:
     golangci-lint fmt
 
-# go generate + vet across every tool module.
-check: gen
+# vet across every tool module.
+check:
     #!/usr/bin/env bash
     set -euo pipefail
     golangci-lint fmt --diff
@@ -29,7 +27,7 @@ check: gen
     done
 
 # Run tests across every tool module; args forwarded to `go test`.
-test *args: gen
+test *args:
     #!/usr/bin/env bash
     set -euo pipefail
     for t in */; do
@@ -38,7 +36,7 @@ test *args: gen
     done
 
 # Build every tool into tools/<name>/bin/<name>.
-build: gen
+build:
     #!/usr/bin/env bash
     set -euo pipefail
     for t in */; do
@@ -60,5 +58,4 @@ ssn-admin *args:
     set -a; [ -f .env.local ] && . .env.local; . .env; set +a
     : "${IC_HOST:=http://127.0.0.1:4943}"; export IC_HOST
     cd tools/ssn-admin
-    [ -f internal/canister/backend_gen.go ] || go generate ./...
     go run ./cmd/ssn-admin {{args}}

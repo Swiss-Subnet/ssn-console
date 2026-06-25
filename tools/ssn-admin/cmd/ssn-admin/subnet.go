@@ -9,8 +9,8 @@ import (
 	"github.com/aviate-labs/agent-go/identity"
 	"github.com/aviate-labs/agent-go/principal"
 
+	"github.com/swiss-subnet/ssn-console/services/canister-clients/history"
 	"github.com/swiss-subnet/ssn-console/tools/ssn-admin/internal/backend"
-	"github.com/swiss-subnet/ssn-console/tools/ssn-admin/internal/canister/history"
 	"github.com/swiss-subnet/ssn-console/tools/ssn-admin/internal/config"
 )
 

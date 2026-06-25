@@ -1,8 +1,9 @@
 ## Stage 1: Build the static binary ##
 # Build context is services/ (the Go workspace root): metrics-proxy depends on the
-# sibling httpsvc module via a replace directive, so both modules must be in context.
-# GOWORK=off ignores go.work (which lists modules we don't copy); httpsvc resolves
-# via metrics-proxy's replace ../httpsvc directive instead.
+# sibling httpsvc and canister-clients modules via replace directives, so all three
+# must be in context. canister-clients' goic bindings are committed, so the COPY
+# brings them in and no generate step runs here. GOWORK=off ignores go.work (which
+# lists modules we don't copy); siblings resolve via metrics-proxy's replace directives.
 
 FROM docker.io/library/golang:1.26 AS builder
 
@@ -11,6 +12,7 @@ ENV CGO_ENABLED=0 GOOS=linux GOWORK=off
 
 COPY metrics-proxy/ ./metrics-proxy/
 COPY httpsvc/ ./httpsvc/
+COPY canister-clients/ ./canister-clients/
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
   --mount=type=cache,target=/go/pkg/mod \

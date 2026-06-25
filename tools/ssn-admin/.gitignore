@@ -1,4 +1,1 @@
 bin/
-# goic-generated candid bindings; regenerated via `go generate`.
-internal/canister/backend_gen.go
-internal/canister/history/canister_history_gen.go

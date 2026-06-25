@@ -8,10 +8,6 @@ linters:
     - ineffassign
     - staticcheck
     - unused
-  exclusions:
-    generated: lax
-    paths:
-      - backend_gen.go
 
 formatters:
   enable:
