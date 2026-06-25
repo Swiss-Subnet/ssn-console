@@ -1,9 +1,5 @@
 import { describe, it, expect, afterEach, beforeEach } from 'vitest';
-import {
-  TestDriver,
-  unauthenticatedError,
-  unauthorizedError,
-} from '../support';
+import { TestDriver, unauthenticatedError, noProfileError } from '../support';
 import { generateRandomIdentity } from '@dfinity/pic';
 import type { Identity } from '@icp-sdk/core/agent';
 import type { Canister, UserProfile } from '@ssn/backend-api';
@@ -35,7 +31,7 @@ describe('admin_list_all_canisters', () => {
       expect(res).toEqual(unauthenticatedError);
     });
 
-    it('should return an error for a non-controller user', async () => {
+    it('should return an error for a user without staff permission', async () => {
       const aliceIdentity = generateRandomIdentity();
       driver.actor.setIdentity(aliceIdentity);
 
@@ -44,7 +40,7 @@ describe('admin_list_all_canisters', () => {
         page: [1n],
       });
 
-      expect(res).toEqual(unauthorizedError);
+      expect(res).toEqual(noProfileError(aliceIdentity.getPrincipal()));
     });
 
     it('should return an empty array when there are no canisters', async () => {
@@ -169,6 +165,7 @@ describe('admin_list_all_canisters', () => {
           id: canister.id,
           user_id: aliceProfile.id,
           email: [aliceEmail],
+          email_verified: aliceProfile.email_verified,
           principal_id: canister.principal_id,
           deleted_at: [],
         });
@@ -179,6 +176,7 @@ describe('admin_list_all_canisters', () => {
           id: canister.id,
           user_id: bobProfile.id,
           email: [bobEmail],
+          email_verified: bobProfile.email_verified,
           principal_id: canister.principal_id,
           deleted_at: [],
         });
