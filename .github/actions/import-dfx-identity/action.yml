@@ -16,3 +16,4 @@ runs:
         dfx identity import --ic --storage-mode plaintext deploy-identity ./identity.pem
         rm -f ./identity.pem
         dfx identity use deploy-identity
+        echo "Deploy principal: $(dfx identity get-principal)"
