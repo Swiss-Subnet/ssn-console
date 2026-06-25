@@ -101,6 +101,18 @@ pub fn list_subnet_canister_id_ranges() -> Vec<(Principal, Principal)> {
     })
 }
 
+pub fn list_known_canisters() -> Vec<(Principal, bool)> {
+    with_state(|s| {
+        s.canister_infos
+            .iter()
+            .map(|entry| {
+                let (principal, info) = entry.into_pair();
+                (principal, info.is_deleted)
+            })
+            .collect()
+    })
+}
+
 pub fn get_canister_changes_count(canister_id: Principal) -> u64 {
     with_state(|s| {
         s.canister_infos

@@ -1,0 +1,30 @@
+name: Sync subnet canister ranges
+description: Read the subnet's certified canister-id ranges and push them into canister-history (corrects range drift).
+
+inputs:
+  network:
+    description: The ICP network (test|production)
+    required: true
+  identity_pem:
+    description: PEM of a canister-history controller identity (write is controller-gated)
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Go
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: tools/ssn-admin/go.mod
+
+    - name: Sync subnet ranges
+      shell: bash
+      working-directory: tools/ssn-admin
+      env:
+        ADMIN_IDENTITY_PEM: ${{ inputs.identity_pem }}
+      run: |
+        export CANISTER_ID_BACKEND=$(dfx canister id backend --network ${{ inputs.network }})
+        export CANISTER_ID_CANISTER_HISTORY=$(dfx canister id canister-history --network ${{ inputs.network }})
+        export IC_HOST=https://icp0.io
+        go generate ./...
+        go run ./cmd/ssn-admin subnet sync-ranges

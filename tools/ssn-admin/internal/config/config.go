@@ -7,9 +7,10 @@ import (
 )
 
 type Config struct {
-	ICHost          string // IC_HOST; defaults to local replica
-	BackendCanister string // CANISTER_ID_BACKEND
-	IdentityPEM     string // ADMIN_IDENTITY_PEM; empty => RFC 8032 test vector (local only)
+	ICHost                  string // IC_HOST; defaults to local replica
+	BackendCanister         string // CANISTER_ID_BACKEND
+	CanisterHistoryCanister string // CANISTER_ID_CANISTER_HISTORY
+	IdentityPEM             string // ADMIN_IDENTITY_PEM; empty => RFC 8032 test vector (local only)
 }
 
 func (c Config) FetchRootKey() bool {
@@ -26,9 +27,10 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("CANISTER_ID_BACKEND is required")
 	}
 	return &Config{
-		ICHost:          icHost,
-		BackendCanister: backend,
-		IdentityPEM:     os.Getenv("ADMIN_IDENTITY_PEM"),
+		ICHost:                  icHost,
+		BackendCanister:         backend,
+		CanisterHistoryCanister: os.Getenv("CANISTER_ID_CANISTER_HISTORY"),
+		IdentityPEM:             os.Getenv("ADMIN_IDENTITY_PEM"),
 	}, nil
 }
 

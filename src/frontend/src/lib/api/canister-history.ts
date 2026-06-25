@@ -1,5 +1,6 @@
 import {
   mapListCanisterChangesResponse,
+  type KnownCanister,
   type ListCanisterChangesResponse,
 } from '@/lib/api-models/canister-history';
 import type { ActorSubclass } from '@icp-sdk/core/agent';
@@ -19,5 +20,16 @@ export class CanisterHistoryApi {
       page: [],
     });
     return mapListCanisterChangesResponse(res);
+  }
+
+  public async listKnownCanisters(): Promise<KnownCanister[]> {
+    const res = await this.actor.list_known_canisters({});
+    if ('Err' in res) {
+      throw new Error(res.Err.message);
+    }
+    return res.Ok.canisters.map(c => ({
+      canisterId: c.canister_id.toText(),
+      isDeleted: c.is_deleted,
+    }));
   }
 }

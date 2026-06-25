@@ -36,6 +36,11 @@ export const AdminLayout: FC = () => {
       visible: canReadAllOrgs,
     },
     {
+      to: '/admin/canisters',
+      label: 'Canisters',
+      visible: canReadAllOrgs,
+    },
+    {
       to: '/admin/trusted-partners',
       label: 'Trusted Partners',
       visible: isAdmin,

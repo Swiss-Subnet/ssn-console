@@ -7,7 +7,10 @@ use crate::{
     },
     service,
 };
-use canister_history_api::{ListSubnetCanisterIdsRequest, ListSubnetCanisterIdsResponse};
+use canister_history_api::{
+    ListKnownCanistersRequest, ListKnownCanistersResponse, ListSubnetCanisterIdsRequest,
+    ListSubnetCanisterIdsResponse,
+};
 use canister_utils::{assert_controller, ApiError, ApiResultDto, CanisterId};
 use ic_cdk::{api::msg_caller, *};
 
@@ -87,6 +90,13 @@ fn list_subnet_canister_ids(
     req: ListSubnetCanisterIdsRequest,
 ) -> ApiResultDto<ListSubnetCanisterIdsResponse> {
     ApiResultDto::Ok(service::list_subnet_canister_ids(req))
+}
+
+#[query]
+fn list_known_canisters(
+    req: ListKnownCanistersRequest,
+) -> ApiResultDto<ListKnownCanistersResponse> {
+    ApiResultDto::Ok(service::list_known_canisters(req))
 }
 
 #[query]

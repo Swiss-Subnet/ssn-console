@@ -11,7 +11,7 @@ use crate::{
     service::{access_control_service, canister_service},
 };
 use backend_api::{AddChildCanistersRequest, AddChildCanistersResponse};
-use canister_utils::{assert_authenticated, assert_controller, ApiResult, ApiResultDto};
+use canister_utils::{assert_authenticated, ApiResult, ApiResultDto};
 use ic_cdk::{api::msg_caller, *};
 
 fn remove_my_canister_inner(
@@ -120,7 +120,9 @@ fn admin_list_all_canisters(
     request: ListAllCanistersRequest,
 ) -> ApiResultDto<ListAllCanistersResponse> {
     let caller = msg_caller();
-    if let Err(err) = assert_controller(&caller) {
+    if let Err(err) =
+        access_control_service::assert_staff_perm(&caller, StaffPermissions::READ_ALL_ORGS)
+    {
         return ApiResultDto::Err(err);
     }
 

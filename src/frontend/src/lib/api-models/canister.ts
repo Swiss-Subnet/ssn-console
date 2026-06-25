@@ -3,6 +3,8 @@ import { fromCandidOpt } from '@/lib/utils';
 import type {
   Canister as ApiCanister,
   CanisterInfo as ApiCanisterInfo,
+  CanisterWithOwner as ApiCanisterWithOwner,
+  ListAllCanistersResponse as ApiListAllCanistersResponse,
   ListMyCanistersResponse as ApiListMyCanistersResponse,
   ListMyCanistersRequest as ApiListMyCanistersRequest,
   ListUserCanistersResponse as ApiListUserCanistersResponse,
@@ -93,6 +95,41 @@ export function mapListUserCanistersResponse(
 ): ListUserCanistersResponse {
   return {
     canisters: mapOkResponse(res).canisters.map(mapCanisterResponse),
+  };
+}
+
+export type CanisterWithOwner = {
+  id: string;
+  principal: string;
+  userId: string;
+  email: string | null;
+  emailVerified: boolean;
+  deletedAt: bigint | null;
+};
+
+export type ListAllCanistersResponse = {
+  canisters: CanisterWithOwner[];
+  totalPages: bigint;
+};
+
+export function mapListAllCanistersResponse(
+  res: ApiListAllCanistersResponse,
+): ListAllCanistersResponse {
+  const ok = mapOkResponse(res);
+  return {
+    canisters: ok.canisters.map(mapCanisterWithOwner),
+    totalPages: ok.meta.total_pages,
+  };
+}
+
+function mapCanisterWithOwner(res: ApiCanisterWithOwner): CanisterWithOwner {
+  return {
+    id: res.id,
+    principal: res.principal_id,
+    userId: res.user_id,
+    email: fromCandidOpt(res.email),
+    emailVerified: res.email_verified,
+    deletedAt: fromCandidOpt(res.deleted_at),
   };
 }
 
