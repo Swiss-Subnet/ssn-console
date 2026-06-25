@@ -16,6 +16,7 @@ runs:
       uses: actions/setup-go@v6
       with:
         go-version-file: tools/ssn-admin/go.mod
+        cache-dependency-path: tools/**/go.sum
 
     - name: Sync subnet ranges
       shell: bash

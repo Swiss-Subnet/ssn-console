@@ -33,16 +33,19 @@ func LoadIdentity(pem, icHost string) (identity.Identity, error) {
 // each rather than assuming one (a mismatch would only surface as a parse
 // failure at call time).
 func parsePEM(pem []byte) (identity.Identity, error) {
-	if id, err := identity.NewEd25519IdentityFromPEM(pem); err == nil {
+	if id, err := identity.NewSecp256k1IdentityFromPEMWithoutParameters(pem); err == nil {
 		return id, nil
 	}
 	if id, err := identity.NewSecp256k1IdentityFromPEM(pem); err == nil {
 		return id, nil
 	}
+	if id, err := identity.NewEd25519IdentityFromPEM(pem); err == nil {
+		return id, nil
+	}
 	if id, err := identity.NewPrime256v1IdentityFromPEM(pem); err == nil {
 		return id, nil
 	}
-	return nil, fmt.Errorf("parse ADMIN_IDENTITY_PEM: unrecognized key (tried Ed25519, secp256k1, prime256v1)")
+	return nil, fmt.Errorf("parse ADMIN_IDENTITY_PEM: unrecognized key (tried Ed25519, secp256k1 with/without params, prime256v1)")
 }
 
 // LoadIdentityOptional is for read-only commands that need no authority: a
