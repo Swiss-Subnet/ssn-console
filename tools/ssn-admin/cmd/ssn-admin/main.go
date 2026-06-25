@@ -35,6 +35,8 @@ func run(args []string) error {
 		return staffCmd(rest)
 	case "principal":
 		return principalCmd(rest)
+	case "service-principal":
+		return servicePrincipalCmd(rest)
 	case "subnet":
 		return subnetCmd(rest)
 	case "-h", "--help", "help":
@@ -60,6 +62,10 @@ func usage() {
   principal list <user-id>
   principal link <user-id> <principal>
   principal unlink <user-id> <principal>
+
+  service-principal list
+  service-principal grant <principal> [--read-all-orgs] [--write-billing] [--manage-users] [--read-metrics]
+  service-principal revoke <principal>
 
   subnet show-ranges
 
@@ -220,6 +226,62 @@ func principalCmd(args []string) error {
 		return nil
 	default:
 		return fmt.Errorf("principal: unknown subcommand %q", args[0])
+	}
+}
+
+func servicePrincipalCmd(args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("service-principal: missing subcommand (list|grant|revoke)")
+	}
+	c, err := newClient()
+	if err != nil {
+		return err
+	}
+	switch args[0] {
+	case "list":
+		entries, err := c.ListServicePrincipals()
+		if err != nil {
+			return err
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "PRINCIPAL\tORGS\tBILLING\tUSERS\tMETRICS")
+		for _, e := range entries {
+			p := e.Permissions
+			_, _ = fmt.Fprintf(w, "%s\t%t\t%t\t%t\t%t\n", e.ServicePrincipal.Encode(), p.ReadAllOrgs, p.WriteBilling, p.ManageUsers, p.ReadMetrics)
+		}
+		return w.Flush()
+	case "grant":
+		if len(args) < 2 {
+			return fmt.Errorf("service-principal grant: missing <principal>")
+		}
+		p, err := principal.Decode(args[1])
+		if err != nil {
+			return fmt.Errorf("invalid principal %q: %w", args[1], err)
+		}
+		perms := parsePermFlags(args[2:])
+		if perms == (backend.StaffPermissions{}) {
+			return fmt.Errorf("service-principal grant: no permission flags given (use --read-metrics etc.); to remove, use revoke")
+		}
+		if err := c.GrantServicePrincipal(p, perms); err != nil {
+			return err
+		}
+		fmt.Printf("granted service principal %s\n", p.Encode())
+		return nil
+	case "revoke":
+		if len(args) < 2 {
+			return fmt.Errorf("service-principal revoke: missing <principal>")
+		}
+		p, err := principal.Decode(args[1])
+		if err != nil {
+			return fmt.Errorf("invalid principal %q: %w", args[1], err)
+		}
+		if err := c.RevokeServicePrincipal(p); err != nil {
+			return err
+		}
+		fmt.Printf("revoked service principal %s\n", p.Encode())
+		return nil
+	default:
+		return fmt.Errorf("service-principal: unknown subcommand %q", args[0])
 	}
 }
 
