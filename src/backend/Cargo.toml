@@ -30,7 +30,12 @@ serde_json = "1"
 candid_parser.workspace = true
 
 [features]
+default = ["embed-frontend"]
 canbench-rs = []
+# Embed and certify the built frontend assets (../frontend/dist). On by default
+# for prod/dfx builds; disable to build the canister without a frontend bundle
+# (e.g. backend-only e2e tests, which then need no frontend build).
+embed-frontend = []
 
 [lints]
 workspace = true

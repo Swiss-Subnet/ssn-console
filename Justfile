@@ -193,11 +193,19 @@ test-backend *args: build-backend
 retest-backend *args:
     cd src/backend-tests && bun run test {{args}}
 
-# Run the Rust PocketIC e2e suite against a freshly built backend wasm
-test-backend-e2e *args: build-backend
-    BACKEND_WASM="$PWD/target/wasm32-unknown-unknown/release/backend.wasm" \
-    POCKET_IC_BIN="$(which pocket-ic)" \
-        cargo test -p backend-e2e {{args}}
+# Run the Rust PocketIC e2e suite against a freshly built backend wasm.
+# Builds the backend without the frontend bundle (--no-default-features), so no
+# frontend build is needed. Uses the pinned pocket-ic from PATH when present
+# (nix shell); otherwise the crate downloads the matching server (e.g. CI).
+test-backend-e2e *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cargo build --target wasm32-unknown-unknown --release -p backend --locked --no-default-features
+    export BACKEND_WASM="$PWD/target/wasm32-unknown-unknown/release/backend.wasm"
+    if command -v pocket-ic >/dev/null 2>&1; then
+        export POCKET_IC_BIN="$(command -v pocket-ic)"
+    fi
+    cargo test -p backend-e2e {{args}}
 
 # Go microservices live under services/; see `just services::` for recipes
 mod services
