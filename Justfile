@@ -193,6 +193,12 @@ test-backend *args: build-backend
 retest-backend *args:
     cd src/backend-tests && bun run test {{args}}
 
+# Run the Rust PocketIC e2e suite against a freshly built backend wasm
+test-backend-e2e *args: build-backend
+    BACKEND_WASM="$PWD/target/wasm32-unknown-unknown/release/backend.wasm" \
+    POCKET_IC_BIN="$(which pocket-ic)" \
+        cargo test -p backend-e2e {{args}}
+
 # Go microservices live under services/; see `just services::` for recipes
 mod services
 

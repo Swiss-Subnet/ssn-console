@@ -1,0 +1,19 @@
+[package]
+name = "backend-e2e"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Black-box PocketIC tests against the deployed backend canister. Types are
+# candid mirrors decoupled from the `backend` crate on purpose: a candid drift
+# must surface here as a decode failure, not silently compile. Do NOT add a
+# dependency on `backend`.
+[build-dependencies]
+candid_parser = { workspace = true }
+
+[dev-dependencies]
+pocket-ic = "14"
+candid = { workspace = true }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+ic-management-canister-types = { workspace = true }
