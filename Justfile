@@ -178,6 +178,11 @@ build-backend:
     gzip -f -c target/wasm32-unknown-unknown/release/backend.wasm \
         > .dfx/local/canisters/backend/backend.wasm.gz
 
+# Regenerate everything derived from .did files (TS bindings + Go clients).
+# Run after editing any .did; CI fails if these committed artifacts drift.
+gen: bindings
+    just services::gen
+
 # Regenerate TS candid bindings from .did files
 bindings:
     cd src/backend-api && bun run build

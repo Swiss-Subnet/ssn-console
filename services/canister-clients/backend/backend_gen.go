@@ -96,6 +96,18 @@ type UserProfileBrief struct {
 	EmailVerified bool    `ic:"email_verified" json:"email_verified"`
 }
 
+type GetUserProfilesByUserIdsRequest struct {
+	ProjectId ProjectId `ic:"project_id" json:"project_id"`
+	UserIds   []UserId  `ic:"user_ids" json:"user_ids"`
+}
+
+type GetUserProfilesByUserIdsResponse struct {
+	Ok  *struct {
+	Profiles []UserProfileBrief `ic:"profiles" json:"profiles"`
+} `ic:"Ok,variant" json:"Ok,omitempty"`
+	Err *ApiError                                                     `ic:"Err,variant" json:"Err,omitempty"`
+}
+
 type GetMyUserProfileResponse struct {
 	Ok  **UserProfile `ic:"Ok,variant" json:"Ok,omitempty"`
 	Err *ApiError     `ic:"Err,variant" json:"Err,omitempty"`
@@ -544,28 +556,28 @@ type Proposal struct {
 
 type ProposalStatus struct {
 	Open            *struct {
-}                                                         `ic:"Open,variant" json:"Open,omitempty"`
+}                                                  `ic:"Open,variant" json:"Open,omitempty"`
 	PendingApproval *struct {
-	Threshold uint32                `ic:"threshold" json:"threshold"`
-	Approvers []principal.Principal `ic:"approvers" json:"approvers"`
-	Votes     []ProposalVote        `ic:"votes" json:"votes"`
+	Threshold uint32         `ic:"threshold" json:"threshold"`
+	Approvers []UserId       `ic:"approvers" json:"approvers"`
+	Votes     []ProposalVote `ic:"votes" json:"votes"`
 } `ic:"PendingApproval,variant" json:"PendingApproval,omitempty"`
 	Rejected        *struct {
-}                                                         `ic:"Rejected,variant" json:"Rejected,omitempty"`
+}                                                  `ic:"Rejected,variant" json:"Rejected,omitempty"`
 	Cancelled       *struct {
-}                                                         `ic:"Cancelled,variant" json:"Cancelled,omitempty"`
+}                                                  `ic:"Cancelled,variant" json:"Cancelled,omitempty"`
 	Executing       *struct {
-}                                                         `ic:"Executing,variant" json:"Executing,omitempty"`
+}                                                  `ic:"Executing,variant" json:"Executing,omitempty"`
 	Executed        *struct {
-}                                                         `ic:"Executed,variant" json:"Executed,omitempty"`
+}                                                  `ic:"Executed,variant" json:"Executed,omitempty"`
 	Failed          *struct {
 	Message string `ic:"message" json:"message"`
-}           `ic:"Failed,variant" json:"Failed,omitempty"`
+}    `ic:"Failed,variant" json:"Failed,omitempty"`
 }
 
 type ProposalVote struct {
-	Voter principal.Principal `ic:"voter" json:"voter"`
-	Vote  Vote                `ic:"vote" json:"vote"`
+	Voter UserId `ic:"voter" json:"voter"`
+	Vote  Vote   `ic:"vote" json:"vote"`
 }
 
 type Vote struct {
@@ -1523,6 +1535,20 @@ func (a BackendAgent) GetUserProfilesByPrincipals(arg0 GetUserProfilesByPrincipa
     if err := a.Query(
         a.CanisterId,
         "get_user_profiles_by_principals",
+        []any{arg0},
+        []any{&r0},
+    ); err != nil {
+        return nil, err
+    }
+    return &r0, nil
+}
+
+// GetUserProfilesByUserIds calls the "get_user_profiles_by_user_ids" method on the "backend" canister.
+func (a BackendAgent) GetUserProfilesByUserIds(arg0 GetUserProfilesByUserIdsRequest) (*GetUserProfilesByUserIdsResponse, error) {
+    var r0 GetUserProfilesByUserIdsResponse
+    if err := a.Query(
+        a.CanisterId,
+        "get_user_profiles_by_user_ids",
         []any{arg0},
         []any{&r0},
     ); err != nil {
