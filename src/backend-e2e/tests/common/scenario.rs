@@ -25,9 +25,9 @@ impl Fixture {
     // the instance to the pool on drop. Tests run in parallel up to the pool
     // size (driven by the number of concurrent test threads).
     pub fn get() -> FixtureGuard {
-        // A pooled instance carries a previous test's state, so restore it. A
-        // freshly seeded one is already at baseline, so skip the redundant load.
-        let fixture = match pool().lock().unwrap().pop() {
+        // Drop the lock before seed/reset so a panic there doesn't poison the pool.
+        let pooled = pool().lock().unwrap().pop();
+        let fixture = match pooled {
             Some(reused) => {
                 reused.env.reset();
                 reused

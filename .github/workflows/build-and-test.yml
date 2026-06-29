@@ -108,7 +108,7 @@ jobs:
 
       - name: Cargo test backend-e2e
         env:
-          BACKEND_WASM: target/wasm32-unknown-unknown/release/backend.wasm
+          BACKEND_WASM: ${{ github.workspace }}/target/wasm32-unknown-unknown/release/backend.wasm
         run: cargo test -p backend-e2e
 
   build_and_test_canister_history:
