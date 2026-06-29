@@ -26,4 +26,11 @@ export const createProposalsSlice: AppStateCreator<ProposalsSlice> = (
       principals,
     });
   },
+
+  async getUserProfilesByUserIds(projectId, userIds) {
+    return get().userProfileApi.getUserProfilesByUserIds({
+      projectId,
+      userIds,
+    });
+  },
 });

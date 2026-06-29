@@ -3,6 +3,8 @@ import {
   mapGetMyUserProfileResponse,
   mapGetUserProfilesByPrincipalsRequest,
   mapGetUserProfilesByPrincipalsResponse,
+  mapGetUserProfilesByUserIdsRequest,
+  mapGetUserProfilesByUserIdsResponse,
   mapListStaleUsersResponse,
   mapListUserProfilesResponse,
   mapUpdateMyUserProfileRequest,
@@ -12,6 +14,8 @@ import {
   type GetMyUserProfileResponse,
   type GetUserProfilesByPrincipalsRequest,
   type GetUserProfilesByPrincipalsResponse,
+  type GetUserProfilesByUserIdsRequest,
+  type GetUserProfilesByUserIdsResponse,
   type ListStaleUsersResponse,
   type ListUserProfilesResponse,
   type UpdateMyUserProfileRequest,
@@ -82,5 +86,14 @@ export class UserProfileApi {
       mapGetUserProfilesByPrincipalsRequest(req),
     );
     return mapGetUserProfilesByPrincipalsResponse(res);
+  }
+
+  public async getUserProfilesByUserIds(
+    req: GetUserProfilesByUserIdsRequest,
+  ): Promise<GetUserProfilesByUserIdsResponse> {
+    const res = await this.actor.get_user_profiles_by_user_ids(
+      mapGetUserProfilesByUserIdsRequest(req),
+    );
+    return mapGetUserProfilesByUserIdsResponse(res);
   }
 }

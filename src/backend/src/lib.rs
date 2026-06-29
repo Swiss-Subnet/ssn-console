@@ -35,6 +35,7 @@ fn post_upgrade() {
     data::canister_repository::migrate_principal_canister_index();
     data::user_profile_repository::migrate_verified_email_index();
     data::proposal_repository::migrate_proposals_proposer_id();
+    data::proposal_repository::migrate_pending_approval_reset();
 }
 
 #[cfg(test)]

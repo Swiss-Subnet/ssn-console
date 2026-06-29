@@ -225,14 +225,14 @@ function mapProposalStatus(status: ApiProposalStatus): ProposalStatus {
   return {
     kind: ProposalStatusKind.PendingApproval,
     threshold: status.PendingApproval.threshold,
-    approvers: status.PendingApproval.approvers.map(p => p.toText()),
+    approvers: status.PendingApproval.approvers,
     votes: status.PendingApproval.votes.map(mapProposalVote),
   };
 }
 
 function mapProposalVote(v: ApiProposalVote): ProposalVoteRecord {
   return {
-    voter: v.voter.toText(),
+    voter: v.voter,
     vote: 'Approve' in v.vote ? Vote.Approve : Vote.Reject,
   };
 }

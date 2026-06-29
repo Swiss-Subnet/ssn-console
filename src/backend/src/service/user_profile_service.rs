@@ -6,7 +6,8 @@ use crate::{
     },
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
-        GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListStaleUsersResponse,
+        GetUserProfilesByPrincipalsResponse, GetUserProfilesByUserIdsRequest,
+        GetUserProfilesByUserIdsResponse, GetUserStatsResponse, ListStaleUsersResponse,
         ListUserProfilesResponse, RejectionError, RejectionReason, StaleUserEntry,
         UpdateMyUserProfileRequest, UpdateUserProfileRequest, VerifyEmailRequest,
     },
@@ -14,8 +15,8 @@ use crate::{
     jwt::{extract_ed25519_public_key_from_pem, verify_jwt},
     mapping::{
         map_create_my_user_profile_response, map_get_my_user_profile_response,
-        map_get_user_profiles_by_principals_response, map_get_user_stats_response,
-        map_list_user_profiles_response, map_user_status_request,
+        map_get_user_profiles_by_principals_response, map_get_user_profiles_by_user_ids_response,
+        map_get_user_stats_response, map_list_user_profiles_response, map_user_status_request,
     },
     service::access_control_service::{self, ProjectAuth},
     service::staleness_service,
@@ -61,6 +62,28 @@ pub fn get_user_profiles_by_principals(
         })
         .collect();
     Ok(map_get_user_profiles_by_principals_response(lookups))
+}
+
+pub fn get_user_profiles_by_user_ids(
+    caller: &Principal,
+    req: GetUserProfilesByUserIdsRequest,
+) -> ApiResult<GetUserProfilesByUserIdsResponse> {
+    let project_id = ProjectId::try_from(req.project_id.as_str())?;
+    ProjectAuth::require(caller, project_id, ProjectPermissions::EMPTY)?;
+
+    let profiles = req
+        .user_ids
+        .into_iter()
+        .filter_map(|raw| UserId::try_from(raw.as_str()).ok())
+        .filter(|user_id| {
+            ProjectAuth::for_user(*user_id, project_id, ProjectPermissions::EMPTY).is_ok()
+        })
+        .filter_map(|user_id| {
+            user_profile_repository::get_user_profile_by_user_id(&user_id)
+                .map(|profile| (user_id, profile))
+        })
+        .collect();
+    Ok(map_get_user_profiles_by_user_ids_response(profiles))
 }
 
 pub fn update_user_profile(req: UpdateUserProfileRequest) -> ApiResult {

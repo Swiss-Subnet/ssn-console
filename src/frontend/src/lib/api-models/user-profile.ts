@@ -14,6 +14,8 @@ import type {
   GetUserStatsResponse as ApiGetUserStatsResponse,
   GetUserProfilesByPrincipalsRequest as ApiGetUserProfilesByPrincipalsRequest,
   GetUserProfilesByPrincipalsResponse as ApiGetUserProfilesByPrincipalsResponse,
+  GetUserProfilesByUserIdsRequest as ApiGetUserProfilesByUserIdsRequest,
+  GetUserProfilesByUserIdsResponse as ApiGetUserProfilesByUserIdsResponse,
   ListStaleUsersResponse as ApiListStaleUsersResponse,
 } from '@ssn/backend-api';
 
@@ -185,6 +187,32 @@ export function mapGetUserProfilesByPrincipalsResponse(
   return mapOkResponse(res).profiles.map(entry => ({
     principal: entry.subject_principal.toText(),
     profile: mapUserProfileBriefOpt(entry.profile),
+  }));
+}
+
+export type GetUserProfilesByUserIdsRequest = {
+  projectId: string;
+  userIds: string[];
+};
+
+export type GetUserProfilesByUserIdsResponse = UserProfileBrief[];
+
+export function mapGetUserProfilesByUserIdsRequest(
+  req: GetUserProfilesByUserIdsRequest,
+): ApiGetUserProfilesByUserIdsRequest {
+  return {
+    project_id: req.projectId,
+    user_ids: req.userIds,
+  };
+}
+
+export function mapGetUserProfilesByUserIdsResponse(
+  res: ApiGetUserProfilesByUserIdsResponse,
+): GetUserProfilesByUserIdsResponse {
+  return mapOkResponse(res).profiles.map(brief => ({
+    id: brief.id,
+    email: fromCandidOpt(brief.email),
+    emailVerified: brief.email_verified,
   }));
 }
 

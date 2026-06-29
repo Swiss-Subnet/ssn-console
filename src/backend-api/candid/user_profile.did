@@ -28,6 +28,16 @@ type UserProfileBrief = record {
   email_verified : bool;
 };
 
+type GetUserProfilesByUserIdsRequest = record {
+  project_id : ProjectId;
+  user_ids : vec UserId;
+};
+
+type GetUserProfilesByUserIdsResponse = variant {
+  Ok : record { profiles : vec UserProfileBrief };
+  Err : ApiError;
+};
+
 type GetMyUserProfileResponse = variant {
   Ok : opt UserProfile;
   Err : ApiError;
@@ -101,6 +111,7 @@ type VerifyEmailResponse = variant {
 service : {
   admin_list_user_profiles : () -> (ListUserProfilesResponse) query;
   get_user_profiles_by_principals : (GetUserProfilesByPrincipalsRequest) -> (GetUserProfilesByPrincipalsResponse) query;
+  get_user_profiles_by_user_ids : (GetUserProfilesByUserIdsRequest) -> (GetUserProfilesByUserIdsResponse) query;
   admin_update_user_profile : (UpdateUserProfileRequest) -> (UpdateUserProfileResponse);
   admin_get_user_stats : () -> (GetUserStatsResponse) query;
   admin_list_stale_users : () -> (ListStaleUsersResponse) query;

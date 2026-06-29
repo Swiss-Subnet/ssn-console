@@ -5,7 +5,6 @@ use crate::data::{
     },
     ProjectId, ProposalId, ProposalStatus, UserId, Vote,
 };
-use candid::Principal;
 use canister_utils::{now_nanos, ApiError, ApiResult};
 use std::cell::RefCell;
 use std::ops::Bound::{Excluded, Included};
@@ -76,7 +75,7 @@ where
 pub fn set_proposal_pending_approval(
     proposal_id: ProposalId,
     threshold: u32,
-    approvers: Vec<Principal>,
+    approvers: Vec<UserId>,
 ) -> ApiResult {
     mutate_state(|s| {
         let mut proposal = s.proposals.get(&proposal_id).ok_or_else(|| {
@@ -105,7 +104,7 @@ pub fn set_proposal_pending_approval(
 
 pub fn record_proposal_vote(
     proposal_id: ProposalId,
-    voter: Principal,
+    voter: UserId,
     vote: Vote,
 ) -> ApiResult<VoteOutcome> {
     mutate_state(|s| {
@@ -128,13 +127,13 @@ pub fn record_proposal_vote(
 
         if !approvers.contains(&voter) {
             return Err(ApiError::client_error(format!(
-                "Principal {voter} is not an approver for proposal {proposal_id}."
+                "User {voter} is not an approver for proposal {proposal_id}."
             )));
         }
 
         if votes.iter().any(|(v, _)| v == &voter) {
             return Err(ApiError::client_error(format!(
-                "Principal {voter} has already voted on proposal {proposal_id}."
+                "User {voter} has already voted on proposal {proposal_id}."
             )));
         }
 
@@ -240,6 +239,19 @@ pub fn migrate_proposals_proposer_id() {
     });
 }
 
+// Persist the from_bytes reset of legacy principal-keyed PendingApproval rows
+// (now decoded as Open) so it happens once at upgrade rather than on every read.
+pub fn migrate_pending_approval_reset() {
+    mutate_state(|s| {
+        let ids: Vec<ProposalId> = s.proposals.iter().map(|e| e.into_pair().0).collect();
+        for id in ids {
+            if let Some(proposal) = s.proposals.get(&id) {
+                s.proposals.insert(id, proposal);
+            }
+        }
+    });
+}
+
 pub fn metrics_counts() -> Vec<(&'static str, u64)> {
     with_state(|s| {
         vec![
@@ -279,9 +291,8 @@ fn mutate_state<R>(f: impl FnOnce(&mut ProposalState) -> R) -> R {
 mod tests {
     use super::*;
     use crate::data::{ProposalOperation, UserId};
-    use crate::test_support::fresh_principal;
 
-    fn seed_pending_proposal(threshold: u32, approvers: Vec<Principal>) -> ProposalId {
+    fn seed_pending_proposal(threshold: u32, approvers: Vec<UserId>) -> ProposalId {
         let project_id = ProjectId::new();
         let proposal_id = create_proposal(
             project_id,
@@ -317,17 +328,17 @@ mod tests {
 
     #[test]
     fn set_pending_approval_rejects_non_open_status() {
-        let a = fresh_principal();
-        let id = seed_pending_proposal(2, vec![a, fresh_principal()]);
+        let a = UserId::new();
+        let id = seed_pending_proposal(2, vec![a, UserId::new()]);
         let err = set_proposal_pending_approval(id, 2, vec![a]).unwrap_err();
         assert!(err.message().contains("not open"));
     }
 
     #[test]
     fn vote_approve_reaches_threshold_but_leaves_status_pending() {
-        let a = fresh_principal();
-        let b = fresh_principal();
-        let c = fresh_principal();
+        let a = UserId::new();
+        let b = UserId::new();
+        let c = UserId::new();
         let id = seed_pending_proposal(2, vec![a, b, c]);
 
         assert_eq!(
@@ -349,9 +360,9 @@ mod tests {
 
     #[test]
     fn vote_reject_flips_to_rejected_when_threshold_unreachable() {
-        let a = fresh_principal();
-        let b = fresh_principal();
-        let c = fresh_principal();
+        let a = UserId::new();
+        let b = UserId::new();
+        let c = UserId::new();
         // threshold 2 of 3 → only 1 reject allowed before unreachable.
         let id = seed_pending_proposal(2, vec![a, b, c]);
 
@@ -371,8 +382,8 @@ mod tests {
 
     #[test]
     fn unanimous_threshold_rejects_on_first_reject() {
-        let a = fresh_principal();
-        let b = fresh_principal();
+        let a = UserId::new();
+        let b = UserId::new();
         let id = seed_pending_proposal(2, vec![a, b]);
 
         assert_eq!(
@@ -383,9 +394,9 @@ mod tests {
 
     #[test]
     fn mixed_votes_can_still_reach_approval() {
-        let a = fresh_principal();
-        let b = fresh_principal();
-        let c = fresh_principal();
+        let a = UserId::new();
+        let b = UserId::new();
+        let c = UserId::new();
         let id = seed_pending_proposal(2, vec![a, b, c]);
 
         record_proposal_vote(id, a, Vote::Approve).unwrap();
@@ -398,8 +409,8 @@ mod tests {
 
     #[test]
     fn vote_from_non_approver_is_rejected() {
-        let a = fresh_principal();
-        let outsider = fresh_principal();
+        let a = UserId::new();
+        let outsider = UserId::new();
         let id = seed_pending_proposal(1, vec![a]);
 
         let err = record_proposal_vote(id, outsider, Vote::Approve).unwrap_err();
@@ -408,8 +419,8 @@ mod tests {
 
     #[test]
     fn duplicate_vote_is_rejected() {
-        let a = fresh_principal();
-        let b = fresh_principal();
+        let a = UserId::new();
+        let b = UserId::new();
         let id = seed_pending_proposal(2, vec![a, b]);
 
         record_proposal_vote(id, a, Vote::Approve).unwrap();
@@ -432,14 +443,14 @@ mod tests {
             },
         );
 
-        let err = record_proposal_vote(id, fresh_principal(), Vote::Approve).unwrap_err();
+        let err = record_proposal_vote(id, UserId::new(), Vote::Approve).unwrap_err();
         assert!(err.message().contains("not pending approval"));
     }
 
     #[test]
     fn vote_on_missing_proposal_is_rejected() {
         let err =
-            record_proposal_vote(ProposalId::new(), fresh_principal(), Vote::Approve).unwrap_err();
+            record_proposal_vote(ProposalId::new(), UserId::new(), Vote::Approve).unwrap_err();
         assert!(err.message().contains("does not exist"));
     }
 

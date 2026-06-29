@@ -2,8 +2,9 @@ use crate::{
     data,
     data::{UserId, UserStatsData},
     dto::{
-        GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListUserProfilesResponse,
-        UserProfile, UserProfileBrief, UserProfileByPrincipal, UserStatus,
+        GetUserProfilesByPrincipalsResponse, GetUserProfilesByUserIdsResponse,
+        GetUserStatsResponse, ListUserProfilesResponse, UserProfile, UserProfileBrief,
+        UserProfileByPrincipal, UserStatus,
     },
 };
 use candid::Principal;
@@ -58,6 +59,21 @@ pub fn map_user_status_response(status: data::UserStatus) -> UserStatus {
     match status {
         data::UserStatus::Active => UserStatus::Active,
         data::UserStatus::Inactive => UserStatus::Inactive,
+    }
+}
+
+pub fn map_get_user_profiles_by_user_ids_response(
+    profiles: Vec<(UserId, data::UserProfile)>,
+) -> GetUserProfilesByUserIdsResponse {
+    GetUserProfilesByUserIdsResponse {
+        profiles: profiles
+            .into_iter()
+            .map(|(id, profile)| UserProfileBrief {
+                id: id.to_string(),
+                email: profile.email,
+                email_verified: profile.email_verified,
+            })
+            .collect(),
     }
 }
 

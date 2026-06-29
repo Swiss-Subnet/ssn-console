@@ -75,6 +75,7 @@ dependencies = [
  "candid",
  "candid_parser",
  "canister-utils",
+ "ciborium",
  "dotenv_codegen",
  "ed25519-dalek",
  "futures",

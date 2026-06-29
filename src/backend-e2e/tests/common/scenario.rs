@@ -157,11 +157,39 @@ pub fn no_project_perms() -> ProjectPermissions {
     }
 }
 
-// Onboard a principal: create its user profile and return its user_id.
+// Onboard a principal: create its user profile, activate it (via the
+// controller), and return its user_id. Activation is required for the endpoints
+// gated on assert_has_platform_access (proposals, approval policies).
 pub fn create_user(env: &Env, p: Principal) -> String {
-    env.update::<_, CreateMyUserProfileResponse>(p, method::CREATE_MY_USER_PROFILE, ())
+    let user_id = env
+        .update::<_, CreateMyUserProfileResponse>(p, method::CREATE_MY_USER_PROFILE, ())
         .expect("create user profile")
-        .id
+        .id;
+    activate_user(env, &user_id);
+    user_id
+}
+
+pub fn activate_user(env: &Env, user_id: &str) {
+    env.update::<_, UpdateUserProfileResponse>(
+        env.controller,
+        method::ADMIN_UPDATE_USER_PROFILE,
+        UpdateUserProfileRequest {
+            user_id: user_id.to_string(),
+            status: Some(UserStatus::Active),
+        },
+    )
+    .expect("activate user");
+}
+
+pub fn get_proposal(env: &Env, caller: Principal, proposal_id: &str) -> Proposal {
+    env.query::<_, GetProposalResponse>(
+        caller,
+        method::GET_PROPOSAL,
+        GetProposalRequest {
+            proposal_id: proposal_id.to_string(),
+        },
+    )
+    .expect("get proposal")
 }
 
 // Bootstrap an org owned by `owner` (profile created here). The org bootstrap
@@ -313,4 +341,93 @@ pub fn invite_and_accept(env: &Env, admin: Principal, org_id: &str, invitee: Pri
         AcceptOrgInviteRequest { invite_id },
     )
     .expect("accept invite");
+}
+
+// Link `new_principal` to the account that `owner` already controls, via the
+// self-service device-link flow.
+pub fn link_principal(env: &Env, owner: Principal, new_principal: Principal, code: &str) {
+    env.update::<_, RegisterLinkCodeResponse>(
+        owner,
+        method::REGISTER_LINK_CODE,
+        RegisterLinkCodeRequest {
+            target_principal: new_principal,
+            code: code.to_string(),
+        },
+    )
+    .expect("register link code");
+
+    env.update::<_, LinkMyPrincipalResponse>(
+        new_principal,
+        method::LINK_MY_PRINCIPAL,
+        LinkMyPrincipalRequest {
+            code: code.to_string(),
+        },
+    )
+    .expect("link my principal");
+}
+
+pub fn set_approval_policy(
+    env: &Env,
+    caller: Principal,
+    project_id: &str,
+    operation_type: OperationType,
+    policy_type: PolicyType,
+) {
+    env.update::<_, UpsertApprovalPolicyResponse>(
+        caller,
+        method::UPSERT_APPROVAL_POLICY,
+        UpsertApprovalPolicyRequest {
+            project_id: project_id.to_string(),
+            operation_type,
+            policy_type,
+        },
+    )
+    .expect("upsert approval policy");
+}
+
+// The "Default Project" created during org bootstrap.
+pub fn default_project(env: &Env, owner: Principal) -> Project {
+    env.query::<_, ListMyProjectsResponse>(
+        owner,
+        method::LIST_MY_PROJECTS,
+        ListMyProjectsRequest {},
+    )
+    .expect("list my projects")
+    .projects
+    .into_iter()
+    .find(|p| p.name == "Default Project")
+    .expect("bootstrapped org has a Default Project")
+}
+
+pub fn create_proposal(
+    env: &Env,
+    caller: Principal,
+    project_id: &str,
+    operation: ProposalOperation,
+) -> Proposal {
+    env.update::<_, CreateProposalResponse>(
+        caller,
+        method::CREATE_PROPOSAL,
+        CreateProposalRequest {
+            project_id: project_id.to_string(),
+            operation: Some(operation),
+        },
+    )
+    .expect("create proposal")
+}
+
+pub fn vote(
+    env: &Env,
+    caller: Principal,
+    proposal_id: &str,
+    vote: Vote,
+) -> Result<Proposal, ApiError> {
+    env.update::<_, VoteProposalResponse>(
+        caller,
+        method::VOTE_PROPOSAL,
+        VoteProposalRequest {
+            proposal_id: proposal_id.to_string(),
+            vote,
+        },
+    )
 }

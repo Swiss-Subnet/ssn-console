@@ -24,13 +24,27 @@ pub struct Proposal {
     pub updated_at_nanos: Option<u64>,
 }
 
+// Decode shape for rows persisted before approvals were re-keyed from Principal
+// to UserId, whose `status` no longer matches ProposalStatus. `status` accepts
+// any CBOR and is discarded; from_bytes resets such proposals to Open.
+#[derive(Deserialize)]
+struct LegacyProposal {
+    project_id: ProjectId,
+    proposer_id: UserId,
+    #[allow(dead_code)]
+    status: ciborium::value::Value,
+    operation: ProposalOperation,
+    created_at_nanos: Option<u64>,
+    updated_at_nanos: Option<u64>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProposalStatus {
     Open,
     PendingApproval {
         threshold: u32,
-        approvers: Vec<Principal>,
-        votes: Vec<(Principal, Vote)>,
+        approvers: Vec<UserId>,
+        votes: Vec<(UserId, Vote)>,
     },
     Rejected,
     Cancelled,
@@ -64,8 +78,94 @@ impl Storable for Proposal {
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        deserialize_cbor(&bytes)
+        if let Ok(proposal) = ciborium::de::from_reader::<Proposal, _>(&*bytes) {
+            return proposal;
+        }
+        // Legacy principal-keyed PendingApproval: reset to Open, drop votes.
+        let legacy: LegacyProposal = deserialize_cbor(&bytes);
+        Proposal {
+            project_id: legacy.project_id,
+            proposer_id: legacy.proposer_id,
+            status: ProposalStatus::Open,
+            operation: legacy.operation,
+            created_at_nanos: legacy.created_at_nanos,
+            updated_at_nanos: legacy.updated_at_nanos,
+        }
     }
 
     const BOUND: Bound = Bound::Unbounded;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    // Serialize-side mirror of the pre-re-key Proposal: principal-keyed
+    // PendingApproval. Variant name matches the current model so the CBOR tag
+    // lines up; only the payload type differs.
+    #[derive(Serialize)]
+    enum LegacyStatus {
+        PendingApproval {
+            threshold: u32,
+            approvers: Vec<Principal>,
+            votes: Vec<(Principal, Vote)>,
+        },
+    }
+
+    #[derive(Serialize)]
+    struct LegacyRow {
+        project_id: ProjectId,
+        proposer_id: UserId,
+        status: LegacyStatus,
+        operation: ProposalOperation,
+        created_at_nanos: Option<u64>,
+        updated_at_nanos: Option<u64>,
+    }
+
+    #[test]
+    fn legacy_principal_keyed_pending_approval_resets_to_open() {
+        let project_id = ProjectId::new();
+        let proposer_id = UserId::new();
+        let p = Principal::anonymous();
+        let bytes = serialize_cbor(&LegacyRow {
+            project_id,
+            proposer_id,
+            status: LegacyStatus::PendingApproval {
+                threshold: 2,
+                approvers: vec![p],
+                votes: vec![(p, Vote::Approve)],
+            },
+            operation: ProposalOperation::CreateCanister,
+            created_at_nanos: Some(7),
+            updated_at_nanos: Some(8),
+        });
+
+        let decoded = Proposal::from_bytes(Cow::Owned(bytes));
+        assert!(matches!(decoded.status, ProposalStatus::Open));
+        assert_eq!(decoded.project_id, project_id);
+        assert_eq!(decoded.proposer_id, proposer_id);
+        assert_eq!(decoded.created_at_nanos, Some(7));
+    }
+
+    #[test]
+    fn user_keyed_pending_approval_round_trips() {
+        let proposal = Proposal {
+            project_id: ProjectId::new(),
+            proposer_id: UserId::new(),
+            status: ProposalStatus::PendingApproval {
+                threshold: 2,
+                approvers: vec![UserId::new()],
+                votes: vec![(UserId::new(), Vote::Approve)],
+            },
+            operation: ProposalOperation::CreateCanister,
+            created_at_nanos: Some(1),
+            updated_at_nanos: Some(2),
+        };
+        let decoded = Proposal::from_bytes(proposal.to_bytes());
+        assert!(matches!(
+            decoded.status,
+            ProposalStatus::PendingApproval { threshold: 2, .. }
+        ));
+    }
 }
