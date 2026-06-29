@@ -132,6 +132,15 @@ pub fn set_org_team_permissions(org_id: OrgId, team_id: TeamId, permissions: Org
     });
 }
 
+// The OrgPermissions granted to `team_id` within `org_id`, or None if the team
+// is not linked to the org.
+pub fn get_org_team_permissions(org_id: OrgId, team_id: TeamId) -> Option<OrgPermissions> {
+    with_state(|s| {
+        s.organization_team_permissions_index
+            .get(&(org_id, team_id))
+    })
+}
+
 // Union the OrgPermissions of every team the user belongs to within `org_id`.
 // Returns OrgPermissions::EMPTY if the user has no teams in the org.
 pub fn aggregate_user_org_permissions(user_id: UserId, org_id: OrgId) -> OrgPermissions {

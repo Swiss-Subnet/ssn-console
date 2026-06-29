@@ -5,7 +5,9 @@ use ic_cdk::{
     *,
 };
 use ic_http_certification::{HeaderField, HttpRequest, HttpResponse, StatusCode};
-use include_dir::{include_dir, Dir};
+#[cfg(feature = "embed-frontend")]
+use include_dir::include_dir;
+use include_dir::Dir;
 use std::cell::RefCell;
 
 #[init]
@@ -22,7 +24,12 @@ thread_local! {
     static ASSET_ROUTER: RefCell<AssetRouter<'static>> = Default::default();
 }
 
+#[cfg(feature = "embed-frontend")]
 static ASSETS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../frontend/dist");
+// Backend-only builds (e.g. e2e tests) embed no frontend; the asset router
+// just certifies and serves nothing.
+#[cfg(not(feature = "embed-frontend"))]
+static ASSETS_DIR: Dir<'_> = Dir::new("", &[]);
 const IMMUTABLE_ASSET_CACHE_CONTROL: &str = "public, max-age=31536000, immutable";
 const NO_CACHE_ASSET_CACHE_CONTROL: &str = "public, no-cache, no-store";
 

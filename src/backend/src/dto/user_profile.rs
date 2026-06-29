@@ -27,6 +27,17 @@ pub struct UserProfileBrief {
     pub email_verified: bool,
 }
 
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct GetUserProfilesByUserIdsRequest {
+    pub project_id: String,
+    pub user_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, CandidType)]
+pub struct GetUserProfilesByUserIdsResponse {
+    pub profiles: Vec<UserProfileBrief>,
+}
+
 pub type GetMyUserProfileResponse = Option<UserProfile>;
 
 pub type CreateMyUserProfileResponse = UserProfile;

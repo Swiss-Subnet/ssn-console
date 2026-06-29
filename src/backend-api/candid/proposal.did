@@ -75,7 +75,7 @@ type ProposalStatus = variant {
   Open : record {};
   PendingApproval : record {
     threshold : nat32;
-    approvers : vec principal;
+    approvers : vec UserId;
     votes : vec ProposalVote;
   };
   Rejected : record {};
@@ -88,7 +88,7 @@ type ProposalStatus = variant {
 };
 
 type ProposalVote = record {
-  voter : principal;
+  voter : UserId;
   vote : Vote;
 };
 

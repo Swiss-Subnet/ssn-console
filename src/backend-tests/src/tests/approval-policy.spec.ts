@@ -346,7 +346,7 @@ describe('Approval Policy + Proposal Voting', () => {
       const bob = await driver.users.createUser();
       await driver.users.inviteIntoOrgAndDefaultTeam(alice, bob);
 
-      const [aliceIdentity] = alice;
+      const [aliceIdentity, aliceProfile] = alice;
       driver.actor.setIdentity(aliceIdentity);
       const project = await driver.getDefaultProject();
       await driver.actor.upsert_approval_policy({
@@ -373,7 +373,7 @@ describe('Approval Policy + Proposal Voting', () => {
       expect(second).toEqual({
         Err: {
           code: [{ ClientError: {} }],
-          message: `Principal ${aliceIdentity.getPrincipal()} has already voted on proposal ${pending.id}.`,
+          message: `User ${aliceProfile.id} has already voted on proposal ${pending.id}.`,
         },
       });
     });

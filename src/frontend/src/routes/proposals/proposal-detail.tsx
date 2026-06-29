@@ -72,13 +72,10 @@ const ProposalDetail: FC = () => {
   const projectMap = useAppStore(selectProjectMap);
   const orgMap = useAppStore(selectOrgMap);
   const profile = useAppStore(s => s.profile);
-  const identity = useAppStore(s => s.identity);
   const getProposal = useAppStore(s => s.getProposal);
   const voteProposal = useAppStore(s => s.voteProposal);
   const cancelProposal = useAppStore(s => s.cancelProposal);
-  const getUserProfilesByPrincipals = useAppStore(
-    s => s.getUserProfilesByPrincipals,
-  );
+  const getUserProfilesByUserIds = useAppStore(s => s.getUserProfilesByUserIds);
 
   const project = useMemo(
     () => projectMap.get(projectId) ?? null,
@@ -97,11 +94,6 @@ const ProposalDetail: FC = () => {
   const [pendingVote, setPendingVote] = useState<Vote | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const myPrincipal = useMemo(
-    () => identity?.getPrincipal().toText() ?? null,
-    [identity],
-  );
-
   useEffect(() => {
     if (isNil(proposalId)) return;
     setIsLoading(true);
@@ -118,25 +110,25 @@ const ProposalDetail: FC = () => {
     ) {
       return;
     }
-    const principals = new Set<string>();
-    proposal.status.approvers.forEach(p => {
-      if (!profileMap.has(p)) principals.add(p);
+    const userIds = new Set<string>();
+    proposal.status.approvers.forEach(id => {
+      if (!profileMap.has(id)) userIds.add(id);
     });
     proposal.status.votes.forEach(v => {
-      if (!profileMap.has(v.voter)) principals.add(v.voter);
+      if (!profileMap.has(v.voter)) userIds.add(v.voter);
     });
-    if (principals.size === 0) return;
+    if (userIds.size === 0) return;
 
-    getUserProfilesByPrincipals(projectId, [...principals])
-      .then(entries => {
+    getUserProfilesByUserIds(projectId, [...userIds])
+      .then(briefs => {
         setProfileMap(prev => {
           const next = new Map(prev);
-          for (const e of entries) next.set(e.principal, e.profile);
+          for (const brief of briefs) next.set(brief.id, brief);
           return next;
         });
       })
       .catch(err => showErrorToast('Failed to resolve voter profiles', err));
-  }, [proposal, projectId, getUserProfilesByPrincipals, profileMap]);
+  }, [proposal, projectId, getUserProfilesByUserIds, profileMap]);
 
   if (isNil(proposalId)) {
     return <p className="text-muted-foreground">Missing proposal id.</p>;
@@ -144,12 +136,13 @@ const ProposalDetail: FC = () => {
 
   const status = proposal?.status ?? null;
   const isPendingApproval = status?.kind === ProposalStatusKind.PendingApproval;
+  const myUserId = profile?.id ?? null;
   const canVote =
     isPendingApproval &&
     !!project?.yourPermissions.proposalApprove &&
-    !!myPrincipal &&
-    status.approvers.includes(myPrincipal) &&
-    !status.votes.some(v => v.voter === myPrincipal);
+    !!myUserId &&
+    status.approvers.includes(myUserId) &&
+    !status.votes.some(v => v.voter === myUserId);
 
   const isProposer = !!profile && proposal?.proposerId === profile.id;
   const isProjectAdmin = !!project?.yourPermissions.projectAdmin;
@@ -336,20 +329,20 @@ const ProposalDetail: FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {status.approvers.map(principal => {
+                    {status.approvers.map(userId => {
                       const vote =
-                        status.votes.find(v => v.voter === principal)?.vote ??
+                        status.votes.find(v => v.voter === userId)?.vote ??
                         null;
                       return (
-                        <TableRow key={principal}>
+                        <TableRow key={userId}>
                           <TableCell>
                             <span className="text-sm">
                               {renderProfileLabel(
-                                principal,
-                                profileMap.get(principal) ?? null,
+                                userId,
+                                profileMap.get(userId) ?? null,
                               )}
                             </span>
-                            {principal === myPrincipal && (
+                            {userId === myUserId && (
                               <span className="text-muted-foreground ml-1 text-xs">
                                 (you)
                               </span>

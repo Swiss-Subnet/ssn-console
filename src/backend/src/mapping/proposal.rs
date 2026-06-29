@@ -107,11 +107,11 @@ pub fn map_proposal_response(proposal_id: ProposalId, proposal: data::Proposal) 
                 votes,
             } => Some(ProposalStatus::PendingApproval {
                 threshold,
-                approvers,
+                approvers: approvers.into_iter().map(|u| u.to_string()).collect(),
                 votes: votes
                     .into_iter()
                     .map(|(voter, vote)| ProposalVote {
-                        voter,
+                        voter: voter.to_string(),
                         vote: map_vote(vote),
                     })
                     .collect(),

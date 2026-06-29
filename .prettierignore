@@ -7,3 +7,6 @@ node_modules
 .DS_Store
 
 bun.lock
+
+# prettier reflows handlebars templates and breaks codegen
+*.hbs

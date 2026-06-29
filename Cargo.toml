@@ -2,6 +2,7 @@
 members = [
     "src/backend",
     "src/backend-api-rs",
+    "src/backend-e2e",
     "src/canister-history",
     "src/canister-history-api-rs",
     "src/canister-utils",
@@ -21,7 +22,10 @@ ic-cdk-timers = "1"
 ic-stable-structures = "0.7"
 
 serde = { version = "1", features = ["derive"] }
+serde_bytes = "0.11"
+ciborium = "0.2"
 futures = "0.3"
+ic-management-canister-types = "0.5"
 
 backend-api = { path = "./src/backend-api-rs" }
 canister-history-api = { path = "./src/canister-history-api-rs" }

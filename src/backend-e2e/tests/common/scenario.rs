@@ -1,0 +1,433 @@
+// Reusable setup flows built on the Env harness. Everything goes through the
+// public candid surface, so these double as exercise of the happy paths.
+
+use crate::common::bindings::*;
+use crate::common::env::{reserved, Env};
+use candid::Principal;
+use std::ops::Deref;
+use std::sync::{Mutex, OnceLock};
+
+// A canister seeded with a known admin (owning an org) and a MANAGE_USERS
+// service principal, snapshotted so a checkout restores to this world via
+// reset() instead of reinstalling. Seeded identities use reserved() principals
+// so they never collide with per-test principal(tag) callers.
+pub struct Fixture {
+    pub env: Env,
+    pub admin: Principal,
+    pub admin_org: Organization,
+    pub staff: Principal,
+}
+
+impl Fixture {
+    // Check out a seeded fixture, restored to its baseline. Reuses a pooled
+    // instance when one is free, otherwise builds and seeds a new one; either
+    // way the returned guard starts from the clean baseline. The guard returns
+    // the instance to the pool on drop. Tests run in parallel up to the pool
+    // size (driven by the number of concurrent test threads).
+    pub fn get() -> FixtureGuard {
+        // Drop the lock before seed/reset so a panic there doesn't poison the pool.
+        let pooled = pool().lock().unwrap().pop();
+        let fixture = match pooled {
+            Some(reused) => {
+                reused.env.reset();
+                reused
+            }
+            None => Self::seed(),
+        };
+        FixtureGuard {
+            fixture: Some(fixture),
+        }
+    }
+
+    fn seed() -> Self {
+        let env = Env::new();
+        let admin = reserved(0xA1);
+        let admin_org = bootstrap_org(&env, admin, "Baseline Org");
+
+        let staff = reserved(0xA2);
+        grant_service_principal(
+            &env,
+            staff,
+            StaffPermissions {
+                manage_users: true,
+                ..no_staff_perms()
+            },
+        );
+
+        env.snapshot_baseline();
+        Fixture {
+            env,
+            admin,
+            admin_org,
+            staff,
+        }
+    }
+}
+
+// Free seeded instances. Grows on demand to the high-water mark of concurrent
+// checkouts, i.e. the number of test threads (cargo --test-threads, default =
+// CPUs); never shrinks. No explicit cap: parallelism bounds it.
+fn pool() -> &'static Mutex<Vec<Fixture>> {
+    static POOL: OnceLock<Mutex<Vec<Fixture>>> = OnceLock::new();
+    POOL.get_or_init(|| Mutex::new(Vec::new()))
+}
+
+pub struct FixtureGuard {
+    fixture: Option<Fixture>,
+}
+
+impl Drop for FixtureGuard {
+    fn drop(&mut self) {
+        if let Some(fixture) = self.fixture.take() {
+            pool().lock().unwrap().push(fixture);
+        }
+    }
+}
+
+impl Deref for FixtureGuard {
+    type Target = Fixture;
+    fn deref(&self) -> &Fixture {
+        self.fixture.as_ref().unwrap()
+    }
+}
+
+impl Deref for Fixture {
+    type Target = Env;
+    fn deref(&self) -> &Env {
+        &self.env
+    }
+}
+
+pub fn no_org_perms() -> OrgPermissions {
+    OrgPermissions {
+        org_admin: false,
+        member_manage: false,
+        team_manage: false,
+        project_create: false,
+        billing_manage: false,
+    }
+}
+
+pub fn no_staff_perms() -> StaffPermissions {
+    StaffPermissions {
+        read_all_orgs: false,
+        write_billing: false,
+        manage_users: false,
+        read_metrics: false,
+    }
+}
+
+// Grant staff permissions to a user account via the controller bootstrap path.
+pub fn grant_staff(env: &Env, user_id: &str, perms: StaffPermissions) {
+    env.update::<_, GrantStaffPermissionsResponse>(
+        env.controller,
+        method::ADMIN_GRANT_STAFF_PERMISSIONS,
+        GrantStaffPermissionsRequest {
+            user_id: user_id.to_string(),
+            permissions: perms,
+        },
+    )
+    .expect("grant staff permissions");
+}
+
+// Grant staff permissions to a service principal (no user account, not subject
+// to the Active/Inactive guard) via the controller bootstrap path.
+pub fn grant_service_principal(env: &Env, p: Principal, perms: StaffPermissions) {
+    env.update::<_, GrantServicePrincipalPermissionsResponse>(
+        env.controller,
+        method::ADMIN_GRANT_SERVICE_PRINCIPAL_PERMISSIONS,
+        GrantServicePrincipalPermissionsRequest {
+            service_principal: p,
+            permissions: perms,
+        },
+    )
+    .expect("grant service principal permissions");
+}
+
+pub fn no_project_perms() -> ProjectPermissions {
+    ProjectPermissions {
+        project_admin: false,
+        canister_manage: false,
+        proposal_create: false,
+        proposal_approve: false,
+        canister_operate: false,
+        canister_read: false,
+        approval_policy_manage: false,
+        project_settings: false,
+    }
+}
+
+// Onboard a principal: create its user profile, activate it (via the
+// controller), and return its user_id. Activation is required for the endpoints
+// gated on assert_has_platform_access (proposals, approval policies).
+pub fn create_user(env: &Env, p: Principal) -> String {
+    let user_id = env
+        .update::<_, CreateMyUserProfileResponse>(p, method::CREATE_MY_USER_PROFILE, ())
+        .expect("create user profile")
+        .id;
+    activate_user(env, &user_id);
+    user_id
+}
+
+pub fn activate_user(env: &Env, user_id: &str) {
+    env.update::<_, UpdateUserProfileResponse>(
+        env.controller,
+        method::ADMIN_UPDATE_USER_PROFILE,
+        UpdateUserProfileRequest {
+            user_id: user_id.to_string(),
+            status: Some(UserStatus::Active),
+        },
+    )
+    .expect("activate user");
+}
+
+pub fn get_proposal(env: &Env, caller: Principal, proposal_id: &str) -> Proposal {
+    env.query::<_, GetProposalResponse>(
+        caller,
+        method::GET_PROPOSAL,
+        GetProposalRequest {
+            proposal_id: proposal_id.to_string(),
+        },
+    )
+    .expect("get proposal")
+}
+
+// Bootstrap an org owned by `owner` (profile created here). The org bootstrap
+// also creates a "Default Team" (ALL org perms, owner as sole member) and a
+// default project.
+pub fn bootstrap_org(env: &Env, owner: Principal, name: &str) -> Organization {
+    create_user(env, owner);
+    env.update::<_, CreateOrganizationResponse>(
+        owner,
+        method::CREATE_ORGANIZATION,
+        CreateOrganizationRequest {
+            name: name.to_string(),
+        },
+    )
+    .expect("create org")
+    .organization
+}
+
+// The org bootstrap creates exactly one team with ORG_ADMIN (the Default Team).
+pub fn org_admin_team_id(env: &Env, caller: Principal, org_id: &str) -> String {
+    list_org_teams(env, caller, org_id)
+        .into_iter()
+        .find(|t| t.permissions.org_admin)
+        .expect("an ORG_ADMIN team must exist")
+        .id
+}
+
+pub fn list_org_teams(env: &Env, caller: Principal, org_id: &str) -> Vec<OrgTeam> {
+    env.query::<_, ListOrgTeamsResponse>(
+        caller,
+        method::LIST_ORG_TEAMS,
+        ListOrgTeamsRequest {
+            org_id: org_id.to_string(),
+        },
+    )
+    .expect("list org teams")
+}
+
+// Create a team in `org_id` and set its org permissions.
+pub fn create_team_with_perms(
+    env: &Env,
+    caller: Principal,
+    org_id: &str,
+    name: &str,
+    perms: OrgPermissions,
+) -> String {
+    let team_id = env
+        .update::<_, CreateTeamResponse>(
+            caller,
+            method::CREATE_TEAM,
+            CreateTeamRequest {
+                org_id: org_id.to_string(),
+                name: name.to_string(),
+            },
+        )
+        .expect("create team")
+        .team
+        .id;
+
+    env.update::<_, UpdateTeamOrgPermissionsResponse>(
+        caller,
+        method::UPDATE_TEAM_ORG_PERMISSIONS,
+        UpdateTeamOrgPermissionsRequest {
+            team_id: team_id.clone(),
+            permissions: perms,
+        },
+    )
+    .expect("set team org permissions");
+
+    team_id
+}
+
+// Add an existing org member (by principal) onto a team. `admin` must hold the
+// permissions required to do so.
+pub fn add_member_to_team(env: &Env, admin: Principal, team_id: &str, member_user_id: &str) {
+    env.update::<_, AddUserToTeamResponse>(
+        admin,
+        method::ADD_USER_TO_TEAM,
+        AddUserToTeamRequest {
+            team_id: team_id.to_string(),
+            user_id: member_user_id.to_string(),
+        },
+    )
+    .expect("add user to team");
+}
+
+pub fn create_project(env: &Env, caller: Principal, org_id: &str, name: &str) -> Project {
+    env.update::<_, CreateProjectResponse>(
+        caller,
+        method::CREATE_PROJECT,
+        CreateProjectRequest {
+            org_id: org_id.to_string(),
+            name: name.to_string(),
+        },
+    )
+    .expect("create project")
+    .project
+}
+
+pub fn add_team_to_project(env: &Env, caller: Principal, project_id: &str, team_id: &str) {
+    env.update::<_, AddTeamToProjectResponse>(
+        caller,
+        method::ADD_TEAM_TO_PROJECT,
+        AddTeamToProjectRequest {
+            team_id: team_id.to_string(),
+            project_id: project_id.to_string(),
+        },
+    )
+    .expect("add team to project");
+}
+
+pub fn set_team_project_perms(
+    env: &Env,
+    caller: Principal,
+    project_id: &str,
+    team_id: &str,
+    perms: ProjectPermissions,
+) {
+    env.update::<_, UpdateTeamProjectPermissionsResponse>(
+        caller,
+        method::UPDATE_TEAM_PROJECT_PERMISSIONS,
+        UpdateTeamProjectPermissionsRequest {
+            project_id: project_id.to_string(),
+            team_id: team_id.to_string(),
+            permissions: perms,
+        },
+    )
+    .expect("set team project permissions");
+}
+
+// Invite `invitee` (already onboarded) into `org_id` and accept on their behalf.
+pub fn invite_and_accept(env: &Env, admin: Principal, org_id: &str, invitee: Principal) {
+    let invite_id = env
+        .update::<_, CreateOrgInviteResponse>(
+            admin,
+            method::CREATE_ORG_INVITE,
+            CreateOrgInviteRequest {
+                org_id: org_id.to_string(),
+                target: InviteTarget::Principal(invitee),
+            },
+        )
+        .expect("create invite")
+        .invite
+        .id;
+
+    env.update::<_, AcceptOrgInviteResponse>(
+        invitee,
+        method::ACCEPT_ORG_INVITE,
+        AcceptOrgInviteRequest { invite_id },
+    )
+    .expect("accept invite");
+}
+
+// Link `new_principal` to the account that `owner` already controls, via the
+// self-service device-link flow.
+pub fn link_principal(env: &Env, owner: Principal, new_principal: Principal, code: &str) {
+    env.update::<_, RegisterLinkCodeResponse>(
+        owner,
+        method::REGISTER_LINK_CODE,
+        RegisterLinkCodeRequest {
+            target_principal: new_principal,
+            code: code.to_string(),
+        },
+    )
+    .expect("register link code");
+
+    env.update::<_, LinkMyPrincipalResponse>(
+        new_principal,
+        method::LINK_MY_PRINCIPAL,
+        LinkMyPrincipalRequest {
+            code: code.to_string(),
+        },
+    )
+    .expect("link my principal");
+}
+
+pub fn set_approval_policy(
+    env: &Env,
+    caller: Principal,
+    project_id: &str,
+    operation_type: OperationType,
+    policy_type: PolicyType,
+) {
+    env.update::<_, UpsertApprovalPolicyResponse>(
+        caller,
+        method::UPSERT_APPROVAL_POLICY,
+        UpsertApprovalPolicyRequest {
+            project_id: project_id.to_string(),
+            operation_type,
+            policy_type,
+        },
+    )
+    .expect("upsert approval policy");
+}
+
+// The "Default Project" created during org bootstrap.
+pub fn default_project(env: &Env, owner: Principal) -> Project {
+    env.query::<_, ListMyProjectsResponse>(
+        owner,
+        method::LIST_MY_PROJECTS,
+        ListMyProjectsRequest {},
+    )
+    .expect("list my projects")
+    .projects
+    .into_iter()
+    .find(|p| p.name == "Default Project")
+    .expect("bootstrapped org has a Default Project")
+}
+
+pub fn create_proposal(
+    env: &Env,
+    caller: Principal,
+    project_id: &str,
+    operation: ProposalOperation,
+) -> Proposal {
+    env.update::<_, CreateProposalResponse>(
+        caller,
+        method::CREATE_PROPOSAL,
+        CreateProposalRequest {
+            project_id: project_id.to_string(),
+            operation: Some(operation),
+        },
+    )
+    .expect("create proposal")
+}
+
+pub fn vote(
+    env: &Env,
+    caller: Principal,
+    proposal_id: &str,
+    vote: Vote,
+) -> Result<Proposal, ApiError> {
+    env.update::<_, VoteProposalResponse>(
+        caller,
+        method::VOTE_PROPOSAL,
+        VoteProposalRequest {
+            proposal_id: proposal_id.to_string(),
+            vote,
+        },
+    )
+}

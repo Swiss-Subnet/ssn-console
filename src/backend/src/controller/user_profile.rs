@@ -2,7 +2,8 @@ use crate::{
     data::StaffPermissions,
     dto::{
         CreateMyUserProfileResponse, GetMyUserProfileResponse, GetUserProfilesByPrincipalsRequest,
-        GetUserProfilesByPrincipalsResponse, GetUserStatsResponse, ListStaleUsersResponse,
+        GetUserProfilesByPrincipalsResponse, GetUserProfilesByUserIdsRequest,
+        GetUserProfilesByUserIdsResponse, GetUserStatsResponse, ListStaleUsersResponse,
         ListUserProfilesResponse, RejectionError, UpdateMyUserProfileRequest,
         UpdateUserProfileRequest, VerifyEmailRequest,
     },
@@ -36,6 +37,18 @@ fn get_user_profiles_by_principals(
     }
 
     user_profile_service::get_user_profiles_by_principals(&caller, request).into()
+}
+
+#[query]
+fn get_user_profiles_by_user_ids(
+    request: GetUserProfilesByUserIdsRequest,
+) -> ApiResultDto<GetUserProfilesByUserIdsResponse> {
+    let caller = msg_caller();
+    if let Err(err) = access_control_service::assert_has_platform_access(&caller) {
+        return ApiResultDto::Err(err);
+    }
+
+    user_profile_service::get_user_profiles_by_user_ids(&caller, request).into()
 }
 
 #[update]

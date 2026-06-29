@@ -107,8 +107,11 @@ fn admin_list_user_readable_canister_principals(
     request: ListUserReadableCanisterPrincipalsRequest,
 ) -> ApiResultDto<ListUserReadableCanisterPrincipalsResponse> {
     let caller = msg_caller();
+    // Per-user, cross-org canister principals are per-record contents, which
+    // READ_METRICS (aggregate-only) must not expose. Gate on READ_ALL_ORGS like
+    // the sibling cross-org read endpoints.
     if let Err(err) =
-        access_control_service::assert_staff_perm(&caller, StaffPermissions::READ_METRICS)
+        access_control_service::assert_staff_perm(&caller, StaffPermissions::READ_ALL_ORGS)
     {
         return ApiResultDto::Err(err);
     }

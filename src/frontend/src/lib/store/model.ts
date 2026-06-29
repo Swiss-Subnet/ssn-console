@@ -2,6 +2,7 @@ import type {
   ApprovalPolicy,
   Canister,
   GetUserProfilesByPrincipalsResponse,
+  GetUserProfilesByUserIdsResponse,
   ListProjectProposalsRequest,
   ListProjectProposalsResponse,
   Proposal,
@@ -112,6 +113,10 @@ export type ProposalsSlice = {
     projectId: string,
     principals: string[],
   ) => Promise<GetUserProfilesByPrincipalsResponse>;
+  getUserProfilesByUserIds: (
+    projectId: string,
+    userIds: string[],
+  ) => Promise<GetUserProfilesByUserIdsResponse>;
 };
 
 export type UserProfileSlice = {

@@ -72,7 +72,7 @@ pub enum ProposalStatus {
     Open {},
     PendingApproval {
         threshold: u32,
-        approvers: Vec<Principal>,
+        approvers: Vec<String>,
         votes: Vec<ProposalVote>,
     },
     Rejected {},
@@ -86,7 +86,7 @@ pub enum ProposalStatus {
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct ProposalVote {
-    pub voter: Principal,
+    pub voter: String,
     pub vote: Vote,
 }
 

@@ -55,7 +55,8 @@ jobs:
         run: cargo clippy --all-targets --all-features
 
       - name: Cargo test
-        run: cargo test
+        # backend-e2e needs a built wasm + PocketIC; it runs in its own job.
+        run: cargo test --workspace --exclude backend-e2e
 
   build_and_test_backend:
     name: Build and Test Backend
@@ -82,6 +83,33 @@ jobs:
 
       - name: pic-js tests
         run: bun turbo -F backend-tests test
+
+  build_and_test_backend_e2e:
+    name: Build and Test Backend (e2e)
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          shared-key: ssn-console
+
+      - name: Install PocketIC server
+        uses: dfinity/pocketic@a980c334fab1b21b0b8a6bba38e1a10836e7258b # main @ 2026-06-26
+        with:
+          pocket-ic-server-version: '14.0.0'
+
+      - name: Build backend wasm (no frontend)
+        run: cargo build --target wasm32-unknown-unknown --release -p backend --locked --no-default-features
+
+      - name: Cargo test backend-e2e
+        env:
+          BACKEND_WASM: ${{ github.workspace }}/target/wasm32-unknown-unknown/release/backend.wasm
+        run: cargo test -p backend-e2e
 
   build_and_test_canister_history:
     name: Build and Test Canister History

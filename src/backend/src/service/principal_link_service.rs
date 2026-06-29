@@ -175,6 +175,14 @@ pub fn admin_link_principal_to_user(
 ) -> ApiResult {
     access_control_service::assert_staff_perm(caller, StaffPermissions::MANAGE_USERS)?;
 
+    // Linking a principal onto an account grants that principal the account's
+    // full staff set, so bound it by the caller's own staff permissions: a
+    // MANAGE_USERS holder cannot mint access to a more-privileged account.
+    let target_perms = user_profile_repository::get_user_profile_by_user_id(&user_id)
+        .and_then(|p| p.staff_permissions)
+        .unwrap_or(StaffPermissions::EMPTY);
+    access_control_service::assert_staff_can_grant(caller, target_perms)?;
+
     if principal == Principal::anonymous() {
         return Err(ApiError::client_error(
             "Target principal must not be anonymous.".to_string(),

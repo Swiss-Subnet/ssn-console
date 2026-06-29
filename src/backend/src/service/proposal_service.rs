@@ -125,7 +125,7 @@ async fn process_proposal(
                 )));
             }
 
-            let approvers = access_control_service::list_project_principals_with_permission(
+            let approvers = access_control_service::list_project_users_with_permission(
                 project_id,
                 ProjectPermissions::PROPOSAL_APPROVE,
             );
@@ -205,7 +205,7 @@ pub async fn vote_proposal(
         )));
     }
 
-    let outcome = proposal_repository::record_proposal_vote(proposal_id, *caller, vote)?;
+    let outcome = proposal_repository::record_proposal_vote(proposal_id, auth.user_id(), vote)?;
 
     if let VoteOutcome::ReachedApproval = outcome {
         execute_operation(proposal.project_id, proposal_id, proposal.operation.clone()).await?;

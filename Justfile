@@ -178,6 +178,11 @@ build-backend:
     gzip -f -c target/wasm32-unknown-unknown/release/backend.wasm \
         > .dfx/local/canisters/backend/backend.wasm.gz
 
+# Regenerate everything derived from .did files (TS bindings + Go clients).
+# Run after editing any .did; CI fails if these committed artifacts drift.
+gen: bindings
+    just services::gen
+
 # Regenerate TS candid bindings from .did files
 bindings:
     cd src/backend-api && bun run build
@@ -192,6 +197,20 @@ test-backend *args: build-backend
 # Re-run backend integration tests without rebuilding the wasm; same scoping args as test-backend
 retest-backend *args:
     cd src/backend-tests && bun run test {{args}}
+
+# Run the Rust PocketIC e2e suite against a freshly built backend wasm.
+# Builds the backend without the frontend bundle (--no-default-features), so no
+# frontend build is needed. Uses the pinned pocket-ic from PATH when present
+# (nix shell); otherwise the crate downloads the matching server (e.g. CI).
+test-backend-e2e *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cargo build --target wasm32-unknown-unknown --release -p backend --locked --no-default-features
+    export BACKEND_WASM="$PWD/target/wasm32-unknown-unknown/release/backend.wasm"
+    if command -v pocket-ic >/dev/null 2>&1; then
+        export POCKET_IC_BIN="$(command -v pocket-ic)"
+    fi
+    cargo test -p backend-e2e {{args}}
 
 # Go microservices live under services/; see `just services::` for recipes
 mod services
