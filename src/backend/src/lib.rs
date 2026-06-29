@@ -15,6 +15,7 @@ mod service;
 mod test_support;
 mod validation;
 
+#[cfg(all(not(feature = "canbench-rs"), feature = "embed-frontend"))]
 #[macro_use]
 extern crate dotenv_codegen;
 

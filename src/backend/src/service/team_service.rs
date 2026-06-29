@@ -132,6 +132,13 @@ pub fn add_user_to_team(
     let (_team, auth) = require_team_access(caller, team_id, OrgPermissions::MEMBER_MANAGE)?;
     auth.assert_member(target_user_id)?;
 
+    // Adding a member to a team confers that team's permissions on them, so the
+    // caller must already hold them. Otherwise MEMBER_MANAGE alone escalates by
+    // adding into a higher-privileged team.
+    let dest_perms = team_repository::get_org_team_permissions(auth.org_id(), team_id)
+        .unwrap_or(OrgPermissions::EMPTY);
+    auth.assert_can_grant(dest_perms)?;
+
     if team_repository::is_user_in_team(target_user_id, team_id) {
         return Ok(AddUserToTeamResponse {});
     }
@@ -183,6 +190,7 @@ pub fn update_team_org_permissions(
     let (team, auth) = require_team_access(caller, team_id, OrgPermissions::ORG_ADMIN)?;
 
     let new_perms = map_org_permissions_from_dto(req.permissions);
+    auth.assert_can_grant(new_perms)?;
 
     if !new_perms.contains(OrgPermissions::ORG_ADMIN) {
         assert_org_admin_populated_after_removing_team(auth.org_id(), team_id)?;

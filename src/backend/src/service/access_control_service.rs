@@ -95,6 +95,44 @@ pub fn assert_staff_perm(caller: &Principal, needed: StaffPermissions) -> ApiRes
     check_profile_staff_perm(&profile, needed)
 }
 
+// The caller's effective staff permissions, resolved by the same precedence as
+// assert_staff_perm: controllers are root (ALL), then service principals, then
+// active user accounts. Returns EMPTY for anonymous, unknown, inactive, or
+// non-staff callers. Used to bound staff-to-staff grants by the granter's set.
+pub fn caller_staff_permissions(caller: &Principal) -> StaffPermissions {
+    if assert_authenticated(caller).is_err() {
+        return StaffPermissions::EMPTY;
+    }
+    if is_controller(caller) {
+        return StaffPermissions::ALL;
+    }
+    if let Some(perms) = service_principal_repository::get_service_principal_permissions(caller) {
+        return perms;
+    }
+    let Some(user_id) = user_profile_repository::get_user_id_by_principal(caller) else {
+        return StaffPermissions::EMPTY;
+    };
+    match user_profile_repository::get_user_profile_by_user_id(&user_id) {
+        Some(profile) if profile.status == UserStatus::Active => {
+            profile.staff_permissions.unwrap_or(StaffPermissions::EMPTY)
+        }
+        _ => StaffPermissions::EMPTY,
+    }
+}
+
+// Granter ceiling for the staff tier: the caller cannot confer staff
+// permissions it does not itself hold. The staff equivalent of
+// OrgAuth/ProjectAuth::assert_can_grant (the staff tier has no proof object).
+pub fn assert_staff_can_grant(caller: &Principal, granted: StaffPermissions) -> ApiResult {
+    let caller_perms = caller_staff_permissions(caller);
+    if !caller_perms.contains(granted) {
+        return Err(ApiError::unauthorized(format!(
+            "Cannot grant staff permissions ({granted}) beyond your own ({caller_perms})"
+        )));
+    }
+    Ok(())
+}
+
 // Enforces the disjointness invariant between user-account principals and
 // service principals. `assert_staff_perm` short-circuits on a service-
 // principal match before consulting the user profile, so an overlap would
@@ -230,6 +268,19 @@ impl OrgAuth {
         }
         Ok(())
     }
+
+    // Granter ceiling: you cannot grant org permissions you do not hold. Used
+    // by every path that confers org perms on a team or member, so a holder of
+    // one capability cannot widen their own authority.
+    pub fn assert_can_grant(&self, granted: OrgPermissions) -> ApiResult {
+        if !self.perms.contains(granted) {
+            return Err(ApiError::unauthorized(format!(
+                "Cannot grant org permissions ({granted}) beyond your own ({})",
+                self.perms
+            )));
+        }
+        Ok(())
+    }
 }
 
 // Proof that a user has at least one team linked to `project_id`, and that
@@ -317,6 +368,17 @@ impl ProjectAuth {
 
     pub fn perms(&self) -> ProjectPermissions {
         self.perms
+    }
+
+    // Granter ceiling: you cannot grant project permissions you do not hold.
+    pub fn assert_can_grant(&self, granted: ProjectPermissions) -> ApiResult {
+        if !self.perms.contains(granted) {
+            return Err(ApiError::unauthorized(format!(
+                "Cannot grant project permissions ({granted}) beyond your own ({})",
+                self.perms
+            )));
+        }
+        Ok(())
     }
 }
 

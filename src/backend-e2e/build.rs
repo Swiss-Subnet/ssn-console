@@ -36,11 +36,34 @@ fn main() {
 
     // bindgen derives only CandidType + Deserialize; tests need Debug for
     // .expect() on the decoded Result and Clone for reusing ids across calls.
-    let output = output.replace(
+    let mut output = output.replace(
         "#[derive(CandidType, Deserialize)]",
         "#[derive(CandidType, Deserialize, Debug, Clone)]",
     );
 
+    output.push_str(&method_consts(&env, &actor));
+
     let out = PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("bindings.rs");
     std::fs::write(&out, output).expect("write bindings.rs");
+}
+
+// Emit a `pub mod method` of `&str` consts, one per service method, so tests
+// reference endpoints by const instead of a string literal that can silently
+// drift from the .did.
+fn method_consts(
+    env: &candid_parser::TypeEnv,
+    actor: &Option<candid_parser::types::Type>,
+) -> String {
+    let actor = actor.as_ref().expect("backend.did defines a service");
+    let methods = env.as_service(actor).expect("actor is a service");
+
+    let mut out = String::from("\npub mod method {\n");
+    for (name, _) in methods {
+        out.push_str(&format!(
+            "    pub const {}: &str = \"{name}\";\n",
+            name.to_uppercase().replace(['-', '.'], "_"),
+        ));
+    }
+    out.push_str("}\n");
+    out
 }

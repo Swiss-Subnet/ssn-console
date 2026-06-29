@@ -241,6 +241,7 @@ pub fn update_team_project_permissions(
     }
 
     let new_perms = map_project_permissions_from_dto(req.permissions);
+    auth.assert_can_grant(new_perms)?;
     project_repository::set_project_team_permissions(auth.project_id(), team_id, new_perms);
 
     Ok(UpdateTeamProjectPermissionsResponse {

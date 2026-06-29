@@ -121,7 +121,7 @@ pub fn no_staff_perms() -> StaffPermissions {
 pub fn grant_staff(env: &Env, user_id: &str, perms: StaffPermissions) {
     env.update::<_, GrantStaffPermissionsResponse>(
         env.controller,
-        "admin_grant_staff_permissions",
+        method::ADMIN_GRANT_STAFF_PERMISSIONS,
         GrantStaffPermissionsRequest {
             user_id: user_id.to_string(),
             permissions: perms,
@@ -135,7 +135,7 @@ pub fn grant_staff(env: &Env, user_id: &str, perms: StaffPermissions) {
 pub fn grant_service_principal(env: &Env, p: Principal, perms: StaffPermissions) {
     env.update::<_, GrantServicePrincipalPermissionsResponse>(
         env.controller,
-        "admin_grant_service_principal_permissions",
+        method::ADMIN_GRANT_SERVICE_PRINCIPAL_PERMISSIONS,
         GrantServicePrincipalPermissionsRequest {
             service_principal: p,
             permissions: perms,
@@ -159,7 +159,7 @@ pub fn no_project_perms() -> ProjectPermissions {
 
 // Onboard a principal: create its user profile and return its user_id.
 pub fn create_user(env: &Env, p: Principal) -> String {
-    env.update::<_, CreateMyUserProfileResponse>(p, "create_my_user_profile", ())
+    env.update::<_, CreateMyUserProfileResponse>(p, method::CREATE_MY_USER_PROFILE, ())
         .expect("create user profile")
         .id
 }
@@ -171,7 +171,7 @@ pub fn bootstrap_org(env: &Env, owner: Principal, name: &str) -> Organization {
     create_user(env, owner);
     env.update::<_, CreateOrganizationResponse>(
         owner,
-        "create_organization",
+        method::CREATE_ORGANIZATION,
         CreateOrganizationRequest {
             name: name.to_string(),
         },
@@ -192,7 +192,7 @@ pub fn org_admin_team_id(env: &Env, caller: Principal, org_id: &str) -> String {
 pub fn list_org_teams(env: &Env, caller: Principal, org_id: &str) -> Vec<OrgTeam> {
     env.query::<_, ListOrgTeamsResponse>(
         caller,
-        "list_org_teams",
+        method::LIST_ORG_TEAMS,
         ListOrgTeamsRequest {
             org_id: org_id.to_string(),
         },
@@ -211,7 +211,7 @@ pub fn create_team_with_perms(
     let team_id = env
         .update::<_, CreateTeamResponse>(
             caller,
-            "create_team",
+            method::CREATE_TEAM,
             CreateTeamRequest {
                 org_id: org_id.to_string(),
                 name: name.to_string(),
@@ -223,7 +223,7 @@ pub fn create_team_with_perms(
 
     env.update::<_, UpdateTeamOrgPermissionsResponse>(
         caller,
-        "update_team_org_permissions",
+        method::UPDATE_TEAM_ORG_PERMISSIONS,
         UpdateTeamOrgPermissionsRequest {
             team_id: team_id.clone(),
             permissions: perms,
@@ -239,7 +239,7 @@ pub fn create_team_with_perms(
 pub fn add_member_to_team(env: &Env, admin: Principal, team_id: &str, member_user_id: &str) {
     env.update::<_, AddUserToTeamResponse>(
         admin,
-        "add_user_to_team",
+        method::ADD_USER_TO_TEAM,
         AddUserToTeamRequest {
             team_id: team_id.to_string(),
             user_id: member_user_id.to_string(),
@@ -251,7 +251,7 @@ pub fn add_member_to_team(env: &Env, admin: Principal, team_id: &str, member_use
 pub fn create_project(env: &Env, caller: Principal, org_id: &str, name: &str) -> Project {
     env.update::<_, CreateProjectResponse>(
         caller,
-        "create_project",
+        method::CREATE_PROJECT,
         CreateProjectRequest {
             org_id: org_id.to_string(),
             name: name.to_string(),
@@ -264,7 +264,7 @@ pub fn create_project(env: &Env, caller: Principal, org_id: &str, name: &str) ->
 pub fn add_team_to_project(env: &Env, caller: Principal, project_id: &str, team_id: &str) {
     env.update::<_, AddTeamToProjectResponse>(
         caller,
-        "add_team_to_project",
+        method::ADD_TEAM_TO_PROJECT,
         AddTeamToProjectRequest {
             team_id: team_id.to_string(),
             project_id: project_id.to_string(),
@@ -282,7 +282,7 @@ pub fn set_team_project_perms(
 ) {
     env.update::<_, UpdateTeamProjectPermissionsResponse>(
         caller,
-        "update_team_project_permissions",
+        method::UPDATE_TEAM_PROJECT_PERMISSIONS,
         UpdateTeamProjectPermissionsRequest {
             project_id: project_id.to_string(),
             team_id: team_id.to_string(),
@@ -297,7 +297,7 @@ pub fn invite_and_accept(env: &Env, admin: Principal, org_id: &str, invitee: Pri
     let invite_id = env
         .update::<_, CreateOrgInviteResponse>(
             admin,
-            "create_org_invite",
+            method::CREATE_ORG_INVITE,
             CreateOrgInviteRequest {
                 org_id: org_id.to_string(),
                 target: InviteTarget::Principal(invitee),
@@ -309,7 +309,7 @@ pub fn invite_and_accept(env: &Env, admin: Principal, org_id: &str, invitee: Pri
 
     env.update::<_, AcceptOrgInviteResponse>(
         invitee,
-        "accept_org_invite",
+        method::ACCEPT_ORG_INVITE,
         AcceptOrgInviteRequest { invite_id },
     )
     .expect("accept invite");

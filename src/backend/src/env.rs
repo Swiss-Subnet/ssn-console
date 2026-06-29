@@ -2,9 +2,10 @@ use base64::{engine::general_purpose, Engine as _};
 use candid::Principal;
 use canister_utils::load_runtime_env;
 
-#[cfg(not(feature = "canbench-rs"))]
+// dotenv! reads .env at compile time, which only exists in a dfx build.
+#[cfg(all(not(feature = "canbench-rs"), feature = "embed-frontend"))]
 const NETWORK: &str = dotenv!("DFX_NETWORK");
-#[cfg(feature = "canbench-rs")]
+#[cfg(any(feature = "canbench-rs", not(feature = "embed-frontend")))]
 const NETWORK: &str = "local";
 
 pub fn is_local() -> bool {

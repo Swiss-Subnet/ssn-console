@@ -10,10 +10,8 @@ const MEMBER: u8 = 1;
 const TARGET: u8 = 2;
 const SCRAPER: u8 = 3;
 
-// A member holding only MEMBER_MANAGE must not be able to add a member (incl.
-// themselves) to a team that holds permissions beyond the caller's own. Adding
-// to the ALL-perm Default Team would otherwise grant ORG_ADMIN on the next
-// request.
+// MEMBER_MANAGE cannot add a member to a team whose perms exceed the caller's
+// own; otherwise adding into the ALL-perm Default Team would confer ORG_ADMIN.
 #[test]
 fn member_manage_cannot_add_to_higher_privileged_team() {
     let f = Fixture::get();
@@ -38,7 +36,7 @@ fn member_manage_cannot_add_to_higher_privileged_team() {
 
     let escalation = f.update::<_, AddUserToTeamResponse>(
         member,
-        "add_user_to_team",
+        method::ADD_USER_TO_TEAM,
         AddUserToTeamRequest {
             team_id: default_team,
             user_id: member_uid.clone(),
@@ -53,7 +51,7 @@ fn member_manage_cannot_add_to_higher_privileged_team() {
     // still be rejected.
     let admin_action = f.update::<_, UpdateOrganizationResponse>(
         member,
-        "update_organization",
+        method::UPDATE_ORGANIZATION,
         UpdateOrganizationRequest {
             org_id: f.admin_org.id.clone(),
             name: "Renamed".to_string(),
@@ -65,9 +63,8 @@ fn member_manage_cannot_add_to_higher_privileged_team() {
     );
 }
 
-// READ_METRICS is documented as aggregate-only, with no per-record contents.
-// A principal holding only READ_METRICS must not be able to enumerate a named
-// user's canister principals cross-org.
+// READ_METRICS is aggregate-only: it must not expose a named user's canister
+// principals cross-org.
 #[test]
 fn read_metrics_cannot_enumerate_user_canisters() {
     let f = Fixture::get();
@@ -86,7 +83,7 @@ fn read_metrics_cannot_enumerate_user_canisters() {
 
     let res = f.query::<_, ListUserReadableCanisterPrincipalsResponse>(
         scraper,
-        "admin_list_user_readable_canister_principals",
+        method::ADMIN_LIST_USER_READABLE_CANISTER_PRINCIPALS,
         ListUserReadableCanisterPrincipalsRequest {
             user_principal: target,
         },
@@ -97,9 +94,8 @@ fn read_metrics_cannot_enumerate_user_canisters() {
     );
 }
 
-// admin_link_principal_to_user must not let a MANAGE_USERS staff member attach
-// a principal to a target holding staff permissions beyond the caller's own:
-// the new principal would inherit the target's full staff set.
+// Linking grants the new principal the target's full staff set, so MANAGE_USERS
+// cannot link onto an account whose staff perms exceed the caller's own.
 #[test]
 fn manage_users_cannot_link_onto_higher_privileged_staff() {
     let f = Fixture::get();
@@ -120,7 +116,7 @@ fn manage_users_cannot_link_onto_higher_privileged_staff() {
 
     let res = f.update::<_, AdminLinkPrincipalResponse>(
         f.staff,
-        "admin_link_principal_to_user",
+        method::ADMIN_LINK_PRINCIPAL_TO_USER,
         AdminLinkPrincipalRequest {
             user_id: target_uid.clone(),
             principal: fresh,
@@ -132,9 +128,8 @@ fn manage_users_cannot_link_onto_higher_privileged_staff() {
     );
 }
 
-// PROJECT_ADMIN is a single bit, deliberately not the project ceiling. A member
-// holding only PROJECT_ADMIN must not be able to grant their own team a
-// permission they do not themselves hold (here CANISTER_MANAGE).
+// PROJECT_ADMIN is one bit, not the project ceiling: it cannot grant a
+// permission the caller does not hold (here CANISTER_MANAGE).
 #[test]
 fn project_admin_cannot_grant_beyond_own_perms() {
     let f = Fixture::get();
@@ -165,7 +160,7 @@ fn project_admin_cannot_grant_beyond_own_perms() {
     // Member, via the PROJECT_ADMIN-only team, tries to self-grant CANISTER_MANAGE.
     let res = f.update::<_, UpdateTeamProjectPermissionsResponse>(
         member,
-        "update_team_project_permissions",
+        method::UPDATE_TEAM_PROJECT_PERMISSIONS,
         UpdateTeamProjectPermissionsRequest {
             project_id: project.id.clone(),
             team_id: team.clone(),
