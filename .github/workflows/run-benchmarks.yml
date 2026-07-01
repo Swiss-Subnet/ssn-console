@@ -23,7 +23,7 @@ jobs:
       benchmarks: ${{ steps.filter.outputs.benchmarks }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
 
       - id: filter
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
@@ -63,10 +63,10 @@ jobs:
 
     steps:
       - name: Checkout current PR
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
 
       - name: Checkout baseline branch
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
         with:
           ref: main
           path: _canbench_baseline_branch
@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7
 
       - name: Save PR number
         run: |
